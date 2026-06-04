@@ -422,16 +422,46 @@
 </head>
 <body>
 
+
+<!-- ═══════════════════════════════════
+     登录页
+═══════════════════════════════════ -->
+<div class="page active" id="page-login">
+  <div style="min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:40px 24px;background:var(--bg);">
+    <div style="text-align:center;margin-bottom:40px;">
+      <div style="font-size:56px;margin-bottom:12px;">🧑‍✈️</div>
+      <div style="font-size:24px;font-weight:700;letter-spacing:-0.02em;">墨尔本机场接送</div>
+      <div style="font-size:13px;color:var(--text2);margin-top:6px;">司机操作端</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;">
+      <div style="font-size:13px;color:var(--text2);margin-bottom:6px;">注册手机号</div>
+      <input id="login-phone" type="tel"
+        style="width:100%;padding:13px 14px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-size:15px;font-family:inherit;outline:none;margin-bottom:14px;"
+        placeholder="+61 4XX XXX XXX">
+      <button onclick="doLogin()"
+        style="width:100%;padding:15px;background:var(--accent);border:none;border-radius:12px;color:var(--bg);font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;">
+        进入工作台 →
+      </button>
+      <div id="login-error" style="color:#ff4d6d;font-size:12px;text-align:center;margin-top:10px;display:none;">
+        手机号未找到，请确认注册信息
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:20px;font-size:12px;color:var(--text3);">
+      首次使用？请先完成合伙人注册
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════════════════════════════
      页面 1：首页 / 任务列表
 ═══════════════════════════════════ -->
-<div class="page active" id="page-home">
+<div class="page" id="page-home">
 
   <div class="topbar">
     <div class="topbar-row">
       <div>
-        <div class="topbar-title">👋 你好，陈师傅</div>
-        <div class="topbar-sub">Toyota HiAce · 沪 A88888</div>
+        <div class="topbar-title">👋 你好，<span id="driver-name">...</span></div>
+        <div class="topbar-sub" id="driver-vehicle">加载中...</div>
       </div>
       <div class="badge depot" onclick="toggleStatus(this)" id="status-badge">
         <div class="badge-dot"></div>
@@ -452,18 +482,18 @@
   <!-- 今日收入 -->
   <div class="earning-card">
     <div class="earning-title">TODAY'S EARNINGS</div>
-    <div class="earning-amount">$255<span style="font-size:18px;color:var(--text2)">.00</span></div>
-    <div class="earning-sub">已完成 3 单 · 平台已结算 $38.25</div>
+    <div class="earning-amount">$<span id="today-earning">0</span></div>
+    <div class="earning-sub">已完成 <span id="today-count">0</span> 单</div>
   </div>
 
   <!-- 统计 -->
   <div class="stats-row">
     <div class="stat-box">
-      <div class="stat-num accent">3</div>
+      <div class="stat-num accent" id="stat-done">0</div>
       <div class="stat-label">今日完成</div>
     </div>
     <div class="stat-box">
-      <div class="stat-num gold">1</div>
+      <div class="stat-num gold" id="stat-pending">0</div>
       <div class="stat-label">待处理</div>
     </div>
     <div class="stat-box">
@@ -474,8 +504,10 @@
 
   <!-- 待处理订单 -->
   <div class="section-title">📬 待接受订单</div>
-
-  <div class="trip-card" onclick="goToDetail()">
+  <div id="pending-trips">
+  <!-- 动态加载 -->
+  </div>
+  <div class="trip-card" onclick="goToDetail()" id="sample-card" style="display:none">
     <div class="trip-card-header">
       <div class="trip-type">
         <div class="trip-type-icon type-pickup">✈️</div>
@@ -513,6 +545,7 @@
       </div>
       <div class="trip-price">$70</div>
     </div>
+  </div>
   </div>
 
   <!-- 今日完成 -->
@@ -925,6 +958,170 @@
 </nav>
 
 <script>
+// ── Supabase 配置 ──
+const SUPA_URL = 'https://gxocvpmgfjvmmkkbswgo.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b2N2cG1nZmp2bW1ra2Jzd2dvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyNDc4NzAsImV4cCI6MjA5NTgyMzg3MH0.ExUNuOP8YyHQmItY6cdl1Euj7nOXqQq-rQT5-7aNerE';
+const TENANT_ID = '00000000-0000-0000-0000-000000000001';
+
+let currentDriver = null;
+let currentTripId = null;
+
+// 从 localStorage 恢复登录状态
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('driver');
+  if (saved) {
+    currentDriver = JSON.parse(saved);
+    enterApp();
+  }
+});
+
+async function supa(path, opts={}) {
+  const res = await fetch(SUPA_URL + '/rest/v1/' + path, {
+    headers: {
+      'apikey': SUPA_KEY,
+      'Authorization': 'Bearer ' + SUPA_KEY,
+      'Content-Type': 'application/json',
+      ...(opts.headers||{})
+    },
+    ...opts
+  });
+  if (!res.ok) { const e=await res.json(); throw new Error(e.message||'API错误'); }
+  return res.json();
+}
+
+// ── 登录 ──
+async function doLogin() {
+  const phone = document.getElementById('login-phone').value.trim();
+  if (!phone) { alert('请输入手机号'); return; }
+  const errEl = document.getElementById('login-error');
+  errEl.style.display = 'none';
+  try {
+    const drivers = await supa(`drivers?phone=eq.${encodeURIComponent(phone)}&is_active=eq.true&tenant_id=eq.${TENANT_ID}`);
+    if (!drivers || drivers.length === 0) {
+      errEl.style.display = 'block'; return;
+    }
+    currentDriver = drivers[0];
+    localStorage.setItem('driver', JSON.stringify(currentDriver));
+    enterApp();
+  } catch(e) {
+    errEl.textContent = '网络错误，请重试';
+    errEl.style.display = 'block';
+  }
+}
+
+function enterApp() {
+  // 显示司机信息
+  document.getElementById('driver-name').textContent = currentDriver.full_name;
+
+  // 加载首页数据
+  loadHome();
+  switchPage('home');
+}
+
+// ── 加载首页 ──
+async function loadHome() {
+  try {
+    // 加载车辆信息
+    const vehicles = await supa(`vehicles?driver_id=eq.${currentDriver.id}&is_active=eq.true&limit=1`);
+    if (vehicles && vehicles.length > 0) {
+      const v = vehicles[0];
+      document.getElementById('driver-vehicle').textContent = `${v.make} ${v.model} · ${v.plate_number}`;
+    }
+
+    // 今日订单
+    const today = new Date().toISOString().split('T')[0];
+    const trips = await supa(`trips?driver_id=eq.${currentDriver.id}&scheduled_at=gte.${today}T00:00:00&order=scheduled_at.asc`);
+
+    const pending = trips.filter(t => ['confirmed','dispatched'].includes(t.status));
+    const done    = trips.filter(t => t.status === 'completed');
+
+    document.getElementById('stat-pending').textContent = pending.length;
+    document.getElementById('stat-done').textContent    = done.length;
+    document.getElementById('today-count').textContent  = done.length;
+
+    const earning = done.reduce((s,t) => s + (parseFloat(t.final_amount||t.total_price)||0), 0);
+    document.getElementById('today-earning').textContent = (earning * 0.85).toFixed(0);
+
+    // 渲染待处理订单
+    const container = document.getElementById('pending-trips');
+    if (pending.length === 0) {
+      container.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">暂无待处理订单</div></div>';
+    } else {
+      container.innerHTML = pending.map(t => renderTripCard(t)).join('');
+    }
+
+  } catch(e) {
+    console.error('加载失败', e);
+  }
+}
+
+function renderTripCard(t) {
+  const isPickup = t.direction === 'from_airport';
+  const time = new Date(t.scheduled_at).toLocaleTimeString('zh', {hour:'2-digit',minute:'2-digit'});
+  return `
+  <div class="trip-card" onclick="goToDetail('${t.id}')">
+    <div class="trip-card-header">
+      <div class="trip-type">
+        <div class="trip-type-icon ${isPickup?'type-pickup':'type-dropoff'}">${isPickup?'✈️':'🏠'}</div>
+        ${isPickup?'接机':'送机'}
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="status-tag tag-waiting">⏳ 待确认</span>
+        <div class="trip-time">${time}</div>
+      </div>
+    </div>
+    <div class="trip-card-body">
+      <div class="route-line">
+        <div class="route-dots">
+          <div class="dot-from"></div>
+          <div class="dot-line"></div>
+          <div class="dot-to"></div>
+        </div>
+        <div class="route-addrs">
+          <div class="route-addr">
+            <div class="route-addr-label">${isPickup?'接客地点':'出发地'}</div>
+            ${isPickup?'墨尔本国际机场':t.pickup_address}
+          </div>
+          <div class="route-addr">
+            <div class="route-addr-label">${isPickup?'目的地':'送达机场'}</div>
+            ${t.dropoff_address}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="trip-card-footer">
+      <div class="trip-meta">
+        <div class="trip-meta-item">👤 ${t.passenger_count}人</div>
+        <div class="trip-meta-item">🧳 ${t.luggage_count}件</div>
+        <div class="trip-meta-item">📍 ${t.distance_km||'?'}km</div>
+      </div>
+      <div class="trip-price">$${t.total_price}</div>
+    </div>
+  </div>`;
+}
+
+// ── 更新司机状态 ──
+async function updateDriverStatus(newStatus) {
+  if (!currentDriver) return;
+  await supa(`drivers?id=eq.${currentDriver.id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({
+      status: newStatus,
+      depot_checkin_at: newStatus === 'at_depot' ? new Date().toISOString() : null
+    })
+  });
+  currentDriver.status = newStatus;
+  localStorage.setItem('driver', JSON.stringify(currentDriver));
+}
+
+// ── 更新订单状态 ──
+async function updateTripStatus(tripId, newStatus, extraFields={}) {
+  await supa(`trips?id=eq.${tripId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status: newStatus, ...extraFields })
+  });
+}
+
 function switchPage(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -934,10 +1131,46 @@ function switchPage(name) {
   window.scrollTo(0, 0);
 }
 
-function goToDetail() {
+function goToDetail(tripId) {
+  if (tripId) currentTripId = tripId;
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-detail').classList.add('active');
   window.scrollTo(0, 0);
+  if (tripId) loadTripDetail(tripId);
+}
+
+async function loadTripDetail(tripId) {
+  try {
+    const trips = await supa(`trips?id=eq.${tripId}`);
+    if (!trips || trips.length === 0) return;
+    const t = trips[0];
+    const time = new Date(t.scheduled_at).toLocaleTimeString('zh',{hour:'2-digit',minute:'2-digit'});
+    const isPickup = t.direction === 'from_airport';
+
+    // Update detail page with real data
+    document.querySelector('#page-detail .topbar-sub').textContent = `单号 #TRP-${t.id.slice(-8).toUpperCase()}`;
+    document.querySelector('#page-detail .status-tag').textContent = '⏳ 待确认';
+
+    // Passenger info
+    const vals = document.querySelectorAll('#page-detail .info-val');
+    if (vals[0]) vals[0].textContent = t.passenger_name;
+    if (vals[1]) vals[1].textContent = t.passenger_phone;
+
+    // Trip info rows
+    document.querySelectorAll('#page-detail .info-row').forEach(row => {
+      const key = row.querySelector('.info-key')?.textContent;
+      const val = row.querySelector('.info-val');
+      if (!val) return;
+      if (key === '类型') val.textContent = isPickup ? '接机' : '送机';
+      if (key === '航班号') val.textContent = t.flight_number || '-';
+      if (key === '约定接机时间') val.textContent = time;
+      if (key === '距离') val.textContent = (t.distance_km || '?') + ' km';
+    });
+
+    // Price
+    document.querySelector('.trip-price') && (document.querySelector('#page-detail .trip-price') || {textContent:''});
+
+  } catch(e) { console.error('订单详情加载失败', e); }
 }
 
 function goBack(pageId) {
@@ -950,17 +1183,17 @@ function goBack(pageId) {
 
 function toggleStatus(el) {
   const states = [
-    { cls: 'online', text: '空闲在线' },
-    { cls: 'depot',  text: '驿站候单' },
-    { cls: 'offline',text: '下线' },
+    { cls: 'online',  text: '空闲在线',  val: 'available' },
+    { cls: 'depot',   text: '驿站候单',  val: 'at_depot'  },
+    { cls: 'offline', text: '下线',      val: 'offline'   },
   ];
   const cur = states.findIndex(s => el.classList.contains(s.cls));
   const next = states[(cur + 1) % states.length];
   el.className = 'badge ' + next.cls;
   el.innerHTML = `<div class="badge-dot"></div>${next.text}`;
-
   const banner = document.getElementById('depot-banner');
   banner.style.display = next.cls === 'depot' ? 'flex' : 'none';
+  updateDriverStatus(next.val);
 }
 
 function selectVtype(el) {
@@ -968,7 +1201,14 @@ function selectVtype(el) {
   el.classList.add('selected');
 }
 
-function acceptTrip() {
+async function acceptTrip() {
+  if (currentTripId) {
+    await updateTripStatus(currentTripId, 'driver_en_route', {
+      driver_id: currentDriver.id
+    });
+    await updateDriverStatus('on_trip');
+  }
+
   // 更新状态步骤
   const circles = document.querySelectorAll('.step-circle');
   const lines = document.querySelectorAll('.step-line');
@@ -1017,11 +1257,18 @@ function arrivedTrip() {
   btn.onclick = completeTrip;
 }
 
-function completeTrip() {
+async function completeTrip() {
   const circles = document.querySelectorAll('.step-circle');
   circles[4].className = 'step-circle done';
   circles[4].textContent = '✓';
-  alert('🎉 行程完成！收入 $59.50 将在每周结算日打入您的账户。');
+  if (currentTripId) {
+    await updateTripStatus(currentTripId, 'completed', {
+      completed_at: new Date().toISOString()
+    });
+    await updateDriverStatus('available');
+  }
+  alert('🎉 行程完成！收入将在每周结算日打入您的账户。');
+  loadHome();
   goBack('page-home');
 }
 
