@@ -625,6 +625,30 @@ body {
 </div>
 
 <script>
+// ── Supabase 配置 ──
+const SUPA_URL = 'https://gxocvpmgfjvmmkkbswgo.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b2N2cG1nZmp2bW1ra2Jzd2dvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyNDc4NzAsImV4cCI6MjA5NTgyMzg3MH0.ExUNuOP8YyHQmItY6cdl1Euj7nOXqQq-rQT5-7aNerE';
+const TENANT_ID = '00000000-0000-0000-0000-000000000001';
+
+// Melbourne Airport coordinates
+const AIRPORT_LAT = -37.6690;
+const AIRPORT_LNG = 144.8410;
+
+async function supaInsert(table, data) {
+  const res = await fetch(SUPA_URL + '/rest/v1/' + table, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPA_KEY,
+      'Authorization': 'Bearer ' + SUPA_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    },
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) { const e = await res.json(); throw new Error(e.message || '提交失败'); }
+  return res.json();
+}
+
 const chatEl=document.getElementById('chat');
 const qrEl=document.getElementById('qr');
 const progEl=document.getElementById('prog');
@@ -963,19 +987,75 @@ function selPay(el, val){
 async function submitBooking(){
   document.getElementById('fc4').style.opacity='0.4';
   const payNames={wechat:'微信支付',cash:'现金',bank_transfer:'银行转账'};
-  await bubble(payNames[S.payment],true);
+  await bubble(payNames[S.payment], true);
   await typing(1300);
-  setProg(100);
-  showSuccess();
-  await typing(600);
-  await bubble(`🎉 <span class="t">${S.name}</span>，预约成功！<br>司机会在约定时间前联系你确认`);
-  await typing(700);
-  await bubble('有任何问题直接发消息给我，我随时在线 😊<br>祝你旅途愉快！✈️');
+
+  try {
+    // 计算价格
+    const PRICES = {sedan:70, mpv:90, large_mpv:120, van:160};
+    const basePrice = PRICES[S.vehicle] || 70;
+
+    // 判断时段附加费
+    const bookingHour = parseInt(S.time.split(':')[0]);
+    const month = new Date(S.date).getMonth() + 1;
+    const isSummer = [10,11,12,1,2,3].includes(month);
+    const normalEnd = isSummer ? 20 : 18;
+    let timeSurcharge = 0;
+    if (bookingHour >= 22 || bookingHour < 6) timeSurcharge = 25;
+    else if (bookingHour < 8 || bookingHour >= normalEnd) timeSurcharge = 15;
+
+    const totalPrice = basePrice + timeSurcharge;
+
+    // 构建行程数据
+    const isFromAirport = S.direction === 'from_airport';
+    const tripData = {
+      tenant_id: TENANT_ID,
+      direction: S.direction,
+      passenger_name: S.name,
+      passenger_phone: S.phone,
+      passenger_count: S.passengers,
+      luggage_count: S.luggage,
+      flight_number: S.flight || null,
+      flight_date: S.date,
+      scheduled_at: S.date + 'T' + S.time + ':00+10:00',
+      pickup_address: isFromAirport ? '墨尔本国际机场' : S.dropoff,
+      pickup_lat: isFromAirport ? AIRPORT_LAT : null,
+      pickup_lng: isFromAirport ? AIRPORT_LNG : null,
+      dropoff_address: isFromAirport ? S.dropoff : '墨尔本国际机场',
+      dropoff_lat: isFromAirport ? null : AIRPORT_LAT,
+      dropoff_lng: isFromAirport ? null : AIRPORT_LNG,
+      distance_km: S.distance || null,
+      vehicle_type: S.vehicle,
+      base_price: basePrice,
+      time_surcharge: timeSurcharge,
+      total_price: totalPrice,
+      payment_method: S.payment,
+      payment_status: S.payment === 'cash' ? 'pending' : 'prepaid',
+      prepaid_amount: S.payment !== 'cash' ? totalPrice : null,
+      status: 'pending',
+      notes: S.tripType === 'group' ? 
+        `团队${S.groupSize}人 · ${S.groupNote||''} · 负责人:${S.groupLeader||S.name}` : null
+    };
+
+    const [trip] = await supaInsert('trips', tripData);
+
+    setProg(100);
+    showSuccess(trip.id, totalPrice);
+    await typing(600);
+    await bubble(`🎉 <span class="t">${S.name}</span>，预约成功！<br>司机会在约定时间前联系你确认`);
+    await typing(700);
+    await bubble('有任何问题直接发消息给我，我随时在线 😊<br>祝你旅途愉快！✈️');
+
+  } catch(err) {
+    console.error(err);
+    await bubble(`⚠️ 提交遇到问题，请截图联系客服<br>${err.message}`);
+  }
 }
 
-function showSuccess(){
+function showSuccess(tripId, totalPrice){
   const payNames={wechat:'💚 微信支付',cash:'💵 现金',bank_transfer:'🏦 银行转账'};
   const dirText=S.direction==='from_airport'?'接机':'送机';
+  const shortId = tripId ? tripId.slice(-8).toUpperCase() : Date.now().toString().slice(-6);
   const card=document.createElement('div'); card.className='success';
   card.innerHTML=`
     <div class="suc-icon">🎊</div>
@@ -984,9 +1064,9 @@ function showSuccess(){
       ${dirText} · ${NAMES[S.vehicle]}<br>
       <strong>${S.date} ${S.time}</strong><br>
       ${S.dropoff}<br>
-      一口价 <strong>$${S.price}</strong> · ${payNames[S.payment]}
+      一口价 <strong>$${totalPrice||S.price}</strong> · ${payNames[S.payment]}
     </div>
-    <div class="suc-id">订单号：TRP-${Date.now().toString().slice(-6)}</div>
+    <div class="suc-id">订单号：TRP-${shortId}</div>
     <div class="suc-pts">🏆 本次预约已累积积分，季度末可参与分红</div>
   `;
   addEl(card);
