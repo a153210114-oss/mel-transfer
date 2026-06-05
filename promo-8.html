@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>澳洲机场接送 · AU TRANSFER</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+<script>
+window.onerror = function(){ return true; };
+window.addEventListener('unhandledrejection', function(e){ e.preventDefault(); });
+</script>
+<style>
+:root {
+  --bg: #080e1a;
+  --surface: #0f1824;
+  --surface2: #162030;
+  --border: #1e3048;
+  --gold: #c8920a;
+  --gold2: #e8b830;
+  --gold3: #ffd878;
+  --teal: #1a8a76;
+  --teal2: #22b898;
+  --teal-light: rgba(26,138,118,0.12);
+  --text: #e8f0fe;
+  --text2: #7a9ab8;
+  --text3: #3d5a7a;
+  --radius: 20px;
+  --radius-sm: 14px;
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body {
+  font-family:'Noto Sans SC',sans-serif;
+  background:var(--bg); color:var(--text);
+  max-width:430px; margin:0 auto; min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* ── Hero ── */
+.hero {
+  background:linear-gradient(160deg,#060e18 0%,#0d1e2e 50%,#061814 100%);
+  padding:44px 22px 36px; position:relative; overflow:hidden;
+}
+.hero-glow {
+  position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 55% 45% at 85% 15%, rgba(200,146,10,0.2) 0%,transparent 55%),
+    radial-gradient(ellipse 45% 55% at 15% 85%, rgba(26,138,118,0.18) 0%,transparent 55%);
+}
+.hero-grid {
+  position:absolute;inset:0;pointer-events:none;
+  background-image:linear-gradient(rgba(255,255,255,0.02) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,0.02) 1px,transparent 1px);
+  background-size:32px 32px;
+}
+
+/* 顶部品牌 */
+.brand-row {
+  position:relative;z-index:1;
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:28px;
+}
+.brand-left { display:flex;align-items:center;gap:10px; }
+.brand-icon {
+  width:42px;height:42px;border-radius:12px;
+  background:linear-gradient(135deg,var(--gold),var(--gold2));
+  display:flex;align-items:center;justify-content:center;font-size:22px;
+}
+.brand-name { font-size:15px;font-weight:700;color:#fff; }
+.brand-sub { font-size:10px;color:rgba(255,255,255,0.35);margin-top:1px;letter-spacing:0.05em; }
+.social-btns { display:flex;gap:8px; }
+.social-btn {
+  width:36px;height:36px;border-radius:10px;border:none;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;cursor:pointer;transition:transform 0.15s;
+}
+.social-btn:active { transform:scale(0.9); }
+.btn-xhs { background:rgba(255,59,59,0.15);border:1px solid rgba(255,59,59,0.3); }
+.btn-wx  { background:rgba(9,187,7,0.15);border:1px solid rgba(9,187,7,0.3); }
+
+/* 主标语 */
+.hero-tag {
+  position:relative;z-index:1;
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(200,146,10,0.15);border:1px solid rgba(200,146,10,0.3);
+  color:var(--gold2);font-size:11px;letter-spacing:0.12em;
+  padding:5px 14px;border-radius:20px;margin-bottom:18px;
+}
+.hero-title {
+  position:relative;z-index:1;
+  font-family:'Playfair Display',serif;
+  font-size:38px;font-weight:900;color:#fff;
+  line-height:1.15;letter-spacing:-0.02em;
+}
+.hero-title .g { color:var(--gold2); }
+.hero-title .t { color:var(--teal2); }
+.hero-sub {
+  position:relative;z-index:1;
+  margin-top:14px;font-size:14px;
+  color:rgba(255,255,255,0.5);line-height:1.8;
+}
+
+/* ── 两个入口卡片 ── */
+.cards-section { padding:20px 16px 8px; }
+
+.entry-card {
+  border-radius:var(--radius);overflow:hidden;
+  margin-bottom:14px;cursor:pointer;
+  transition:transform 0.2s;
+}
+.entry-card:active { transform:scale(0.98); }
+
+/* 司机卡 */
+.driver-card {
+  background:linear-gradient(135deg,#0a1e14,#102810);
+  border:1px solid rgba(200,146,10,0.2);
+}
+.driver-card-header {
+  padding:20px 20px 16px;
+  background:linear-gradient(135deg,rgba(200,146,10,0.12),rgba(26,138,118,0.08));
+  border-bottom:1px solid rgba(200,146,10,0.12);
+}
+.card-tag {
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:10px;font-weight:600;letter-spacing:0.12em;
+  padding:4px 12px;border-radius:20px;margin-bottom:12px;
+}
+.tag-gold { background:rgba(200,146,10,0.2);color:var(--gold2);border:1px solid rgba(200,146,10,0.3); }
+.tag-teal { background:rgba(26,138,118,0.2);color:var(--teal2);border:1px solid rgba(26,138,118,0.3); }
+
+.card-headline { font-size:22px;font-weight:800;color:#fff;line-height:1.2;margin-bottom:6px; }
+.card-headline .accent-gold { color:var(--gold2); }
+.card-headline .accent-teal { color:var(--teal2); }
+.card-tagline { font-size:13px;color:rgba(255,255,255,0.5);line-height:1.6; }
+
+.card-body { padding:16px 20px 20px; }
+.card-pitch {
+  font-size:13px;color:rgba(255,255,255,0.65);
+  line-height:1.8;margin-bottom:14px;
+}
+.card-pitch strong { color:var(--gold2); }
+
+/* 收益展示 */
+.income-row { display:flex;gap:8px;margin-bottom:14px; }
+.income-item {
+  flex:1;background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:10px;padding:10px;text-align:center;
+}
+.income-num { font-size:20px;font-weight:700;color:var(--gold2); }
+.income-label { font-size:10px;color:var(--text3);margin-top:2px; }
+
+/* 积分细则 */
+.points-section {
+  background:rgba(255,255,255,0.03);
+  border:1px solid rgba(255,255,255,0.06);
+  border-radius:12px;padding:14px;margin-bottom:14px;
+}
+.points-title {
+  font-size:11px;font-weight:600;letter-spacing:0.1em;
+  margin-bottom:10px;display:flex;align-items:center;gap:6px;
+}
+.points-title.gold { color:var(--gold); }
+.points-title.teal { color:var(--teal2); }
+.points-row {
+  display:flex;justify-content:space-between;align-items:center;
+  padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.04);
+  font-size:12px;
+}
+.points-row:last-child { border-bottom:none;padding-bottom:0; }
+.points-key { color:var(--text2); }
+.points-val { font-weight:600; }
+.val-gold { color:var(--gold2); }
+.val-teal { color:var(--teal2); }
+.val-purple { color:#a78bfa; }
+
+/* 兑换细则 */
+.exchange-box {
+  background:rgba(167,139,250,0.06);
+  border:1px solid rgba(167,139,250,0.15);
+  border-radius:10px;padding:12px 14px;margin-bottom:14px;
+}
+.exchange-title { font-size:11px;font-weight:600;color:#a78bfa;margin-bottom:8px; }
+.exchange-item {
+  font-size:11px;color:var(--text2);
+  padding:4px 0;display:flex;gap:8px;align-items:flex-start;
+  border-bottom:1px solid rgba(255,255,255,0.04);line-height:1.5;
+}
+.exchange-item:last-child { border-bottom:none; }
+.exchange-item span { color:#a78bfa;flex-shrink:0; }
+
+/* CTA按钮 */
+.card-cta {
+  width:100%;padding:15px;border:none;border-radius:12px;
+  font-family:'Noto Sans SC',sans-serif;
+  font-size:15px;font-weight:700;cursor:pointer;
+  transition:transform 0.15s;position:relative;overflow:hidden;
+}
+.card-cta:active { transform:scale(0.97); }
+.cta-gold {
+  background:linear-gradient(135deg,var(--gold),var(--gold2));
+  color:#0a0e14;
+  box-shadow:0 6px 24px rgba(200,146,10,0.3);
+}
+.cta-teal {
+  background:linear-gradient(135deg,var(--teal),var(--teal2));
+  color:#fff;
+  box-shadow:0 6px 24px rgba(26,138,118,0.3);
+}
+.cta-gold::before,.cta-teal::before {
+  content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent);
+  animation:shine 3s infinite;
+}
+@keyframes shine { to{left:150%;} }
+
+/* 乘客卡 */
+.passenger-card {
+  background:linear-gradient(135deg,#0a1420,#081820);
+  border:1px solid rgba(26,138,118,0.2);
+}
+.passenger-card-header {
+  padding:20px 20px 16px;
+  background:linear-gradient(135deg,rgba(26,138,118,0.1),rgba(200,146,10,0.06));
+  border-bottom:1px solid rgba(26,138,118,0.1);
+}
+
+/* 折叠内容 */
+.card-detail { display:none; }
+.card-detail.open { display:block; }
+
+/* 展开指示器 */
+.expand-hint {
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:10px 20px;
+  font-size:12px;color:var(--text3);
+  border-top:1px solid rgba(255,255,255,0.04);
+}
+.expand-arrow { transition:transform 0.3s; }
+.expand-arrow.open { transform:rotate(180deg); }
+
+/* ── 底部 ── */
+.bottom-section {
+  padding:16px 16px 40px;
+}
+.contact-card {
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:18px;margin-bottom:14px;
+  display:flex;align-items:center;gap:14px;
+}
+.contact-icon { font-size:28px;flex-shrink:0; }
+.contact-text h4 { font-size:14px;font-weight:600;margin-bottom:3px; }
+.contact-text p { font-size:12px;color:var(--text2);line-height:1.5; }
+.contact-btns { margin-left:auto;display:flex;flex-direction:column;gap:6px; }
+.contact-btn {
+  padding:7px 12px;border-radius:8px;font-size:11px;
+  font-weight:600;cursor:pointer;border:none;
+  font-family:'Noto Sans SC',sans-serif;white-space:nowrap;
+}
+.btn-wechat { background:rgba(9,187,7,0.15);color:#07c507;border:1px solid rgba(9,187,7,0.3); }
+.btn-phone  { background:rgba(0,212,255,0.1);color:var(--teal2);border:1px solid rgba(0,212,255,0.2); }
+
+.share-btn {
+  width:100%;padding:18px;border:none;border-radius:var(--radius);
+  background:linear-gradient(135deg,rgba(200,146,10,0.15),rgba(26,138,118,0.1));
+  border:1.5px solid rgba(200,146,10,0.25);
+  font-family:'Noto Sans SC',sans-serif;
+  font-size:16px;font-weight:700;color:var(--text);
+  cursor:pointer;transition:all 0.15s;
+}
+.share-btn:active { transform:scale(0.97); }
+
+/* 海报弹窗 */
+.poster-modal {
+  position:fixed;inset:0;background:rgba(0,0,0,0.92);
+  z-index:9999;display:flex;flex-direction:column;
+  align-items:center;padding:24px 16px;overflow-y:auto;
+}
+@keyframes pointUp {
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-5px)}
+}
+
+/* 滚动条幅 + 浮窗 */
+.founder-bar {
+  background:linear-gradient(90deg,#0a1e14,#102818,#0a1e14);
+  border-bottom:1px solid rgba(200,146,10,0.2);
+  padding:0; overflow:hidden; height:36px;
+  display:flex; align-items:center;
+  position:sticky; top:0; z-index:200;
+}
+.founder-scroll {
+  display:flex; align-items:center;
+  animation:scrollBanner 20s linear infinite;
+  white-space:nowrap; gap:48px;
+}
+.founder-scroll-item {
+  font-size:13px; color:rgba(255,255,255,0.85);
+  font-weight:500; flex-shrink:0;
+}
+.founder-scroll-item .name { color:#e8b830; font-weight:700; }
+@keyframes scrollBanner {
+  0%   { transform:translateX(100vw); }
+  100% { transform:translateX(-100%); }
+}
+
+/* 我也要浮窗按钮 */
+.founder-float {
+  position:sticky; top:36px;
+  display:block; margin:-36px auto 0;
+  width:fit-content; left:0; right:0;
+  background:linear-gradient(135deg,#c8920a,#e8b830);
+  color:#0a0e14; font-family:inherit;
+  font-size:11px; font-weight:800;
+  padding:7px 18px; border-radius:20px;
+  border:none; cursor:pointer; z-index:300;
+  box-shadow:0 4px 16px rgba(200,146,10,0.5);
+  animation:floatPulse 2s ease-in-out infinite;
+  line-height:1.4; text-align:center;
+  transform:translateX(-50%); left:50%;
+}
+@keyframes floatPulse {
+  0%,100%{transform:translateY(0);box-shadow:0 4px 20px rgba(200,146,10,0.5);}
+  50%{transform:translateY(-4px);box-shadow:0 8px 28px rgba(200,146,10,0.7);}
+}
+
+/* 弹窗 */
+.founder-modal-bg {
+  position:fixed;inset:0;background:rgba(0,0,0,0.85);
+  z-index:500;display:flex;align-items:flex-end;
+  animation:fadeIn 0.2s ease;
+}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.founder-modal {
+  width:100%;max-width:430px;margin:0 auto;
+  background:linear-gradient(160deg,#0a1e14,#102818);
+  border:1px solid rgba(200,146,10,0.25);
+  border-radius:24px 24px 0 0;
+  padding:28px 20px 40px;
+  animation:slideUp 0.3s cubic-bezier(0.34,1.1,0.64,1);
+}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-handle {
+  width:40px;height:4px;background:rgba(255,255,255,0.15);
+  border-radius:2px;margin:0 auto 20px;
+}
+.modal-badge {
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(200,146,10,0.15);border:1px solid rgba(200,146,10,0.3);
+  color:#e8b830;font-size:11px;letter-spacing:0.1em;
+  padding:5px 14px;border-radius:20px;margin-bottom:14px;
+}
+.modal-title {
+  font-size:26px;font-weight:900;color:#fff;
+  line-height:1.2;margin-bottom:8px;
+}
+.modal-title .gold{color:#e8b830;}
+.modal-sub {font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:20px;line-height:1.6;}
+.modal-perks {
+  background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);
+  border-radius:14px;padding:16px;margin-bottom:16px;
+}
+.modal-perk {
+  display:flex;align-items:flex-start;gap:10px;
+  padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);
+  font-size:13px;color:rgba(255,255,255,0.75);line-height:1.5;
+}
+.modal-perk:last-child{border-bottom:none;}
+.modal-perk-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+.quota-bar {
+  background:rgba(255,255,255,0.04);border:1px solid rgba(200,146,10,0.2);
+  border-radius:12px;padding:14px 16px;margin-bottom:16px;
+}
+.quota-title{font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:8px;letter-spacing:0.08em;}
+.quota-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.quota-city{font-size:13px;color:rgba(255,255,255,0.7);}
+.quota-num{font-size:13px;font-weight:700;color:#e8b830;}
+.quota-progress{height:4px;background:rgba(255,255,255,0.08);border-radius:2px;margin-top:4px;}
+.quota-fill{height:100%;background:linear-gradient(90deg,#c8920a,#e8b830);border-radius:2px;}
+.modal-cta {
+  width:100%;padding:16px;border:none;border-radius:14px;
+  background:linear-gradient(135deg,#c8920a,#e8b830);
+  color:#0a0e14;font-family:inherit;font-size:16px;font-weight:800;
+  cursor:pointer;box-shadow:0 6px 24px rgba(200,146,10,0.35);
+}
+.modal-close {
+  width:100%;padding:12px;border:none;border-radius:14px;
+  background:transparent;color:rgba(255,255,255,0.3);
+  font-family:inherit;font-size:13px;cursor:pointer;margin-top:8px;
+}
+
+</style>
+</head>
+<body>
+
+<!-- 滚动条幅 -->
+<div class="founder-bar">
+  <div class="founder-scroll" id="founder-scroll">
+    <div class="founder-scroll-item">🎉 恭喜 <span class="name">王先生</span> 成为墨尔本创始合伙人</div>
+    <div class="founder-scroll-item">🎉 恭喜 <span class="name">李先生</span> 成为悉尼创始合伙人</div>
+    <div class="founder-scroll-item">🎉 恭喜 <span class="name">张先生</span> 成为墨尔本创始合伙人</div>
+    <div class="founder-scroll-item">🎉 恭喜 <span class="name">陈先生</span> 成为布里斯班创始合伙人</div>
+    <div class="founder-scroll-item">🎉 恭喜 <span class="name">刘先生</span> 成为悉尼创始合伙人</div>
+    <div class="founder-scroll-item">🎉 恭喜 <span class="name">黄先生</span> 成为墨尔本创始合伙人</div>
+    <div class="founder-scroll-item">🎉 恭喜 <span class="name">赵先生</span> 成为珀斯创始合伙人</div>
+  </div>
+</div>
+
+<!-- 我也要浮窗按钮 -->
+<button class="founder-float" onclick="showFounderModal()">
+  我也要成为<br>创始合伙人！
+</button>
+
+<!-- 弹窗 -->
+<div class="founder-modal-bg" id="founder-modal" style="display:none;" onclick="hideFounderModal(event)">
+  <div class="founder-modal">
+    <div class="modal-handle"></div>
+    <div class="modal-badge">⭐ 限时限额</div>
+    <div class="modal-title">我也要成为<br><span class="gold">创始合伙人！</span></div>
+    <div class="modal-sub">创始合伙人享有永久特权，越早加入越值钱</div>
+
+    <div class="modal-perks">
+      <div class="modal-perk">
+        <div class="modal-perk-icon">×2</div>
+        <div>积分永久×2倍加成，每单、每次推荐、每次好评均翻倍</div>
+      </div>
+      <div class="modal-perk">
+        <div class="modal-perk-icon">📈</div>
+        <div>季度按积分占比分享平台利润，积分即股份</div>
+      </div>
+      <div class="modal-perk">
+        <div class="modal-perk-icon">+5%</div>
+        <div>年底持有积分额外+5%加成，逾期自动滚存不清零</div>
+      </div>
+      <div class="modal-perk">
+        <div class="modal-perk-icon">🏆</div>
+        <div>创始合伙人专属编号，永久载入平台历史</div>
+      </div>
+    </div>
+
+    <div class="quota-bar">
+      <div class="quota-title">📊 创始名额实时进度</div>
+      <div class="quota-row">
+        <span class="quota-city">🏙️ 墨尔本（限50名）</span>
+        <span class="quota-num">剩余 <span id="mel-quota">38</span> 名</span>
+      </div>
+      <div class="quota-progress"><div class="quota-fill" style="width:24%"></div></div>
+      <div class="quota-row" style="margin-top:10px;">
+        <span class="quota-city">🌆 悉尼（限50名）</span>
+        <span class="quota-num">剩余 <span id="syd-quota">44</span> 名</span>
+      </div>
+      <div class="quota-progress"><div class="quota-fill" style="width:12%"></div></div>
+      <div class="quota-row" style="margin-top:10px;">
+        <span class="quota-city">🌇 其他州（各限20名）</span>
+        <span class="quota-num">名额充足</span>
+      </div>
+    </div>
+
+    <button class="modal-cta" onclick="goJoin()">⭐ 立即加入，锁定创始资格 →</button>
+    <button class="modal-close" onclick="hideFounderModal()">稍后再说</button>
+  </div>
+</div>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-grid"></div>
+
+  <div class="brand-row">
+    <div class="brand-left">
+      <div class="brand-icon">✈️</div>
+      <div>
+        <div class="brand-name">澳洲机场接送</div>
+        <div class="brand-sub">AU TRANSFER · 华人专属</div>
+      </div>
+    </div>
+    <div class="social-btns">
+      <button class="social-btn btn-xhs" onclick="openXHS()">📕</button>
+      <button class="social-btn btn-wx"  onclick="openWeChat()">💬</button>
+    </div>
+  </div>
+
+  <div class="hero-tag">🇦🇺 澳洲华人首选</div>
+  <div class="hero-title">
+    服务<span class="g">华人</span><br>
+    成就<span class="t">彼此</span>
+  </div>
+  <div class="hero-sub">
+    司机：服务华人，增加收入<br>
+    乘客：华人服务，安心方便
+  </div>
+</div>
+
+<!-- 两个入口 -->
+<div class="cards-section">
+
+  <!-- 司机入口 -->
+  <div class="entry-card driver-card" id="driver-card">
+    <div class="driver-card-header" onclick="toggleCard('driver')">
+      <div class="card-tag tag-gold">🧑‍✈️ 司机 · 合伙人</div>
+      <div class="card-headline">服务<span class="accent-gold">华人</span><br>增加<span class="accent-gold">收入</span></div>
+      <div class="card-tagline">Uber/滴滴司机的第三个选择</div>
+    </div>
+    <div class="expand-hint" onclick="toggleCard('driver')">
+      <span>了解详情</span>
+      <span class="expand-arrow" id="driver-arrow">▼</span>
+    </div>
+    <div class="card-detail" id="driver-detail">
+      <div class="card-body">
+
+        <div class="card-pitch">
+          如果您是华人 <strong>Uber、滴滴司机</strong>，那您现在有了第三个选择来增加您的收入：<br><br>
+          <strong>即时的机场接送单</strong> + <strong>分享推荐的积分</strong><br><br>
+          我们只收取少量佣金用于平台推广，其余全部归您所有。越早加入，积分越值钱。
+        </div>
+
+        <div class="income-row">
+          <div class="income-item">
+            <div class="income-num">高比例</div>
+            <div class="income-label">每单直接到手</div>
+          </div>
+          <div class="income-item">
+            <div class="income-num">×2</div>
+            <div class="income-label">创始积分加成</div>
+          </div>
+          <div class="income-item">
+            <div class="income-num">季度</div>
+            <div class="income-label">平台利润分红</div>
+          </div>
+        </div>
+
+        <!-- 积分获取 -->
+        <div class="points-section">
+          <div class="points-title gold">🏆 积分获取方式</div>
+          <div class="points-row">
+            <span class="points-key">完成一单接送</span>
+            <span class="points-val val-gold">+10分</span>
+          </div>
+          <div class="points-row">
+            <span class="points-key">获得5星好评</span>
+            <span class="points-val val-gold">+5分</span>
+          </div>
+          <div class="points-row">
+            <span class="points-key">推荐新乘客下单</span>
+            <span class="points-val val-gold">+20分</span>
+          </div>
+          <div class="points-row">
+            <span class="points-key">推荐新司机加入</span>
+            <span class="points-val val-gold">+50分</span>
+          </div>
+          <div class="points-row">
+            <span class="points-key">创始合伙人加成</span>
+            <span class="points-val val-purple">以上全部 ×2</span>
+          </div>
+        </div>
+
+        <!-- 积分兑换 -->
+        <div class="exchange-box">
+          <div class="exchange-title">💎 积分兑换细则</div>
+          <div class="exchange-item"><span>📅</span>每季度末公告分润池金额，7天内可选择兑换</div>
+          <div class="exchange-item"><span>💰</span>按全网积分占比分配，积分即股份</div>
+          <div class="exchange-item"><span>⏳</span>逾期自动滚存年底，额外+5%加成</div>
+          <div class="exchange-item"><span>♾️</span>积分永不清零，分红持续滚利</div>
+          <div class="exchange-item"><span>🚫</span>无最低兑换门槛，1分即可参与</div>
+        </div>
+
+        <button class="card-cta cta-gold" onclick="window.location.href='partner-recruit.html'">
+          🧑‍✈️ 立即成为合伙人 →
+        </button>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- 乘客入口 -->
+  <div class="entry-card passenger-card" id="passenger-card">
+    <div class="passenger-card-header" onclick="toggleCard('passenger')">
+      <div class="card-tag tag-teal">✈️ 乘客 · 积分会员</div>
+      <div class="card-headline">华人<span class="accent-teal">服务</span><br>安心<span class="accent-teal">方便</span></div>
+      <div class="card-tagline">全程中文 · 一口价 · 预约有保障</div>
+    </div>
+    <div class="expand-hint" onclick="toggleCard('passenger')">
+      <span>了解详情</span>
+      <span class="expand-arrow" id="passenger-arrow">▼</span>
+    </div>
+    <div class="card-detail" id="passenger-detail">
+      <div class="card-body">
+
+        <div class="card-pitch">
+          亲，如果您对我们的服务满意，请务必<strong>分享给更多有此需求的朋友</strong>。<br><br>
+          我们将回馈您小小的心意——每次推荐成功，双方均可获得积分奖励，积分可参与平台季度分红。
+        </div>
+
+        <!-- 积分获取 -->
+        <div class="points-section">
+          <div class="points-title teal">🏆 乘客积分获取</div>
+          <div class="points-row">
+            <span class="points-key">每次下单乘车</span>
+            <span class="points-val val-teal">+5分</span>
+          </div>
+          <div class="points-row">
+            <span class="points-key">推荐朋友下单</span>
+            <span class="points-val val-teal">+20分</span>
+          </div>
+          <div class="points-row">
+            <span class="points-key">推荐司机加入</span>
+            <span class="points-val val-teal">+50分</span>
+          </div>
+          <div class="points-row">
+            <span class="points-key">早期注册加成</span>
+            <span class="points-val val-purple">积分 ×2</span>
+          </div>
+        </div>
+
+        <!-- 积分兑换 -->
+        <div class="exchange-box">
+          <div class="exchange-title">💎 积分兑换细则</div>
+          <div class="exchange-item"><span>📅</span>每季度末公告分润池，7天内可选择兑换现金</div>
+          <div class="exchange-item"><span>💰</span>按全网积分占比分享平台利润</div>
+          <div class="exchange-item"><span>⏳</span>逾期自动滚存年底，额外+5%</div>
+          <div class="exchange-item"><span>♾️</span>积分永不清零，持续累积</div>
+          <div class="exchange-item"><span>🚫</span>无门槛，1分即可参与分红</div>
+        </div>
+
+        <button class="card-cta cta-teal" onclick="window.location.href='passenger-recruit.html'">
+          ✈️ 立即预约接送 →
+        </button>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- 底部联系 -->
+<div class="bottom-section">
+
+  <!-- 双二维码 -->
+  <div style="display:flex;gap:12px;margin-bottom:14px;">
+    <div style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;text-align:center;">
+      <div style="font-size:11px;font-weight:600;color:var(--teal2);margin-bottom:10px;letter-spacing:0.08em;">✈️ 乘客预约</div>
+      <div id="qr1" style="margin:0 auto 8px;"></div>
+      <div style="font-size:10px;color:var(--text3);">扫码预约接送</div>
+      <div style="font-size:28px;animation:pointUp 1s ease-in-out infinite;margin-top:4px;">👆</div>
+    </div>
+    <div style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;text-align:center;">
+      <div style="font-size:11px;font-weight:600;color:var(--gold2);margin-bottom:10px;letter-spacing:0.08em;">🧑‍✈️ 司机加入</div>
+      <div id="qr2" style="margin:0 auto 8px;"></div>
+      <div style="font-size:10px;color:var(--text3);">扫码成为合伙人</div>
+      <div style="font-size:28px;animation:pointUp 1s ease-in-out infinite;animation-delay:0.3s;margin-top:4px;">👆</div>
+    </div>
+  </div>
+
+  <div class="contact-card">
+    <div class="contact-icon">🧑‍✈️</div>
+    <div class="contact-text">
+      <h4>澳小墨 · 随时在线</h4>
+      <p>微信：DIVE-DING<br>电话：13732299999</p>
+    </div>
+    <div class="contact-btns">
+      <button class="contact-btn btn-wechat" onclick="openWeChat()">💬 微信</button>
+      <button class="contact-btn btn-phone"  onclick="callPhone()">📞 电话</button>
+    </div>
+  </div>
+
+  <button onclick="generatePoster()" style="
+    width:100%;padding:20px;border:none;border-radius:var(--radius);
+    background:linear-gradient(135deg,var(--gold),var(--gold2));
+    font-family:'Noto Sans SC',sans-serif;
+    font-size:18px;font-weight:900;color:#0a0e14;
+    cursor:pointer;letter-spacing:0.03em;
+    box-shadow:0 8px 32px rgba(200,146,10,0.4);
+    position:relative;overflow:hidden;
+  ">
+    🖼️ 生成推广海报 · 分享给朋友
+    <div style="font-size:12px;font-weight:400;margin-top:4px;color:rgba(10,14,20,0.6);">双方均可获得积分奖励</div>
+  </button>
+</div>
+
+<!-- 非App说明 + 桌面快捷方式 -->
+<div style="margin:0 16px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;">
+  <div style="padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;">
+    <span style="font-size:24px;">📱</span>
+    <div>
+      <div style="font-size:14px;font-weight:700;">无需下载App</div>
+      <div style="font-size:11px;color:var(--text2);margin-top:2px;">添加到手机桌面，像App一样使用</div>
+    </div>
+  </div>
+
+  <!-- iOS -->
+  <div style="padding:14px 18px;border-bottom:1px solid var(--border);">
+    <div style="font-size:12px;font-weight:600;color:var(--teal2);margin-bottom:8px;">🍎 iPhone / iPad (Safari)</div>
+    <div style="font-size:12px;color:var(--text2);line-height:2;">
+      1. 用 <strong style="color:var(--text);">Safari</strong> 打开本页面<br>
+      2. 点底部 <strong style="color:var(--text);">分享按钮</strong> ↑<br>
+      3. 选择 <strong style="color:var(--teal2);">添加到主屏幕</strong><br>
+      4. 名称填 <strong style="color:var(--text);">澳洲机场接送</strong> → 添加
+    </div>
+  </div>
+
+  <!-- Android -->
+  <div style="padding:14px 18px;">
+    <div style="font-size:12px;font-weight:600;color:var(--gold2);margin-bottom:8px;">🤖 安卓 Android (Chrome)</div>
+    <div style="font-size:12px;color:var(--text2);line-height:2;">
+      1. 用 <strong style="color:var(--text);">Chrome</strong> 打开本页面<br>
+      2. 点右上角 <strong style="color:var(--text);">⋮ 菜单</strong><br>
+      3. 选择 <strong style="color:var(--gold2);">添加到主屏幕</strong><br>
+      4. 确认添加即可
+    </div>
+  </div>
+</div>
+
+<script>
+// ── 城市识别 ──
+const CITY_AGENTS = {
+  melbourne:{name:'澳小墨',city:'墨尔本'},
+  sydney:{name:'澳小悉',city:'悉尼'},
+  brisbane:{name:'澳小布',city:'布里斯班'},
+  canberra:{name:'澳小堪',city:'堪培拉'},
+  tasmania:{name:'澳小塔',city:'塔斯马尼亚'},
+  adelaide:{name:'澳小南',city:'阿德莱德'},
+  perth:{name:'澳小西',city:'珀斯'},
+};
+
+function detectCityByCoords(lat,lng){
+  const cities=[
+    {key:'melbourne',lat:-37.81,lng:144.96,r:1.5},
+    {key:'sydney',lat:-33.87,lng:151.21,r:1.5},
+    {key:'brisbane',lat:-27.47,lng:153.02,r:1.5},
+    {key:'canberra',lat:-35.28,lng:149.13,r:1.0},
+    {key:'tasmania',lat:-42.88,lng:147.33,r:3.0},
+    {key:'adelaide',lat:-34.93,lng:138.60,r:1.5},
+    {key:'perth',lat:-31.95,lng:115.86,r:1.5},
+  ];
+  for(const c of cities){
+    if(Math.sqrt(Math.pow(lat-c.lat,2)+Math.pow(lng-c.lng,2))<=c.r) return c.key;
+  }
+  return 'melbourne';
+}
+
+async function initCity(){
+  let key='melbourne';
+  try {
+    const pos=await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej,{timeout:3000}));
+    key=detectCityByCoords(pos.coords.latitude,pos.coords.longitude);
+  } catch(e){
+    try {
+      const r=await fetch('https://ipapi.co/json/');
+      const d=await r.json();
+      const city=(d.city||'').toLowerCase();
+      const reg=(d.region||'').toLowerCase();
+      if(city.includes('sydney')||reg.includes('new south wales')) key='sydney';
+      else if(city.includes('brisbane')||reg.includes('queensland')) key='brisbane';
+      else if(city.includes('perth')||reg.includes('western australia')) key='perth';
+      else if(city.includes('adelaide')||reg.includes('south australia')) key='adelaide';
+      else if(city.includes('canberra')||reg.includes('australian capital')) key='canberra';
+      else if(reg.includes('tasmania')) key='tasmania';
+    } catch(e2){}
+  }
+  const agent=CITY_AGENTS[key]||CITY_AGENTS.melbourne;
+  window.currentAgent=agent;
+  document.querySelector('.contact-text h4').textContent=agent.name+' · 随时在线';
+}
+
+// ── 折叠展开 ──
+function toggleCard(type){
+  const detail=document.getElementById(type+'-detail');
+  const arrow=document.getElementById(type+'-arrow');
+  const isOpen=detail.classList.contains('open');
+  detail.classList.toggle('open',!isOpen);
+  arrow.classList.toggle('open',!isOpen);
+}
+
+// ── 联系 ──
+function openXHS(){ window.open('https://www.xiaohongshu.com/user/profile/4286544851','_blank'); }
+function openWeChat(){ alert('📱 微信搜索：DIVE-DING\n或手机号：13732299999\n\n我们会尽快回复！'); }
+function callPhone(){ window.location.href='tel:13732299999'; }
+
+// ── 海报生成 ──
+async function generatePoster(){
+  const btn=event?.target?.closest('button');
+  if(btn){btn.textContent='⏳ 生成中...';btn.disabled=true;}
+
+  const agent=window.currentAgent||{name:'澳小墨',city:'澳洲'};
+  const canvas=document.createElement('canvas');
+  canvas.width=750;canvas.height=1280;
+  const ctx=canvas.getContext('2d');
+
+  // 背景
+  const bg=ctx.createLinearGradient(0,0,0,1280);
+  bg.addColorStop(0,'#060e18');bg.addColorStop(0.5,'#0d1e2e');bg.addColorStop(1,'#061814');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,750,1280);
+
+  // 装饰
+  ctx.beginPath();ctx.arc(660,130,220,0,Math.PI*2);
+  ctx.fillStyle='rgba(200,146,10,0.1)';ctx.fill();
+  ctx.beginPath();ctx.arc(80,1180,180,0,Math.PI*2);
+  ctx.fillStyle='rgba(26,138,118,0.08)';ctx.fill();
+
+  // 品牌
+  ctx.font='bold 36px sans-serif';ctx.fillStyle='#ffffff';
+  ctx.textAlign='center';ctx.fillText('✈️ 澳洲机场接送',375,72);
+  ctx.font='15px sans-serif';ctx.fillStyle='rgba(255,255,255,0.3)';
+  ctx.fillText('AU TRANSFER · 华人专属 · 全澳覆盖',375,104);
+
+  ctx.strokeStyle='rgba(200,146,10,0.2)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(60,125);ctx.lineTo(690,125);ctx.stroke();
+
+  // 主标语
+  ctx.font='bold 60px sans-serif';ctx.fillStyle='#ffffff';
+  ctx.fillText('服务华人',375,200);
+  ctx.fillStyle='#e8b830';ctx.fillText('成就彼此',375,272);
+
+  ctx.font='20px sans-serif';ctx.fillStyle='rgba(255,255,255,0.45)';
+  ctx.fillText('司机：服务华人，增加收入',375,318);
+  ctx.fillText('乘客：华人服务，安心方便',375,348);
+
+  // 分割
+  ctx.strokeStyle='rgba(255,255,255,0.06)';
+  ctx.beginPath();ctx.moveTo(60,375);ctx.lineTo(690,375);ctx.stroke();
+
+  // 司机区
+  ctx.fillStyle='rgba(200,146,10,0.08)';
+  ctx.beginPath();ctx.roundRect(40,390,670,360,16);ctx.fill();
+  ctx.strokeStyle='rgba(200,146,10,0.2)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.roundRect(40,390,670,360,16);ctx.stroke();
+
+  ctx.font='bold 22px sans-serif';ctx.fillStyle='#e8b830';
+  ctx.textAlign='left';ctx.fillText('🧑‍✈️  司机 · 合伙人',60,428);
+  ctx.font='bold 28px sans-serif';ctx.fillStyle='#ffffff';
+  ctx.fillText('服务华人，增加收入',60,468);
+  ctx.font='14px sans-serif';ctx.fillStyle='rgba(255,255,255,0.5)';
+  ctx.fillText('Uber/滴滴司机的第三个选择 · 即时机场接送单',60,496);
+  ctx.fillText('高比例分润 · 推荐积分 · 季度股东分红',60,518);
+
+  // 司机积分
+  ctx.font='13px sans-serif';ctx.fillStyle='#e8b830';
+  const dPoints=[['完成一单','+10分'],['好评奖励','+5分'],['推荐乘客','+20分'],['推荐司机','+50分'],['创始加成','×2倍']];
+  dPoints.forEach((p,i)=>{
+    const x=60+(i%3)*218, y=i<3?570:618;
+    ctx.fillStyle='rgba(200,146,10,0.15)';
+    ctx.beginPath();ctx.roundRect(x,y-20,200,38,8);ctx.fill();
+    ctx.font='12px sans-serif';ctx.fillStyle='rgba(255,255,255,0.6)';
+    ctx.fillText(p[0],x+10,y-4);
+    ctx.font='bold 16px sans-serif';ctx.fillStyle='#e8b830';
+    ctx.fillText(p[1],x+10,y+14);
+  });
+
+  ctx.font='bold 18px sans-serif';ctx.fillStyle='#e8b830';
+  ctx.textAlign='center';
+  ctx.fillText('→ 扫码加入合伙人',375,670);
+
+  // 乘客区
+  ctx.fillStyle='rgba(26,138,118,0.08)';
+  ctx.beginPath();ctx.roundRect(40,690,670,340,16);ctx.fill();
+  ctx.strokeStyle='rgba(26,138,118,0.2)';
+  ctx.beginPath();ctx.roundRect(40,690,670,340,16);ctx.stroke();
+
+  ctx.font='bold 22px sans-serif';ctx.fillStyle='#22b898';
+  ctx.textAlign='left';ctx.fillText('✈️  乘客 · 积分会员',60,728);
+  ctx.font='bold 28px sans-serif';ctx.fillStyle='#ffffff';
+  ctx.fillText('华人服务，安心方便',60,768);
+  ctx.font='14px sans-serif';ctx.fillStyle='rgba(255,255,255,0.5)';
+  ctx.fillText('全程中文 · 一口价透明 · 预约有保障',60,796);
+  ctx.fillText('下单积分 · 推荐奖励 · 季度参与分红',60,818);
+
+  const pPoints=[['每次下单','+5分'],['推荐朋友','+20分'],['推荐司机','+50分']];
+  pPoints.forEach((p,i)=>{
+    const x=60+i*218, y=860;
+    ctx.fillStyle='rgba(26,138,118,0.15)';
+    ctx.beginPath();ctx.roundRect(x,y-20,200,38,8);ctx.fill();
+    ctx.font='12px sans-serif';ctx.fillStyle='rgba(255,255,255,0.6)';
+    ctx.fillText(p[0],x+10,y-4);
+    ctx.font='bold 16px sans-serif';ctx.fillStyle='#22b898';
+    ctx.fillText(p[1],x+10,y+14);
+  });
+
+  ctx.font='bold 18px sans-serif';ctx.fillStyle='#22b898';
+  ctx.textAlign='center';
+  ctx.fillText('→ 扫码立即预约',375,930);
+
+  // 积分兑换说明
+  ctx.strokeStyle='rgba(255,255,255,0.05)';
+  ctx.beginPath();ctx.moveTo(60,960);ctx.lineTo(690,960);ctx.stroke();
+
+  ctx.font='bold 16px sans-serif';ctx.fillStyle='#a78bfa';
+  ctx.fillText('💎 积分兑换细则',375,990);
+  ctx.font='13px sans-serif';ctx.fillStyle='rgba(255,255,255,0.4)';
+  ctx.fillText('每季度末公告 · 7天内可兑换 · 逾期滚存+5% · 永不清零',375,1016);
+
+  // 联系
+  ctx.strokeStyle='rgba(255,255,255,0.05)';
+  ctx.beginPath();ctx.moveTo(60,1045);ctx.lineTo(690,1045);ctx.stroke();
+
+  ctx.font='bold 22px sans-serif';ctx.fillStyle='rgba(255,255,255,0.8)';
+  ctx.fillText('💬 微信：DIVE-DING',375,1082);
+  ctx.font='16px sans-serif';ctx.fillStyle='rgba(255,255,255,0.35)';
+  ctx.fillText('手机：13732299999',375,1110);
+  ctx.font='14px sans-serif';ctx.fillStyle='rgba(255,255,255,0.18)';
+  ctx.fillText('mel-transfer.vercel.app',375,1150);
+
+  ctx.font='bold 18px sans-serif';ctx.fillStyle='rgba(200,146,10,0.5)';
+  ctx.fillText('分享给朋友 · 双方获得积分奖励 🏆',375,1200);
+
+  showPosterModal(canvas.toDataURL('image/png'));
+  if(btn){btn.textContent='🖼️ 分享给朋友 · 持续获得奖励';btn.disabled=false;}
+}
+
+function showPosterModal(dataUrl){
+  document.getElementById('poster-modal')?.remove();
+  const m=document.createElement('div');
+  m.id='poster-modal';m.className='poster-modal';
+  m.innerHTML=`
+    <div style="color:#fff;font-size:15px;font-weight:700;margin-bottom:14px;text-align:center;">长按图片保存到相册 📱</div>
+    <img src="${dataUrl}" style="width:100%;max-width:375px;border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,0.6);">
+    <div style="color:rgba(255,255,255,0.4);font-size:12px;margin-top:14px;text-align:center;line-height:1.8;">
+      保存后发给朋友<br>朋友扫码即可进入预约或加入
+    </div>
+    <button onclick="document.getElementById('poster-modal').remove()" style="margin-top:18px;padding:12px 36px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:20px;color:#fff;font-size:14px;cursor:pointer;font-family:inherit;">关闭</button>
+  `;
+  m.onclick=e=>{if(e.target===m)m.remove();};
+  document.body.appendChild(m);
+}
+
+
+function showFounderModal(){
+  document.getElementById('founder-modal').style.display='flex';
+  document.body.style.overflow='hidden';
+}
+function hideFounderModal(e){
+  if(!e||e.target===document.getElementById('founder-modal')){
+    document.getElementById('founder-modal').style.display='none';
+    document.body.style.overflow='';
+  }
+}
+function goJoin(){
+  hideFounderModal();
+  window.location.href='partner-recruit.html';
+}
+
+window.addEventListener('load', function(){
+  initCity();
+  // 用Google Charts QR API（微信可访问）
+  const qr1 = document.getElementById('qr1');
+  const qr2 = document.getElementById('qr2');
+  if(qr1) {
+    const img1 = document.createElement('img');
+    img1.src = 'https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=' + encodeURIComponent('https://mel-transfer.vercel.app/passenger-recruit.html');
+    img1.style.cssText = 'width:130px;height:130px;border-radius:8px;';
+    img1.onerror = function(){ this.style.display='none'; };
+    qr1.appendChild(img1);
+  }
+  if(qr2) {
+    const img2 = document.createElement('img');
+    img2.src = 'https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=' + encodeURIComponent('https://mel-transfer.vercel.app/partner-recruit.html');
+    img2.style.cssText = 'width:130px;height:130px;border-radius:8px;';
+    img2.onerror = function(){ this.style.display='none'; };
+    qr2.appendChild(img2);
+  }
+});
+</script>
+</body>
+</html>
