@@ -531,6 +531,55 @@
   font-family:inherit;font-size:13px;cursor:pointer;margin-top:8px;
 }
 
+
+.section-label {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text2);
+  letter-spacing: 1px;
+  padding: 16px 0 8px;
+  text-transform: uppercase;
+}
+.current-card {
+  border: 1.5px solid var(--accent);
+  box-shadow: 0 0 0 3px rgba(0,212,255,0.08);
+}
+.trip-progress-bar {
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  margin: 10px 0 4px;
+  overflow: hidden;
+}
+.trip-progress-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+@keyframes progressPulse {
+  0%,100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+
+.urgent-card {
+  border: 2px solid #ff3b30 !important;
+  box-shadow: 0 0 0 3px rgba(255,59,48,0.15) !important;
+}
+.urgent-tag {
+  background: #ff3b30;
+  color: white;
+  font-size: 11px;
+  font-weight: 900;
+  padding: 3px 8px;
+  border-radius: 6px;
+  animation: urgentPulse 0.8s ease-in-out infinite;
+}
+@keyframes urgentPulse {
+  0%,100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
 </style>
 <script>
 window.onerror = function(msg, src, line, col, err) {
@@ -1623,35 +1672,80 @@ async function loadHome() {
     const earning = done.reduce((s,t) => s + (parseFloat(t.final_amount||t.total_price)||0), 0);
     document.getElementById('today-earning').textContent = (earning * 0.85).toFixed(0);
 
-    // 渲染待处理订单
+    // 分类：当前单（今天且在途/进行中/已到达）和预约单
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    
+    const currentTrips = myTrips.filter(t => 
+      ['driver_en_route','driver_arrived','in_progress'].includes(t.status)
+    );
+    
+    const upcomingTrips = [
+      ...unassigned,
+      ...myTrips.filter(t => ['confirmed','dispatched','pending'].includes(t.status))
+    ].sort((a,b) => new Date(a.scheduled_at) - new Date(b.scheduled_at));
+
+    // 渲染
     const container = document.getElementById('pending-trips');
-    if (pending.length === 0) {
-      container.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">暂无待处理订单</div></div>';
-    } else {
-      container.innerHTML = pending.map(t => renderTripCard(t)).join('');
+    let html = '';
+
+    // 当前单
+    if (currentTrips.length > 0) {
+      html += '<div class="section-label">🚗 当前任务</div>';
+      html += currentTrips.map(t => renderTripCard(t, true)).join('');
     }
+
+    // 预约单
+    if (upcomingTrips.length > 0) {
+      html += '<div class="section-label">📅 预约订单</div>';
+      html += upcomingTrips.map(t => renderTripCard(t, false)).join('');
+    }
+
+    if (!html) {
+      html = '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">暂无待处理订单</div></div>';
+    }
+
+    container.innerHTML = html;
 
   } catch(e) {
     console.error('加载失败', e);
   }
 }
 
-function renderTripCard(t) {
+function getTripProgress(status) {
+  const map = {
+    'pending':         { pct: 10, color: '#888',    label: '⏳ 待接单' },
+    'confirmed':       { pct: 25, color: '#0096c7', label: '📅 已确认' },
+    'dispatched':      { pct: 35, color: '#0096c7', label: '📋 已派单' },
+    'driver_en_route': { pct: 60, color: '#e8a020', label: '🚗 在途中' },
+    'driver_arrived':  { pct: 80, color: '#e8a020', label: '📍 已到达' },
+    'in_progress':     { pct: 90, color: '#27ae60', label: '🛣️ 行程中' },
+    'completed':       { pct: 100,color: '#27ae60', label: '✅ 已完成' },
+  };
+  return map[status] || { pct: 0, color: '#888', label: status };
+}
+
+function renderTripCard(t, isCurrent=false) {
   const isPickup = t.direction === 'from_airport';
   const dt = new Date(t.scheduled_at);
   const date = dt.toLocaleDateString('zh', {month:'2-digit',day:'2-digit'});
   const time = dt.toLocaleTimeString('zh', {hour:'2-digit',minute:'2-digit'});
+  const prog = getTripProgress(t.status);
   return `
-  <div class="trip-card" onclick="goToDetail('${t.id}')">
+  <div class="trip-card${isCurrent?' current-card':''}${t.is_urgent?' urgent-card':''}" onclick="goToDetail('${t.id}')">
     <div class="trip-card-header">
       <div class="trip-type">
         <div class="trip-type-icon ${isPickup?'type-pickup':'type-dropoff'}">${isPickup?'✈️':'🏠'}</div>
         ${isPickup?'接机':'送机'}
+        ${t.is_urgent?'<span class="urgent-tag">🔴 紧急</span>':''}
       </div>
       <div style="display:flex;align-items:center;gap:8px">
-        <span class="status-tag ${t.status==='confirmed'?'tag-active':'tag-waiting'}">${t.status==='confirmed'?'📅 已确认':'⏳ 待确认'}</span>
+        <span class="status-tag" style="background:${prog.color}22;color:${prog.color};">${prog.label}</span>
         <div class="trip-time">${date} ${time}</div>
       </div>
+    </div>
+    <div class="trip-progress-bar">
+      <div class="trip-progress-fill" style="width:${prog.pct}%;background:${prog.color};${prog.pct>50&&prog.pct<100?'animation:progressPulse 1.5s ease-in-out infinite;':''}"></div>
     </div>
     <div class="trip-card-body">
       <div class="route-line">
@@ -1687,34 +1781,40 @@ function renderTripCard(t) {
 // ── 出发提醒系统 ──
 const activeReminders = {}; // tripId -> intervalId
 
-function startDepartureReminder(tripId, scheduledAt) {
+function startDepartureReminder(tripId, scheduledAt, isUrgent=false) {
   if (!scheduledAt || activeReminders[tripId]) return;
+
+  const REMIND_THRESHOLD = isUrgent ? 9999 : 60; // 紧急单立即提醒
 
   const timer = setInterval(() => {
     const diff = scheduledAt - new Date();
     const mins = Math.floor(diff / 60000);
 
-    if (mins <= 60 && mins > 0) {
-      // 每2分钟提醒一次
+    if (mins <= REMIND_THRESHOLD && mins > 0) {
       if(navigator.vibrate) navigator.vibrate([400,100,400,100,400]);
-      showNewOrderBanner(`⏰ ${mins}分钟后出发！点击确认收到 →`, tripId);
+      const msg = isUrgent
+        ? `🔴 紧急订单！${mins}分钟后出发，请立即准备！`
+        : `⏰ ${mins}分钟后出发！点击确认收到 →`;
+      showNewOrderBanner(msg, tripId);
     } else if (mins <= 0) {
-      // 到时间了，激活出发按钮
       if(navigator.vibrate) navigator.vibrate([600,200,600,200,600]);
       showNewOrderBanner(`🚗 出发时间到！请立即前往接客`, tripId);
       clearInterval(timer);
       delete activeReminders[tripId];
     }
-  }, 2 * 60 * 1000); // 每2分钟
+  }, 2 * 60 * 1000);
 
   activeReminders[tripId] = timer;
 
-  // 立即检查一次（如果已在60分钟内）
+  // 立即触发一次
   const diffNow = scheduledAt - new Date();
   const minsNow = Math.floor(diffNow / 60000);
-  if (minsNow <= 60 && minsNow > 0) {
+  if (minsNow <= REMIND_THRESHOLD && minsNow > 0) {
     if(navigator.vibrate) navigator.vibrate([400,100,400]);
-    showNewOrderBanner(`⏰ ${minsNow}分钟后出发！点击确认收到 →`, tripId);
+    const msg = isUrgent
+      ? `🔴 紧急订单！${minsNow}分钟后出发，请立即准备！`
+      : `⏰ ${minsNow}分钟后出发！点击确认收到 →`;
+    showNewOrderBanner(msg, tripId);
   }
 }
 
@@ -2021,7 +2121,7 @@ async function acceptTrip() {
   alert(`✅ 订单已确认！\n\n📅 出发时间：${dateStr} ${timeStr}\n\n🤖 派单员将在出发前60分钟开始提醒，每2分钟一次直到您确认收到。\n\n请保持App在后台运行。`);
 
   // 启动提醒计时器
-  startDepartureReminder(currentTripId, scheduledAt);
+  startDepartureReminder(currentTripId, scheduledAt, currentTripData?.is_urgent);
 
   // 自动跳回任务列表并刷新
   goBack('page-home');
