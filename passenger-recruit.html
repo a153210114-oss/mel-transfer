@@ -876,13 +876,13 @@ function showDirection(){
     </div>
 
     <div class="ff" id="addr-field">
-      <label class="fl" id="addr-label">${S.direction==='to_airport'?'出发地址':'目的地址'}</label>
+      <label class="fl" id="addr-label">${S.direction==='to_airport'?'从哪里出发？':'您去哪里？'}</label>
       <div id="addr-hint" style="font-size:11px;color:var(--ink3);margin-bottom:6px;line-height:1.6">
         ${S.direction==='to_airport'
           ? '📍 可点击下方按钮自动获取您的位置'
           : '📋 建议从地图App复制地址粘贴到此处'}
       </div>
-      <input class="fi" id="f-addr" placeholder="${S.direction==='to_airport'?'输入或粘贴地址':'输入目的地，如 33 Swanston St Melbourne'}">
+      <input class="fi" id="f-addr" placeholder="如：33 Swanston St, Melbourne">
       <div id="gps-btn-wrap" style="display:${S.direction==='to_airport'?'block':'none'};margin-top:8px">
         <button onclick="useMyLocation()" style="
           width:100%; padding:11px;
@@ -910,7 +910,7 @@ function selDir(el, val){
   const addrLbl=document.querySelector('#f-addr');
   if(addrLbl){
     const label=addrLbl.previousElementSibling;
-    if(label) label.textContent=val==='to_airport'?'出发地址':'目的地址';
+    if(label) label.textContent=val==='to_airport'?'从哪里出发？':'您去哪里？';
   }
 }
 
