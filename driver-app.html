@@ -677,7 +677,7 @@ window.addEventListener('unhandledrejection', function(e) {
         接机
       </div>
       <div style="display:flex;align-items:center;gap:8px">
-        <span class="status-tag tag-waiting">⏳ 待确认</span>
+        <span class="status-tag ${t.status==='confirmed'?'tag-active':'tag-waiting'}">${t.status==='confirmed'?'📅 已确认':'⏳ 待确认'}</span>
         <div class="trip-time">14:30</div>
       </div>
     </div>
@@ -1649,7 +1649,7 @@ function renderTripCard(t) {
         ${isPickup?'接机':'送机'}
       </div>
       <div style="display:flex;align-items:center;gap:8px">
-        <span class="status-tag tag-waiting">⏳ 待确认</span>
+        <span class="status-tag ${t.status==='confirmed'?'tag-active':'tag-waiting'}">${t.status==='confirmed'?'📅 已确认':'⏳ 待确认'}</span>
         <div class="trip-time">${date} ${time}</div>
       </div>
     </div>
@@ -1681,6 +1681,51 @@ function renderTripCard(t) {
       <div class="trip-price">$${t.total_price}</div>
     </div>
   </div>`;
+}
+
+
+// ── 出发提醒系统 ──
+const activeReminders = {}; // tripId -> intervalId
+
+function startDepartureReminder(tripId, scheduledAt) {
+  if (!scheduledAt || activeReminders[tripId]) return;
+
+  const timer = setInterval(() => {
+    const diff = scheduledAt - new Date();
+    const mins = Math.floor(diff / 60000);
+
+    if (mins <= 60 && mins > 0) {
+      // 每2分钟提醒一次
+      if(navigator.vibrate) navigator.vibrate([400,100,400,100,400]);
+      showNewOrderBanner(`⏰ ${mins}分钟后出发！点击确认收到 →`, tripId);
+    } else if (mins <= 0) {
+      // 到时间了，激活出发按钮
+      if(navigator.vibrate) navigator.vibrate([600,200,600,200,600]);
+      showNewOrderBanner(`🚗 出发时间到！请立即前往接客`, tripId);
+      clearInterval(timer);
+      delete activeReminders[tripId];
+    }
+  }, 2 * 60 * 1000); // 每2分钟
+
+  activeReminders[tripId] = timer;
+
+  // 立即检查一次（如果已在60分钟内）
+  const diffNow = scheduledAt - new Date();
+  const minsNow = Math.floor(diffNow / 60000);
+  if (minsNow <= 60 && minsNow > 0) {
+    if(navigator.vibrate) navigator.vibrate([400,100,400]);
+    showNewOrderBanner(`⏰ ${minsNow}分钟后出发！点击确认收到 →`, tripId);
+  }
+}
+
+function confirmReminder(tripId) {
+  // 司机点确认，停止提醒
+  if (activeReminders[tripId]) {
+    clearInterval(activeReminders[tripId]);
+    delete activeReminders[tripId];
+  }
+  const banner = document.getElementById('new-order-banner');
+  if (banner) banner.style.display = 'none';
 }
 
 // ── 更新司机状态 ──
@@ -1879,8 +1924,14 @@ async function loadTripDetail(tripId) {
     const trips = await supa(`trips?id=eq.${tripId}`);
     if (!trips || trips.length === 0) return;
     const t = trips[0];
-    const time = new Date(t.scheduled_at).toLocaleTimeString('zh',{hour:'2-digit',minute:'2-digit'});
+    const scheduledDt = new Date(t.scheduled_at);
+    const time = scheduledDt.toLocaleTimeString('zh',{hour:'2-digit',minute:'2-digit'});
+    const dateStr = scheduledDt.toLocaleDateString('zh',{month:'2-digit',day:'2-digit'});
     const isPickup = t.direction === 'from_airport';
+
+    // 存scheduled_at供acceptTrip判断
+    const timeEl = document.getElementById('detail-time');
+    if(timeEl) timeEl.dataset.scheduled = t.scheduled_at;
 
     // Update detail page with real data
     document.querySelector('#page-detail .topbar-sub').textContent = `单号 #TRP-${t.id.slice(-8).toUpperCase()}`;
@@ -1959,18 +2010,22 @@ async function acceptTrip() {
   circles[2].className = 'step-circle active';
   lines[1].className = 'step-line done';
 
-  // 更新按钮
-  const btns = document.querySelectorAll('.action-btn');
-  btns[0].textContent = '🚗 已出发，前往接客';
-  btns[0].className = 'action-btn btn-success';
-  btns[0].onclick = departTrip;
-  btns[1].style.display = 'none';
+  // 获取出发时间
+  const tripEl = document.getElementById('detail-time');
+  const scheduledAt = tripEl ? new Date(tripEl.dataset.scheduled) : null;
 
-  // 更新状态标签
-  document.querySelector('#page-detail .status-tag').className = 'status-tag tag-active';
-  document.querySelector('#page-detail .status-tag').textContent = '🚗 进行中';
+  const dateStr = scheduledAt ? scheduledAt.toLocaleDateString('zh',{month:'2-digit',day:'2-digit'}) : '';
+  const timeStr = scheduledAt ? scheduledAt.toLocaleTimeString('zh',{hour:'2-digit',minute:'2-digit'}) : '';
 
-  alert('✅ 已接受订单！请准时前往接客。');
+  // 确认弹窗后自动跳回任务列表
+  alert(`✅ 订单已确认！\n\n📅 出发时间：${dateStr} ${timeStr}\n\n🤖 派单员将在出发前60分钟开始提醒，每2分钟一次直到您确认收到。\n\n请保持App在后台运行。`);
+
+  // 启动提醒计时器
+  startDepartureReminder(currentTripId, scheduledAt);
+
+  // 自动跳回任务列表并刷新
+  goBack('page-home');
+  await loadTrips();
 }
 
 function departTrip() {
