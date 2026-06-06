@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>澳洲出行管家</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  min-height: 100vh;
+  background: linear-gradient(160deg, #e8f4fd 0%, #fef9ec 50%, #e8f8f0 100%);
+  font-family: 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.brand-bar {
+  width: 100%;
+  padding: 16px 20px 0;
+  text-align: center;
+}
+.brand-name { font-size: 13px; color: #999; letter-spacing: 2px; }
+
+/* ── 舞台 ── */
+.stage {
+  width: 100%;
+  max-width: 420px;
+  height: 300px;
+  position: relative;
+  overflow: visible;
+  margin-top: 10px;
+}
+.ground {
+  position: absolute;
+  bottom: 40px; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #d0e8f0 20%, #d0e8f0 80%, transparent);
+}
+.buildings {
+  position: absolute;
+  bottom: 42px; left: 0; right: 0; height: 80px;
+  opacity: 0.1;
+  background:
+    linear-gradient(to top, #4a90d9, #4a90d9) 10% 0 / 30px 70px no-repeat,
+    linear-gradient(to top, #4a90d9, #4a90d9) 30% 0 / 40px 80px no-repeat,
+    linear-gradient(to top, #4a90d9, #4a90d9) 62% 0 / 35px 75px no-repeat,
+    linear-gradient(to top, #4a90d9, #4a90d9) 82% 0 / 28px 55px no-repeat;
+}
+
+/* ── Agent ── */
+.agent-wrap {
+  position: absolute;
+  bottom: 42px;
+  left: -140px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: runIn 1.0s cubic-bezier(0.22, 0.61, 0.36, 1) 0.3s forwards;
+}
+@keyframes runIn {
+  0%   { left: -140px; transform: scale(0.3); }
+  60%  { left: 50%; transform: translateX(-50%) scale(1.08); }
+  80%  { transform: translateX(-50%) scale(0.96); }
+  100% { left: 50%; transform: translateX(-50%) scale(1.0); }
+}
+
+/* 气泡 */
+.bubble-wrap {
+  position: absolute;
+  top: -110px;
+  left: 50%;
+  transform: translateX(-10px);
+  opacity: 0;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.bubble {
+  background: white;
+  border-radius: 20px;
+  padding: 12px 20px;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.13);
+  font-size: 17px;
+  font-weight: 800;
+  color: #1a3a5c;
+  position: relative;
+}
+/* 云状气泡尾巴，三个小圆指向下方角色 */
+.bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -14px; left: 22px;
+  width: 12px; height: 12px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 10px 8px 0 0 white, 18px 18px 0 0 white;
+}
+.bubble-wrap.show { animation: bubblePop 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.bubble-wrap.hide { animation: bubbleFade 0.3s ease-in forwards; }
+@keyframes bubblePop {
+  0%   { opacity:0; transform: translateX(-10px) scale(0.7); }
+  100% { opacity:1; transform: translateX(-10px) scale(1); }
+}
+@keyframes bubbleFade {
+  0% { opacity:1; } 100% { opacity:0; }
+}
+
+/* ── 角色整体 ── */
+.agent-body {
+  position: relative;
+  width: 100px;
+  height: 150px;
+  animation: runBob 0.22s ease-in-out infinite;
+}
+.agent-wrap.stopped .agent-body { animation: none; }
+@keyframes runBob {
+  0%,100% { transform: translateY(0) rotate(-1deg); }
+  50%      { transform: translateY(-5px) rotate(1deg); }
+}
+
+/* ── 大檐帽（歪戴）── */
+.hat-group {
+  position: absolute;
+  top: -2px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-12deg);
+  width: 80px;
+  z-index: 10;
+}
+/* 帽顶 */
+.hat-crown {
+  width: 52px;
+  height: 30px;
+  background: linear-gradient(180deg, #1a3a5c 0%, #0f2540 100%);
+  border-radius: 8px 8px 0 0;
+  margin: 0 auto;
+  position: relative;
+}
+.hat-crown::after {
+  content: 'AU';
+  position: absolute;
+  top: 50%; left: 50%; transform: translate(-50%,-50%);
+  font-size: 9px; font-weight: 900;
+  color: #c8a020; letter-spacing: 1px;
+}
+/* 帽箍 */
+.hat-band {
+  width: 52px;
+  height: 6px;
+  background: #c8a020;
+  margin: 0 auto;
+}
+/* 大帽檐 */
+.hat-brim {
+  width: 80px;
+  height: 10px;
+  background: linear-gradient(180deg, #1a3a5c, #0f2540);
+  border-radius: 4px;
+  margin: 0 auto;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+}
+
+/* ── 头部（藏在帽子下）── */
+.head {
+  width: 54px;
+  height: 50px;
+  background: radial-gradient(circle at 40% 60%, #fde8c8, #f5c98a);
+  border-radius: 50%;
+  position: absolute;
+  top: 24px;
+  left: 50%; transform: translateX(-50%);
+  z-index: 5;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  overflow: hidden;
+}
+/* 头顶暗色（藏进帽子） */
+.head::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 45%;
+  background: #1a3a5c;
+  border-radius: 50% 50% 0 0;
+}
+.eyes {
+  position: absolute;
+  top: 26px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 10px;
+}
+.eye {
+  width: 7px; height: 8px;
+  background: #2a1a0a;
+  border-radius: 50%;
+  position: relative;
+}
+.eye::after {
+  content:'';
+  position:absolute;
+  top:1px; left:1px;
+  width:3px; height:3px;
+  background:white;
+  border-radius:50%;
+}
+.smile {
+  position: absolute;
+  bottom: 10px; left: 50%; transform: translateX(-50%);
+  width: 18px; height: 9px;
+  border-bottom: 3px solid #c87050;
+  border-radius: 0 0 12px 12px;
+}
+.blush { position: absolute; bottom: 12px; width: 10px; height: 6px; background: rgba(255,120,100,0.35); border-radius: 50%; }
+.blush.left { left: 4px; }
+.blush.right { right: 4px; }
+
+/* 身体 */
+.body {
+  position: absolute;
+  top: 68px; left: 50%; transform: translateX(-50%);
+  width: 56px; height: 55px;
+  background: linear-gradient(180deg, #1a3a5c 0%, #0f2540 100%);
+  border-radius: 8px 8px 4px 4px;
+  z-index: 4;
+}
+.tie {
+  position: absolute;
+  top: 4px; left: 50%; transform: translateX(-50%);
+  width: 8px; height: 22px;
+  background: #c8a020;
+  clip-path: polygon(20% 0%, 80% 0%, 100% 70%, 50% 100%, 0% 70%);
+}
+.badge-body {
+  position: absolute;
+  top: 8px; right: 8px;
+  width: 14px; height: 10px;
+  background: #c8a020;
+  border-radius: 2px;
+  display: flex; align-items:center; justify-content:center;
+  font-size: 5px; color: #1a3a5c; font-weight: 900;
+}
+
+/* 手臂 */
+.arm {
+  position: absolute;
+  width: 14px; height: 42px;
+  background: linear-gradient(180deg, #1a3a5c, #0f2540);
+  border-radius: 7px;
+  top: 70px;
+  z-index: 3;
+}
+.arm.left  { left: 10px; transform-origin: top center; animation: armSwingL 0.22s ease-in-out infinite alternate; }
+.arm.right { right: 10px; transform-origin: top center; transform: rotate(-65deg); animation: armSwingR 0.22s ease-in-out infinite alternate; }
+.agent-wrap.stopped .arm.left  { animation: none; transform: rotate(5deg); }
+.agent-wrap.stopped .arm.right { animation: none; transform: rotate(-75deg); }
+@keyframes armSwingL { from { transform: rotate(-15deg); } to { transform: rotate(15deg); } }
+@keyframes armSwingR { from { transform: rotate(-70deg); } to { transform: rotate(-50deg); } }
+.hand {
+  position: absolute;
+  bottom: -4px; left: 50%; transform: translateX(-50%);
+  width: 12px; height: 12px;
+  background: #f5c98a;
+  border-radius: 50%;
+}
+
+/* 腿 */
+.legs {
+  position: absolute;
+  top: 118px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 6px;
+  z-index: 3;
+}
+.leg {
+  width: 14px; height: 34px;
+  background: linear-gradient(180deg, #2a4a70, #1a3050);
+  border-radius: 7px;
+  position: relative;
+}
+.leg.left  { transform-origin: top center; animation: legSwingL 0.22s ease-in-out infinite alternate; }
+.leg.right { transform-origin: top center; animation: legSwingR 0.22s ease-in-out infinite alternate; }
+.agent-wrap.stopped .leg.left,
+.agent-wrap.stopped .leg.right { animation: none; transform: rotate(0deg); }
+@keyframes legSwingL { from { transform: rotate(-20deg); } to { transform: rotate(20deg); } }
+@keyframes legSwingR { from { transform: rotate(20deg); } to { transform: rotate(-20deg); } }
+.shoe {
+  position: absolute;
+  bottom: -6px; left: 50%; transform: translateX(-50%);
+  width: 18px; height: 8px;
+  background: #1a1a2e;
+  border-radius: 4px 6px 4px 4px;
+}
+
+/* 牌子 */
+.sign-wrap {
+  position: absolute;
+  top: 28px;
+  right: -88px;
+  opacity: 0;
+  transform: rotate(5deg);
+  transition: opacity 0.4s 0s;
+}
+.agent-wrap.stopped .sign-wrap { opacity: 1; }
+.sign-pole { width: 4px; height: 55px; background: linear-gradient(180deg, #8a6020, #6a4010); margin-left: 6px; border-radius: 2px; }
+.sign-board {
+  width: 86px;
+  background: #fffbf0;
+  border: 2px solid #c8a020;
+  border-radius: 8px;
+  padding: 6px 8px;
+  text-align: center;
+  box-shadow: 0 3px 10px rgba(200,160,32,0.3);
+}
+.sign-icon { font-size: 18px; }
+.sign-text { font-size: 10px; font-weight: 800; color: #1a3a5c; line-height: 1.3; margin-top: 2px; }
+
+/* 脚印 */
+.footprint {
+  position: absolute;
+  bottom: 32px;
+  font-size: 12px;
+  opacity: 0;
+  animation: footFade 0.6s ease-out forwards;
+}
+@keyframes footFade {
+  0%   { opacity: 0.5; }
+  100% { opacity: 0; transform: translateY(4px); }
+}
+
+/* ── 内容区 ── */
+.content {
+  width: 100%; max-width: 420px;
+  padding: 0 20px 10px;
+}
+.greeting {
+  text-align: center;
+  margin-bottom: 20px;
+  opacity: 0;
+  animation: fadeUp 0.6s ease 1.5s forwards;
+}
+@keyframes fadeUp {
+  from { opacity:0; transform: translateY(12px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+.greeting h1 { font-size: 24px; font-weight: 900; color: #1a3a5c; line-height: 1.3; }
+.greeting p  { font-size: 13px; color: #999; margin-top: 6px; }
+
+/* 客服栏 */
+.service-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: linear-gradient(135deg, #1a3a5c, #0f2540);
+  border-radius: 16px;
+  padding: 12px 20px;
+  margin-bottom: 14px;
+  opacity: 0;
+  animation: fadeUp 0.6s ease 1.7s forwards;
+}
+.service-label {
+  font-size: 12px;
+  color: #c8a020;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+.service-num {
+  font-size: 16px;
+  font-weight: 900;
+  color: white;
+  letter-spacing: 1px;
+}
+.service-divider {
+  width: 1px; height: 28px;
+  background: rgba(255,255,255,0.2);
+}
+
+/* 功能卡片 */
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  opacity: 0;
+  animation: fadeUp 0.6s ease 1.9s forwards;
+}
+.card {
+  background: white;
+  border-radius: 18px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+  text-decoration: none;
+  color: inherit;
+  border: 2px solid transparent;
+  cursor: pointer;
+}
+.card:active { transform: scale(0.97); }
+.card.blue { border-color: #e0f0ff; }
+.card.gold { border-color: #fef0d0; }
+.card-icon {
+  width: 50px; height: 50px;
+  border-radius: 14px;
+  display: flex; align-items:center; justify-content:center;
+  font-size: 24px; flex-shrink: 0;
+}
+.card.blue .card-icon { background: linear-gradient(135deg, #e8f4ff, #d0e8ff); }
+.card.gold .card-icon { background: linear-gradient(135deg, #fef8e8, #fde8c0); }
+.card-text h3 { font-size: 15px; font-weight: 800; color: #1a3a5c; margin-bottom: 3px; }
+.card-text p  { font-size: 12px; color: #aaa; line-height: 1.4; }
+.card-arrow   { margin-left: auto; font-size: 20px; color: #ccc; flex-shrink: 0; }
+
+/* 底部联系 */
+.footer {
+  width: 100%; max-width: 420px;
+  padding: 14px 20px 30px;
+  opacity: 0;
+  animation: fadeUp 0.6s ease 2.1s forwards;
+}
+.contact-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.contact-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 10px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: transform 0.15s;
+  text-decoration: none;
+  color: inherit;
+}
+.contact-btn:active { transform: scale(0.95); }
+.wechat-btn { background: #e8f8ee; color: #1a7a3c; }
+.xhs-btn    { background: #fef0f0; color: #c0392b; }
+.footer-note { text-align: center; font-size: 11px; color: #ccc; }
+</style>
+</head>
+<body>
+
+<div class="brand-bar">
+  <div class="brand-name">AU TRANSFER · 澳洲出行</div>
+</div>
+
+<div class="stage">
+  <div class="buildings"></div>
+  <div class="ground"></div>
+  <div id="footprints"></div>
+
+  <div class="agent-wrap" id="agent">
+
+    <div class="bubble-wrap" id="bubble">
+      <div class="bubble" id="bubble-text">我来啦 👋</div>
+    </div>
+
+    <div class="sign-wrap">
+      <div class="sign-board">
+        <div class="sign-icon">✈️</div>
+        <div class="sign-text">澳洲出行<br>管家</div>
+      </div>
+      <div class="sign-pole"></div>
+    </div>
+
+    <div class="agent-body">
+      <!-- 大檐帽（歪戴，盖住头顶） -->
+      <div class="hat-group">
+        <div class="hat-crown"></div>
+        <div class="hat-band"></div>
+        <div class="hat-brim"></div>
+      </div>
+
+      <!-- 头（藏进帽子） -->
+      <div class="head">
+        <div class="eyes">
+          <div class="eye"></div>
+          <div class="eye"></div>
+        </div>
+        <div class="smile"></div>
+        <div class="blush left"></div>
+        <div class="blush right"></div>
+      </div>
+
+      <!-- 身体 -->
+      <div class="body">
+        <div class="tie"></div>
+        <div class="badge-body">AU</div>
+      </div>
+
+      <!-- 手臂 -->
+      <div class="arm left"><div class="hand"></div></div>
+      <div class="arm right"><div class="hand"></div></div>
+
+      <!-- 腿 -->
+      <div class="legs">
+        <div class="leg left"><div class="shoe"></div></div>
+        <div class="leg right"><div class="shoe"></div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="content">
+  <div class="greeting">
+    <h1>你好！我是澳洲出行管家 😊</h1>
+    <p>华人服务华人，安心出行每一程</p>
+  </div>
+
+  <!-- 客服电话栏 -->
+  <a class="service-bar" href="tel:0449251218">
+    <div>
+      <div class="service-label">🇦🇺 澳洲客服电话</div>
+      <div class="service-num">0449 251 218</div>
+    </div>
+    <div class="service-divider"></div>
+    <div style="font-size:28px;">📞</div>
+  </a>
+
+  <div class="cards">
+    <a class="card blue" href="#" onclick="showPassengerNotice(event)">
+      <div class="card-icon">🛬</div>
+      <div class="card-text">
+        <h3>预约机场接送</h3>
+        <p>接机 · 送机 · 华人司机 · 中文沟通</p>
+      </div>
+      <div class="card-arrow">›</div>
+    </a>
+    <a class="card gold" href="#" onclick="showDriverNotice(event)">
+      <div class="card-icon">🧑‍✈️</div>
+      <div class="card-text">
+        <h3>成为合伙人司机</h3>
+        <p>灵活接单 · 积分分红 · 越早越值钱</p>
+      </div>
+      <div class="card-arrow">›</div>
+    </a>
+  </div>
+</div>
+
+<div class="footer">
+  <div class="contact-row">
+    <button class="contact-btn wechat-btn" onclick="
+      if(navigator.clipboard){navigator.clipboard.writeText('13732299999');}
+      alert('微信号已复制：13732299999\n请打开微信→添加朋友→粘贴搜索');
+    ">
+      💬 🇨🇳 微信 13732299999
+    </button>
+    <a class="contact-btn xhs-btn" href="https://www.xiaohongshu.com/user/profile/4286544851" target="_blank">
+      📕 小红书 澳洲晓宏叔
+    </a>
+  </div>
+  <div class="footer-note">mel-transfer.vercel.app</div>
+</div>
+
+<script>
+const agent = document.getElementById('agent');
+const bubble = document.getElementById('bubble');
+const bubbleText = document.getElementById('bubble-text');
+
+setTimeout(() => {
+  agent.classList.add('stopped');
+  bubble.classList.add('show');
+
+  setTimeout(() => {
+    bubble.classList.remove('show');
+    bubble.classList.add('hide');
+    setTimeout(() => {
+      bubbleText.textContent = '有什么能帮你？😊';
+      bubble.classList.remove('hide');
+      bubble.classList.add('show');
+    }, 350);
+  }, 1400);
+}, 1200);
+
+let footprintTimer = setInterval(() => {
+  if (agent.classList.contains('stopped')) { clearInterval(footprintTimer); return; }
+  const fp = document.createElement('div');
+  fp.className = 'footprint';
+  fp.textContent = '👟';
+  fp.style.left = (Math.random() * 60 + 10) + '%';
+  fp.style.animationDuration = (Math.random() * 0.3 + 0.4) + 's';
+  document.getElementById('footprints').appendChild(fp);
+  setTimeout(() => fp.remove(), 800);
+}, 80);
+</script>
+
+<!-- 司机端告示弹窗 -->
+<div id="driver-notice" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:999;display:none;align-items:center;justify-content:center;padding:24px;">
+  <div style="background:white;border-radius:24px;padding:28px 24px;max-width:360px;width:100%;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.25);">
+    <!-- 关闭按钮 -->
+    <button onclick="closeDriverNotice()" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:22px;color:#aaa;cursor:pointer;">×</button>
+    <!-- 图标 -->
+    <div style="text-align:center;font-size:40px;margin-bottom:12px;">🧑‍✈️</div>
+    <!-- 标题 -->
+    <div style="text-align:center;font-size:18px;font-weight:900;color:#1a3a5c;margin-bottom:16px;line-height:1.4;">
+      只有接机单或送机单<br>被迫放空？
+    </div>
+    <!-- 内容 -->
+    <div style="background:#f8f4ff;border-radius:14px;padding:16px;margin-bottom:16px;">
+      <div style="font-size:14px;color:#555;line-height:1.8;">
+        🤔 几个老客户下单时间冲突，怎么办？<br>
+        😓 辛苦跑了一程，回程空车浪费？<br>
+        💡 <strong style="color:#1a3a5c;">加入我们，实现共享！</strong><br>
+        ✅ 多余订单共享给平台司机<br>
+        ✅ 闲暇时间轻松接单<br>
+        ✅ 每单稳定收益，越做越多
+      </div>
+    </div>
+    <!-- 按钮 -->
+    <a href="partner-recruit.html" style="display:block;background:linear-gradient(135deg,#1a3a5c,#0f2540);color:white;text-align:center;padding:14px;border-radius:14px;font-size:15px;font-weight:800;text-decoration:none;">
+      ⭐ 立即加入合伙人 →
+    </a>
+    <button onclick="closeDriverNotice()" style="display:block;width:100%;margin-top:10px;background:none;border:none;color:#bbb;font-size:13px;cursor:pointer;">稍后再说</button>
+  </div>
+</div>
+
+<script>
+function showDriverNotice(e) {
+  e.preventDefault();
+  const el = document.getElementById('driver-notice');
+  el.style.display = 'flex';
+}
+function closeDriverNotice() {
+  document.getElementById('driver-notice').style.display = 'none';
+}
+</script>
+
+<!-- 乘客引导弹窗 -->
+<div id="passenger-notice" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:999;align-items:center;justify-content:center;padding:24px;">
+  <div style="background:white;border-radius:28px;padding:32px 24px 28px;width:100%;max-width:360px;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.25);">
+    
+    <!-- 关闭X（大） -->
+    <button onclick="closePassengerNotice()" style="position:absolute;top:14px;right:16px;background:#f0f0f0;border:none;width:36px;height:36px;border-radius:50%;font-size:20px;color:#666;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;">×</button>
+
+    <!-- 动画角色 -->
+    <div style="text-align:center;font-size:52px;margin-bottom:12px;">🧑‍✈️</div>
+
+    <!-- 标题 -->
+    <div style="text-align:center;font-size:22px;font-weight:900;color:#1a3a5c;line-height:1.4;margin-bottom:8px;">
+      点我试试<br>立刻获得积分！
+    </div>
+    <div style="text-align:center;font-size:13px;color:#aaa;margin-bottom:20px;">
+      下单即得积分，可折现参与分红
+    </div>
+
+    <!-- 积分预告 -->
+    <div style="background:linear-gradient(135deg,#1a3a5c,#0f2540);border-radius:18px;padding:16px 20px;margin-bottom:20px;text-align:center;">
+      <div style="color:#c8a020;font-size:12px;font-weight:800;margin-bottom:6px;">🏆 完成第一次预约即得</div>
+      <div style="color:white;font-size:36px;font-weight:900;">+12 积分</div>
+      <div style="color:rgba(255,255,255,0.5);font-size:11px;margin-top:4px;">基础5分 + 车费×0.1折算</div>
+    </div>
+
+    <!-- 亮点 -->
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:22px;">
+      <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:#444;">
+        <span style="font-size:18px;">✈️</span> 华人司机，全程中文，安心接送
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:#444;">
+        <span style="font-size:18px;">💰</span> 一口价透明，不临时加收
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:#444;">
+        <span style="font-size:18px;">🎁</span> 推荐朋友，双方各再得20积分
+      </div>
+    </div>
+
+    <!-- 进入按钮 -->
+    <a href="passenger-recruit.html" style="display:block;background:linear-gradient(135deg,#00b4d8,#0096c7);color:white;text-align:center;padding:16px;border-radius:16px;font-size:16px;font-weight:900;text-decoration:none;box-shadow:0 6px 20px rgba(0,150,200,0.35);">
+      🚀 立即预约，马上得积分 →
+    </a>
+    <button onclick="closePassengerNotice()" style="display:block;width:100%;margin-top:12px;background:none;border:none;color:#bbb;font-size:13px;cursor:pointer;">稍后再说</button>
+  </div>
+</div>
+
+<script>
+function showPassengerNotice(e) {
+  e.preventDefault();
+  document.getElementById('passenger-notice').style.display = 'flex';
+}
+function closePassengerNotice() {
+  document.getElementById('passenger-notice').style.display = 'none';
+}
+</script>
+
+</body>
+</html>
