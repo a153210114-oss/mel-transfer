@@ -746,6 +746,60 @@ function greetAssistant() {
   setTimeout(() => addAssistantMsg(greeting), 500);
 }
 
+
+// ── 司机端烟花彩带 ──
+let driverConfettiInterval = null;
+
+function showDriverConfetti(points) {
+  document.getElementById('driver-confetti-pts').textContent = '+' + points;
+  const overlay = document.getElementById('driver-confetti');
+  overlay.style.display = 'flex';
+  startDriverConfetti();
+}
+
+function closeDriverConfetti() {
+  document.getElementById('driver-confetti').style.display = 'none';
+  stopDriverConfetti();
+}
+
+function startDriverConfetti() {
+  const canvas = document.getElementById('driver-confetti-canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const colors = ['#00d4ff','#f5a623','#00c896','#ff4d6d','#a855f7','#ffffff'];
+  const pieces = Array.from({length:120}, () => ({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height - canvas.height,
+    w: Math.random() * 10 + 5,
+    h: Math.random() * 6 + 3,
+    color: colors[Math.floor(Math.random() * colors.length)],
+    speed: Math.random() * 3 + 2,
+    angle: Math.random() * 360,
+    spin: Math.random() * 10 - 5,
+    wobble: Math.random() * 3
+  }));
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    pieces.forEach(p => {
+      p.y += p.speed; p.angle += p.spin;
+      p.x += Math.sin(p.angle * 0.05) * p.wobble;
+      if (p.y > canvas.height) { p.y = -10; p.x = Math.random() * canvas.width; }
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.angle * Math.PI / 180);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+      ctx.restore();
+    });
+  }
+  driverConfettiInterval = setInterval(draw, 16);
+}
+
+function stopDriverConfetti() {
+  if (driverConfettiInterval) { clearInterval(driverConfettiInterval); driverConfettiInterval = null; }
+}
+
 </script>
 </head>
 <body>
@@ -803,9 +857,9 @@ function greetAssistant() {
     <div class="modal-title">我也要成为<br><span class="gold">创始合伙人！</span></div>
     <div class="modal-sub">创始合伙人享有永久特权，越早加入越值钱</div>
     <div class="modal-perks">
-      <div class="modal-perk"><div class="modal-perk-icon">×2</div><div>积分永久×2倍加成，每单、每次推荐均翻倍</div></div>
-      <div class="modal-perk"><div class="modal-perk-icon">📈</div><div>季度按积分占比分享平台利润，积分即股份</div></div>
-      <div class="modal-perk"><div class="modal-perk-icon">+5%</div><div>年底持有积分额外+5%加成，永不清零</div></div>
+      <div class="modal-perk"><div class="modal-perk-icon">⭐</div><div>创始合伙人专属权益，永久有效</div></div>
+      <div class="modal-perk"><div class="modal-perk-icon">💰</div><div>季度末参与平台收益分配</div></div>
+      <div class="modal-perk"><div class="modal-perk-icon">🔒</div><div>积分永久保留，不会清零</div></div>
       <div class="modal-perk"><div class="modal-perk-icon">🏆</div><div>创始合伙人专属编号，永久载入平台历史</div></div>
     </div>
     <div class="quota-bar">
@@ -1407,12 +1461,11 @@ function greetAssistant() {
     </div>
   </div>
 
-  <!-- 积分说明 -->
+  <!-- 积分说明（隐藏） -->
   <div style="margin:12px 16px 0;background:linear-gradient(135deg,rgba(168,85,247,0.1),rgba(0,212,255,0.06));border:1px solid rgba(168,85,247,0.2);border-radius:var(--radius-sm);padding:14px 16px;">
-    <div style="font-size:12px;font-weight:600;color:#a855f7;margin-bottom:8px;">🏆 股东积分计划</div>
+    <div style="font-size:12px;font-weight:600;color:#a855f7;margin-bottom:8px;">🏆 我的积分</div>
     <div style="font-size:11px;color:var(--text2);line-height:1.8;">
-      每完成一单 +积分 · 每季度末按积分占比分享平台利润<br>
-      创始合伙人积分永久×2倍加成 · 年底持有+5%
+      积分将在季度末统一结算
     </div>
   </div>
 
@@ -2162,7 +2215,7 @@ async function generatePosterFallback() {
   ctx.fillText('mel-transfer.vercel.app', 375, 1000);
 
   ctx.font='bold 17px sans-serif'; ctx.fillStyle='rgba(200,134,10,0.55)';
-  ctx.fillText('分享给朋友，双方均可获得积分奖励 🏆', 375, 1050);
+  ctx.fillText('华人服务华人，安心出行每一程', 375, 1050);
 
   showPosterPreview(canvas.toDataURL('image/png'));
 }
@@ -2407,5 +2460,19 @@ function submitReg() {
   alert('✅ 注册申请已提交！\n我们会在24小时内通过微信联系您完成审核。');
 }
 </script>
+
+<!-- 烟花彩带层 -->
+<div id="driver-confetti" style="display:none;position:fixed;inset:0;z-index:9998;pointer-events:all;flex-direction:column;align-items:center;justify-content:center;">
+  <canvas id="driver-confetti-canvas" style="position:absolute;inset:0;width:100%;height:100%;"></canvas>
+  <div style="position:relative;z-index:1;background:var(--surface);border-radius:24px;padding:28px 32px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.4);max-width:280px;border:1px solid var(--border);">
+    <div style="font-size:48px;margin-bottom:10px;">🎉</div>
+    <div style="font-size:18px;font-weight:900;color:var(--text);margin-bottom:6px;">太棒了！</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:12px;">恭喜获得</div>
+    <div style="font-size:44px;font-weight:900;color:var(--accent);margin-bottom:4px;" id="driver-confetti-pts">+10</div>
+    <div style="font-size:15px;font-weight:700;color:var(--text2);margin-bottom:22px;">积分</div>
+    <button onclick="closeDriverConfetti()" style="background:var(--accent);color:var(--bg);border:none;border-radius:12px;padding:12px 28px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;width:100%;">收到！继续加油 💪</button>
+  </div>
+</div>
+
 </body>
 </html>
