@@ -548,6 +548,64 @@ async function supaFetch(path, opts={}) {
   return res.json();
 }
 
+
+// ── Claude AI 对话 ──
+const CLAUDE_MODEL = 'claude-sonnet-4-20250514';
+let aiHistory = [];
+
+const AI_SYSTEM = `你是澳洲出行管家"澳小墨"，专门为华人旅客提供墨尔本机场接送服务。
+
+你可以回答：
+- 价格：Sedan $70起（墨尔本机场25km内），MPV $90，大型MPV $120，Van $160
+- 服务：接机、送机、全程中文、华人司机
+- 支付：微信支付、信用卡、银行转账
+- 取消政策：24小时前全退，12-24小时退80%，2-12小时退50%，2小时内不退
+- 积分：每次下单得积分，可折现，推荐朋友各得20积分
+
+你不能透露：
+- 平台抽成比例
+- 其他乘客信息
+- 司机具体收入
+
+回答要简短友好，用中文，加适当emoji。如果用户要下单，引导他们填写表单。`;
+
+async function sendAIMessage() {
+  const input = document.getElementById('ai-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+
+  // 显示用户消息
+  await bubble(msg, true);
+  
+  // 加入历史
+  aiHistory.push({ role: 'user', content: msg });
+  
+  // 显示打字动画
+  await typing(600);
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system: AI_SYSTEM,
+        messages: aiHistory
+      })
+    });
+    const data = await res.json();
+    const reply = data.content?.[0]?.text || '抱歉，我没听清楚，请再说一遍 😊';
+    
+    aiHistory.push({ role: 'assistant', content: reply });
+    // 保持历史最多10条
+    if (aiHistory.length > 10) aiHistory = aiHistory.slice(-10);
+    
+    await bubble(reply);
+  } catch(e) {
+    await bubble('网络有点问题，请稍后再试 😅');
+  }
+}
+
 </script>
 </head>
 <body>
@@ -766,6 +824,17 @@ async function supaFetch(path, opts={}) {
 
   <div class="chat" id="chat"></div>
   <div class="qr" id="qr"></div>
+  
+  <!-- 自由提问输入框 -->
+  <div id="ai-input-bar" style="display:none;position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);padding:10px 14px;display:none;align-items:center;gap:8px;z-index:50;">
+    <input id="ai-input" placeholder="有问题随时问我..." 
+      style="flex:1;background:var(--bg);border:1.5px solid var(--border);border-radius:20px;padding:10px 16px;color:var(--text);font-size:14px;font-family:inherit;outline:none;"
+      onkeydown="if(event.key==='Enter')sendAIMessage()">
+    <button onclick="sendAIMessage()" 
+      style="background:var(--accent);border:none;border-radius:50%;width:38px;height:38px;font-size:18px;cursor:pointer;flex-shrink:0;">
+      ➤
+    </button>
+  </div>
 </div>
 
 <script>
@@ -952,7 +1021,8 @@ async function start(){
   await bubble('全程中文，下单简单，<span class="t">一口价</span>不乱收费 💰<br>告诉我你的行程，我来帮你安排');
   setProg(15);
   await typing(700);
-  await bubble('先告诉我你的姓名和联系方式吧 📱');
+  await bubble('先告诉我你的姓名和联系方式吧 📱<br><span style="font-size:12px;opacity:0.6;">也可以直接输入任何问题 👇</span>');
+  document.getElementById('ai-input-bar').style.display = 'flex';
   showContact();
 }
 
