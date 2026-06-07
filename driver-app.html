@@ -1135,7 +1135,7 @@ function markNotificationsRead() {
     </div>
 
     <!-- 操作按钮 -->
-    <button class="action-btn btn-primary" onclick="acceptTrip()">✅ 接受订单</button>
+    <button class="action-btn btn-primary" onclick="isGuestMode?alert('请先完善资料并等待审核后才能接单'):acceptTrip()" style="${isGuestMode?'opacity:0.5':''}">${isGuestMode?'🔒 审核后可接单':'✅ 接受订单'}</button>
     <button class="action-btn btn-danger" onclick="declineTrip()">✗ 拒绝</button>
 
   </div>
@@ -1667,37 +1667,88 @@ function initAudio() {
   }
 }
 
+let isGuestMode = false;
+
 async function doLogin() {
-  initAudio(); // 用户点击时初始化音频
+  initAudio();
   const phone = document.getElementById('login-phone').value.trim();
   if (!phone) { alert('请输入手机号'); return; }
   const errEl = document.getElementById('login-error');
   errEl.style.display = 'none';
   try {
+    // 先查已审核司机
     const drivers = await supa(`drivers?phone=eq.${encodeURIComponent(phone)}&is_active=eq.true&tenant_id=eq.${TENANT_ID}`);
-    if (!drivers || drivers.length === 0) {
-      errEl.style.display = 'block'; return;
+    if (drivers && drivers.length > 0) {
+      currentDriver = drivers[0];
+      isGuestMode = false;
+      localStorage.setItem('driver', JSON.stringify(currentDriver));
+      enterApp();
+      return;
     }
-    currentDriver = drivers[0];
-    localStorage.setItem('driver', JSON.stringify(currentDriver));
-    enterApp();
+    // 再查未审核司机（游客模式）
+    const pending = await supa(`drivers?phone=eq.${encodeURIComponent(phone)}&tenant_id=eq.${TENANT_ID}`);
+    if (pending && pending.length > 0) {
+      currentDriver = pending[0];
+      isGuestMode = true;
+      localStorage.setItem('driver', JSON.stringify(currentDriver));
+      enterApp(true);
+      return;
+    }
+    // 手机号不存在，创建游客账号
+    const [newDriver] = await supa('drivers', {
+      method: 'POST',
+      body: {
+        tenant_id: TENANT_ID,
+        phone: phone,
+        full_name: '新司机',
+        is_active: false,
+        status: 'offline'
+      }
+    }).catch(() => [null]);
+    if (newDriver) {
+      currentDriver = newDriver;
+      isGuestMode = true;
+      localStorage.setItem('driver', JSON.stringify(currentDriver));
+      enterApp(true);
+    } else {
+      errEl.textContent = '网络错误，请重试';
+      errEl.style.display = 'block';
+    }
   } catch(e) {
     errEl.textContent = '网络错误，请重试';
     errEl.style.display = 'block';
   }
 }
 
-function enterApp() {
+function enterApp(guestMode=false) {
   initCityAgent();
-  document.getElementById('driver-name').textContent = currentDriver.full_name;
-  // 登录后才显示条幅和浮窗
-  const bar = document.querySelector('.founder-bar');
-  const float = document.getElementById('founder-float-card');
-  if(bar) bar.style.display = 'flex';
-  if(float) float.style.display = 'block';
+  document.getElementById('driver-name').textContent = currentDriver.full_name || '新司机';
+
+  // 游客模式横幅
+  if (guestMode) {
+    showGuestBanner();
+  } else {
+    const bar = document.querySelector('.founder-bar');
+    const float = document.getElementById('founder-float-card');
+    if(bar) bar.style.display = 'flex';
+    if(float && !currentDriver.is_founder) float.style.display = 'block';
+  }
+
   loadHome();
   switchPage('home');
-  startAutoRefresh();
+  if (!guestMode) startAutoRefresh();
+}
+
+function showGuestBanner() {
+  const banner = document.createElement('div');
+  banner.id = 'guest-banner';
+  banner.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:linear-gradient(135deg,#c8920a,#e8b830);color:#0a0e14;padding:10px 16px;z-index:500;display:flex;align-items:center;gap:10px;font-size:13px;font-weight:700;';
+  banner.innerHTML = `
+    <span style="font-size:16px;">👀</span>
+    <span style="flex:1;">游客模式 · 完善资料后可接单</span>
+    <button onclick="switchPage('register')" style="background:rgba(0,0,0,0.15);border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:800;cursor:pointer;color:#0a0e14;">立即完善 →</button>
+  `;
+  document.body.prepend(banner);
 }
 
 // ── 提示音（用Web Audio API，无需外部文件）──
