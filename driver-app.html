@@ -1933,10 +1933,10 @@ async function loadHome() {
     const today = new Date().toISOString().split('T')[0];
 
     // 未分配的新订单（所有司机可见）
-    const unassigned = await supa(`trips?driver_id=is.null&status=eq.pending&scheduled_at=gte.${today}T00:00:00&tenant_id=eq.${TENANT_ID}&order=scheduled_at.asc`);
+    const unassigned = await supa(`public_trips?driver_id=is.null&status=eq.pending&scheduled_at=gte.${today}T00:00:00&tenant_id=eq.${TENANT_ID}&order=scheduled_at.asc`);
 
     // 已分配给我的订单
-    const myTrips = await supa(`trips?driver_id=eq.${currentDriver.id}&scheduled_at=gte.${today}T00:00:00&order=scheduled_at.asc`);
+    const myTrips = await supa(`trips?driver_id=eq.${currentDriver.id}&status=in.(confirmed,dispatched,driver_en_route,driver_arrived,in_progress)&scheduled_at=gte.${today}T00:00:00&order=scheduled_at.asc`);
 
     const pending = [...unassigned, ...myTrips.filter(t => ['confirmed','dispatched'].includes(t.status))];
     const done    = myTrips.filter(t => t.status === 'completed');
@@ -2298,7 +2298,11 @@ function goToDetail(tripId) {
 
 async function loadTripDetail(tripId) {
   try {
-    const trips = await supa(`trips?id=eq.${tripId}`);
+    // 已接单查完整信息，未接单查public_trips
+    let trips = await supa(`trips?id=eq.${tripId}&driver_id=eq.${currentDriver.id}`);
+    if (!trips || trips.length === 0) {
+      trips = await supa(`public_trips?id=eq.${tripId}`);
+    }
     if (!trips || trips.length === 0) return;
     const t = trips[0];
     const scheduledDt = new Date(t.scheduled_at);
