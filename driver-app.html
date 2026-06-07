@@ -800,6 +800,42 @@ function stopDriverConfetti() {
   if (driverConfettiInterval) { clearInterval(driverConfettiInterval); driverConfettiInterval = null; }
 }
 
+
+// ── 通知 & 未完成事项检测 ──
+function checkPendingItems() {
+  if (!currentDriver) return;
+  const items = [];
+
+  // 注册未完成检测
+  if (!currentDriver.vehicle_type) items.push({icon:'🚗', text:'车辆信息未完善，请到"我的"完成注册', action:"switchPage('profile')"});
+  if (!currentDriver.bank_account) items.push({icon:'💳', text:'收款账户未设置，请到"我的"完成设置', action:"switchPage('profile')"});
+  if (!currentDriver.wechat_id) items.push({icon:'💬', text:'微信号未填写，方便联系客人', action:"switchPage('profile')"});
+
+  // 显示红点
+  const dot = document.getElementById('notify-dot');
+  if (dot) dot.style.display = items.length > 0 ? 'block' : 'none';
+
+  // 渲染通知列表
+  const list = document.getElementById('notify-list');
+  if (!list) return;
+  if (items.length === 0) {
+    list.innerHTML = '<div style="text-align:center;color:var(--text3);font-size:13px;padding:30px 0;">暂无新通知</div>';
+    return;
+  }
+  list.innerHTML = items.map(item => `
+    <div onclick="${item.action}" style="background:var(--surface);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;border:1px solid var(--border);cursor:pointer;border-left:3px solid var(--red);">
+      <div style="font-size:24px;">${item.icon}</div>
+      <div style="flex:1;font-size:13px;color:var(--text);line-height:1.5;">${item.text}</div>
+      <div style="color:var(--text3);">›</div>
+    </div>`).join('');
+}
+
+function markNotificationsRead() {
+  // 点进通知页后红点消失（但内容还在）
+  const dot = document.getElementById('notify-dot');
+  if (dot) dot.style.display = 'none';
+}
+
 </script>
 </head>
 <body>
@@ -1256,6 +1292,41 @@ function stopDriverConfetti() {
   </div>
 </div>
 
+
+<!-- 公告页 -->
+<div class="page" id="page-announce">
+  <div class="topbar" style="display:flex;align-items:center;gap:12px;padding:14px 16px;">
+    <div style="width:40px;height:40px;background:rgba(0,212,255,0.1);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🧑‍✈️</div>
+    <div><div style="font-size:15px;font-weight:800;color:var(--text);">澳小墨</div><div style="font-size:11px;color:var(--text2);">平台公告</div></div>
+  </div>
+  <div style="padding:16px;">
+    <div style="background:var(--surface);border-radius:16px;padding:16px;margin-bottom:12px;border:1px solid var(--border);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-size:14px;font-weight:800;color:var(--text);">📣 欢迎加入澳洲出行</div>
+        <div style="font-size:11px;color:var(--text3);">今天</div>
+      </div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.7;">感谢您成为澳洲出行合伙人！我们致力于帮助华人司机经营人脉、管理客户，让您赚更多钱，省出更多时间陪伴家人。</div>
+    </div>
+    <div style="background:var(--surface);border-radius:16px;padding:16px;border:1px solid var(--border);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-size:14px;font-weight:800;color:var(--text);">📋 平台使用指南</div>
+        <div style="font-size:11px;color:var(--text3);">今天</div>
+      </div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.7;">1. 任务页查看待接订单<br>2. 点击订单接受/查看详情<br>3. 出发前系统自动提醒<br>4. 完成行程后点击"完成"<br>5. 有问题随时找助理</div>
+    </div>
+  </div>
+</div>
+
+<!-- 通知页 -->
+<div class="page" id="page-notify">
+  <div class="topbar" style="display:flex;align-items:center;gap:12px;padding:14px 16px;">
+    <div style="width:40px;height:40px;background:rgba(0,212,255,0.1);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🧑‍✈️</div>
+    <div><div style="font-size:15px;font-weight:800;color:var(--text);">澳小墨</div><div style="font-size:11px;color:var(--text2);">我的通知</div></div>
+  </div>
+  <div id="notify-list" style="padding:16px;display:flex;flex-direction:column;gap:10px;">
+    <div style="text-align:center;color:var(--text3);font-size:13px;padding:30px 0;">暂无新通知</div>
+  </div>
+</div>
 <div class="page" id="page-register">
 
   <div class="reg-header">
@@ -1556,13 +1627,13 @@ function stopDriverConfetti() {
     <div class="nav-icon">📋</div>
     <div class="nav-label">任务</div>
   </div>
-  <div class="nav-item" id="nav-assistant" onclick="switchPage('assistant')">
-    <div class="nav-icon">🤖</div>
-    <div class="nav-label">助理</div>
+  <div class="nav-item" id="nav-announce" onclick="switchPage('announce')">
+    <div class="nav-icon" style="position:relative;">📣<span id="announce-dot" style="display:none;position:absolute;top:-2px;right:-2px;width:8px;height:8px;background:var(--red);border-radius:50%;"></span></div>
+    <div class="nav-label">公告</div>
   </div>
-  <div class="nav-item" id="nav-register" onclick="switchPage('register')">
-    <div class="nav-icon">📝</div>
-    <div class="nav-label">注册</div>
+  <div class="nav-item" id="nav-notify" onclick="switchPage('notify')">
+    <div class="nav-icon" style="position:relative;">🔔<span id="notify-dot" style="display:none;position:absolute;top:-2px;right:-2px;width:8px;height:8px;background:var(--red);border-radius:50%;"></span></div>
+    <div class="nav-label">通知</div>
   </div>
   <div class="nav-item" id="nav-profile" onclick="switchPage('profile')">
     <div class="nav-icon">👤</div>
@@ -1780,6 +1851,7 @@ async function checkNewOrders() {
       playNewOrderSound();
       showNewOrderBanner(newCount - lastPendingCount);
       await loadHome();
+  checkPendingItems();
     }
     lastPendingCount = newCount;
   } catch(e) { console.error('刷新检查失败', e); }
