@@ -589,6 +589,154 @@ window.onerror = function(msg, src, line, col, err) {
 window.addEventListener('unhandledrejection', function(e) {
   e.preventDefault();
 });
+
+// ── AI助理 ──
+let assistantHistory = [];
+let assistantRecording = false;
+let assistantRecognition = null;
+
+function buildAssistantPrompt() {
+  const d = currentDriver || {};
+  const today = new Date().toLocaleDateString('zh-CN');
+  return `你是澳洲机场接送平台的司机助理"澳墨助理"，服务对象是司机${d.full_name||''}。
+
+你的身份：能干、高效、主动的助理，不废话，直接执行或回答。
+
+你能做的事：
+1. 查询订单：今日订单数、待处理订单、历史订单
+2. 切换状态：空闲/驿站候单/下线（告知司机怎么操作）
+3. 接受订单：告知司机当前待接订单信息
+4. 查询收入：今日、本周、本月收入和分成
+5. 查询积分：当前积分、本季度预计分红
+6. 客户管理：记录客户偏好、查看常客
+7. 分享推广：生成推广链接文字
+8. 重要提醒：即将出发的订单、未确认事项
+9. 帮助引导：告诉司机平台功能怎么用
+
+今天是${today}。
+
+当前司机数据：
+- 姓名：${d.full_name||'未知'}
+- 状态：${d.status||'未知'}
+- 今日收入：$${(currentStats?.todayEarning||0).toFixed(0)}
+- 今日完成：${currentStats?.todayDone||0}单
+- 待处理：${currentStats?.pending||0}单
+- 积分：${d.points||0}分
+
+回答要求：简短有力，中文，必要时用数字和列表。如果需要司机在App里操作，说明在哪个页面怎么点。`;
+}
+
+let currentStats = {};
+
+async function assistantSend(presetMsg) {
+  const input = document.getElementById('assistant-input');
+  const msg = presetMsg || input.value.trim();
+  if (!msg) return;
+  if (!presetMsg) input.value = '';
+
+  // 显示用户消息
+  addAssistantMsg(msg, true);
+  assistantHistory.push({ role: 'user', content: msg });
+
+  const typing = addAssistantTyping();
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system: buildAssistantPrompt(),
+        messages: assistantHistory
+      })
+    });
+    const data = await res.json();
+    const reply = data.content?.[0]?.text || '抱歉，请再说一遍';
+    assistantHistory.push({ role: 'assistant', content: reply });
+    if (assistantHistory.length > 20) assistantHistory = assistantHistory.slice(-20);
+    typing.remove();
+    addAssistantMsg(reply);
+    speakAssistant(reply);
+  } catch(e) {
+    typing.remove();
+    addAssistantMsg('网络有问题，请稍后再试');
+  }
+}
+
+function addAssistantMsg(html, isUser=false) {
+  const chat = document.getElementById('assistant-chat');
+  const div = document.createElement('div');
+  div.style.cssText = `display:flex;gap:8px;align-items:flex-end;${isUser?'flex-direction:row-reverse':''}`;
+  div.innerHTML = `
+    <div style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;background:${isUser?'rgba(200,160,32,0.15)':'rgba(0,212,255,0.1)'};">
+      ${isUser?'🧑‍✈️':'🤖'}
+    </div>
+    <div style="max-width:78%;background:${isUser?'var(--accent)':'var(--surface)'};color:${isUser?'white':'var(--text)'};border-radius:${isUser?'18px 18px 4px 18px':'18px 18px 18px 4px'};padding:10px 14px;font-size:13px;line-height:1.6;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+      ${html.replace(/
+/g,'<br>')}
+    </div>`;
+  chat.appendChild(div);
+  setTimeout(() => { chat.scrollTop = chat.scrollHeight; }, 100);
+}
+
+function addAssistantTyping() {
+  const chat = document.getElementById('assistant-chat');
+  const div = document.createElement('div');
+  div.className = 'assist-typing';
+  div.style.cssText = 'display:flex;gap:8px;align-items:flex-end;';
+  div.innerHTML = `
+    <div style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;background:rgba(0,212,255,0.1);">🤖</div>
+    <div style="background:var(--surface);border-radius:18px 18px 18px 4px;padding:12px 16px;display:flex;gap:4px;">
+      <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
+    </div>`;
+  chat.appendChild(div);
+  setTimeout(() => { chat.scrollTop = chat.scrollHeight; }, 100);
+  return div;
+}
+
+function speakAssistant(text) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const clean = text.replace(/<[^>]*>/g,'').replace(/[*#]/g,'').replace(/\s+/g,' ').trim();
+  const u = new SpeechSynthesisUtterance(clean);
+  u.lang = 'zh-CN'; u.rate = 1.05; u.pitch = 0.9;
+  window.speechSynthesis.speak(u);
+}
+
+function toggleAssistantMic() {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    alert('请使用Safari或Chrome'); return;
+  }
+  if (assistantRecording) { assistantRecognition?.stop(); return; }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  assistantRecognition = new SR();
+  assistantRecognition.lang = 'zh-CN';
+  assistantRecognition.onstart = () => {
+    assistantRecording = true;
+    document.getElementById('assist-mic-btn').textContent = '🔴';
+  };
+  assistantRecognition.onresult = (e) => {
+    assistantSend(e.results[0][0].transcript);
+  };
+  assistantRecognition.onend = () => {
+    assistantRecording = false;
+    document.getElementById('assist-mic-btn').textContent = '🎤';
+  };
+  assistantRecognition.start();
+}
+
+// 首次进入助理页发送欢迎语
+let assistantGreeted = false;
+function greetAssistant() {
+  if (assistantGreeted) return;
+  assistantGreeted = true;
+  const d = currentDriver;
+  const pending = currentStats?.pending || 0;
+  const greeting = pending > 0
+    ? `${d?.full_name||''}师傅，有${pending}个待处理订单！需要我帮你查看吗？`
+    : `${d?.full_name||''}师傅，今天状态不错！有什么需要我帮你处理的？`;
+  setTimeout(() => addAssistantMsg(greeting), 500);
+}
+
 </script>
 </head>
 <body>
@@ -1002,6 +1150,48 @@ window.addEventListener('unhandledrejection', function(e) {
 <!-- ═══════════════════════════════════
      页面 3：司机注册
 ═══════════════════════════════════ -->
+
+<!-- ═══════════════════════════════════
+     页面：AI助理
+═══════════════════════════════════ -->
+<div class="page" id="page-assistant">
+  <div class="topbar">
+    <div class="topbar-title">🤖 我的助理</div>
+    <div class="topbar-sub" id="assistant-status">随时待命</div>
+  </div>
+
+  <!-- 助理头像区 -->
+  <div style="background:linear-gradient(135deg,#1a3a5c,#0d2540);padding:16px;display:flex;align-items:center;gap:12px;">
+    <div style="width:48px;height:48px;background:rgba(0,212,255,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;border:2px solid rgba(0,212,255,0.3);">🤖</div>
+    <div>
+      <div style="color:white;font-weight:800;font-size:15px;">澳墨助理</div>
+      <div style="color:rgba(255,255,255,0.5);font-size:11px;">语音/文字都可以，我来帮你搞定</div>
+    </div>
+    <button onclick="toggleAssistantMic()" id="assist-mic-btn" style="margin-left:auto;background:rgba(0,212,255,0.15);border:1.5px solid rgba(0,212,255,0.4);color:#00d4ff;border-radius:50%;width:40px;height:40px;font-size:18px;cursor:pointer;">🎤</button>
+  </div>
+
+  <!-- 快捷指令 -->
+  <div style="padding:12px 14px 0;display:flex;gap:8px;flex-wrap:wrap;">
+    <button onclick="assistantSend('今天跑了几单？')" style="background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:6px 12px;font-size:12px;color:var(--text2);cursor:pointer;">今天几单？</button>
+    <button onclick="assistantSend('我现在空闲')" style="background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:6px 12px;font-size:12px;color:var(--text2);cursor:pointer;">切换空闲</button>
+    <button onclick="assistantSend('接受最新订单')" style="background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:6px 12px;font-size:12px;color:var(--text2);cursor:pointer;">接受订单</button>
+    <button onclick="assistantSend('我的积分是多少？')" style="background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:6px 12px;font-size:12px;color:var(--text2);cursor:pointer;">查积分</button>
+    <button onclick="assistantSend('帮我分享推广链接')" style="background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:6px 12px;font-size:12px;color:var(--text2);cursor:pointer;">分享推广</button>
+    <button onclick="assistantSend('最近有什么重要提醒？')" style="background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:6px 12px;font-size:12px;color:var(--text2);cursor:pointer;">重要提醒</button>
+  </div>
+
+  <!-- 对话区 -->
+  <div id="assistant-chat" style="flex:1;padding:14px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding-bottom:120px;"></div>
+
+  <!-- 输入区 -->
+  <div style="position:fixed;bottom:60px;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--bg);border-top:1px solid var(--border);padding:10px 14px;display:flex;gap:8px;align-items:center;z-index:50;">
+    <input id="assistant-input" placeholder="问我任何事..." 
+      style="flex:1;background:var(--surface2);border:1.5px solid var(--border);border-radius:20px;padding:10px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none;"
+      onkeydown="if(event.key==='Enter')assistantSend()">
+    <button onclick="assistantSend()" style="width:38px;height:38px;background:var(--accent);border:none;border-radius:50%;color:white;font-size:16px;cursor:pointer;">➤</button>
+  </div>
+</div>
+
 <div class="page" id="page-register">
 
   <div class="reg-header">
@@ -1303,11 +1493,15 @@ window.addEventListener('unhandledrejection', function(e) {
     <div class="nav-icon">📋</div>
     <div class="nav-label">任务</div>
   </div>
+  <div class="nav-item" id="nav-assistant" onclick="switchPage('assistant')">
+    <div class="nav-icon">🤖</div>
+    <div class="nav-label">助理</div>
+  </div>
   <div class="nav-item" id="nav-register" onclick="switchPage('register')">
     <div class="nav-icon">📝</div>
     <div class="nav-label">注册</div>
   </div>
-  <div class="nav-item" id="nav-profile" onclick="switchPage('profile')" id="nav-profile">
+  <div class="nav-item" id="nav-profile" onclick="switchPage('profile')">
     <div class="nav-icon">👤</div>
     <div class="nav-label">我的</div>
   </div>
