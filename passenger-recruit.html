@@ -302,9 +302,73 @@ body{
   <!-- 背景光晕 -->
   <div style="position:absolute;width:300px;height:300px;background:radial-gradient(circle,rgba(0,150,199,0.3),transparent);border-radius:50%;animation:haloExpand 2s ease-out 0.5s forwards;opacity:0;"></div>
   
-  <!-- 跑步机器人 -->
-  <div id="splash-agent" style="font-size:40px;position:absolute;bottom:45%;transform:translateX(-200px) scale(0.2);animation:agentRunIn 1.2s cubic-bezier(0.22,0.61,0.36,1) 0.3s forwards;">
-    🧑‍✈️
+  <!-- 全身跑步机器人 -->
+  <div id="splash-agent" style="position:absolute;top:15%;right:-200px;animation:agentRunIn 1.2s cubic-bezier(0.22,0.61,0.36,1) 0.2s forwards;">
+    
+    <!-- 牌子 -->
+    <div style="position:absolute;top:-50px;right:-70px;animation:signWave 0.3s ease-in-out infinite alternate;">
+      <div style="background:white;border:2px solid #c8a020;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:900;color:#1a3a5c;white-space:nowrap;box-shadow:0 3px 10px rgba(0,0,0,0.2);">
+        👋 澳洲出行管家
+      </div>
+      <div style="width:3px;height:30px;background:#8a6020;margin:0 auto;"></div>
+    </div>
+
+    <!-- 身体容器（整体跑步抖动） -->
+    <div style="animation:bodyBob 0.2s ease-in-out infinite alternate;position:relative;">
+      
+      <!-- 头部 -->
+      <div style="width:48px;height:48px;background:radial-gradient(circle at 40% 60%,#fde8c8,#f5c98a);border-radius:50%;position:relative;margin:0 auto;">
+        <!-- 帽子 -->
+        <div style="position:absolute;top:-18px;left:50%;transform:translateX(-50%) rotate(-8deg);width:56px;">
+          <div style="width:36px;height:20px;background:#1a3a5c;border-radius:5px 5px 0 0;margin:0 auto;position:relative;">
+            <div style="position:absolute;bottom:3px;left:0;right:0;height:3px;background:#c8a020;"></div>
+            <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);font-size:7px;color:#c8a020;font-weight:900;">AU</div>
+          </div>
+          <div style="width:56px;height:7px;background:#1a3a5c;border-radius:3px;margin-top:-1px;"></div>
+        </div>
+        <!-- 眼睛 -->
+        <div style="position:absolute;top:20px;left:50%;transform:translateX(-50%);display:flex;gap:8px;">
+          <div style="width:6px;height:7px;background:#2a1a0a;border-radius:50%;"></div>
+          <div style="width:6px;height:7px;background:#2a1a0a;border-radius:50%;"></div>
+        </div>
+        <!-- 미소 -->
+        <div style="position:absolute;bottom:10px;left:50%;transform:translateX(-50%);width:16px;height:7px;border-bottom:2.5px solid #c87050;border-radius:0 0 10px 10px;"></div>
+      </div>
+
+      <!-- 身体 -->
+      <div style="width:50px;height:50px;background:linear-gradient(180deg,#1a3a5c,#0f2540);border-radius:7px 7px 3px 3px;margin:2px auto 0;position:relative;">
+        <div style="position:absolute;top:6px;left:50%;transform:translateX(-50%);width:7px;height:18px;background:#c8a020;clip-path:polygon(20% 0%,80% 0%,100% 70%,50% 100%,0% 70%);"></div>
+      </div>
+
+      <!-- 左臂（前摆） -->
+      <div style="position:absolute;top:52px;left:-6px;width:13px;height:36px;background:#1a3a5c;border-radius:6px;transform-origin:top center;animation:armFwd 0.2s ease-in-out infinite alternate;">
+        <div style="position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);width:11px;height:11px;background:#f5c98a;border-radius:50%;"></div>
+      </div>
+      <!-- 右臂（后摆，举牌） -->
+      <div style="position:absolute;top:48px;right:-10px;width:13px;height:36px;background:#1a3a5c;border-radius:6px;transform-origin:top center;transform:rotate(-70deg);">
+        <div style="position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);width:11px;height:11px;background:#f5c98a;border-radius:50%;"></div>
+      </div>
+
+      <!-- 腿容器 -->
+      <div style="display:flex;gap:5px;justify-content:center;margin-top:2px;">
+        <!-- 左腿（前迈） -->
+        <div style="width:13px;height:32px;background:#2a4a70;border-radius:6px;transform-origin:top center;animation:legFwd 0.2s ease-in-out infinite alternate;position:relative;">
+          <div style="position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);width:17px;height:7px;background:#1a1a2e;border-radius:3px 5px 3px 3px;"></div>
+        </div>
+        <!-- 右腿（后蹬） -->
+        <div style="width:13px;height:32px;background:#2a4a70;border-radius:6px;transform-origin:top center;animation:legBack 0.2s ease-in-out infinite alternate;position:relative;">
+          <div style="position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);width:17px;height:7px;background:#1a1a2e;border-radius:3px 5px 3px 3px;"></div>
+        </div>
+      </div>
+
+      <!-- 脚下气流 -->
+      <div style="position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);display:flex;gap:3px;align-items:flex-end;">
+        <div style="width:18px;height:3px;background:rgba(255,255,255,0.6);border-radius:2px;animation:airLine 0.2s ease-in-out infinite alternate;"></div>
+        <div style="width:28px;height:2px;background:rgba(255,255,255,0.4);border-radius:2px;animation:airLine 0.2s ease-in-out 0.05s infinite alternate;"></div>
+        <div style="width:20px;height:3px;background:rgba(255,255,255,0.5);border-radius:2px;animation:airLine 0.2s ease-in-out 0.1s infinite alternate;"></div>
+      </div>
+
+    </div>
   </div>
 
   <!-- 欢迎文字 -->
@@ -330,8 +394,8 @@ body{
       <div onclick="chooseAgent('female')" style="flex:1;background:rgba(255,255,255,0.08);border:2px solid rgba(255,255,255,0.15);border-radius:22px;padding:28px 16px;text-align:center;cursor:pointer;transition:all 0.2s;"
         onmouseover="this.style.borderColor='#e8a0c8'" onmouseout="this.style.borderColor='rgba(255,255,255,0.15)'">
         <div style="font-size:56px;margin-bottom:12px;">👩‍✈️</div>
-        <div style="font-size:18px;font-weight:900;color:white;margin-bottom:4px;">小美</div>
-        <div style="font-size:12px;color:rgba(255,255,255,0.5);">女生 · 温柔亲切</div>
+        <div style="font-size:18px;font-weight:900;color:white;margin-bottom:4px;">小本</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.5);">女生 · 温柔专业</div>
         <div style="margin-top:14px;background:#c060a0;color:white;border-radius:10px;padding:8px;font-size:13px;font-weight:700;">选我</div>
       </div>
     </div>
@@ -345,11 +409,35 @@ body{
 
 <style>
 @keyframes agentRunIn {
-  0%   { transform: translateX(-200px) scale(0.2); }
-  50%  { transform: translateX(0) scale(1.4); }
-  70%  { transform: translateX(0) scale(0.95); }
-  85%  { transform: translateX(0) scale(1.05); }
-  100% { transform: translateX(0) scale(1.0); font-size:120px; }
+  0%   { right:-200px; top:15%; transform:scale(0.25); }
+  60%  { right:calc(50% - 40px); top:35%; transform:scale(1.08); }
+  75%  { right:calc(50% - 40px); top:35%; transform:scale(0.96); }
+  88%  { right:calc(50% - 40px); top:35%; transform:scale(1.02); }
+  100% { right:calc(50% - 40px); top:35%; transform:scale(1.0); }
+}
+@keyframes bodyBob {
+  from { transform: translateY(0) rotate(-1.5deg); }
+  to   { transform: translateY(-7px) rotate(1.5deg); }
+}
+@keyframes armFwd {
+  from { transform: rotate(-30deg); }
+  to   { transform: rotate(20deg); }
+}
+@keyframes legFwd {
+  from { transform: rotate(-25deg); }
+  to   { transform: rotate(15deg); }
+}
+@keyframes legBack {
+  from { transform: rotate(15deg); }
+  to   { transform: rotate(-25deg); }
+}
+@keyframes airLine {
+  from { transform: translateX(0); opacity:0.8; }
+  to   { transform: translateX(-8px); opacity:0.2; }
+}
+@keyframes signWave {
+  from { transform: rotate(-5deg); }
+  to   { transform: rotate(5deg); }
 }
 @keyframes haloExpand {
   0%   { opacity:0; transform:scale(0.5); }
@@ -378,11 +466,13 @@ body{
     <div class="agent-status" id="agent-status">墨尔本机场接送专家 · 在线</div>
   </div>
   <div class="notif-btns">
-    <button class="notif-btn" onclick="openNotif()">
-      🔔<div class="notif-dot" id="notif-dot"></div>
+    <button class="notif-btn" onclick="openNotif()" style="width:auto;padding:4px 10px;border-radius:10px;display:flex;flex-direction:column;align-items:center;">
+      <span>🔔</span><span style="font-size:9px;color:rgba(255,255,255,0.6);">通知</span>
+      <div class="notif-dot" id="notif-dot"></div>
     </button>
-    <button class="notif-btn" onclick="openAnnounce()">
-      📣<div class="notif-dot" id="announce-dot"></div>
+    <button class="notif-btn" onclick="openAnnounce()" style="width:auto;padding:4px 10px;border-radius:10px;display:flex;flex-direction:column;align-items:center;">
+      <span>📣</span><span style="font-size:9px;color:rgba(255,255,255,0.6);">公告</span>
+      <div class="notif-dot" id="announce-dot"></div>
     </button>
   </div>
 </div>
@@ -510,7 +600,14 @@ async function agentSay(html, delayMs=800){
 function speak(text){
   if(!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
+  // 清理文字：去HTML标签、emoji、特殊符号
+  const clean = text
+    .replace(/<[^>]*>/g, '')
+    .replace(/[\uD800-\uDFFF]{2}/g, '')
+    .replace(/[\u2600-\u27BF]/g, '')
+    .replace(/[·•→←]/g, '')
+    .replace(/\s+/g, ' ').trim();
+  const u = new SpeechSynthesisUtterance(clean);
   u.lang = 'zh-CN';
   u.rate = currentAgent?.rate || 1.0;
   u.pitch = currentAgent?.pitch || 1.0;
@@ -871,7 +968,7 @@ function showPointsGuide(){
 // ── 选择管家 ──
 const AGENTS = {
   male:   { emoji:'🧑‍✈️', name:'澳小墨', pitch:0.8, rate:0.95, greeting:'你好！我是澳小墨 🧑‍✈️<br>专为华人旅客提供墨尔本机场接送<br>告诉我你的行程，我来帮你安排！' },
-  female: { emoji:'👩‍✈️', name:'澳小美', pitch:1.2, rate:1.0,  greeting:'你好！我是澳小美 👩‍✈️<br>很高兴为你服务，告诉我你的行程<br>我来帮你安排墨尔本机场接送 😊' },
+  female: { emoji:'👩‍✈️', name:'澳小本', pitch:1.2, rate:1.0,  greeting:'你好！我是澳小本 👩‍✈️<br>很高兴为你服务，告诉我你的行程<br>我来帮你安排墨尔本机场接送 😊' },
 };
 let currentAgent = null;
 
