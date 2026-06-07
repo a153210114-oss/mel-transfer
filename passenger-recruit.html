@@ -347,7 +347,8 @@ let aiHistory=[], bookingSubmitted=false;
 function buildSystemPrompt(){
   const saved = getPassenger();
   const addrs = getSavedAddresses();
-  let prompt = `你是澳洲出行管家，专为华人旅客提供墨尔本机场接送服务。回答简短友好，用中文，适当emoji，不透露平台抽成。
+  const yr = new Date().getFullYear();
+  let prompt = `你是澳洲出行管家，专为华人旅客提供墨尔本机场接送服务。回答简短友好，用中文，适当emoji，不透露平台抽成。今年是${yr}年，所有日期都用${yr}年。
 
 任务：通过对话收集完整预约信息后显示车型选择。需要收集：接机还是送机、日期、司机到达时间、乘客地址。
 
