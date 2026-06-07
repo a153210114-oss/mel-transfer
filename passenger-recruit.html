@@ -594,7 +594,8 @@ async function sendAIMessage() {
       })
     });
     const data = await res.json();
-    const reply = data.content?.[0]?.text || '抱歉，我没听清楚，请再说一遍 😊';
+    console.log('AI response:', JSON.stringify(data));
+    const reply = data.content?.[0]?.text || data.error || '抱歉，我没听清楚，请再说一遍 😊';
     
     aiHistory.push({ role: 'assistant', content: reply });
     // 保持历史最多10条
@@ -826,7 +827,7 @@ async function sendAIMessage() {
   <div class="qr" id="qr"></div>
   
   <!-- 自由提问输入框 -->
-  <div id="ai-input-bar" style="display:none;position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);padding:10px 14px;display:none;align-items:center;gap:8px;z-index:50;">
+  <div id="ai-input-bar" style="display:none;position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);padding:10px 14px;align-items:center;gap:8px;z-index:50;">
     <input id="ai-input" placeholder="有问题随时问我..." 
       style="flex:1;background:var(--bg);border:1.5px solid var(--border);border-radius:20px;padding:10px 16px;color:var(--text);font-size:14px;font-family:inherit;outline:none;"
       onkeydown="if(event.key==='Enter')sendAIMessage()">
