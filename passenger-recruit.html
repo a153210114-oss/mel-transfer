@@ -360,7 +360,7 @@ function buildSystemPrompt(){
 
 收集到所有信息（方向+日期+司机到达/上车时间+地址）后，说"好的信息齐了！帮你看看车型 🚗"`;
 
-  if(saved.name) prompt += `\n\n当前用户：${saved.name}，叫名字更亲切。`;
+  if(saved.name) prompt += '\n\n当前用户：'+saved.name+'。称呼时用"'+saved.name+'主人"，体现尊重和专业感。';
   if(addrs.length>0) prompt += `\n用户常用地址：${addrs[0]}。若用户说"回家""老地址""上次的地址"，直接用此地址，无需再问。`;
 
   prompt += `\n\n【重要】收集到地址信息后，必须在回复末尾加JSON标记：
@@ -553,14 +553,8 @@ async function chooseAgent(gender){
   setTimeout(()=>{ splash.style.display='none'; },500);
   await delay(600);
   const saved=getPassenger();
-  if(saved.name){
-    await agentSay(`${saved.name}，欢迎回来！告诉我这次的行程，我来帮你安排`);
-  } else {
-    const greet = gender==='male'
-      ? '你好！我是澳小墨，专为华人旅客提供墨尔本机场接送。告诉我你的行程，我来帮你安排！'
-      : '你好！我是澳小本，很高兴为你服务。告诉我你的行程，我来帮你安排墨尔本机场接送！';
-    await agentSay(greet);
-  }
+  const namePrefix = saved.name ? saved.name+'主人' : '主人';
+  await agentSay(`${namePrefix}，您的出行管家来喽！请问今天有什么出行计划需要我安排？`);
 }
 
 window.onload = function(){
