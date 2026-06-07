@@ -3,1730 +3,799 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>澳小墨 · 澳洲机场接送</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<title>司机端 · 澳洲机场接送</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg: #f7f3ee;
-  --bg2: #ede7dc;
-  --surface: #ffffff;
-  --ink: #1c1408;
-  --ink2: #5c4e38;
-  --ink3: #a08870;
-  --teal: #1a7a6a;
-  --teal2: #22a08c;
-  --teal-light: #e6f5f2;
-  --gold: #c8860a;
-  --gold2: #e8a820;
-  --warm: #e85820;
-  --radius: 22px;
-  --radius-sm: 14px;
-  --shadow: 0 4px 24px rgba(28,20,8,0.10);
-  --shadow-lg: 0 16px 56px rgba(28,20,8,0.16);
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#f0f4f8;
+  --surface:#ffffff;
+  --border:#e0e8f0;
+  --text:#1a3a5c;
+  --text2:#7a90a8;
+  --accent:#0096c7;
+  --gold:#c8a020;
+  --green:#27ae60;
+  --red:#ff3b30;
 }
-* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-body {
-  font-family: 'Noto Sans SC', sans-serif;
-  background: var(--bg); color: var(--ink);
-  max-width: 430px; margin: 0 auto; overflow-x: hidden;
-}
-.screen { display:none; }
-.screen.active { display:block; animation: rise 0.45s cubic-bezier(0.34,1.1,0.64,1); }
-@keyframes rise { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
-
-/* ══════════════════════════
-   广告落地页
-══════════════════════════ */
-#ad { background: var(--bg); min-height:100vh; }
-
-/* 顶部大图区 */
-.hero-band {
-  background: linear-gradient(160deg, #0d2a24 0%, #1a4a3a 50%, #0d3028 100%);
-  padding: 56px 24px 48px;
-  position: relative; overflow: hidden;
-}
-.hero-band-glow {
-  position: absolute; inset: 0; pointer-events: none;
-  background:
-    radial-gradient(ellipse 50% 60% at 85% 20%, rgba(200,134,10,0.25) 0%, transparent 55%),
-    radial-gradient(ellipse 60% 40% at 15% 85%, rgba(34,160,140,0.2) 0%, transparent 55%);
-}
-.hero-band-pattern {
-  position: absolute; inset: 0; pointer-events: none; opacity: 0.06;
-  background-image: radial-gradient(circle, #fff 1px, transparent 1px);
-  background-size: 28px 28px;
+body{
+  font-family:'Noto Sans SC',sans-serif;
+  background:var(--bg);
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  max-width:480px;
+  margin:0 auto;
 }
 
-.brand-row {
-  position: relative; z-index: 1;
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 36px;
+/* ── Agent头部 ── */
+.agent-header{
+  background:linear-gradient(135deg,#1a3a5c,#0d2540);
+  padding:16px 16px 12px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  position:sticky;
+  top:0;
+  z-index:100;
 }
-.brand-logo { display: flex; align-items: center; gap: 10px; }
-.brand-icon {
-  width: 40px; height: 40px; border-radius: 12px;
-  background: linear-gradient(135deg, var(--gold), var(--gold2));
-  display: flex; align-items: center; justify-content: center; font-size: 22px;
+.agent-avatar{
+  width:48px;height:48px;
+  background:rgba(255,255,255,0.1);
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:26px;
+  flex-shrink:0;
 }
-.brand-name { font-size: 14px; font-weight: 700; color: rgba(255,255,255,0.9); letter-spacing: 0.03em; }
-.brand-sub { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 1px; }
-.xhs-badge {
-  display: flex; align-items: center; gap: 5px;
-  background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
-  padding: 5px 12px; border-radius: 20px;
-  font-size: 11px; color: rgba(255,255,255,0.7);
+.agent-info{flex:1;}
+.agent-name{font-size:16px;font-weight:800;color:white;}
+.agent-status{font-size:11px;color:rgba(255,255,255,0.5);margin-top:2px;}
+.notif-btns{display:flex;gap:8px;}
+.notif-btn{
+  position:relative;
+  background:rgba(255,255,255,0.1);
+  border:none;width:36px;height:36px;
+  border-radius:10px;font-size:16px;cursor:pointer;
 }
-
-.hero-tag {
-  position: relative; z-index: 1;
-  display: inline-flex; align-items: center; gap: 6px;
-  background: rgba(200,134,10,0.2); border: 1px solid rgba(200,134,10,0.4);
-  color: var(--gold2); font-size: 11px; letter-spacing: 0.1em;
-  padding: 5px 14px; border-radius: 20px; margin-bottom: 18px;
-}
-.hero-title {
-  position: relative; z-index: 1;
-  font-family: 'Syne', sans-serif;
-  font-size: 34px; font-weight: 800; color: #ffffff;
-  line-height: 1.15; letter-spacing: -0.02em;
-}
-.hero-title .accent { color: var(--gold2); }
-.hero-sub {
-  position: relative; z-index: 1;
-  margin-top: 14px; font-size: 14px;
-  color: rgba(255,255,255,0.6); line-height: 1.8; font-weight: 300;
+.notif-dot{
+  position:absolute;top:-3px;right:-3px;
+  background:var(--red);border-radius:50%;
+  width:8px;height:8px;display:none;
 }
 
-/* 浮动卡片 */
-.float-card {
-  margin: -24px 20px 0;
-  background: var(--surface);
-  border-radius: var(--radius);
-  padding: 20px;
-  box-shadow: var(--shadow-lg);
-  position: relative; z-index: 10;
-}
-.fc-row { display: flex; gap: 0; }
-.fc-item {
-  flex: 1; text-align: center; padding: 10px 8px;
-  border-right: 1px solid var(--bg2);
-}
-.fc-item:last-child { border-right: none; }
-.fc-icon { font-size: 24px; margin-bottom: 6px; }
-.fc-label { font-size: 11px; font-weight: 600; color: var(--ink); }
-.fc-sub { font-size: 10px; color: var(--ink3); margin-top: 2px; line-height: 1.4; }
-
-/* 信任条 */
-.trust-bar {
-  margin: 20px 20px 0;
-  display: flex; gap: 8px;
-}
-.trust-pill {
-  flex: 1; padding: 10px 8px; text-align: center;
-  background: var(--teal-light); border-radius: 10px;
-  font-size: 11px; font-weight: 600; color: var(--teal);
-  line-height: 1.4;
+/* ── 对话区 ── */
+.chat-area{
+  flex:1;
+  padding:16px 14px 120px;
+  overflow-y:auto;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
 }
 
-/* 场景卡片 */
-.section-title {
-  font-size: 11px; font-weight: 600; color: var(--ink3);
-  letter-spacing: 0.12em; text-transform: uppercase;
-  padding: 24px 20px 12px;
+/* 消息气泡 */
+.msg{display:flex;gap:8px;align-items:flex-end;}
+.msg.user{flex-direction:row-reverse;}
+.msg-avatar{
+  width:32px;height:32px;
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;flex-shrink:0;
+  background:rgba(0,150,199,0.1);
 }
-.scene-cards { padding: 0 20px; display: flex; flex-direction: column; gap: 12px; }
-.scene-card {
-  background: var(--surface); border-radius: var(--radius-sm);
-  padding: 16px; display: flex; gap: 14px; align-items: flex-start;
-  box-shadow: 0 2px 12px rgba(28,20,8,0.07);
+.msg.user .msg-avatar{background:rgba(200,160,32,0.1);}
+.msg-bubble{
+  max-width:75%;
+  background:white;
+  border-radius:18px 18px 18px 4px;
+  padding:10px 14px;
+  font-size:14px;
+  color:var(--text);
+  line-height:1.6;
+  box-shadow:0 2px 8px rgba(0,0,0,0.06);
 }
-.scene-icon {
-  width: 44px; height: 44px; border-radius: 12px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 22px; flex-shrink: 0;
-}
-.icon-teal { background: var(--teal-light); }
-.icon-gold { background: rgba(200,134,10,0.12); }
-.icon-warm { background: rgba(232,88,32,0.1); }
-.scene-text h4 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
-.scene-text p { font-size: 12px; color: var(--ink2); line-height: 1.6; }
-
-/* 价格展示 */
-.price-section { margin: 20px; }
-.price-card {
-  background: var(--surface); border-radius: var(--radius);
-  overflow: hidden; box-shadow: var(--shadow);
-}
-.price-header {
-  background: linear-gradient(135deg, var(--teal), var(--teal2));
-  padding: 16px 20px;
-  display: flex; align-items: center; justify-content: space-between;
-}
-.price-header-left h3 { font-size: 15px; font-weight: 700; color: #fff; }
-.price-header-left p { font-size: 11px; color: rgba(255,255,255,0.65); margin-top: 2px; }
-.price-tag {
-  background: rgba(255,255,255,0.2); border-radius: 8px;
-  padding: 6px 12px; font-size: 11px; color: #fff; font-weight: 600;
-}
-.price-rows { padding: 4px 0; }
-.price-row {
-  display: flex; align-items: center; padding: 13px 20px;
-  border-bottom: 1px solid var(--bg); gap: 12px;
-}
-.price-row:last-child { border-bottom: none; }
-.price-row-icon { font-size: 20px; flex-shrink: 0; width: 28px; text-align: center; }
-.price-row-info { flex: 1; }
-.price-row-name { font-size: 13px; font-weight: 600; }
-.price-row-cap { font-size: 11px; color: var(--ink3); margin-top: 1px; }
-.price-row-price {
-  font-size: 18px; font-weight: 700; color: var(--teal);
-  font-family: 'Syne', sans-serif;
-}
-.price-note {
-  padding: 12px 20px; background: var(--bg);
-  font-size: 11px; color: var(--ink3); line-height: 1.7;
+.msg.user .msg-bubble{
+  background:var(--accent);
+  color:white;
+  border-radius:18px 18px 4px 18px;
 }
 
-/* 积分奖励 */
-.points-section { margin: 0 20px 8px; }
-.points-card {
-  background: linear-gradient(135deg, rgba(200,134,10,0.1), rgba(34,160,140,0.08));
-  border: 1px solid rgba(200,134,10,0.2);
-  border-radius: var(--radius-sm); padding: 16px;
+/* 打字动画 */
+.typing-bubble{
+  background:white;
+  border-radius:18px 18px 18px 4px;
+  padding:12px 16px;
+  display:flex;gap:4px;align-items:center;
+  box-shadow:0 2px 8px rgba(0,0,0,0.06);
 }
-.points-title { font-size: 13px; font-weight: 700; color: var(--gold); margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
-.points-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid rgba(28,20,8,0.05); }
-.points-row:last-child { border-bottom: none; }
-.points-key { font-size: 12px; color: var(--ink2); }
-.points-val { font-size: 12px; font-weight: 600; color: var(--gold); }
+.typing-dot{
+  width:7px;height:7px;
+  background:#ccc;border-radius:50%;
+  animation:typingBounce 1s ease-in-out infinite;
+}
+.typing-dot:nth-child(2){animation-delay:0.15s;}
+.typing-dot:nth-child(3){animation-delay:0.3s;}
+@keyframes typingBounce{
+  0%,60%,100%{transform:translateY(0);}
+  30%{transform:translateY(-6px);background:var(--accent);}
+}
 
-/* 支付方式 */
-.pay-section { margin: 0 20px; }
-.pay-row { display: flex; gap: 8px; }
-.pay-pill {
-  flex: 1; padding: 12px 8px; text-align: center;
-  background: var(--surface); border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(28,20,8,0.07);
-  font-size: 12px; font-weight: 500; color: var(--ink2);
+/* 选择卡片 */
+.choice-cards{
+  display:flex;flex-direction:column;gap:8px;
+  margin-top:4px;
 }
-.pay-icon { font-size: 20px; margin-bottom: 4px; }
+.choice-card{
+  background:white;
+  border:2px solid var(--border);
+  border-radius:14px;
+  padding:12px 16px;
+  cursor:pointer;
+  transition:all 0.2s;
+  display:flex;align-items:center;gap:10px;
+}
+.choice-card:active{transform:scale(0.98);}
+.choice-card.selected{border-color:var(--accent);background:#f0f8ff;}
+.choice-card-icon{font-size:22px;}
+.choice-card-text h4{font-size:14px;font-weight:700;color:var(--text);}
+.choice-card-text p{font-size:12px;color:var(--text2);margin-top:2px;}
+.choice-card-price{margin-left:auto;font-size:16px;font-weight:900;color:var(--accent);}
 
-/* CTA */
-.cta-section { margin: 24px 20px 48px; }
-.cta-btn {
-  width: 100%; padding: 18px;
-  background: linear-gradient(135deg, var(--teal) 0%, var(--teal2) 100%);
-  border: none; border-radius: var(--radius);
-  font-family: 'Noto Sans SC', sans-serif;
-  font-size: 17px; font-weight: 700; color: #ffffff;
-  cursor: pointer; position: relative; overflow: hidden;
-  box-shadow: 0 8px 32px rgba(26,122,106,0.35);
-  transition: transform 0.15s; letter-spacing: 0.03em;
+/* 车型卡片 */
+.vehicle-cards{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;
+  margin-top:4px;
 }
-.cta-btn:active { transform: scale(0.97); }
-.cta-btn::before {
-  content: ''; position: absolute; top:0; left:-100%; width:60%; height:100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-  animation: shine 3s infinite;
+.vehicle-card{
+  background:white;
+  border:2px solid var(--border);
+  border-radius:14px;
+  padding:12px;
+  cursor:pointer;
+  text-align:center;
+  transition:all 0.2s;
 }
-@keyframes shine { to{left:150%} }
-.cta-sub { text-align: center; margin-top: 12px; font-size: 11px; color: var(--ink3); line-height: 1.7; }
+.vehicle-card:active{transform:scale(0.97);}
+.vehicle-card.selected{border-color:var(--accent);background:#f0f8ff;}
+.vehicle-icon{font-size:28px;margin-bottom:4px;}
+.vehicle-name{font-size:13px;font-weight:700;color:var(--text);}
+.vehicle-cap{font-size:11px;color:var(--text2);margin:2px 0;}
+.vehicle-price{font-size:16px;font-weight:900;color:var(--accent);}
 
-/* ══════════════════════════
-   Agent 页
-══════════════════════════ */
-#agent { background: var(--bg); min-height:100vh; display:flex; flex-direction:column; }
+/* 确认卡 */
+.confirm-card{
+  background:white;
+  border-radius:18px;
+  padding:18px;
+  box-shadow:0 4px 20px rgba(0,0,0,0.08);
+  margin-top:4px;
+}
+.confirm-title{
+  font-size:15px;font-weight:900;color:var(--text);
+  margin-bottom:14px;display:flex;align-items:center;gap:8px;
+}
+.confirm-row{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 0;
+  border-bottom:1px solid var(--border);
+  font-size:13px;
+}
+.confirm-row:last-of-type{border:none;}
+.confirm-label{color:var(--text2);width:60px;flex-shrink:0;}
+.confirm-value{color:var(--text);font-weight:600;flex:1;}
+.confirm-btns{display:flex;gap:8px;margin-top:14px;}
+.confirm-btn{
+  flex:1;padding:12px;border:none;border-radius:12px;
+  font-size:14px;font-weight:700;cursor:pointer;
+  font-family:inherit;
+}
+.confirm-btn.primary{background:var(--accent);color:white;}
+.confirm-btn.secondary{background:var(--bg);color:var(--text2);}
 
-.progress-bar {
-  position: fixed; top:0; left:50%; transform:translateX(-50%);
-  width:100%; max-width:430px; height:3px;
-  background: var(--bg2); z-index:200;
+/* 联系表单 */
+.contact-form{
+  background:white;
+  border-radius:18px;
+  padding:18px;
+  box-shadow:0 4px 20px rgba(0,0,0,0.08);
+  margin-top:4px;
 }
-.prog-fill { height:100%; background: linear-gradient(90deg, var(--teal), var(--teal2)); border-radius:0 3px 3px 0; transition:width 0.5s ease; }
+.form-title{font-size:15px;font-weight:900;color:var(--text);margin-bottom:14px;}
+.form-field{margin-bottom:12px;}
+.form-label{font-size:12px;color:var(--text2);margin-bottom:4px;display:block;}
+.form-input{
+  width:100%;padding:11px 14px;
+  background:var(--bg);
+  border:1.5px solid var(--border);
+  border-radius:10px;
+  color:var(--text);font-size:14px;
+  font-family:inherit;outline:none;
+}
+.form-input:focus{border-color:var(--accent);}
 
-/* Agent 头部 */
-.a-header {
-  background: linear-gradient(160deg, #0d2a24 0%, #1a4a3a 100%);
-  padding: 50px 20px 32px;
-  position: relative; overflow: hidden;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+/* 支付选项 */
+.pay-options{display:flex;gap:8px;margin-top:4px;}
+.pay-opt{
+  flex:1;padding:10px 6px;
+  background:var(--bg);
+  border:2px solid var(--border);
+  border-radius:10px;
+  text-align:center;
+  font-size:12px;font-weight:700;
+  color:var(--text2);cursor:pointer;
 }
-.a-header-glow {
-  position: absolute; inset: 0; pointer-events: none;
-  background:
-    radial-gradient(ellipse at 75% 25%, rgba(200,134,10,0.18) 0%, transparent 50%),
-    radial-gradient(ellipse at 25% 75%, rgba(34,160,140,0.15) 0%, transparent 50%);
-}
-.a-top { position: relative; z-index:1; display:flex; align-items:center; gap:14px; }
-.a-avatar {
-  width: 68px; height: 68px; border-radius: 50%; flex-shrink:0;
-  background: linear-gradient(135deg, #1a3a30, #2a5a48);
-  border: 2.5px solid rgba(200,134,10,0.55);
-  display: flex; align-items:center; justify-content:center; font-size:36px;
-  box-shadow: 0 0 0 6px rgba(200,134,10,0.08), 0 8px 24px rgba(0,0,0,0.35);
-  animation: fl 3s ease-in-out infinite; position:relative;
-}
-@keyframes fl { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
-.a-mouth {
-  position:absolute; bottom:13px; left:50%; transform:translateX(-50%);
-  width:12px; height:5px; border-radius:0 0 6px 6px; background:rgba(0,0,0,0.3);
-  animation:tk 0.35s ease-in-out infinite alternate;
-}
-.a-mouth.q { animation:none; height:3px; }
-@keyframes tk { from{height:3px} to{height:8px} }
-.a-info { flex:1; }
-.a-name { font-size:19px; font-weight:700; color:#fff; }
-.a-role { font-size:11px; color: var(--gold2); letter-spacing:0.1em; margin-top:2px; text-transform:uppercase; }
-.a-desc { font-size:12px; color:rgba(255,255,255,0.45); margin-top:6px; line-height:1.5; }
-
-/* 聊天区 */
-.chat { flex:1; padding:20px 16px 16px; overflow-y:auto; display:flex; flex-direction:column; gap:14px; }
-.bw { display:flex; align-items:flex-end; gap:8px; }
-.bw.u { flex-direction:row-reverse; }
-.bav {
-  width:30px; height:30px; border-radius:50%; flex-shrink:0;
-  background:linear-gradient(135deg,#1a3a30,#2a5a48);
-  border:1px solid rgba(200,134,10,0.3);
-  display:flex; align-items:center; justify-content:center; font-size:16px;
-}
-.bb {
-  max-width:80%; padding:12px 15px; border-radius:18px;
-  font-size:14px; line-height:1.65;
-  animation:pp 0.3s cubic-bezier(0.34,1.4,0.64,1) both;
-}
-.bw:not(.u) .bb { background:var(--surface); border-bottom-left-radius:4px; box-shadow:var(--shadow); color:var(--ink); }
-.bw.u .bb { background:linear-gradient(135deg,var(--teal),var(--teal2)); border-bottom-right-radius:4px; color:#fff; font-weight:500; }
-@keyframes pp { from{opacity:0;transform:scale(0.85)} to{opacity:1;transform:scale(1)} }
-.bb .t { color:var(--teal2); font-weight:700; }
-.bb .g { color:var(--gold); font-weight:700; }
-
-/* 打字 */
-.typing { display:flex; align-items:center; gap:5px; padding:13px 16px; background:var(--surface); border-radius:18px; border-bottom-left-radius:4px; width:fit-content; box-shadow:var(--shadow); }
-.td { width:6px; height:6px; border-radius:50%; background:var(--ink3); animation:tb 1.2s ease infinite; }
-.td:nth-child(2){animation-delay:.2s} .td:nth-child(3){animation-delay:.4s}
-@keyframes tb { 0%,60%,100%{transform:translateY(0);opacity:.4} 30%{transform:translateY(-5px);opacity:1} }
-
-/* 快捷回复 */
-.qr { padding:4px 16px 12px; display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-end; }
-.qrb {
-  padding:9px 16px; background:transparent;
-  border:1.5px solid var(--teal); border-radius:20px;
-  font-size:13px; font-weight:500; color:var(--teal);
-  cursor:pointer; font-family:'Noto Sans SC',sans-serif; transition:all 0.15s;
-}
-.qrb:active { background:var(--teal); color:#fff; transform:scale(0.97); }
-
-/* 表单卡 */
-.fc {
-  background:var(--surface); border-radius:var(--radius-sm);
-  padding:18px; margin:0 16px;
-  box-shadow:var(--shadow);
-  animation:pp 0.3s cubic-bezier(0.34,1.4,0.64,1) both;
-}
-.fc-t { font-size:13px; font-weight:700; color:var(--teal); margin-bottom:14px; display:flex; align-items:center; gap:8px; }
-.ff { margin-bottom:10px; }
-.fl { font-size:11px; color:var(--ink3); margin-bottom:5px; display:block; }
-.fi {
-  width:100%; padding:11px 13px;
-  background:var(--bg); border:1.5px solid var(--bg2);
-  border-radius:10px; font-size:13px; color:var(--ink);
-  font-family:'Noto Sans SC',sans-serif; outline:none;
-  -webkit-appearance:none; transition:border-color 0.2s;
-}
-.fi:focus { border-color:var(--teal); }
-.fi::placeholder { color:var(--ink3); }
-.fr { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-.frow3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
-
-/* 人数选择器 */
-.num-sel { display:flex; align-items:center; gap:0; border:1.5px solid var(--bg2); border-radius:10px; overflow:hidden; }
-.ns-btn { width:44px; height:44px; background:var(--bg); border:none; font-size:20px; color:var(--teal); cursor:pointer; font-family:'Noto Sans SC',sans-serif; transition:background 0.15s; }
-.ns-btn:active { background:var(--teal-light); }
-.ns-val { flex:1; text-align:center; font-size:16px; font-weight:700; color:var(--ink); background:var(--surface); }
-
-/* 车型选项 */
-.vtg { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:8px 0; }
-.vt { padding:12px 8px; text-align:center; background:var(--bg); border:1.5px solid var(--bg2); border-radius:10px; cursor:pointer; transition:all 0.15s; }
-.vt.on { border-color:var(--teal); background:var(--teal-light); }
-.vt-i { font-size:22px; margin-bottom:4px; }
-.vt-n { font-size:12px; font-weight:600; }
-.vt-c { font-size:10px; color:var(--ink3); margin-top:1px; }
-.vt-p { font-size:12px; font-weight:700; color:var(--teal); margin-top:3px; }
-
-/* 方向选择 */
-.dir-sel { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:8px 0; }
-.dir-opt { padding:14px 10px; text-align:center; background:var(--bg); border:1.5px solid var(--bg2); border-radius:10px; cursor:pointer; transition:all 0.15s; }
-.dir-opt.on { border-color:var(--teal); background:var(--teal-light); }
-.dir-icon { font-size:24px; margin-bottom:5px; }
-.dir-name { font-size:13px; font-weight:600; }
-.dir-sub { font-size:10px; color:var(--ink3); margin-top:2px; }
+.pay-opt.selected{border-color:var(--accent);color:var(--accent);background:#f0f8ff;}
 
 /* 提交按钮 */
-.fsub {
-  width:100%; padding:13px; background:linear-gradient(135deg,var(--teal),var(--teal2));
-  border:none; border-radius:10px; font-family:'Noto Sans SC',sans-serif;
-  font-size:14px; font-weight:700; color:#fff; cursor:pointer; margin-top:6px; transition:all 0.15s;
+.submit-btn{
+  width:100%;margin-top:16px;
+  padding:15px;
+  background:linear-gradient(135deg,var(--accent),#0077b6);
+  color:white;border:none;border-radius:14px;
+  font-size:16px;font-weight:900;
+  font-family:inherit;cursor:pointer;
+  box-shadow:0 6px 20px rgba(0,150,199,0.35);
 }
-.fsub:active { transform:scale(0.98); opacity:0.9; }
 
-/* 报价卡 */
-.quote-card {
-  background:var(--surface); border-radius:var(--radius-sm);
-  overflow:hidden; margin:0 16px; box-shadow:var(--shadow);
-  animation:pp 0.3s cubic-bezier(0.34,1.4,0.64,1) both;
+/* ── 底部输入区 ── */
+.input-bar{
+  position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+  width:100%;max-width:480px;
+  background:white;
+  border-top:1px solid var(--border);
+  padding:10px 14px 20px;
+  display:flex;gap:8px;align-items:center;
+  z-index:100;
 }
-.qc-header {
-  background:linear-gradient(135deg,var(--teal),var(--teal2));
-  padding:14px 16px; display:flex; justify-content:space-between; align-items:center;
+.chat-input{
+  flex:1;
+  background:var(--bg);
+  border:1.5px solid var(--border);
+  border-radius:22px;
+  padding:10px 16px;
+  font-size:14px;color:var(--text);
+  font-family:inherit;outline:none;
 }
-.qc-header-left { font-size:13px; font-weight:700; color:#fff; }
-.qc-header-sub { font-size:11px; color:rgba(255,255,255,0.65); margin-top:2px; }
-.qc-dist { font-size:12px; color:rgba(255,255,255,0.8); font-weight:600; }
-.qc-rows { padding:4px 0; }
-.qc-row {
-  display:flex; align-items:center; padding:13px 16px;
-  border-bottom:1px solid var(--bg); gap:10px; cursor:pointer; transition:background 0.15s;
+.chat-input:focus{border-color:var(--accent);}
+.send-btn{
+  width:40px;height:40px;
+  background:var(--accent);
+  border:none;border-radius:50%;
+  font-size:16px;cursor:pointer;
+  flex-shrink:0;display:flex;
+  align-items:center;justify-content:center;
+  color:white;
 }
-.qc-row:last-child { border-bottom:none; }
-.qc-row.sel { background:var(--teal-light); }
-.qc-row:active { background:var(--teal-light); }
-.qc-icon { font-size:22px; flex-shrink:0; width:28px; text-align:center; }
-.qc-info { flex:1; }
-.qc-name { font-size:13px; font-weight:600; }
-.qc-cap { font-size:11px; color:var(--ink3); margin-top:1px; }
-.qc-price { font-size:19px; font-weight:800; color:var(--teal); font-family:'Syne',sans-serif; }
-.sel-btn {
-  width:calc(100% - 32px); margin:12px 16px; padding:13px;
-  background:linear-gradient(135deg,var(--teal),var(--teal2));
-  border:none; border-radius:10px; font-family:'Noto Sans SC',sans-serif;
-  font-size:14px; font-weight:700; color:#fff; cursor:pointer; transition:all 0.15s;
+.mic-btn{
+  width:40px;height:40px;
+  background:var(--bg);
+  border:1.5px solid var(--border);
+  border-radius:50%;
+  font-size:18px;cursor:pointer;
+  flex-shrink:0;
 }
-.sel-btn:active { transform:scale(0.98); }
+.mic-btn.recording{background:#fff0f0;border-color:var(--red);}
 
-/* 成功 */
-.success {
-  background:linear-gradient(135deg,var(--teal-light),rgba(200,134,10,0.06));
-  border:1.5px solid rgba(26,122,106,0.25);
-  border-radius:var(--radius); padding:28px 20px; margin:0 16px; text-align:center;
-  animation:pp 0.4s cubic-bezier(0.34,1.4,0.64,1) both;
+/* ── 成功弹窗 ── */
+.modal-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,0.55);z-index:999;
+  align-items:flex-end;justify-content:center;
 }
-.suc-icon { font-size:52px; margin-bottom:14px; animation:bi 0.5s 0.2s both; }
-@keyframes bi { from{transform:scale(0)} 60%{transform:scale(1.2)} to{transform:scale(1)} }
-.suc-title { font-size:20px; font-weight:700; color:var(--teal); margin-bottom:8px; }
-.suc-sub { font-size:13px; color:var(--ink2); line-height:1.75; }
-.suc-id { margin-top:14px; padding:10px 14px; background:rgba(26,122,106,0.1); border-radius:8px; font-size:12px; color:var(--teal); font-weight:600; }
-.suc-pts { margin-top:8px; padding:10px 14px; background:rgba(200,134,10,0.1); border-radius:8px; font-size:12px; color:var(--gold); }
-
-.notif-item {
-  background: white;
-  border-radius: 14px;
-  padding: 14px 16px;
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-  border-left: 3px solid transparent;
+.modal-sheet{
+  background:white;
+  border-radius:28px 28px 0 0;
+  padding:28px 24px 40px;
+  width:100%;max-width:480px;
 }
-.notif-item.unread { border-left-color: #ff3b30; }
-.notif-item.unread .notif-title { font-weight: 800; }
-.notif-icon { font-size: 22px; flex-shrink: 0; }
-.notif-title { font-size: 13px; color: #1a3a5c; margin-bottom: 3px; }
-.notif-body { font-size: 12px; color: #888; line-height: 1.5; }
-.notif-time { font-size: 11px; color: #ccc; margin-left: auto; flex-shrink: 0; }
-
+.modal-handle{
+  width:40px;height:4px;background:#e0e0e0;
+  border-radius:2px;margin:0 auto 20px;
+}
 </style>
-<script>
-window.onerror = function(msg, src, line, col, err) {
-  // 静默处理跨域脚本错误
-  if (!src || src === '') return true;
-  return false;
-};
-window.addEventListener('unhandledrejection', function(e) {
-  e.preventDefault(); // 静默处理Promise错误
-});
-
-function showPointsGuide() {
-  document.getElementById('points-guide-modal').style.display = 'flex';
-}
-function closePointsGuide() {
-  document.getElementById('points-guide-modal').style.display = 'none';
-}
-
-
-// ── 通知系统 ──
-async function loadNotifications() {
-  const p = getPassenger();
-  if (!p.phone) return;
-
-  try {
-    const notifs = await supaFetch(`notifications?phone=eq.${encodeURIComponent(p.phone)}&tenant_id=eq.${TENANT_ID}&order=created_at.desc&limit=20`);
-    const unread = notifs.filter(n => !n.is_read && n.type !== 'announcement');
-    const unreadAnnounce = notifs.filter(n => !n.is_read && n.type === 'announcement');
-
-    // 更新红标
-    const badge = document.getElementById('notif-badge');
-    const abadge = document.getElementById('announce-badge');
-    if (badge) badge.style.display = unread.length > 0 ? 'flex' : 'none';
-    if (abadge) abadge.style.display = unreadAnnounce.length > 0 ? 'block' : 'none';
-
-    // 渲染通知列表
-    const list = document.getElementById('notif-list');
-    const personal = notifs.filter(n => n.type !== 'announcement');
-    if (list && personal.length > 0) {
-      list.innerHTML = personal.map(n => `
-        <div class="notif-item ${n.is_read?'':'unread'}" onclick="readNotif('${n.id}',this)">
-          <div class="notif-icon">${n.icon||'🔔'}</div>
-          <div style="flex:1;">
-            <div class="notif-title">${n.title}</div>
-            <div class="notif-body">${n.body}</div>
-          </div>
-          <div class="notif-time">${timeAgo(n.created_at)}</div>
-        </div>
-      `).join('');
-    }
-  } catch(e) { console.log('notif error', e); }
-}
-
-async function readNotif(id, el) {
-  el.classList.remove('unread');
-  try {
-    await supaFetch(`notifications?id=eq.${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ is_read: true })
-    });
-    loadNotifications();
-  } catch(e) {}
-}
-
-async function markAllRead() {
-  const p = getPassenger();
-  if (!p.phone) return;
-  try {
-    await supaFetch(`notifications?phone=eq.${encodeURIComponent(p.phone)}&tenant_id=eq.${TENANT_ID}&is_read=eq.false`, {
-      method: 'PATCH',
-      body: JSON.stringify({ is_read: true })
-    });
-    loadNotifications();
-  } catch(e) {}
-}
-
-function openNotifications() {
-  switchToPage('page-notifications');
-  markAllRead();
-}
-
-function openAnnouncements() {
-  switchToPage('page-notifications');
-}
-
-function switchToPage(pageId) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(pageId).classList.add('active');
-  window.scrollTo(0,0);
-}
-
-function timeAgo(dateStr) {
-  const diff = (new Date() - new Date(dateStr)) / 60000;
-  if (diff < 1) return '刚刚';
-  if (diff < 60) return Math.floor(diff) + '分钟前';
-  if (diff < 1440) return Math.floor(diff/60) + '小时前';
-  return Math.floor(diff/1440) + '天前';
-}
-
-// supa fetch带PATCH支持
-async function supaFetch(path, opts={}) {
-  const res = await fetch(SUPA_URL + '/rest/v1/' + path, {
-    headers: {
-      'apikey': SUPA_KEY,
-      'Authorization': 'Bearer ' + SUPA_KEY,
-      'Content-Type': 'application/json',
-      'Prefer': 'return=representation',
-      ...(opts.headers||{})
-    },
-    ...opts
-  });
-  if (!res.ok) { const e = await res.json(); throw new Error(e.message||'error'); }
-  return res.json();
-}
-
-
-// ── Claude AI 对话 ──
-const CLAUDE_MODEL = 'claude-sonnet-4-20250514';
-let aiHistory = [];
-
-const AI_SYSTEM = `你是澳洲出行管家"澳小墨"，专门为华人旅客提供墨尔本机场接送服务。
-
-你可以回答：
-- 价格：Sedan $70起（墨尔本机场25km内），MPV $90，大型MPV $120，Van $160
-- 服务：接机、送机、全程中文、华人司机
-- 支付：微信支付、信用卡、银行转账
-- 取消政策：24小时前全退，12-24小时退80%，2-12小时退50%，2小时内不退
-- 积分：每次下单得积分，可折现，推荐朋友各得20积分
-
-你不能透露：
-- 平台抽成比例
-- 其他乘客信息
-- 司机具体收入
-
-回答要简短友好，用中文，加适当emoji。如果用户要下单，引导他们填写表单。`;
-
-async function sendAIMessage() {
-  const input = document.getElementById('ai-input');
-  const msg = input.value.trim();
-  if (!msg) return;
-  input.value = '';
-
-  // 显示用户消息
-  await bubble(msg, true);
-  
-  // 加入历史
-  aiHistory.push({ role: 'user', content: msg });
-  
-  // 显示打字动画
-  await typing(600);
-
-  try {
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        system: AI_SYSTEM,
-        messages: aiHistory
-      })
-    });
-    const data = await res.json();
-    console.log('AI response:', JSON.stringify(data));
-    const reply = data.content?.[0]?.text || data.error || '抱歉，我没听清楚，请再说一遍 😊';
-    
-    aiHistory.push({ role: 'assistant', content: reply });
-    // 保持历史最多10条
-    if (aiHistory.length > 10) aiHistory = aiHistory.slice(-10);
-    
-    await bubble(reply);
-  } catch(e) {
-    await bubble('网络有点问题，请稍后再试 😅');
-  }
-}
-
-</script>
 </head>
 <body>
 
-<!-- ═══════════════════ 广告落地页 ═══════════════════ -->
-<div class="screen" id="ad" style="display:none;">
-
-  <div class="hero-band">
-    <div class="hero-band-glow"></div>
-    <div class="hero-band-pattern"></div>
-    <div class="brand-row">
-      <div class="brand-logo">
-        <div class="brand-icon">✈️</div>
-        <div>
-          <div class="brand-name">澳洲机场接送</div>
-          <div class="brand-sub">澳洲华人 · 一口价透明</div>
-        </div>
-      </div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <button onclick="openXHS()" style="
-          width:36px;height:36px;border-radius:10px;
-          background:rgba(255,59,59,0.15);border:1px solid rgba(255,59,59,0.3);
-          display:flex;align-items:center;justify-content:center;
-          font-size:18px;cursor:pointer;
-        ">📕</button>
-        <button onclick="openWeChat()" style="
-          width:36px;height:36px;border-radius:10px;
-          background:rgba(9,187,7,0.15);border:1px solid rgba(9,187,7,0.3);
-          display:flex;align-items:center;justify-content:center;
-          font-size:18px;cursor:pointer;
-        ">💬</button>
-      </div>
-    </div>
-    <div class="hero-tag">🇦🇺 澳洲华人首选</div>
-    <div class="hero-title">
-      到澳洲了？<br>让<span class="accent">华人司机</span>接你<br>安心又省心
-    </div>
-    <div class="hero-sub">
-      微信 · 信用卡 · 银行转账，三种支付方式
-    </div>
+<!-- Agent头部 -->
+<div class="agent-header">
+  <div class="agent-avatar" id="agent-avatar">🧑‍✈️</div>
+  <div class="agent-info">
+    <div class="agent-name" id="agent-name">澳小墨</div>
+    <div class="agent-status" id="agent-status">墨尔本机场接送专家 · 在线</div>
   </div>
-
-  <!-- 浮动特点卡 -->
-  <div class="float-card">
-    <div class="fc-row">
-      <div class="fc-item">
-        <div class="fc-icon">🗣️</div>
-        <div class="fc-label">全程中文</div>
-        <div class="fc-sub">华人司机<br>沟通无障碍</div>
-      </div>
-      <div class="fc-item">
-        <div class="fc-icon">💰</div>
-        <div class="fc-label">一口价</div>
-        <div class="fc-sub">下单即锁价<br>绝不临时加收</div>
-      </div>
-      <div class="fc-item">
-        <div class="fc-icon">📍</div>
-        <div class="fc-label">实时追踪</div>
-        <div class="fc-sub">司机位置<br>手机实时查看</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 信任标签 -->
-  <div class="trust-bar">
-    <div class="trust-pill">✅ 持牌司机</div>
-    <div class="trust-pill">🔒 预付保障</div>
-    <div class="trust-pill">⭐ 积分返利</div>
-  </div>
-
-
-
-  <!-- 价格展示 -->
-  <div class="section-title">参考价格（<span id="price-city-label">当地机场</span>）</div>
-  <div class="price-section" style="margin-top:0">
-    <div class="price-card">
-      <div class="price-header">
-        <div class="price-header-left">
-          <h3>机场25公里内一口价</h3>
-          <p>City及周边区域</p>
-        </div>
-        <div class="price-tag">📍 起步价</div>
-      </div>
-      <div class="price-rows">
-        <div class="price-row">
-          <div class="price-row-icon">🚗</div>
-          <div class="price-row-info">
-            <div class="price-row-name">Sedan</div>
-            <div class="price-row-cap">1-3人 · 最多6件行李</div>
-          </div>
-          <div class="price-row-price">$70</div>
-        </div>
-        <div class="price-row">
-          <div class="price-row-icon">🚐</div>
-          <div class="price-row-info">
-            <div class="price-row-name">MPV 商务车</div>
-            <div class="price-row-cap">4-6人 · 最多12件行李</div>
-          </div>
-          <div class="price-row-price">$90</div>
-        </div>
-        <div class="price-row">
-          <div class="price-row-icon">🚌</div>
-          <div class="price-row-info">
-            <div class="price-row-name">大型MPV</div>
-            <div class="price-row-cap">7-9人 · 最多18件行李</div>
-          </div>
-          <div class="price-row-price">$120</div>
-        </div>
-        <div class="price-row">
-          <div class="price-row-icon">🚌</div>
-          <div class="price-row-info">
-            <div class="price-row-name">Van（10-15座）</div>
-            <div class="price-row-cap">最多14人 · 适合小团队</div>
-          </div>
-          <div class="price-row-price">$160</div>
-        </div>
-        <div class="price-row">
-          <div class="price-row-icon">🚎</div>
-          <div class="price-row-info">
-            <div class="price-row-name">Bus（20座以上）</div>
-            <div class="price-row-cap">旅行团 · 多辆配合 · 询价</div>
-          </div>
-          <div class="price-row-price">询价</div>
-        </div>
-      </div>
-      <div class="price-note">
-        超出25公里每5公里加收固定金额 · 下单时自动计算显示<br>
-        非工作时段（深夜/清晨）小额附加费 · 下单前透明显示
-      </div>
-    </div>
-  </div>
-
-  <!-- 积分奖励 -->
-  <div class="section-title">下单还能赚积分</div>
-  <div class="points-section">
-    <div class="points-card">
-      <div class="points-title">🏆 乘客积分计划</div>
-      <div class="points-row"><span class="points-key">每次下单</span><span class="points-val">+积分</span></div>
-      <div class="points-row"><span class="points-key">推荐朋友下单</span><span class="points-val">+积分奖励</span></div>
-      <div class="points-row"><span class="points-key">季度积分分红</span><span class="points-val">按比例现金返利</span></div>
-      <div class="points-row"><span class="points-key">年底持有加成</span><span class="points-val">额外+5%</span></div>
-    </div>
-  </div>
-
-  <!-- 支付方式 -->
-  <div class="section-title">支付方式</div>
-  <div class="pay-section">
-    <div class="pay-row">
-      <div class="pay-pill"><div class="pay-icon">💚</div>微信支付</div>
-      <div class="pay-pill"><div class="pay-icon">💳</div>信用卡</div>
-      <div class="pay-pill"><div class="pay-icon">🏦</div>银行转账</div>
-    </div>
-  </div>
-
-  <!-- CTA -->
-  <div class="cta-section">
-    <button class="cta-btn" onclick="goAgent()">
-      立即预约，澳小墨帮你下单 →
+  <div class="notif-btns">
+    <button class="notif-btn" onclick="openNotif()">
+      🔔<div class="notif-dot" id="notif-dot"></div>
     </button>
-    <div class="cta-sub">
-
-      提前24小时取消全额退款
-    </div>
+    <button class="notif-btn" onclick="openAnnounce()">
+      📣<div class="notif-dot" id="announce-dot"></div>
+    </button>
   </div>
-
-
-<!-- 浮动预约按钮 -->
-  <div id="float-btn" style="
-    position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
-    width:calc(100% - 40px); max-width:390px;
-    z-index:100;
-  ">
-    <button onclick="goAgent()" style="
-      width:100%; padding:17px;
-      background:linear-gradient(135deg,var(--teal),var(--teal2));
-      border:none; border-radius:var(--radius);
-      font-family:'Noto Sans SC',sans-serif;
-      font-size:16px; font-weight:700; color:#fff;
-      cursor:pointer;
-      box-shadow:0 8px 32px rgba(26,122,106,0.45), 0 2px 8px rgba(0,0,0,0.15);
-    ">✈️ 立即预约</button>
-  </div>
-  <div style="height:80px"></div>
-
 </div>
 
-<!-- ═══════════════════ Agent 对话页 ═══════════════════ -->
-<div class="screen active" id="agent">
-  <div class="progress-bar"><div class="prog-fill" id="prog" style="width:8%"></div></div>
+<!-- 对话区 -->
+<div class="chat-area" id="chat-area"></div>
 
-  <div class="a-header">
-    <div class="a-header-glow"></div>
-    <div class="a-top">
-      <div class="a-avatar" id="av">
-        🧑‍✈️
-        <div class="a-mouth q" id="mouth"></div>
+<!-- 底部输入 -->
+<div class="input-bar">
+  <button class="mic-btn" id="mic-btn" onclick="toggleMic()">🎤</button>
+  <input class="chat-input" id="chat-input" placeholder="输入或语音告诉我行程..."
+    onkeydown="if(event.key==='Enter')sendMessage()">
+  <button class="send-btn" onclick="sendMessage()">➤</button>
+</div>
+
+<!-- 成功弹窗 -->
+<div class="modal-overlay" id="success-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div style="text-align:center;font-size:52px;margin-bottom:10px;">🎉</div>
+    <div style="text-align:center;font-size:22px;font-weight:900;color:var(--text);margin-bottom:6px;">预约成功！</div>
+    <div style="text-align:center;font-size:13px;color:var(--text2);margin-bottom:20px;">
+      订单号：<span id="suc-id" style="font-weight:700;color:var(--text);"></span>
+    </div>
+    <!-- 积分 -->
+    <div style="background:linear-gradient(135deg,#1a3a5c,#0d2540);border-radius:16px;padding:16px 20px;margin-bottom:14px;display:flex;align-items:center;gap:14px;">
+      <div style="font-size:32px;">🏆</div>
+      <div style="flex:1;">
+        <div style="color:var(--gold);font-size:12px;font-weight:800;">本次获得积分</div>
+        <div style="color:white;font-size:26px;font-weight:900;" id="suc-pts">+5</div>
+        <div style="color:rgba(255,255,255,0.5);font-size:11px;">积分可折现·季度末参与分红</div>
       </div>
-      <div class="a-info">
-        <div class="a-name agent-name" id="agent-name-display">澳小墨</div>
-        <div class="a-role agent-city" id="agent-city-display">墨尔本</div>
-        <div class="a-desc">告诉我行程，3分钟搞定预约</div>
-      </div>
-      <!-- 通知按钮 -->
-      <div style="margin-left:auto;display:flex;gap:10px;align-items:center;">
-        <button onclick="openNotifications()" style="position:relative;background:rgba(255,255,255,0.1);border:none;width:38px;height:38px;border-radius:12px;font-size:18px;cursor:pointer;">
-          🔔
-          <div id="notif-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#ff3b30;color:white;border-radius:50%;width:18px;height:18px;font-size:10px;font-weight:900;display:flex;align-items:center;justify-content:center;line-height:1;">!</div>
-        </button>
-        <button onclick="openAnnouncements()" style="position:relative;background:rgba(255,255,255,0.1);border:none;width:38px;height:38px;border-radius:12px;font-size:18px;cursor:pointer;">
-          📣
-          <div id="announce-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#ff3b30;border-radius:50%;width:10px;height:10px;"></div>
-        </button>
+      <button onclick="showPointsGuide()" style="background:rgba(200,160,32,0.2);border:1px solid var(--gold);color:var(--gold);border-radius:10px;padding:8px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">查看更多<br>赚积分 →</button>
+    </div>
+    <!-- 分享 -->
+    <div style="background:#f0f7ff;border-radius:14px;padding:14px;margin-bottom:12px;">
+      <div style="font-size:13px;font-weight:800;color:var(--text);margin-bottom:8px;">📤 分享给朋友，双方各得20积分</div>
+      <div style="display:flex;gap:8px;">
+        <input id="share-url" readonly style="flex:1;background:white;border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:11px;color:#666;min-width:0;">
+        <button id="copy-btn" onclick="copyShare()" style="background:var(--text);color:white;border:none;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;">📋 复制</button>
       </div>
     </div>
-  </div>
-
-  <div class="chat" id="chat"></div>
-  <div class="qr" id="qr"></div>
-  
-  <!-- 自由提问输入框 -->
-  <div id="ai-input-bar" style="display:none;position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);padding:10px 14px;align-items:center;gap:8px;z-index:50;">
-    <input id="ai-input" placeholder="有问题随时问我..." 
-      style="flex:1;background:var(--bg);border:1.5px solid var(--border);border-radius:20px;padding:10px 16px;color:var(--text);font-size:14px;font-family:inherit;outline:none;"
-      onkeydown="if(event.key==='Enter')sendAIMessage()">
-    <button onclick="sendAIMessage()" 
-      style="background:var(--accent);border:none;border-radius:50%;width:38px;height:38px;font-size:18px;cursor:pointer;flex-shrink:0;">
-      ➤
+    <button onclick="addToHome()" style="width:100%;padding:13px;background:var(--bg);border:none;border-radius:14px;font-size:14px;font-weight:700;color:var(--text2);cursor:pointer;margin-bottom:10px;">
+      📱 添加到手机桌面，下次一秒打开
     </button>
+    <button onclick="closeSuccess()" style="width:100%;padding:11px;background:none;border:none;font-size:13px;color:#bbb;cursor:pointer;">关闭</button>
   </div>
 </div>
 
 <script>
-
-// ── 澳洲城市自动识别 ──
-const CITY_AGENTS = {
-  melbourne:  { name: '澳小墨', city: '墨尔本', emoji: '🧑‍✈️' },
-  sydney:     { name: '澳小悉', city: '悉尼',   emoji: '🧑‍✈️' },
-  brisbane:   { name: '澳小布', city: '布里斯班', emoji: '🧑‍✈️' },
-  canberra:   { name: '澳小堪', city: '堪培拉', emoji: '🧑‍✈️' },
-  tasmania:   { name: '澳小塔', city: '塔斯马尼亚', emoji: '🧑‍✈️' },
-  adelaide:   { name: '澳小南', city: '阿德莱德', emoji: '🧑‍✈️' },
-  perth:      { name: '澳小西', city: '珀斯',   emoji: '🧑‍✈️' },
-};
-
-// 根据坐标判断城市
-function detectCityByCoords(lat, lng) {
-  const cities = [
-    { key: 'melbourne', lat: -37.81, lng: 144.96, radius: 1.5 },
-    { key: 'sydney',    lat: -33.87, lng: 151.21, radius: 1.5 },
-    { key: 'brisbane',  lat: -27.47, lng: 153.02, radius: 1.5 },
-    { key: 'canberra',  lat: -35.28, lng: 149.13, radius: 1.0 },
-    { key: 'tasmania',  lat: -42.88, lng: 147.33, radius: 3.0 },
-    { key: 'adelaide',  lat: -34.93, lng: 138.60, radius: 1.5 },
-    { key: 'perth',     lat: -31.95, lng: 115.86, radius: 1.5 },
-  ];
-  for (const c of cities) {
-    const dist = Math.sqrt(Math.pow(lat - c.lat, 2) + Math.pow(lng - c.lng, 2));
-    if (dist <= c.radius) return c.key;
-  }
-  return 'melbourne'; // 默认墨尔本
-}
-
-// IP定位（免费API，无需授权）
-async function detectCityByIP() {
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 3000);
-    const res = await fetch('https://ipapi.co/json/', { signal: controller.signal });
-    clearTimeout(timeout);
-    const data = await res.json();
-    const city = (data.city || '').toLowerCase();
-    const region = (data.region || '').toLowerCase();
-    if (city.includes('sydney') || region.includes('new south wales')) return 'sydney';
-    if (city.includes('brisbane') || region.includes('queensland')) return 'brisbane';
-    if (city.includes('perth') || region.includes('western australia')) return 'perth';
-    if (city.includes('adelaide') || region.includes('south australia')) return 'adelaide';
-    if (city.includes('canberra') || region.includes('australian capital')) return 'canberra';
-    if (region.includes('tasmania')) return 'tasmania';
-    if (city.includes('melbourne') || region.includes('victoria')) return 'melbourne';
-    return 'melbourne';
-  } catch(e) {
-    return 'melbourne';
-  }
-}
-
-// 城市默认墨尔本
-function initCityAgent() {
-  const agent = CITY_AGENTS.melbourne;
-  window.currentAgent = agent;
-  document.querySelectorAll('.agent-name, #agent-name-display').forEach(el => el.textContent = agent.name);
-  document.querySelectorAll('.agent-city, #agent-city-display').forEach(el => el.textContent = agent.city);
-}
-
-// ── Supabase 配置 ──
+// ── 配置 ──
 const SUPA_URL = 'https://gxocvpmgfjvmmkkbswgo.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b2N2cG1nZmp2bW1ra2Jzd2dvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyNDc4NzAsImV4cCI6MjA5NTgyMzg3MH0.ExUNuOP8YyHQmItY6cdl1Euj7nOXqQq-rQT5-7aNerE';
 const TENANT_ID = '00000000-0000-0000-0000-000000000001';
 
-// Melbourne Airport coordinates
-const AIRPORT_LAT = -37.6690;
-const AIRPORT_LNG = 144.8410;
+// ── 状态 ──
+const S = {
+  direction: null,
+  address: null,
+  date: null,
+  time: null,
+  vehicle: null,
+  price: null,
+  name: null,
+  phone: null,
+  wechat: null,
+  payment: 'wechat',
+  step: 'start'
+};
 
+const PRICES = { sedan:70, mpv:90, large_mpv:120, van:160 };
+const VEHICLES = [
+  {type:'sedan', icon:'🚗', name:'Sedan 轿车', cap:'1-3人', price:70},
+  {type:'mpv', icon:'🚐', name:'MPV 商务车', cap:'4-6人', price:90},
+  {type:'large_mpv', icon:'🚌', name:'大型MPV', cap:'7-9人', price:120},
+  {type:'van', icon:'🚎', name:'Van 大巴', cap:'10人+', price:160},
+];
 
-// ── 推荐码 & 身份管理 ──
-function genRef() {
-  return Math.random().toString(36).substring(2,8).toUpperCase();
+// ── 工具 ──
+const chatArea = document.getElementById('chat-area');
+
+function scrollBottom(){
+  setTimeout(()=>{ chatArea.scrollTop = chatArea.scrollHeight; }, 100);
 }
-function savePassenger(name, phone, wechat) {
-  let p = JSON.parse(localStorage.getItem('au_passenger') || '{}');
-  if (!p.ref) p.ref = genRef();
-  p.name = name; p.phone = phone; p.wechat = wechat;
+
+function addMsg(html, isUser=false){
+  const div = document.createElement('div');
+  div.className = 'msg' + (isUser?' user':'');
+  div.innerHTML = `
+    <div class="msg-avatar">${isUser?'👤':'🧑‍✈️'}</div>
+    <div class="msg-bubble">${html}</div>
+  `;
+  chatArea.appendChild(div);
+  scrollBottom();
+  return div;
+}
+
+function addTyping(){
+  const div = document.createElement('div');
+  div.className = 'msg';
+  div.innerHTML = `
+    <div class="msg-avatar">🧑‍✈️</div>
+    <div class="typing-bubble">
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+    </div>
+  `;
+  chatArea.appendChild(div);
+  scrollBottom();
+  return div;
+}
+
+function delay(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+async function agentSay(html, delayMs=800){
+  const typing = addTyping();
+  await delay(delayMs);
+  typing.remove();
+  addMsg(html);
+  speak(html.replace(/<[^>]*>/g,''));
+}
+
+// ── 语音输出 ──
+function speak(text){
+  if(!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'zh-CN';
+  u.rate = 1.0;
+  window.speechSynthesis.speak(u);
+}
+
+// ── 语音输入 ──
+let recognition = null;
+let isRecording = false;
+
+function toggleMic(){
+  if(!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)){
+    alert('您的浏览器不支持语音输入，请使用Safari或Chrome');
+    return;
+  }
+  if(isRecording){
+    recognition?.stop();
+    return;
+  }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.lang = 'zh-CN';
+  recognition.continuous = false;
+  recognition.interimResults = false;
+
+  recognition.onstart = ()=>{
+    isRecording = true;
+    document.getElementById('mic-btn').classList.add('recording');
+    document.getElementById('mic-btn').textContent = '🔴';
+  };
+  recognition.onresult = (e)=>{
+    const text = e.results[0][0].transcript;
+    document.getElementById('chat-input').value = text;
+    sendMessage();
+  };
+  recognition.onend = ()=>{
+    isRecording = false;
+    document.getElementById('mic-btn').classList.remove('recording');
+    document.getElementById('mic-btn').textContent = '🎤';
+  };
+  recognition.onerror = ()=>{
+    isRecording = false;
+    document.getElementById('mic-btn').classList.remove('recording');
+    document.getElementById('mic-btn').textContent = '🎤';
+  };
+  recognition.start();
+}
+
+// ── 身份管理 ──
+function genRef(){ return Math.random().toString(36).substring(2,8).toUpperCase(); }
+function savePassenger(name,phone,wechat){
+  let p = JSON.parse(localStorage.getItem('au_passenger')||'{}');
+  if(!p.ref) p.ref = genRef();
+  p.name=name; p.phone=phone; p.wechat=wechat;
   localStorage.setItem('au_passenger', JSON.stringify(p));
   return p;
 }
-function getPassenger() {
-  return JSON.parse(localStorage.getItem('au_passenger') || '{}');
-}
-function getIncomingRef() {
-  // 读URL里的?ref=，存本地备用
+function getPassenger(){ return JSON.parse(localStorage.getItem('au_passenger')||'{}'); }
+function getIncomingRef(){
   const u = new URLSearchParams(window.location.search);
   const r = u.get('ref');
-  if (r) sessionStorage.setItem('incoming_ref', r);
-  return sessionStorage.getItem('incoming_ref') || null;
+  if(r) sessionStorage.setItem('incoming_ref',r);
+  return sessionStorage.getItem('incoming_ref')||null;
 }
 
-async function supaInsert(table, data) {
-  const res = await fetch(SUPA_URL + '/rest/v1/' + table, {
-    method: 'POST',
-    headers: {
-      'apikey': SUPA_KEY,
-      'Authorization': 'Bearer ' + SUPA_KEY,
-      'Content-Type': 'application/json',
-      'Prefer': 'return=representation'
+// ── Supabase ──
+async function supaInsert(table, data){
+  const res = await fetch(SUPA_URL+'/rest/v1/'+table, {
+    method:'POST',
+    headers:{
+      'apikey':SUPA_KEY,
+      'Authorization':'Bearer '+SUPA_KEY,
+      'Content-Type':'application/json',
+      'Prefer':'return=representation'
     },
-    body: JSON.stringify(data)
+    body:JSON.stringify(data)
   });
-  if (!res.ok) { const e = await res.json(); throw new Error(e.message || '提交失败'); }
+  if(!res.ok){ const e=await res.json(); throw new Error(e.message||'error'); }
   return res.json();
 }
 
-// lazy loaded elements
-// mouthEl lazy loaded
-const S={
-  name:'', phone:'', wechat:'',
-  direction:'', passengers:1, luggage:1,
-  pickup:'', dropoff:'', date:'', time:'',
-  flight:'', vehicle:'sedan', price:0,
-  payment:''
-};
-const PRICES={sedan:70,mpv:90,large_mpv:120,van:160};
-const NAMES={sedan:'Sedan',mpv:'MPV商务车',large_mpv:'大型MPV',van:'Van大巴'};
+// ── AI 对话历史 ──
+let aiHistory = [];
+let bookingSubmitted = false;
 
-function chatEl(){ return document.getElementById('chat'); }
-function qrEl(){ return document.getElementById('qr'); }
-function setProg(p){ const el=document.getElementById('prog'); if(el) el.style.width=p+'%'; }
-function talking(on){ const mouthEl=document.getElementById('mouth'); if(mouthEl) mouthEl.className='a-mouth'+(on?'':' q'); }
+const SYSTEM_PROMPT = `你是澳洲出行管家"澳小墨"，专为华人旅客提供墨尔本机场接送服务。
 
-function bubble(html, isU=false, delay=0){
-  return new Promise(r=>setTimeout(()=>{
-    if(!isU) talking(true);
-    const w=document.createElement('div'); w.className='bw'+(isU?' u':'');
-    if(!isU){ const a=document.createElement('div'); a.className='bav'; a.textContent='🧑‍✈️'; w.appendChild(a); }
-    const b=document.createElement('div'); b.className='bb'; b.innerHTML=html;
-    w.appendChild(b); chatEl().appendChild(w); scroll();
-    setTimeout(()=>{ talking(false); r(); },500);
-  },delay));
-}
+你的任务是通过对话收集预约信息：接机还是送机、日期时间、地址。
 
-function typing(ms=1100){
-  // 先清掉之前残留的typing泡泡
-  document.querySelectorAll('.tw-bubble').forEach(el=>el.remove());
-  return new Promise(r=>{
-    talking(true);
-    const w=document.createElement('div'); w.className='bw tw-bubble';
-    const a=document.createElement('div'); a.className='bav'; a.textContent='🧑‍✈️'; w.appendChild(a);
-    const t=document.createElement('div'); t.className='typing';
-    for(let i=0;i<3;i++){const d=document.createElement('div');d.className='td';t.appendChild(d);}
-    w.appendChild(t); chatEl().appendChild(w); scroll();
-    setTimeout(()=>{ w.remove(); talking(false); r(); },ms);
-  });
-}
+价格（墨尔本机场25km内）：
+- Sedan轿车：$70（1-3人）
+- MPV商务车：$90（4-6人）
+- 大型MPV：$120（7-9人）
+- Van大巴：$160（10人+）
 
-function setQR(opts){
-  qrEl().innerHTML='';
-  opts.forEach(o=>{
-    const b=document.createElement('button'); b.className='qrb';
-    b.textContent=o.label; b.onclick=()=>{clearQR(); o.fn();};
-    qrEl().appendChild(b);
-  });
-}
-function clearQR(){ qrEl().innerHTML=''; }
-function scroll(){
-  setTimeout(()=>{
-    chatEl().scrollTop = chatEl().scrollHeight;
-    // 也滚动整个页面确保输入区可见
-    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-  }, 100);
-}
+支付：微信、信用卡、银行转账
 
-function addEl(el){ chatEl().appendChild(el); scroll(); return el; }
+规则：
+- 回答简短友好，用中文，适当emoji
+- 不透露平台抽成
+- 收集到接机/送机+地址+时间后，告诉用户"好的，我来给你选车型"
 
-function mkForm(html, id='fc'){
-  const c=document.createElement('div'); c.className='fc'; c.id=id; c.innerHTML=html;
-  return addEl(c);
-}
+如果用户已经说了行程信息，在回复末尾加上JSON标记：
+[EXTRACTED: {"direction":"from_airport或to_airport","date":"YYYY-MM-DD","time":"HH:MM","address":"地址"}]`;
 
-// ── 对话流程 ──
-async function start(){
-  initCityAgent();
-  await typing(700);
-  await bubble(`你好！我是 <span class="t">${window.currentAgent?.name||'澳小墨'}</span> ✈️<br>专门帮你预约${window.currentAgent?.city||'墨尔本'}机场接送`);
-  await typing(900);
-  await bubble('全程中文，下单简单，<span class="t">一口价</span>不乱收费 💰<br>告诉我你的行程，我来帮你安排');
-  setProg(15);
-  await typing(700);
-  await bubble('先告诉我你的姓名和联系方式吧 📱<br><span style="font-size:12px;opacity:0.6;">也可以直接输入任何问题 👇</span>');
-  document.getElementById('ai-input-bar').style.display = 'flex';
-  showContact();
-}
+// ── 发送消息 ──
+async function sendMessage(){
+  const input = document.getElementById('chat-input');
+  const msg = input.value.trim();
+  if(!msg) return;
+  input.value = '';
 
-function showContact(){
-  mkForm(`
-    <div class="fc-t">📱 联系方式</div>
-    <div class="ff"><label class="fl">你的称呼</label><input class="fi" id="f-name" placeholder="姓名或昵称都可以"></div>
-    <div class="fr">
-      <div class="ff"><label class="fl">手机号</label><input class="fi" id="f-phone" type="tel" placeholder="+61 或 +86"></div>
-      <div class="ff"><label class="fl">微信号（选填）</label><input class="fi" id="f-wx" placeholder="微信ID"></div>
-    </div>
-    <button class="fsub" onclick="submitContact()">下一步 →</button>
-  `);
-}
+  addMsg(msg, true);
+  aiHistory.push({role:'user', content:msg});
 
-async function submitContact(){
-  const n=document.getElementById('f-name')?.value.trim();
-  const p=document.getElementById('f-phone')?.value.trim();
-  if(!n||!p){alert('请填写称呼和手机号');return;}
-  S.name=n; S.phone=p; S.wechat=document.getElementById('f-wx')?.value.trim();
-  // 存本地身份（自动生成推荐码）
-  savePassenger(n, p, S.wechat);
-  document.getElementById('fc').style.opacity='0.4';
-  scroll();
-  await bubble(n,true);
-  await typing(800);
-  await bubble(`你好，<span class="t">${n}</span>！😊<br>这次是接机还是送机呢？`);
-  setProg(30);
-  showDirection();
-}
+  const typing = addTyping();
+  try {
+    const res = await fetch('/api/chat',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({system:SYSTEM_PROMPT, messages:aiHistory})
+    });
+    const data = await res.json();
+    const reply = data.content?.[0]?.text || '抱歉，请再说一遍 😊';
+    aiHistory.push({role:'assistant', content:reply});
+    if(aiHistory.length > 20) aiHistory = aiHistory.slice(-20);
 
-function showDirection(){
-  mkForm(`
-    <div class="fc-t">✈️ 行程方向</div>
-    <div class="dir-sel">
-      <div class="dir-opt on" id="d-from" onclick="selDir(this,'from_airport')">
-        <div class="dir-icon">🛬</div>
-        <div class="dir-name">接机</div>
-        <div class="dir-sub">机场→目的地</div>
-      </div>
-      <div class="dir-opt" id="d-to" onclick="selDir(this,'to_airport')">
-        <div class="dir-icon">🛫</div>
-        <div class="dir-name">送机</div>
-        <div class="dir-sub">出发地→机场</div>
-      </div>
-    </div>
+    typing.remove();
 
-    <div class="ff" id="addr-field">
-      <label class="fl" id="addr-label">${S.direction==='to_airport'?'从哪里出发？':'您去哪里？'}</label>
-      <div id="addr-hint" style="font-size:11px;color:var(--ink3);margin-bottom:6px;line-height:1.6">
-        ${S.direction==='to_airport'
-          ? '📍 可点击下方按钮自动获取您的位置'
-          : '📋 建议从地图App复制地址粘贴到此处'}
-      </div>
-      <input class="fi" id="f-addr" placeholder="如：33 Swanston St, Melbourne">
-      <div id="gps-btn-wrap" style="display:${S.direction==='to_airport'?'block':'none'};margin-top:8px">
-        <button onclick="useMyLocation()" style="
-          width:100%; padding:11px;
-          background:var(--teal-light); border:1.5px solid var(--teal);
-          border-radius:10px; font-family:'Noto Sans SC',sans-serif;
-          font-size:13px; font-weight:600; color:var(--teal);
-          cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
-        ">📍 使用我的当前位置</button>
-      </div>
-    </div>
-    <div class="ff"><label class="fl">航班号 <span style="color:var(--ink3);font-size:10px">选填 · 方便司机确认到达时间</span></label><input class="fi" id="f-flight" placeholder="如 CX168，不清楚可留空"></div>
-    <div class="fr">
-      <div class="ff"><label class="fl">日期</label><input class="fi" id="f-date" type="date"></div>
-      <div class="ff"><label class="fl">时间</label><input class="fi" id="f-time" type="time"></div>
-    </div>
-    <button class="fsub" onclick="submitDirection()">下一步 →</button>
-  `,'fc2');
-  S.direction='from_airport';
-}
-
-function selDir(el, val){
-  document.querySelectorAll('.dir-opt').forEach(d=>d.classList.remove('on'));
-  el.classList.add('on'); S.direction=val;
-  const lbl=document.querySelector('#fc2 .fi+.fi')?.previousSibling;
-  const addrLbl=document.querySelector('#f-addr');
-  if(addrLbl){
-    const label=addrLbl.previousElementSibling;
-    if(label) label.textContent=val==='to_airport'?'从哪里出发？':'您去哪里？';
+    // 检查是否提取到行程信息
+    const match = reply.match(/\[EXTRACTED:\s*({.*?})\]/s);
+    if(match){
+      try{
+        const extracted = JSON.parse(match[1]);
+        if(extracted.direction) S.direction = extracted.direction;
+        if(extracted.date) S.date = extracted.date;
+        if(extracted.time) S.time = extracted.time;
+        if(extracted.address) S.address = extracted.address;
+      } catch(e){}
+      const cleanReply = reply.replace(/\[EXTRACTED:.*?\]/s,'').trim();
+      addMsg(cleanReply);
+      speak(cleanReply);
+      // 如果信息够了，显示车型选择
+      if(S.direction && S.date && S.time && S.address){
+        await delay(800);
+        showVehicleChoice();
+      }
+    } else {
+      addMsg(reply);
+      speak(reply);
+    }
+  } catch(e){
+    typing.remove();
+    addMsg('网络有点问题，请稍后再试 😅');
   }
 }
 
-async function submitDirection(){
-  const addr=document.getElementById('f-addr')?.value.trim();
-  const date=document.getElementById('f-date')?.value;
-  const time=document.getElementById('f-time')?.value;
-  if(!addr||!date||!time){alert('请填写地址、日期和时间');return;}
-  S.dropoff=addr; S.date=date; S.time=time;
-  S.flight=document.getElementById('f-flight')?.value.trim();
-
-
-
-  document.getElementById('fc2').style.opacity='0.4';
-  const dirText=S.direction==='from_airport'?'接机':'送机';
-  await bubble(`${dirText} · ${addr}`,true);
-  await typing(800);
-  await bubble('好的！帮你看看报价，选个合适的车型 🚗');
-  setProg(60);
-  showQuote();
-}
-
-function showPassengers(){
-  mkForm(`
-    <div class="fc-t">👥 出行人数与行李</div>
-    <div class="ff">
-      <label class="fl">出行人数</label>
-      <div class="num-sel">
-        <button class="ns-btn" onclick="adj('pax',-1)">－</button>
-        <div class="ns-val" id="v-pax">1</div>
-        <button class="ns-btn" onclick="adj('pax',1)">＋</button>
-      </div>
+// ── 显示车型选择 ──
+async function showVehicleChoice(){
+  await agentSay('好的！帮你看看合适的车型，根据人数选一个吧 🚗', 500);
+  const div = document.createElement('div');
+  div.className = 'vehicle-cards';
+  div.innerHTML = VEHICLES.map(v=>`
+    <div class="vehicle-card" onclick="selectVehicle('${v.type}',${v.price},this)">
+      <div class="vehicle-icon">${v.icon}</div>
+      <div class="vehicle-name">${v.name}</div>
+      <div class="vehicle-cap">${v.cap}</div>
+      <div class="vehicle-price">$${v.price}</div>
     </div>
-    <div class="ff">
-      <label class="fl">托运行李箱（每人最多2件）</label>
-      <div class="num-sel">
-        <button class="ns-btn" onclick="adj('lug',-1)">－</button>
-        <div class="ns-val" id="v-lug">1</div>
-        <button class="ns-btn" onclick="adj('lug',1)">＋</button>
-      </div>
+  `).join('');
+  chatArea.appendChild(div);
+  scrollBottom();
+}
+
+function selectVehicle(type, price, el){
+  document.querySelectorAll('.vehicle-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  S.vehicle = type;
+  S.price = price;
+  setTimeout(()=> showConfirm(), 400);
+}
+
+// ── 确认卡 ──
+async function showConfirm(){
+  await agentSay('好的！帮你确认一下行程信息 👇', 500);
+  const dirText = S.direction==='from_airport'?'接机（机场出发）':'送机（去机场）';
+  const vInfo = VEHICLES.find(v=>v.type===S.vehicle);
+  const div = document.createElement('div');
+  div.className = 'confirm-card';
+  div.innerHTML = `
+    <div class="confirm-title">📋 行程确认</div>
+    <div class="confirm-row"><span class="confirm-label">类型</span><span class="confirm-value">${dirText}</span></div>
+    <div class="confirm-row"><span class="confirm-label">时间</span><span class="confirm-value">${S.date} ${S.time}</span></div>
+    <div class="confirm-row"><span class="confirm-label">${S.direction==='from_airport'?'目的地':'出发地'}</span><span class="confirm-value">${S.address}</span></div>
+    <div class="confirm-row"><span class="confirm-label">车型</span><span class="confirm-value">${vInfo?.icon} ${vInfo?.name}</span></div>
+    <div class="confirm-row"><span class="confirm-label">费用</span><span class="confirm-value" style="color:var(--accent);font-size:18px;font-weight:900;">$${S.price}</span></div>
+    <div class="confirm-btns">
+      <button class="confirm-btn secondary" onclick="restartBooking()">✏️ 修改</button>
+      <button class="confirm-btn primary" onclick="showContactForm()">✅ 确认，去下单</button>
     </div>
-    <button class="fsub" onclick="submitPassengers()">查看报价 →</button>
-  `,'fc3');
-}
-
-function adj(type, delta){
-  if(type==='pax'){
-    S.passengers=Math.max(1,Math.min(20,S.passengers+delta));
-    document.getElementById('v-pax').textContent=S.passengers;
-  } else {
-    S.luggage=Math.max(0,Math.min(S.passengers*2,S.luggage+delta));
-    document.getElementById('v-lug').textContent=S.luggage;
-  }
-}
-
-async function submitPassengers(){
-  document.getElementById('fc3').style.opacity='0.4';
-  await bubble(`${S.passengers}人 · ${S.luggage}件行李`,true);
-  await typing(1000);
-  await bubble('稍等，我来帮你算一下价格 🔍');
-  setProg(70);
-  showQuote();
-}
-
-function getRecommended(){
-  const p=S.passengers;
-  if(p<=3) return 'sedan';
-  if(p<=6) return 'mpv';
-  if(p<=9) return 'large_mpv';
-  return 'van';
-}
-
-function showQuote(){
-  const rec='sedan';
-  S.vehicle=rec;
-
-  const card=document.createElement('div');
-  card.className='quote-card'; card.id='qc';
-
-  const rows=[
-    {type:'sedan',icon:'🚗',name:'Sedan 轿车',cap:'1-3人 · 小型行李',price:PRICES.sedan},
-    {type:'mpv',icon:'🚐',name:'MPV 商务车',cap:'4-6人 · 中型行李',price:PRICES.mpv},
-    {type:'large_mpv',icon:'🚌',name:'大型MPV',cap:'7-9人 · 大件行李',price:PRICES.large_mpv},
-    {type:'van',icon:'🚎',name:'Van 大巴',cap:'10人以上 · 超大行李',price:PRICES.van},
-  ];
-
-  card.innerHTML=`
-    <div class="qc-header">
-      <div>
-        <div class="qc-header-left">选择车型</div>
-        <div class="qc-header-sub">一口价 · 不另加收 · 可选人数行李</div>
-      </div>
-    </div>
-    <div class="qc-rows" id="qc-rows">
-      ${rows.map(r=>`
-        <div class="qc-row${r.type===rec?' sel':''}" onclick="selVehicle(this,'${r.type}',${r.price})">
-          <div class="qc-icon">${r.icon}</div>
-          <div class="qc-info">
-            <div class="qc-name">${r.name}</div>
-            <div class="qc-cap">${r.cap}</div>
-          </div>
-          <div class="qc-price">$${r.price}</div>
-        </div>
-      `).join('')}
-    </div>
-    <button class="sel-btn" onclick="confirmVehicle()">确认选择，下一步 →</button>
   `;
-  addEl(card);
-  S.price=PRICES[rec];
-  scroll();
+  chatArea.appendChild(div);
+  scrollBottom();
 }
 
-function selVehicle(el, type, price){
-  document.querySelectorAll('.qc-row').forEach(r=>r.classList.remove('sel'));
-  el.classList.add('sel');
-  S.vehicle=type; S.price=price;
-}
+// ── 联系表单 ──
+async function showContactForm(){
+  // 检查是否有存储身份
+  const saved = getPassenger();
+  await agentSay('最后一步，填一下联系方式就搞定！😊', 400);
 
-async function confirmVehicle(){
-  document.getElementById('qc').style.opacity='0.4';
-  await bubble(`${NAMES[S.vehicle]} · $${S.price}`,true);
-  await typing(800);
-  await bubble(`好的！<span class="t">${NAMES[S.vehicle]}</span> 一口价 <span class="g">$${S.price}</span> 💰<br>最后选择支付方式就完成了`);
-  setProg(85);
-  showPayment();
-}
-
-function showPayment(){
-  mkForm(`
-    <div class="fc-t">💳 支付方式</div>
-    <div class="frow3" style="margin-bottom:14px">
-      <div class="vt on" onclick="selPay(this,'wechat')" style="padding:14px 6px">
-        <div class="vt-i">💚</div>
-        <div class="vt-n" style="font-size:11px">微信支付</div>
-      </div>
-      <div class="vt" onclick="selPay(this,'cash')" style="padding:14px 6px">
-        <div class="vt-i">💳</div>
-        <div class="vt-n" style="font-size:11px">信用卡</div>
-      </div>
-      <div class="vt" onclick="selPay(this,'bank_transfer')" style="padding:14px 6px">
-        <div class="vt-i">🏦</div>
-        <div class="vt-n" style="font-size:11px">银行转账</div>
+  const div = document.createElement('div');
+  div.className = 'contact-form';
+  div.innerHTML = `
+    <div class="form-title">📱 联系方式 & 支付</div>
+    <div class="form-field">
+      <label class="form-label">你的称呼</label>
+      <input class="form-input" id="f-name" placeholder="姓名或昵称" value="${saved.name||''}">
+    </div>
+    <div class="form-field">
+      <label class="form-label">手机号</label>
+      <input class="form-input" id="f-phone" type="tel" placeholder="+61 或 +86" value="${saved.phone||''}">
+    </div>
+    <div class="form-field">
+      <label class="form-label">微信号（选填）</label>
+      <input class="form-input" id="f-wechat" placeholder="微信ID" value="${saved.wechat||''}">
+    </div>
+    <div class="form-field">
+      <label class="form-label">付款方式</label>
+      <div class="pay-options">
+        <div class="pay-opt selected" onclick="selPay(this,'wechat')">💚 微信</div>
+        <div class="pay-opt" onclick="selPay(this,'cash')">💳 到车付</div>
+        <div class="pay-opt" onclick="selPay(this,'bank_transfer')">🏦 转账</div>
       </div>
     </div>
-    <button class="fsub" onclick="submitBooking()">确认预约 ✅</button>
-  `,'fc4');
-  S.payment='wechat';
+    <button class="submit-btn" onclick="submitBooking()">🚀 确认预约 · $${S.price}</button>
+  `;
+  chatArea.appendChild(div);
+  scrollBottom();
 }
 
 function selPay(el, val){
-  document.querySelectorAll('#fc4 .vt').forEach(v=>v.classList.remove('on'));
-  el.classList.add('on'); S.payment=val;
+  document.querySelectorAll('.pay-opt').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+  S.payment = val;
 }
 
-let bookingSubmitted = false;
+// ── 重新开始 ──
+function restartBooking(){
+  S.direction=null; S.address=null; S.date=null; S.time=null; S.vehicle=null; S.price=null;
+  agentSay('没问题！告诉我你想修改什么？😊', 300);
+}
+
+// ── 提交下单 ──
 async function submitBooking(){
   if(bookingSubmitted) return;
+  const name = document.getElementById('f-name').value.trim();
+  const phone = document.getElementById('f-phone').value.trim();
+  if(!name||!phone){ alert('请填写姓名和手机号'); return; }
   bookingSubmitted = true;
-  document.getElementById('fc4').style.opacity='0.4';
-  const payNames={wechat:'微信支付',cash:'现金',bank_transfer:'银行转账'};
-  await bubble(payNames[S.payment], true);
-  await typing(1300);
+
+  S.name=name; S.phone=phone;
+  S.wechat = document.getElementById('f-wechat').value.trim();
+
+  const passenger = savePassenger(name, phone, S.wechat);
+  const incomingRef = getIncomingRef();
+  const scheduledAt = new Date(`${S.date}T${S.time}:00`);
+  const isUrgent = (scheduledAt - new Date()) / 60000 <= 90;
+  const points = Math.round(S.price * 0.1) + 5;
 
   try {
-    // 计算价格
-    const PRICES = {sedan:70, mpv:90, large_mpv:120, van:160};
-    const basePrice = PRICES[S.vehicle] || 70;
-
-    // 判断时段附加费
-    const bookingHour = parseInt(S.time.split(':')[0]);
-    const month = new Date(S.date).getMonth() + 1;
-    const isSummer = [10,11,12,1,2,3].includes(month);
-    const normalEnd = isSummer ? 20 : 18;
-    let timeSurcharge = 0;
-    if (bookingHour >= 22 || bookingHour < 6) timeSurcharge = 25;
-    else if (bookingHour < 8 || bookingHour >= normalEnd) timeSurcharge = 15;
-
-    const totalPrice = basePrice + timeSurcharge;
-
-    // 构建行程数据
-    const isFromAirport = S.direction === 'from_airport';
-    const tripData = {
+    const [trip] = await supaInsert('trips',{
       tenant_id: TENANT_ID,
+      passenger_name: name,
+      passenger_phone: phone,
+      passenger_wechat: S.wechat||null,
       direction: S.direction,
-      passenger_name: S.name,
-      passenger_phone: S.phone,
-      passenger_count: S.passengers,
-      luggage_count: S.luggage,
-      flight_number: S.flight || null,
-      flight_date: S.date,
-      scheduled_at: S.date + 'T' + S.time + ':00+10:00',
-      pickup_address: isFromAirport ? '墨尔本国际机场' : S.dropoff,
-      pickup_lat: isFromAirport ? AIRPORT_LAT : null,
-      pickup_lng: isFromAirport ? AIRPORT_LNG : null,
-      dropoff_address: isFromAirport ? S.dropoff : '墨尔本国际机场',
-      dropoff_lat: isFromAirport ? null : AIRPORT_LAT,
-      dropoff_lng: isFromAirport ? null : AIRPORT_LNG,
-      distance_km: S.distance || null,
+      pickup_address: S.direction==='from_airport'?'墨尔本国际机场':S.address,
+      dropoff_address: S.direction==='from_airport'?S.address:'墨尔本国际机场',
       vehicle_type: S.vehicle,
-      base_price: basePrice,
-      time_surcharge: timeSurcharge,
-      total_price: totalPrice,
+      scheduled_at: `${S.date}T${S.time}:00`,
+      total_price: S.price,
       payment_method: S.payment,
-      payment_status: S.payment === 'bank_transfer' ? 'pending' : 'prepaid',
-      prepaid_amount: S.payment !== 'bank_transfer' ? totalPrice : null,
-      status: 'pending',
-      notes: null
-    };
+      payment_status: S.payment==='bank_transfer'?'pending':'prepaid',
+      prepaid_amount: S.payment!=='bank_transfer'?S.price:null,
+      status:'pending',
+      is_urgent: isUrgent
+    });
 
-    const [trip] = await supaInsert('trips', tripData);
-
-    // 写入/更新乘客contacts表
-    const passenger = getPassenger();
-    const incomingRef = getIncomingRef();
-    const points = Math.round(totalPrice * 0.1) + 5; // 金额×0.1 + 基础5分
-    try {
-      await supaInsert('contacts', {
-        tenant_id: TENANT_ID,
-        full_name: S.name,
-        phone: S.phone,
-        wechat_id: S.wechat || null,
-        source: '小红书',
-        status: 'customer'
+    // 存contacts
+    try{
+      await supaInsert('contacts',{
+        tenant_id:TENANT_ID,
+        full_name:name, phone:phone,
+        wechat_id:S.wechat||null,
+        source:'小红书', status:'customer'
       });
-    } catch(e) { console.log('contacts skip', e.message); }
+    }catch(e){}
 
-    // 如有推荐人，写referrals表
-    if (incomingRef) {
-      try {
-        await supaInsert('referrals', {
-          tenant_id: TENANT_ID,
-          referrer_code: incomingRef,
-          referee_phone: S.phone,
-          referee_name: S.name,
-          trip_id: trip.id,
-          points_awarded: 20,
-          status: 'confirmed'
+    // 推荐关系
+    if(incomingRef){
+      try{
+        await supaInsert('referrals',{
+          tenant_id:TENANT_ID,
+          referrer_code:incomingRef,
+          referee_phone:phone,
+          referee_name:name,
+          trip_id:trip.id,
+          points_awarded:20,
+          status:'confirmed'
         });
-      } catch(e) { console.log('referral skip', e); }
+      }catch(e){}
     }
 
-    setProg(100);
-    showSuccessModal(trip.id, totalPrice, points, passenger.ref);
-    await typing(600);
-    await bubble(`🎉 <span class="t">${S.name}</span>，预约成功！<br>司机会在约定时间前联系你确认`);
-    await typing(700);
-    await bubble('💰 付款方式：<br>· 微信转账：<span class="t">DIVE-DING</span><br>· 银行转账请联系客服<br>· 到车后扫码刷卡');
-    await typing(600);
-    await bubble('有任何问题直接联系客服 😊<br>📞 <span class="t">0449 251 218</span><br>祝你旅途愉快！✈️');
+    // 成功弹窗
+    const shortId = trip.id.slice(-8).toUpperCase();
+    document.getElementById('suc-id').textContent = 'TRP-'+shortId;
+    document.getElementById('suc-pts').textContent = '+'+points;
+    const shareUrl = window.location.origin+window.location.pathname+'?ref='+passenger.ref;
+    document.getElementById('share-url').value = shareUrl;
+    document.getElementById('success-modal').style.display = 'flex';
 
-  } catch(err) {
-    console.error(err);
-    await bubble(`⚠️ 提交遇到问题，请截图联系客服<br>${err.message}`);
-  }
-}
-
-function showSuccessModal(tripId, totalPrice, points, myRef){
-  const payNames={wechat:'💚 微信支付',cash:'💳 到车付款',bank_transfer:'🏦 银行转账'};
-  const dirText=S.direction==='from_airport'?'接机':'送机';
-  const shortId = tripId ? tripId.slice(-8).toUpperCase() : Date.now().toString().slice(-6);
-  const card=document.createElement('div'); card.className='success';
-  card.innerHTML=`
-    <div class="suc-icon">🎊</div>
-    <div class="suc-title">预约成功！</div>
-    <div class="suc-sub">
-      ${dirText} · ${NAMES[S.vehicle]}<br>
-      <strong>${S.date} ${S.time}</strong><br>
-      ${S.dropoff}<br>
-      一口价 <strong>$${totalPrice||S.price}</strong> · ${payNames[S.payment]}
-    </div>
-    <div class="suc-id">订单号：TRP-${shortId}</div>
-    <div class="suc-pts">🏆 本次预约已累积积分，季度末可参与分红</div>
-  `;
-  addEl(card);
-}
-
-function openXHS(){
-  // 小红书主页链接，替换成你的真实主页
-  const url = 'https://www.xiaohongshu.com/user/profile/4286544851';
-  window.open(url, '_blank');
-}
-
-function openWeChat(){
-  // 显示微信二维码或微信号
-  alert('📱 微信搜索添加：\nDIVE-DING\n\n或手机号添加：\n13732299999\n\n我们会尽快回复您！');
-}
-
-
-
-
-
-
-// ── 推广海报生成（截取promo页面）──
-async function generatePoster() {
-  const btn = event?.target?.closest('button');
-  if(btn){ btn.textContent = '⏳ 生成中...'; btn.disabled = true; }
-  await generatePosterFallback();
-  if(btn){ btn.textContent = '🖼️ 分享给朋友'; btn.disabled = false; }
-}
-
-// 备用：Canvas手绘海报
-async function generatePosterFallback() {
-  const agentName = window.currentAgent?.name || '澳小墨';
-  const agentCity = window.currentAgent?.city || '澳洲';
-
-  const canvas = document.createElement('canvas');
-  canvas.width = 750; canvas.height = 1150;
-  const ctx = canvas.getContext('2d');
-
-  // 背景
-  const bg = ctx.createLinearGradient(0, 0, 0, 1150);
-  bg.addColorStop(0, '#0d2a24');
-  bg.addColorStop(0.5, '#1a4a3a');
-  bg.addColorStop(1, '#0a2018');
-  ctx.fillStyle = bg;
-  ctx.beginPath();
-  ctx.roundRect(0, 0, 750, 1150, 0);
-  ctx.fill();
-
-  // 装饰圆
-  ctx.beginPath(); ctx.arc(650, 120, 200, 0, Math.PI*2);
-  ctx.fillStyle = 'rgba(200,134,10,0.1)'; ctx.fill();
-  ctx.beginPath(); ctx.arc(80, 1050, 160, 0, Math.PI*2);
-  ctx.fillStyle = 'rgba(34,160,140,0.08)'; ctx.fill();
-
-  // 品牌
-  ctx.font = 'bold 34px sans-serif'; ctx.fillStyle = '#ffffff';
-  ctx.textAlign = 'center'; ctx.fillText('✈️ 澳洲机场接送', 375, 80);
-  ctx.font = '16px sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.35)';
-  ctx.fillText('AU TRANSFER · 华人专属 · 全澳覆盖', 375, 112);
-
-  // 分割线
-  ctx.strokeStyle = 'rgba(200,134,10,0.25)'; ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(60,135); ctx.lineTo(690,135); ctx.stroke();
-
-  // 主标题
-  ctx.font = 'bold 58px sans-serif'; ctx.fillStyle = '#ffffff';
-  ctx.fillText('全程中文', 375, 215);
-  ctx.fillText('一口价透明', 375, 285);
-  ctx.font = 'bold 26px sans-serif'; ctx.fillStyle = '#e8a820';
-  ctx.fillText('华人司机 · 预约有保障', 375, 335);
-
-  // Agent
-  ctx.font = '20px sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.5)';
-  ctx.fillText(`${agentName} 为您服务`, 375, 375);
-
-  // QR区背景
-  ctx.fillStyle = 'rgba(255,255,255,0.05)';
-  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-  ctx.beginPath(); ctx.roundRect(40,400,670,500,20); ctx.fill(); ctx.stroke();
-
-  ctx.font = 'bold 20px sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.65)';
-  ctx.fillText('📲 扫码进入 · 截图转发给朋友', 375, 440);
-
-
-
-  // 左QR框
-  ctx.fillStyle='#fff'; ctx.beginPath(); ctx.roundRect(65,465,270,270,14); ctx.fill();
-  ctx.font='bold 18px sans-serif'; ctx.fillStyle='#22a08c';
-  ctx.fillText('✈️ 乘客预约', 200,762);
-  ctx.font='13px sans-serif'; ctx.fillStyle='rgba(255,255,255,0.35)';
-  ctx.fillText('扫码预约接送', 200,785);
-
-  // 右QR框
-  ctx.fillStyle='#fff'; ctx.beginPath(); ctx.roundRect(415,465,270,270,14); ctx.fill();
-  ctx.font='bold 18px sans-serif'; ctx.fillStyle='#e8a820';
-  ctx.fillText('🧑‍✈️ 司机加入', 550,762);
-  ctx.font='13px sans-serif'; ctx.fillStyle='rgba(255,255,255,0.35)';
-  ctx.fillText('扫码成为合伙人', 550,785);
-
-  // 特点
-  ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.lineWidth=1;
-  ctx.beginPath(); ctx.moveTo(60,810); ctx.lineTo(690,810); ctx.stroke();
-
-  const features = ['全程中文', '一口价', '24h服务', '积分分红'];
-  features.forEach((f,i)=>{
-    const x = 95 + i*145;
-    ctx.font='bold 16px sans-serif'; ctx.fillStyle='#22a08c';
-    ctx.fillText('✓', x, 855);
-    ctx.font='14px sans-serif'; ctx.fillStyle='rgba(255,255,255,0.55)';
-    ctx.fillText(f, x, 878);
-  });
-
-  // 联系
-  ctx.font='bold 22px sans-serif'; ctx.fillStyle='rgba(255,255,255,0.8)';
-  ctx.fillText('💬 微信：DIVE-DING', 375, 930);
-  ctx.font='15px sans-serif'; ctx.fillStyle='rgba(255,255,255,0.35)';
-  ctx.fillText('手机：13732299999', 375, 958);
-
-  ctx.font='13px sans-serif'; ctx.fillStyle='rgba(255,255,255,0.2)';
-  ctx.fillText('mel-transfer.vercel.app', 375, 1000);
-
-  ctx.font='bold 17px sans-serif'; ctx.fillStyle='rgba(200,134,10,0.55)';
-  ctx.fillText('分享给朋友，双方均可获得积分奖励 🏆', 375, 1050);
-
-  showPosterPreview(canvas.toDataURL('image/png'));
-}
-
-function showPosterPreview(dataUrl) {
-  document.getElementById('poster-modal')?.remove();
-  const modal = document.createElement('div');
-  modal.id = 'poster-modal';
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:9999;display:flex;flex-direction:column;align-items:center;padding:20px 16px;overflow-y:auto;';
-  modal.innerHTML = `
-    <div style="color:#fff;font-size:15px;font-weight:700;margin-bottom:12px;text-align:center;">
-      长按图片保存到相册 📱
-    </div>
-    <img src="${dataUrl}" style="width:100%;max-width:375px;border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,0.6);">
-    <div style="color:rgba(255,255,255,0.4);font-size:12px;margin-top:12px;text-align:center;line-height:1.7;">
-      保存后发给朋友<br>朋友扫码即可进入预约或加入
-    </div>
-    <button onclick="document.getElementById('poster-modal').remove()" style="margin-top:16px;padding:12px 32px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:20px;color:#fff;font-size:14px;cursor:pointer;font-family:inherit;">关闭</button>
-  `;
-  modal.onclick = e => { if(e.target===modal) modal.remove(); };
-  document.body.appendChild(modal);
-}
-
-function shareToWeChat(){
-  const isWeChat = /MicroMessenger/i.test(navigator.userAgent);
-  if(isWeChat){
-    const mask = document.createElement('div');
-    mask.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;flex-direction:column;align-items:flex-end;padding:12px 16px;';
-    mask.innerHTML = '<div style="color:#fff;font-size:14px;text-align:right;margin-top:8px;line-height:1.8">点击右上角 ···<br>选择"发送给朋友"<br>或"分享到朋友圈"</div><div style="font-size:40px;margin-top:4px;">↗️</div>';
-    mask.onclick = () => mask.remove();
-    document.body.appendChild(mask);
-  } else { shareGeneral(); }
-}
-
-async function shareGeneral(){
-  const shareData = {
-    title: '澳洲机场接送 · 华人司机 · 一口价',
-    text: '澳洲机场接送，全程中文，一口价透明！',
-    url: window.location.href
-  };
-  if(navigator.share){
-    try { await navigator.share(shareData); return; } catch(e){}
-  }
-  try {
-    await navigator.clipboard.writeText(window.location.href);
-    const t = document.createElement('div');
-    t.style.cssText = 'position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(26,122,106,0.95);color:#fff;padding:12px 24px;border-radius:24px;font-size:13px;font-weight:600;z-index:9999;white-space:nowrap;';
-    t.textContent = '✅ 链接已复制！';
-    document.body.appendChild(t);
-    setTimeout(()=>t.remove(), 2500);
   } catch(e){
-    prompt('复制链接分享给好友：', window.location.href);
+    bookingSubmitted = false;
+    alert('提交遇到问题，请截图联系客服\n'+e.message);
   }
 }
 
-function useMyLocation(){
-  const btn = document.querySelector('#gps-btn-wrap button');
-  if(btn){ btn.textContent='📍 正在获取位置...'; btn.disabled=true; }
+// ── 成功弹窗操作 ──
+function copyShare(){
+  const url = document.getElementById('share-url').value;
+  if(navigator.clipboard) navigator.clipboard.writeText(url).then(()=>{
+    document.getElementById('copy-btn').textContent='✅ 已复制';
+    setTimeout(()=>document.getElementById('copy-btn').textContent='📋 复制',2000);
+  });
+}
+function addToHome(){
+  alert('📱 添加快捷方式：\n\niOS：底部分享 → 添加到主屏幕\nAndroid：右上角菜单 → 添加到桌面');
+}
+function closeSuccess(){
+  document.getElementById('success-modal').style.display='none';
+}
+function showPointsGuide(){
+  alert('🏆 积分赚取方式：\n\n✈️ 每次下单 +5分起\n👥 推荐朋友下单 双方各+20分\n🧑‍✈️ 推荐司机加入 双方各+50分\n\n积分季度末可折现，永不清零！');
+}
 
-  if(!navigator.geolocation){
-    alert('您的浏览器不支持定位，请手动输入地址');
-    if(btn){ btn.textContent='📍 使用我的当前位置'; btn.disabled=false; }
-    return;
+// ── 通知 ──
+function openNotif(){ alert('暂无新通知'); }
+function openAnnounce(){ alert('📣 欢迎使用澳洲出行管家！\n\n下单即得积分，季度末可折现参与分红。\n推荐朋友双方各得20积分！'); }
+
+// ── 启动 ──
+window.onload = async function(){
+  // 检查是否已有身份
+  const saved = getPassenger();
+  if(saved.name){
+    await agentSay(`${saved.name}，欢迎回来！✈️<br>告诉我这次的行程，我来帮你安排 😊`);
+  } else {
+    await agentSay('你好！我是澳小墨 🧑‍✈️<br>专为华人旅客提供墨尔本机场接送<br>告诉我你的行程，我来帮你安排！');
   }
-
-  navigator.geolocation.getCurrentPosition(
-    async (pos) => {
-      const lat = pos.coords.latitude;
-      const lng = pos.coords.longitude;
-      try {
-        const res = await fetch(
-          'https://nominatim.openstreetmap.org/reverse?lat='+lat+'&lon='+lng+'&format=json&accept-language=en',
-          { headers: { 'Accept-Language': 'en' } }
-        );
-        const data = await res.json();
-        const a = data.address || {};
-        const short = [a.house_number, a.road, a.suburb, a.city || a.town]
-          .filter(Boolean).join(' ');
-        document.getElementById('f-addr').value = short || data.display_name;
-        if(btn){ btn.textContent='✅ 已获取位置'; btn.style.background='rgba(42,122,90,0.15)'; btn.disabled=false; }
-      } catch(e) {
-        document.getElementById('f-addr').value = lat.toFixed(5)+', '+lng.toFixed(5);
-        if(btn){ btn.textContent='✅ 已定位'; btn.disabled=false; }
-      }
-    },
-    (err) => {
-      if(btn){ btn.textContent='📍 使用我的当前位置'; btn.disabled=false; }
-      if(err.code===1) alert('请允许浏览器访问您的位置权限');
-      else alert('定位失败，请手动输入地址');
-    },
-    { timeout:10000, enableHighAccuracy:true }
-  );
-}
-
-function goAgent(){
-  document.getElementById('ad').style.display='none';
-  document.getElementById('agent').classList.add('active');
-  window.scrollTo(0,0);
-  setTimeout(start,300);
-}
-
-// 页面加载直接开始
-window.onload = function() {
-  setTimeout(function() {
-    start().catch(function(e){ console.log('start error', e); });
-    loadNotifications();
-  }, 600);
 };
 </script>
-
-<!-- ══ 预约成功弹窗 ══ -->
-<div id="success-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:999;align-items:flex-end;justify-content:center;">
-  <div style="background:white;border-radius:28px 28px 0 0;padding:28px 24px 40px;width:100%;max-width:480px;position:relative;">
-    
-    <!-- 拖动条 -->
-    <div style="width:40px;height:4px;background:#e0e0e0;border-radius:2px;margin:0 auto 20px;"></div>
-
-    <!-- 成功图标 -->
-    <div style="text-align:center;font-size:52px;margin-bottom:8px;">🎉</div>
-    <div style="text-align:center;font-size:22px;font-weight:900;color:#1a3a5c;margin-bottom:4px;">预约成功！</div>
-    <div style="text-align:center;font-size:13px;color:#aaa;margin-bottom:20px;">
-      订单号：<span id="suc-orderid" style="font-weight:700;color:#1a3a5c;"></span>
-      &nbsp;·&nbsp; 费用 <span id="suc-total" style="font-weight:700;color:#1a3a5c;"></span>
-    </div>
-
-    <!-- 积分卡 -->
-    <div style="background:linear-gradient(135deg,#1a3a5c,#0f2540);border-radius:18px;padding:18px 20px;margin-bottom:16px;display:flex;align-items:center;gap:14px;">
-      <div style="font-size:36px;">🏆</div>
-      <div style="flex:1;">
-        <div style="color:#c8a020;font-size:13px;font-weight:800;margin-bottom:3px;">本次获得积分</div>
-        <div style="color:white;font-size:28px;font-weight:900;" id="suc-pts">+5</div>
-        <div style="color:rgba(255,255,255,0.55);font-size:11px;margin-top:2px;">积分可折现·季度末参与分红</div>
-      </div>
-      <button onclick="showPointsGuide()" style="background:rgba(200,160,32,0.2);border:1px solid #c8a020;color:#c8a020;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">
-        查看更多<br>赚积分方式 →
-      </button>
-    </div>
-
-    <!-- 分享区 -->
-    <div style="background:#f0f7ff;border-radius:14px;padding:14px 16px;margin-bottom:14px;">
-      <div style="font-size:13px;font-weight:800;color:#1a3a5c;margin-bottom:8px;">📤 分享给朋友，双方各得20积分</div>
-      <div style="display:flex;gap:8px;">
-        <input id="suc-share-url" readonly style="flex:1;background:white;border:1px solid #dde;border-radius:8px;padding:8px 10px;font-size:11px;color:#666;min-width:0;">
-        <button id="copy-btn" onclick="copyShareLink()" style="background:#1a3a5c;color:white;border:none;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">📋 复制</button>
-      </div>
-    </div>
-
-    <!-- 添加桌面 -->
-    <button onclick="addToHome()" style="width:100%;padding:13px;background:#f5f5f5;border:none;border-radius:14px;font-size:14px;font-weight:700;color:#555;cursor:pointer;margin-bottom:10px;">
-      📱 添加到手机桌面，下次一秒打开
-    </button>
-
-    <!-- 关闭 -->
-    <button onclick="closeSuccessModal()" style="width:100%;padding:11px;background:none;border:none;font-size:13px;color:#bbb;cursor:pointer;">
-      关闭
-    </button>
-  </div>
-</div>
-
-<!-- ══ 更多积分方式弹窗 ══ -->
-<div id="points-guide-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;align-items:center;justify-content:center;padding:24px;">
-  <div style="background:white;border-radius:24px;padding:28px 22px;width:100%;max-width:380px;position:relative;">
-    <button onclick="closePointsGuide()" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:22px;color:#aaa;cursor:pointer;">×</button>
-    <div style="text-align:center;font-size:32px;margin-bottom:10px;">🏆</div>
-    <div style="text-align:center;font-size:18px;font-weight:900;color:#1a3a5c;margin-bottom:18px;">积分赚取方式</div>
-    
-    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;">
-      <div style="background:#f8f9ff;border-radius:12px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-size:14px;color:#333;">✈️ 每次下单</span>
-        <span style="font-weight:900;color:#1a3a5c;">+5分起</span>
-      </div>
-      <div style="background:#fff8e8;border-radius:12px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-size:14px;color:#333;">👥 推荐朋友下单</span>
-        <span style="font-weight:900;color:#c8a020;">双方各+20分</span>
-      </div>
-      <div style="background:#f0fff5;border-radius:12px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-size:14px;color:#333;">🧑‍✈️ 推荐司机加入</span>
-        <span style="font-weight:900;color:#27ae60;">双方各+50分</span>
-      </div>
-      <div style="background:#fff0f0;border-radius:12px;padding:12px 16px;">
-        <div style="font-size:13px;color:#555;line-height:1.6;">
-          💰 <strong>积分兑换：</strong>每季度末可折现参与分红<br>
-          ♾️ <strong>永不清零：</strong>年底持有积分额外+5%
-        </div>
-      </div>
-    </div>
-
-    <!-- 分享按钮 -->
-    <button onclick="copyShareLink();closePointsGuide();" style="width:100%;padding:14px;background:linear-gradient(135deg,#1a3a5c,#0f2540);color:white;border:none;border-radius:14px;font-size:15px;font-weight:800;cursor:pointer;">
-      📤 立即分享，各得20积分 →
-    </button>
-  </div>
-</div>
-
-
-<!-- ══ 通知中心 ══ -->
-<div class="screen" id="page-notifications">
-  <div class="topbar">
-    <button class="back-btn" onclick="goBack('page-agent')">← 返回</button>
-    <div class="topbar-title">我的通知</div>
-    <button onclick="markAllRead()" style="background:none;border:none;color:rgba(255,255,255,0.6);font-size:12px;cursor:pointer;">全部已读</button>
-  </div>
-
-  <!-- 个人通知 -->
-  <div style="padding:16px 16px 8px;">
-    <div style="font-size:12px;color:#aaa;font-weight:700;letter-spacing:1px;margin-bottom:10px;">🔔 我的通知</div>
-    <div id="notif-list" style="display:flex;flex-direction:column;gap:8px;">
-      <div style="text-align:center;color:#ccc;font-size:13px;padding:20px;">暂无通知</div>
-    </div>
-  </div>
-
-  <!-- 公告 -->
-  <div style="padding:8px 16px 16px;">
-    <div style="font-size:12px;color:#aaa;font-weight:700;letter-spacing:1px;margin-bottom:10px;">📣 平台公告</div>
-    <div id="announce-list" style="display:flex;flex-direction:column;gap:8px;">
-      <div style="background:white;border-radius:14px;padding:14px 16px;">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-          <span style="font-size:16px;">📣</span>
-          <span style="font-size:13px;font-weight:800;color:#1a3a5c;">欢迎加入澳洲出行</span>
-          <span style="margin-left:auto;font-size:11px;color:#ccc;">今天</span>
-        </div>
-        <div style="font-size:12px;color:#666;line-height:1.6;">感谢您选择澳洲出行管家！我们致力于为华人旅客提供最贴心的机场接送服务。下单即得积分，季度末可折现参与分红。</div>
-      </div>
-    </div>
-  </div>
-</div>
-
 </body>
 </html>
