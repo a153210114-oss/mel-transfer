@@ -222,7 +222,7 @@ const SUPA_URL = 'https://gxocvpmgfjvmmkkbswgo.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b2N2cG1nZmp2bW1ra2Jzd2dvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyNDc4NzAsImV4cCI6MjA5NTgyMzg3MH0.ExUNuOP8YyHQmItY6cdl1Euj7nOXqQq-rQT5-7aNerE';
 const TENANT_ID = '00000000-0000-0000-0000-000000000001';
 
-const S = {direction:null,address:null,date:null,time:null,vehicle:null,price:null,name:null,phone:null,wechat:null,payment:'wechat'};
+const S = {direction:null,address:null,date:null,time:null,vehicle:null,price:null,name:null,phone:null,wechat:null,payment:'wechat',trip_type:'standard',wait_hours:0};
 const VEHICLES = [
   {type:'sedan',icon:'🚗',name:'Sedan 轿车',cap:'1-3人',price:70},
   {type:'mpv',icon:'🚐',name:'MPV 商务车',cap:'4-6人',price:90},
@@ -350,13 +350,19 @@ function buildSystemPrompt(){
   const yr = new Date().getFullYear();
   let prompt = `你是澳洲出行管家，专为华人旅客提供墨尔本机场接送服务。回答简短友好，用中文，适当emoji，不透露平台抽成。今年是${yr}年，所有日期都用${yr}年。
 
-任务：通过对话收集完整预约信息后显示车型选择。需要收集：接机还是送机、日期、司机到达时间、乘客地址。
+任务：通过对话收集完整预约信息后显示车型选择。需要收集：订单类型、日期、时间、地址。
+
+【三种订单类型】
+1. 接机（from_airport）：乘客从机场出来，司机接到目的地
+2. 送机（to_airport）：司机从出发地送乘客去机场
+3. 陪同接机（accompanied）：主人需要司机陪同去机场接客人，再一起回家。此类型需额外收集：预计等候几小时（通常2-4小时）
 
 【时间确认规则】
-送机（to_airport）：若乘客说的是航班起飞时间，必须问"为确保准时，需要司机几点到您门口？建议起飞前2小时"。记录司机到达时间。
-接机（from_airport）：若乘客说的是落地时间，必须问"过海关取行李需要时间，预计几点能出来上车？通常落地后40-60分钟"。记录乘客上车时间。
+送机：若乘客说的是起飞时间，必须问"需要司机几点到您门口？建议起飞前2小时"。记录司机到达时间。
+接机：若乘客说的是落地时间，必须问"过海关取行李需要时间，预计几点出来上车？通常落地后40-60分钟"。记录上车时间。
+陪同接机：问"您几点出发去机场？客人大概几点落地？预计需要等候几小时？"记录出发时间和等候时长。
 
-价格（墨尔本机场25km内）：Sedan $70（1-3人）、MPV $90（4-6人）、大型MPV $120（7-9人）、Van $160（10人+）
+价格（墨尔本机场25km内）：Sedan $70（1-3人）、MPV $90（4-6人）、大型MPV $120（7-9人）、Van $160（10人+）。陪同接机额外收等候费：$20/小时
 支付：微信、到车付款、银行转账
 
 收集到所有信息（方向+日期+司机到达/上车时间+地址）后，说"好的信息齐了！帮你看看车型 🚗"`;
@@ -364,9 +370,12 @@ function buildSystemPrompt(){
   if(saved.name) prompt += '\n\n当前用户：'+saved.name+'。称呼时用"'+saved.name+'主人"，体现尊重和专业感。';
   if(addrs.length>0) prompt += `\n用户常用地址：${addrs[0]}。若用户说"回家""老地址""上次的地址"，直接用此地址，无需再问。`;
 
-  prompt += `\n\n【重要】收集到地址信息后，必须在回复末尾加JSON标记：
-[EXTRACTED: {"direction":"from_airport或to_airport","date":"YYYY-MM-DD","time":"HH:MM","address":"完整地址"}]
-time填司机到达时间（送机）或乘客上车时间（接机）。信息不完整时只填已知字段。`;
+  prompt += `\n\n【重要】收集到关键信息后，必须在回复末尾加JSON标记：
+[EXTRACTED: {"direction":"from_airport或to_airport","date":"YYYY-MM-DD","time":"HH:MM","address":"完整地址","trip_type":"standard或accompanied","wait_hours":0}]
+- direction：接机=from_airport，送机=to_airport，陪同接机=from_airport（trip_type=accompanied）
+- time：送机填司机到达时间，接机填上车时间，陪同接机填出发时间
+- wait_hours：陪同接机填等候小时数，其他填0
+信息不完整时只填已知字段。`;
 
   return prompt;
 }
@@ -398,6 +407,8 @@ async function sendMessage(){
         if(ex.date) S.date=ex.date;
         if(ex.time) S.time=ex.time;
         if(ex.address) S.address=ex.address;
+        if(ex.trip_type) S.trip_type=ex.trip_type;
+        if(ex.wait_hours) S.wait_hours=ex.wait_hours;
       }catch(e){}
       const clean = reply.replace(/\[EXTRACTED:.*?\]/s,'').trim();
       addMsg(clean); speak(clean);
@@ -434,9 +445,12 @@ function selectVehicle(type,price,el){
 
 async function showConfirm(){
   await agentSay('帮你确认一下行程信息',500);
-  const dirText=S.direction==='from_airport'?'接机（机场出发）':'送机（去机场）';
-  const timeLabel=S.direction==='from_airport'?'上车时间':'司机到达';
-  const addrLabel=S.direction==='from_airport'?'目的地':'出发地';
+  const isAccompanied = S.trip_type==='accompanied';
+  const dirText = isAccompanied?'陪同接机（全程陪同）':S.direction==='from_airport'?'接机（机场出发）':'送机（去机场）';
+  const timeLabel = isAccompanied?'出发时间':S.direction==='from_airport'?'上车时间':'司机到达';
+  const addrLabel = isAccompanied?'出发地/目的地':S.direction==='from_airport'?'目的地':'出发地';
+  const waitFee = isAccompanied ? S.wait_hours*20 : 0;
+  const totalPrice = S.price + waitFee;
   const vInfo=VEHICLES.find(v=>v.type===S.vehicle);
   const div=document.createElement('div');
   div.className='confirm-card';
@@ -447,7 +461,9 @@ async function showConfirm(){
     <div class="confirm-row"><span class="confirm-label">${timeLabel}</span><span class="confirm-value">${S.time}</span></div>
     <div class="confirm-row"><span class="confirm-label">${addrLabel}</span><span class="confirm-value">${S.address}</span></div>
     <div class="confirm-row"><span class="confirm-label">车型</span><span class="confirm-value">${vInfo?.icon} ${vInfo?.name}</span></div>
-    <div class="confirm-row"><span class="confirm-label">费用</span><span class="confirm-value" style="color:var(--accent);font-size:18px;font-weight:900;">$${S.price}</span></div>
+    <div class="confirm-row"><span class="confirm-label">车费</span><span class="confirm-value">$${S.price}</span></div>
+    ${isAccompanied?`<div class="confirm-row"><span class="confirm-label">等候费</span><span class="confirm-value">$${waitFee}（${S.wait_hours}小时×$20）</span></div>`:''}
+    <div class="confirm-row"><span class="confirm-label">合计</span><span class="confirm-value" style="color:var(--accent);font-size:18px;font-weight:900;">$${totalPrice}</span></div>
     <div class="confirm-btns">
       <button class="confirm-btn secondary" onclick="restartBooking()">✏️ 修改</button>
       <button class="confirm-btn primary" onclick="showContactForm()">✅ 确认下单</button>
@@ -500,16 +516,20 @@ async function submitBooking(){
   const isUrgent=(scheduledAt-new Date())/60000<=90;
   const points=Math.round(S.price*0.1)+5;
   try{
+    const isAcc = S.trip_type==='accompanied';
+    const waitFee2 = isAcc ? S.wait_hours*20 : 0;
+    const finalPrice = S.price + waitFee2;
     const [trip]=await supaInsert('trips',{
       tenant_id:TENANT_ID,passenger_name:name,passenger_phone:phone,
       passenger_wechat:S.wechat||null,direction:S.direction,
-      pickup_address:S.direction==='from_airport'?'墨尔本国际机场':S.address,
-      dropoff_address:S.direction==='from_airport'?S.address:'墨尔本国际机场',
+      pickup_address:isAcc||S.direction==='to_airport'?S.address:'墨尔本国际机场',
+      dropoff_address:isAcc||S.direction==='from_airport'?S.address:'墨尔本国际机场',
       vehicle_type:S.vehicle,scheduled_at:`${S.date}T${S.time}:00`,
-      total_price:S.price,payment_method:S.payment,
+      total_price:finalPrice,payment_method:S.payment,
       payment_status:S.payment==='bank_transfer'?'pending':'prepaid',
-      prepaid_amount:S.payment!=='bank_transfer'?S.price:null,
-      status:'pending',is_urgent:isUrgent
+      prepaid_amount:S.payment!=='bank_transfer'?finalPrice:null,
+      status:'pending',is_urgent:isUrgent,
+      trip_type:S.trip_type,wait_hours:S.wait_hours
     });
     try{ await supaInsert('contacts',{tenant_id:TENANT_ID,full_name:name,phone:phone,wechat_id:S.wechat||null,source:'小红书',status:'customer'}); }catch(e){}
     if(getIncomingRef()){
@@ -555,7 +575,7 @@ async function chooseAgent(gender){
   await delay(600);
   const saved=getPassenger();
   const namePrefix = saved.name ? saved.name+'主人' : '主人';
-  await agentSay(`${namePrefix}，您的出行管家来喽！请问今天有什么出行计划需要我安排？`);
+  await agentSay(`${namePrefix}，您的出行管家来喽！接机、送机、或者陪您去机场接客人，请问今天需要安排哪种服务？`);
 }
 
 window.onload = function(){
