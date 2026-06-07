@@ -931,21 +931,18 @@ function markNotificationsRead() {
     <div style="display:flex;gap:8px;">
       <div id="status-depot" onclick="setStatus('at_depot')"
         style="flex:1;border-radius:12px;padding:10px 12px;cursor:pointer;border:2px solid rgba(0,212,255,0.4);background:rgba(0,212,255,0.1);text-align:center;">
-        <div style="font-size:16px;margin-bottom:2px;">🏠</div>
-        <div style="font-size:11px;font-weight:700;color:var(--accent);">驿站候单</div>
-        <div id="queue-pos" style="font-size:10px;color:var(--text2);margin-top:2px;display:none;">第 - 位</div>
+        <div style="font-size:12px;font-weight:800;color:var(--accent);">上线候单</div>
+        <div id="queue-pos" style="font-size:10px;color:var(--text2);margin-top:3px;display:none;">第 - 位</div>
       </div>
       <div id="status-ontrip"
         style="flex:1;border-radius:12px;padding:10px 12px;border:2px solid var(--border);background:var(--surface2);text-align:center;opacity:0.5;">
-        <div style="font-size:16px;margin-bottom:2px;">🚗</div>
-        <div style="font-size:11px;font-weight:700;color:var(--text2);">在途</div>
-        <div style="font-size:10px;color:var(--text3);margin-top:2px;">系统自动</div>
+        <div style="font-size:12px;font-weight:800;color:var(--text2);">在途中</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:3px;">系统自动</div>
       </div>
       <div id="status-offline" onclick="setStatus('offline')"
         style="flex:1;border-radius:12px;padding:10px 12px;cursor:pointer;border:2px solid var(--border);background:var(--surface2);text-align:center;">
-        <div style="font-size:16px;margin-bottom:2px;">⚫</div>
-        <div style="font-size:11px;font-weight:700;color:var(--text2);">下线</div>
-        <div style="font-size:10px;color:var(--text3);margin-top:2px;">不接单</div>
+        <div style="font-size:12px;font-weight:800;color:var(--text2);">下线</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:3px;">不接单</div>
       </div>
     </div>
   </div>
