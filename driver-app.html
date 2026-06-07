@@ -913,28 +913,39 @@ function markNotificationsRead() {
 
 <div class="page" id="page-home">
 
-  <div class="topbar">
-    <div class="topbar-row">
-      <div>
-        <div class="topbar-title">👋 你好，<span id="driver-name">...</span></div>
-        <div class="topbar-sub" id="driver-vehicle">加载中...</div>
+  <!-- 澳小墨头部 -->
+  <div style="background:linear-gradient(135deg,#0d1f3c,#0a1628);padding:14px 16px;">
+    <!-- 第一行：澳小墨 + 助理按钮 -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+      <div style="width:40px;height:40px;background:rgba(0,212,255,0.1);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;border:1.5px solid rgba(0,212,255,0.2);">🧑‍✈️</div>
+      <div style="flex:1;">
+        <div style="font-size:15px;font-weight:800;color:var(--text);" id="driver-name">...</div>
+        <div style="font-size:11px;color:var(--text2);" id="driver-vehicle">加载中...</div>
       </div>
-      <div style="display:flex;align-items:center;gap:8px">
-        <button onclick="loadHome()" style="background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.2);border-radius:8px;padding:6px 10px;color:var(--text2);font-size:16px;cursor:pointer;">🔄</button>
-        <div class="badge depot" onclick="toggleStatus(this)" id="status-badge">
-          <div class="badge-dot"></div>
-          驿站候单
-        </div>
-      </div>
+      <button onclick="switchPage('assistant')" style="background:rgba(0,212,255,0.12);border:1.5px solid rgba(0,212,255,0.25);color:var(--accent);border-radius:12px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;">🤖 助理</button>
+      <button onclick="loadHome()" style="background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:10px;padding:7px 10px;color:var(--text2);font-size:14px;cursor:pointer;">🔄</button>
     </div>
-  </div>
 
-  <!-- 驿站签到横幅 -->
-  <div class="depot-banner" id="depot-banner">
-    <div class="depot-icon">🛖</div>
-    <div class="depot-text">
-      <h3>机场驿站候单中</h3>
-      <p>队列位置 <span class="queue-badge">第 2 位</span>，预计下一单约15分钟</p>
+    <!-- 第二行：状态切换卡片 -->
+    <div style="display:flex;gap:8px;">
+      <div id="status-depot" onclick="setStatus('at_depot')"
+        style="flex:1;border-radius:12px;padding:10px 12px;cursor:pointer;border:2px solid rgba(0,212,255,0.4);background:rgba(0,212,255,0.1);text-align:center;">
+        <div style="font-size:16px;margin-bottom:2px;">🏠</div>
+        <div style="font-size:11px;font-weight:700;color:var(--accent);">驿站候单</div>
+        <div id="queue-pos" style="font-size:10px;color:var(--text2);margin-top:2px;display:none;">第 - 位</div>
+      </div>
+      <div id="status-ontrip"
+        style="flex:1;border-radius:12px;padding:10px 12px;border:2px solid var(--border);background:var(--surface2);text-align:center;opacity:0.5;">
+        <div style="font-size:16px;margin-bottom:2px;">🚗</div>
+        <div style="font-size:11px;font-weight:700;color:var(--text2);">在途</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:2px;">系统自动</div>
+      </div>
+      <div id="status-offline" onclick="setStatus('offline')"
+        style="flex:1;border-radius:12px;padding:10px 12px;cursor:pointer;border:2px solid var(--border);background:var(--surface2);text-align:center;">
+        <div style="font-size:16px;margin-bottom:2px;">⚫</div>
+        <div style="font-size:11px;font-weight:700;color:var(--text2);">下线</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:2px;">不接单</div>
+      </div>
     </div>
   </div>
 
@@ -962,132 +973,8 @@ function markNotificationsRead() {
   </div>
 
   <!-- 待处理订单 -->
-  <div class="section-title">📬 待接受订单</div>
   <div id="pending-trips">
-  <!-- 动态加载 -->
-  </div>
-  <div class="trip-card" onclick="goToDetail()" id="sample-card" style="display:none">
-    <div class="trip-card-header">
-      <div class="trip-type">
-        <div class="trip-type-icon type-pickup">✈️</div>
-        接机
-      </div>
-      <div style="display:flex;align-items:center;gap:8px">
-        <span class="status-tag ${t.status==='confirmed'?'tag-active':'tag-waiting'}">${t.status==='confirmed'?'📅 已确认':'⏳ 待确认'}</span>
-        <div class="trip-time">14:30</div>
-      </div>
-    </div>
-    <div class="trip-card-body">
-      <div class="route-line">
-        <div class="route-dots">
-          <div class="dot-from"></div>
-          <div class="dot-line"></div>
-          <div class="dot-to"></div>
-        </div>
-        <div class="route-addrs">
-          <div class="route-addr">
-            <div class="route-addr-label">接客地点</div>
-            墨尔本国际机场 T2 国际到达
-          </div>
-          <div class="route-addr">
-            <div class="route-addr-label">目的地</div>
-            33 Swanston St, Melbourne CBD
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="trip-card-footer">
-      <div class="trip-meta">
-        <div class="trip-meta-item">👤 3人</div>
-        <div class="trip-meta-item">🧳 5件</div>
-        <div class="trip-meta-item">📍 23km</div>
-      </div>
-      <div class="trip-price">$70</div>
-    </div>
-  </div>
-  </div>
-
-  <!-- 今日完成 -->
-  <div class="section-title">✅ 今日已完成</div>
-
-  <div class="trip-card" style="opacity:0.7">
-    <div class="trip-card-header">
-      <div class="trip-type">
-        <div class="trip-type-icon type-dropoff">🏠</div>
-        送机
-      </div>
-      <div style="display:flex;align-items:center;gap:8px">
-        <span class="status-tag tag-confirmed">✓ 完成</span>
-        <div class="trip-time">10:00</div>
-      </div>
-    </div>
-    <div class="trip-card-body">
-      <div class="route-line">
-        <div class="route-dots">
-          <div class="dot-from"></div>
-          <div class="dot-line"></div>
-          <div class="dot-to"></div>
-        </div>
-        <div class="route-addrs">
-          <div class="route-addr">
-            <div class="route-addr-label">接客地点</div>
-            88 Bourke St, Melbourne CBD
-          </div>
-          <div class="route-addr">
-            <div class="route-addr-label">目的地</div>
-            墨尔本国际机场 T1
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="trip-card-footer">
-      <div class="trip-meta">
-        <div class="trip-meta-item">👤 2人</div>
-        <div class="trip-meta-item">🧳 4件</div>
-        <div class="trip-meta-item">💳 微信</div>
-      </div>
-      <div class="trip-price">$70</div>
-    </div>
-  </div>
-
-  <div class="trip-card" style="opacity:0.7">
-    <div class="trip-card-header">
-      <div class="trip-type">
-        <div class="trip-type-icon type-pickup">✈️</div>
-        接机
-      </div>
-      <div style="display:flex;align-items:center;gap:8px">
-        <span class="status-tag tag-confirmed">✓ 完成</span>
-        <div class="trip-time">07:15</div>
-      </div>
-    </div>
-    <div class="trip-card-body">
-      <div class="route-line">
-        <div class="route-dots">
-          <div class="dot-from"></div>
-          <div class="dot-line"></div>
-          <div class="dot-to"></div>
-        </div>
-        <div class="route-addrs">
-          <div class="route-addr">
-            <div class="route-addr-label">接客地点</div>
-            墨尔本国际机场 T2 国际到达
-          </div>
-          <div class="route-addr">
-            <div class="route-addr-label">目的地</div>
-            15 Park Rd, Doncaster VIC 3108
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="trip-card-footer">
-      <div class="trip-meta">
-        <div class="trip-meta-item">👤 4人</div>
-        <div class="trip-meta-item">🧳 8件</div>
-        <div class="trip-meta-item">💰 现金</div>
-      </div>
-      <div class="trip-price">$90</div>
-    </div>
+    <!-- 动态加载 -->
   </div>
 
 </div>
@@ -1852,6 +1739,7 @@ async function checkNewOrders() {
       showNewOrderBanner(newCount - lastPendingCount);
       await loadHome();
   checkPendingItems();
+  setStatus(currentDriver.status || 'at_depot');
     }
     lastPendingCount = newCount;
   } catch(e) { console.error('刷新检查失败', e); }
@@ -2400,20 +2288,52 @@ function goBack(pageId) {
   window.scrollTo(0, 0);
 }
 
-function toggleStatus(el) {
-  const states = [
-    { cls: 'online',  text: '空闲在线',  val: 'available' },
-    { cls: 'depot',   text: '驿站候单',  val: 'at_depot'  },
-    { cls: 'offline', text: '下线',      val: 'offline'   },
-  ];
-  const cur = states.findIndex(s => el.classList.contains(s.cls));
-  const next = states[(cur + 1) % states.length];
-  el.className = 'badge ' + next.cls;
-  el.innerHTML = `<div class="badge-dot"></div>${next.text}`;
-  const banner = document.getElementById('depot-banner');
-  banner.style.display = next.cls === 'depot' ? 'flex' : 'none';
-  updateDriverStatus(next.val);
+function setStatus(val) {
+  // 高亮选中卡片
+  ['depot','ontrip','offline'].forEach(s => {
+    const el = document.getElementById('status-'+s);
+    if (!el) return;
+    el.style.opacity = '1';
+    el.style.borderColor = 'var(--border)';
+    el.style.background = 'var(--surface2)';
+    el.querySelector('div:nth-child(2)').style.color = 'var(--text2)';
+  });
+
+  const activeMap = {
+    at_depot: 'depot',
+    on_trip:  'ontrip',
+    offline:  'offline'
+  };
+  const key = activeMap[val] || 'offline';
+  const activeEl = document.getElementById('status-'+key);
+  if (activeEl) {
+    const colors = {depot:'var(--accent)', ontrip:'var(--gold)', offline:'var(--text3)'};
+    const bgs = {depot:'rgba(0,212,255,0.1)', ontrip:'rgba(245,166,35,0.1)', offline:'rgba(255,255,255,0.05)'};
+    const borders = {depot:'rgba(0,212,255,0.4)', ontrip:'rgba(245,166,35,0.4)', offline:'rgba(255,255,255,0.15)'};
+    activeEl.style.borderColor = borders[key];
+    activeEl.style.background = bgs[key];
+    activeEl.querySelector('div:nth-child(2)').style.color = colors[key];
+  }
+
+  // 驿站候单显示队列位置
+  const queuePos = document.getElementById('queue-pos');
+  if (queuePos) queuePos.style.display = val === 'at_depot' ? 'block' : 'none';
+
+  // 更新数据库
+  updateDriverStatus(val);
+
+  // 更新顶部导航栏状态标签
+  const badge = document.getElementById('driver-status-badge');
+  if (badge) {
+    const labels = {at_depot:'驿站候单', on_trip:'在途中', offline:'已下线'};
+    badge.textContent = labels[val] || '在线';
+    badge.style.color = val==='at_depot'?'var(--accent)':val==='offline'?'var(--text3)':'var(--gold)';
+    badge.style.background = val==='at_depot'?'rgba(0,212,255,0.1)':val==='offline'?'rgba(255,255,255,0.05)':'rgba(245,166,35,0.1)';
+  }
 }
+
+// 兼容旧代码
+function toggleStatus(el) { setStatus('at_depot'); }
 
 function selectVtype(el) {
   document.querySelectorAll('.vtype-card').forEach(c => c.classList.remove('selected'));
