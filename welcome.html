@@ -3,7 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>澳洲出行管家</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="澳洲出行">
+<meta name="theme-color" content="#1a3a5c">
+<title>澳洲出行 AI 管家</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 body {
@@ -349,28 +354,31 @@ body {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  background: linear-gradient(135deg, #1a3a5c, #0f2540);
+  background: #e8f4ff;
+  border: 1.5px solid #b8d8f8;
   border-radius: 16px;
   padding: 12px 20px;
-  margin-bottom: 14px;
+  margin-top: 14px;
+  margin-bottom: 0;
   opacity: 0;
   animation: fadeUp 0.6s ease 1.7s forwards;
+  text-decoration: none;
 }
 .service-label {
   font-size: 12px;
-  color: #c8a020;
+  color: #2980b9;
   font-weight: 800;
   letter-spacing: 1px;
 }
 .service-num {
   font-size: 16px;
   font-weight: 900;
-  color: white;
+  color: #1a3a5c;
   letter-spacing: 1px;
 }
 .service-divider {
   width: 1px; height: 28px;
-  background: rgba(255,255,255,0.2);
+  background: #b8d8f8;
 }
 
 /* 功能卡片 */
@@ -382,32 +390,39 @@ body {
   animation: fadeUp 0.6s ease 1.9s forwards;
 }
 .card {
-  background: white;
   border-radius: 18px;
-  padding: 16px 20px;
+  padding: 18px 20px;
   display: flex;
   align-items: center;
   gap: 14px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.18);
   text-decoration: none;
-  color: inherit;
-  border: 2px solid transparent;
   cursor: pointer;
+  transition: transform 0.15s;
 }
 .card:active { transform: scale(0.97); }
-.card.blue { border-color: #e0f0ff; }
-.card.gold { border-color: #fef0d0; }
+.card.blue {
+  background: linear-gradient(135deg, #1a3a5c, #0d2540);
+}
+.card.gold {
+  background: linear-gradient(135deg, #2a1f00, #4a3800);
+}
 .card-icon {
   width: 50px; height: 50px;
   border-radius: 14px;
   display: flex; align-items:center; justify-content:center;
-  font-size: 24px; flex-shrink: 0;
+  font-size: 26px; flex-shrink: 0;
 }
-.card.blue .card-icon { background: linear-gradient(135deg, #e8f4ff, #d0e8ff); }
-.card.gold .card-icon { background: linear-gradient(135deg, #fef8e8, #fde8c0); }
-.card-text h3 { font-size: 15px; font-weight: 800; color: #1a3a5c; margin-bottom: 3px; }
-.card-text p  { font-size: 12px; color: #aaa; line-height: 1.4; }
-.card-arrow   { margin-left: auto; font-size: 20px; color: #ccc; flex-shrink: 0; }
+.card.blue .card-icon { background: rgba(255,255,255,0.1); }
+.card.gold .card-icon { background: rgba(255,255,255,0.1); }
+.card-text h3 {
+  font-size: 16px; font-weight: 900; margin-bottom: 3px;
+  color: rgba(255,255,255,0.95);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.4), 0 -1px 0 rgba(255,255,255,0.15);
+  letter-spacing: 0.5px;
+}
+.card-text p  { font-size: 12px; color: rgba(255,255,255,0.5); line-height: 1.4; }
+.card-arrow   { margin-left: auto; font-size: 22px; color: rgba(255,255,255,0.4); flex-shrink: 0; }
 
 /* 底部联系 */
 .footer {
@@ -446,7 +461,7 @@ body {
 <body>
 
 <div class="brand-bar">
-  <div class="brand-name">AU TRANSFER · 澳洲出行</div>
+  <div class="brand-name">澳洲出行 AI 管家</div>
 </div>
 
 <div class="stage">
@@ -509,8 +524,27 @@ body {
 
 <div class="content">
   <div class="greeting">
-    <h1>你好！我是澳洲出行管家 😊</h1>
+    <h1>你好！我是澳洲出行 AI 管家 😊</h1>
     <p>华人服务华人，安心出行每一程</p>
+  </div>
+
+  <div class="cards">
+    <a class="card blue" href="#" onclick="showPassengerNotice(event)">
+      <div class="card-icon">🛬</div>
+      <div class="card-text">
+        <h3>我要出行</h3>
+        <p>接机 · 送机 · 陪同接机 · AI全程引导</p>
+      </div>
+      <div class="card-arrow">›</div>
+    </a>
+    <a class="card gold" href="#" onclick="showDriverNotice(event)">
+      <div class="card-icon">🧑‍✈️</div>
+      <div class="card-text">
+        <h3>我是司机</h3>
+        <p>AI助理 · 智能派单 · 积分分红</p>
+      </div>
+      <div class="card-arrow">›</div>
+    </a>
   </div>
 
   <!-- 客服电话栏 -->
@@ -522,25 +556,6 @@ body {
     <div class="service-divider"></div>
     <div style="font-size:28px;">📞</div>
   </a>
-
-  <div class="cards">
-    <a class="card blue" href="#" onclick="showPassengerNotice(event)">
-      <div class="card-icon">🛬</div>
-      <div class="card-text">
-        <h3>预约机场接送</h3>
-        <p>接机 · 送机 · 华人司机 · 中文沟通</p>
-      </div>
-      <div class="card-arrow">›</div>
-    </a>
-    <a class="card gold" href="#" onclick="showDriverNotice(event)">
-      <div class="card-icon">🧑‍✈️</div>
-      <div class="card-text">
-        <h3>成为合伙人司机</h3>
-        <p>灵活接单 · 积分分红 · 越早越值钱</p>
-      </div>
-      <div class="card-arrow">›</div>
-    </a>
-  </div>
 </div>
 
 <div class="footer">
@@ -555,7 +570,7 @@ body {
       📕 小红书 澳洲晓宏叔
     </a>
   </div>
-  <div class="footer-note">mel-transfer.vercel.app</div>
+  <div class="footer-note">澳洲出行 AI 管家 · mel-transfer.vercel.app</div>
 </div>
 
 <script>
@@ -639,40 +654,62 @@ function closeDriverNotice() {
     <div style="text-align:center;font-size:52px;margin-bottom:10px;">🧑‍✈️</div>
 
     <!-- 标题 -->
-    <div style="text-align:center;font-size:20px;font-weight:900;color:#1a3a5c;line-height:1.4;margin-bottom:18px;">
-      澳洲机场接送<br><span style="color:#0096c7;">新人专享折扣价</span>
+    <div style="text-align:center;font-size:20px;font-weight:900;color:#1a3a5c;line-height:1.4;margin-bottom:6px;">
+      澳洲机场接送
+    </div>
+    <div style="text-align:center;font-size:13px;color:#888;margin-bottom:18px;">无需注册，直接下单</div>
+
+    <!-- 现金券返现卡片 -->
+    <div style="background:linear-gradient(135deg,#1a3a5c,#0d2540);border-radius:18px;padding:18px 20px;margin-bottom:16px;text-align:center;">
+      <div style="font-size:12px;color:rgba(255,255,255,0.6);margin-bottom:6px;">🎁 注册新用户专属</div>
+      <div style="font-size:13px;color:#c8a020;font-weight:800;margin-bottom:10px;">首单完成后返还现金券</div>
+      <div style="display:flex;justify-content:center;gap:12px;">
+        <div style="background:rgba(255,255,255,0.08);border-radius:12px;padding:10px 14px;text-align:center;">
+          <div style="font-size:22px;font-weight:900;color:white;">$5</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.5);margin-top:2px;">Sedan</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.08);border-radius:12px;padding:10px 14px;text-align:center;">
+          <div style="font-size:22px;font-weight:900;color:white;">$8</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.5);margin-top:2px;">MPV</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.08);border-radius:12px;padding:10px 14px;text-align:center;">
+          <div style="font-size:22px;font-weight:900;color:white;">$12</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.5);margin-top:2px;">大型</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:10px;">下一单直接抵用 · 单单有返 · 循环不断</div>
     </div>
 
     <!-- 车型价格 -->
-    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px;">
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
       <div style="display:flex;justify-content:space-between;align-items:center;background:#f8fbff;border-radius:12px;padding:10px 14px;">
         <span style="font-size:14px;color:#333;">🚗 Sedan 轿车 <span style="font-size:11px;color:#aaa;">1-3人</span></span>
-        <span><span style="text-decoration:line-through;color:#ccc;font-size:12px;">$70</span> <strong style="color:#0096c7;">$60</strong></span>
+        <strong style="color:#1a3a5c;">$70</strong>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;background:#f8fbff;border-radius:12px;padding:10px 14px;">
         <span style="font-size:14px;color:#333;">🚐 MPV 商务车 <span style="font-size:11px;color:#aaa;">4-6人</span></span>
-        <span><span style="text-decoration:line-through;color:#ccc;font-size:12px;">$90</span> <strong style="color:#0096c7;">$75</strong></span>
+        <strong style="color:#1a3a5c;">$90</strong>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;background:#f8fbff;border-radius:12px;padding:10px 14px;">
         <span style="font-size:14px;color:#333;">🚌 大型MPV <span style="font-size:11px;color:#aaa;">7-9人</span></span>
-        <span><span style="text-decoration:line-through;color:#ccc;font-size:12px;">$120</span> <strong style="color:#0096c7;">$99</strong></span>
+        <strong style="color:#1a3a5c;">$120</strong>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;background:#f8fbff;border-radius:12px;padding:10px 14px;">
         <span style="font-size:14px;color:#333;">🚎 Van 大巴 <span style="font-size:11px;color:#aaa;">10人+</span></span>
-        <span><span style="text-decoration:line-through;color:#ccc;font-size:12px;">$160</span> <strong style="color:#0096c7;">$130</strong></span>
+        <strong style="color:#1a3a5c;">$160</strong>
       </div>
     </div>
 
     <!-- 支付方式 -->
-    <div style="display:flex;justify-content:center;gap:12px;margin-bottom:20px;">
-      <span style="font-size:12px;color:#888;background:#f5f5f5;padding:5px 10px;border-radius:8px;">💚 微信支付</span>
+    <div style="display:flex;justify-content:center;gap:10px;margin-bottom:18px;">
+      <span style="font-size:12px;color:#888;background:#f5f5f5;padding:5px 10px;border-radius:8px;">💚 微信</span>
       <span style="font-size:12px;color:#888;background:#f5f5f5;padding:5px 10px;border-radius:8px;">💳 信用卡</span>
-      <span style="font-size:12px;color:#888;background:#f5f5f5;padding:5px 10px;border-radius:8px;">🏦 银行转账</span>
+      <span style="font-size:12px;color:#888;background:#f5f5f5;padding:5px 10px;border-radius:8px;">🏦 转账</span>
     </div>
 
     <!-- 大按钮 -->
     <div style="background:linear-gradient(135deg,#00b4d8,#0096c7);color:white;text-align:center;padding:16px;border-radius:16px;font-size:16px;font-weight:900;box-shadow:0 6px 20px rgba(0,150,200,0.4);">
-      🚀 立即预约享折扣 →
+      🚀 立即预约 →
     </div>
     <div style="text-align:center;font-size:11px;color:#ccc;margin-top:10px;">点击任意位置进入预约</div>
   </div>
@@ -688,5 +725,13 @@ function closePassengerNotice() {
 }
 </script>
 
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
+</script>
 </body>
 </html>
