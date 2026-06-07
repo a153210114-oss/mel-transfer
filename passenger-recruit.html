@@ -763,7 +763,7 @@ async function sendMessage(){
     const res = await fetch('/api/chat',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({system:buildSystemPrompt()+SYSTEM_PROMPT.substring(SYSTEM_PROMPT.indexOf('\n')), messages:aiHistory})
+      body:JSON.stringify({system:buildSystemPrompt(), messages:aiHistory})
     });
     const data = await res.json();
     const reply = data.content?.[0]?.text || '抱歉，请再说一遍 😊';
