@@ -676,6 +676,17 @@ function savePassenger(name,phone,wechat){
   localStorage.setItem('au_passenger', JSON.stringify(p));
   return p;
 }
+function saveAddress(address){
+  if(!address) return;
+  let addrs = JSON.parse(localStorage.getItem('au_addresses')||'[]');
+  addrs = addrs.filter(a=>a!==address);
+  addrs.unshift(address);
+  addrs = addrs.slice(0,3); // 最多记3个
+  localStorage.setItem('au_addresses', JSON.stringify(addrs));
+}
+function getSavedAddresses(){
+  return JSON.parse(localStorage.getItem('au_addresses')||'[]');
+}
 function getPassenger(){ return JSON.parse(localStorage.getItem('au_passenger')||'{}'); }
 function getIncomingRef(){
   const u = new URLSearchParams(window.location.search);
@@ -703,6 +714,16 @@ async function supaInsert(table, data){
 // ── AI 对话历史 ──
 let aiHistory = [];
 let bookingSubmitted = false;
+
+function buildSystemPrompt(){
+  const saved = getPassenger();
+  const addrs = getSavedAddresses();
+  const addrHint = addrs.length > 0 ? `
+用户常用地址：${addrs.join('、')}。如果用户说"回家"或"老地址"，使用第一个地址：${addrs[0]}。` : '';
+  const nameHint = saved.name ? `
+用户姓名：${saved.name}。` : '';
+  return `你是澳洲出行管家"澳小墨"，专为华人旅客提供墨尔本机场接送服务。${nameHint}${addrHint}`;
+}
 
 const SYSTEM_PROMPT = `你是澳洲出行管家"澳小墨"，专为华人旅客提供墨尔本机场接送服务。
 
@@ -742,7 +763,7 @@ async function sendMessage(){
     const res = await fetch('/api/chat',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({system:SYSTEM_PROMPT, messages:aiHistory})
+      body:JSON.stringify({system:buildSystemPrompt()+SYSTEM_PROMPT.substring(SYSTEM_PROMPT.indexOf('\n')), messages:aiHistory})
     });
     const data = await res.json();
     const reply = data.content?.[0]?.text || '抱歉，请再说一遍 😊';
@@ -887,6 +908,7 @@ async function submitBooking(){
   S.wechat = document.getElementById('f-wechat').value.trim();
 
   const passenger = savePassenger(name, phone, S.wechat);
+  saveAddress(S.address);
   const incomingRef = getIncomingRef();
   const scheduledAt = new Date(`${S.date}T${S.time}:00`);
   const isUrgent = (scheduledAt - new Date()) / 60000 <= 90;
