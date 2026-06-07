@@ -666,12 +666,13 @@ function addAssistantMsg(html, isUser=false) {
   const chat = document.getElementById('assistant-chat');
   const div = document.createElement('div');
   div.style.cssText = 'display:flex;gap:8px;align-items:flex-end;' + (isUser?'flex-direction:row-reverse':'');
+  const agentEmoji = isUser ? '🧑‍✈️' : '🧑‍✈️';
   const formatted = html.replace(/\n/g,'<br>').replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
   const bg = isUser ? 'rgba(200,160,32,0.15)' : 'rgba(0,212,255,0.1)';
   const bubbleBg = isUser ? 'var(--accent)' : 'var(--surface)';
   const color = isUser ? 'white' : 'var(--text)';
   const radius = isUser ? '18px 18px 4px 18px' : '18px 18px 18px 4px';
-  const avatar = isUser ? '🧑‍✈️' : '🤖';
+  const avatar = isUser ? '🧑‍✈️' : '🧑‍✈️';
   div.innerHTML = '<div style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;background:'+bg+';">'+avatar+'</div>'
     + '<div style="max-width:78%;background:'+bubbleBg+';color:'+color+';border-radius:'+radius+';padding:10px 14px;font-size:13px;line-height:1.6;box-shadow:0 2px 8px rgba(0,0,0,0.08);">'+formatted+'</div>';
   chat.appendChild(div);
@@ -684,7 +685,7 @@ function addAssistantTyping() {
   div.className = 'assist-typing';
   div.style.cssText = 'display:flex;gap:8px;align-items:flex-end;';
   div.innerHTML = `
-    <div style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;background:rgba(0,212,255,0.1);">🤖</div>
+    <div style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;background:rgba(0,212,255,0.1);">🧑‍✈️</div>
     <div style="background:var(--surface);border-radius:18px 18px 18px 4px;padding:12px 16px;display:flex;gap:4px;">
       <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
     </div>`;
@@ -885,7 +886,7 @@ function markNotificationsRead() {
     <div class="founder-scroll-item">🎉 恭喜 <span class="name">赵先生</span> 成为珀斯创始合伙人</div>
   </div>
 </div>
-<button class="founder-float" onclick="showFounderModal()" style="display:none;">我也要成为<br>创始合伙人！</button>
+
 <div class="founder-modal-bg" id="founder-modal" style="display:none;pointer-events:none;" onclick="hideFounderModal(event)">
   <div class="founder-modal">
     <div class="modal-handle"></div>
@@ -950,10 +951,15 @@ function markNotificationsRead() {
   </div>
 
   <!-- 今日收入 -->
-  <div class="earning-card">
-    <div class="earning-title">TODAY'S EARNINGS</div>
-    <div class="earning-amount">$<span id="today-earning">0</span></div>
-    <div class="earning-sub">已完成 <span id="today-count">0</span> 单</div>
+  <div class="earning-card" style="display:flex;align-items:center;gap:12px;">
+    <div style="flex:1;">
+      <div class="earning-title">TODAY'S EARNINGS</div>
+      <div class="earning-amount">$<span id="today-earning">0</span></div>
+      <div class="earning-sub">已完成 <span id="today-count">0</span> 单</div>
+    </div>
+    <button id="founder-float-card" onclick="showFounderModal()" style="display:none;background:linear-gradient(135deg,#c8920a,#e8b830);color:#0a0e14;border:none;border-radius:14px;padding:10px 12px;font-size:11px;font-weight:900;cursor:pointer;text-align:center;line-height:1.4;flex-shrink:0;">
+      ⭐ 我要成为<br>创始合伙人
+    </button>
   </div>
 
   <!-- 统计 -->
@@ -1148,9 +1154,9 @@ function markNotificationsRead() {
 
   <!-- 助理头像区 -->
   <div style="background:linear-gradient(135deg,#1a3a5c,#0d2540);padding:16px;display:flex;align-items:center;gap:12px;">
-    <div style="width:48px;height:48px;background:rgba(0,212,255,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;border:2px solid rgba(0,212,255,0.3);">🤖</div>
+    <div style="width:48px;height:48px;background:rgba(0,212,255,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;border:2px solid rgba(0,212,255,0.3);">🧑‍✈️</div>
     <div>
-      <div style="color:white;font-weight:800;font-size:15px;">澳墨助理</div>
+      <div style="color:white;font-weight:800;font-size:15px;">澳小墨</div>
       <div style="color:rgba(255,255,255,0.5);font-size:11px;">语音/文字都可以，我来帮你搞定</div>
     </div>
     <button onclick="toggleAssistantMic()" id="assist-mic-btn" style="margin-left:auto;background:rgba(0,212,255,0.15);border:1.5px solid rgba(0,212,255,0.4);color:#00d4ff;border-radius:50%;width:40px;height:40px;font-size:18px;cursor:pointer;">🎤</button>
@@ -1684,7 +1690,7 @@ function enterApp() {
   document.getElementById('driver-name').textContent = currentDriver.full_name;
   // 登录后才显示条幅和浮窗
   const bar = document.querySelector('.founder-bar');
-  const float = document.querySelector('.founder-float');
+  const float = document.getElementById('founder-float-card');
   if(bar) bar.style.display = 'flex';
   if(float) float.style.display = 'block';
   loadHome();
