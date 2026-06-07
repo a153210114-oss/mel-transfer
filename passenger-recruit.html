@@ -12,74 +12,304 @@
   --text:#1a3a5c;--text2:#7a90a8;--accent:#0096c7;
   --gold:#c8a020;--green:#27ae60;--red:#ff3b30;
 }
-body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);min-height:100vh;display:flex;flex-direction:column;max-width:480px;margin:0 auto;}
-.agent-header{background:linear-gradient(135deg,#1a3a5c,#0d2540);padding:16px 16px 12px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;}
-.agent-avatar{width:48px;height:48px;background:rgba(255,255,255,0.1);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;}
-.agent-info{flex:1;}
-.agent-name{font-size:16px;font-weight:800;color:white;}
-.agent-status{font-size:11px;color:rgba(255,255,255,0.5);margin-top:2px;}
-.notif-btns{display:flex;gap:8px;}
-.notif-btn{position:relative;background:rgba(255,255,255,0.1);border:none;border-radius:10px;font-size:16px;cursor:pointer;padding:4px 10px;display:flex;flex-direction:column;align-items:center;}
-.notif-dot{position:absolute;top:-3px;right:-3px;background:var(--red);border-radius:50%;width:8px;height:8px;display:none;}
-.chat-area{flex:1;padding:16px 14px 120px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;}
+body{
+  font-family:'Noto Sans SC',sans-serif;
+  background:var(--bg);
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+  max-width:480px;
+  margin:0 auto;
+  overflow:hidden;
+}
+
+/* ── 顶部栏 ── */
+.top-bar{
+  display:flex;align-items:center;
+  padding:12px 16px;
+  background:linear-gradient(135deg,#1a3a5c,#0d2540);
+  flex-shrink:0;
+  z-index:10;
+}
+.exit-btn{
+  background:rgba(255,255,255,0.1);
+  border:none;color:rgba(255,255,255,0.7);
+  border-radius:10px;padding:7px 12px;
+  font-size:13px;cursor:pointer;
+  font-family:inherit;
+}
+.agent-center{
+  flex:1;text-align:center;
+}
+.agent-emoji{font-size:28px;line-height:1;}
+.agent-nm{font-size:12px;color:rgba(255,255,255,0.6);margin-top:2px;}
+.profile-btn{
+  background:rgba(255,255,255,0.1);
+  border:none;color:white;
+  border-radius:50%;width:36px;height:36px;
+  font-size:18px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+}
+
+/* ── 对话区 ── */
+.chat-area{
+  flex:1;
+  overflow-y:auto;
+  padding:16px 14px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
 .msg{display:flex;gap:8px;align-items:flex-end;}
 .msg.user{flex-direction:row-reverse;}
-.msg-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;background:rgba(0,150,199,0.1);}
-.msg.user .msg-avatar{background:rgba(200,160,32,0.1);}
-.msg-bubble{max-width:75%;background:white;border-radius:18px 18px 18px 4px;padding:10px 14px;font-size:14px;color:var(--text);line-height:1.6;box-shadow:0 2px 8px rgba(0,0,0,0.06);}
-.msg.user .msg-bubble{background:var(--accent);color:white;border-radius:18px 18px 4px 18px;}
-.typing-bubble{background:white;border-radius:18px 18px 18px 4px;padding:12px 16px;display:flex;gap:4px;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,0.06);}
-.typing-dot{width:7px;height:7px;background:#ccc;border-radius:50%;animation:typingBounce 1s ease-in-out infinite;}
+.msg-av{
+  width:32px;height:32px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;flex-shrink:0;
+  background:rgba(0,150,199,0.1);
+}
+.msg.user .msg-av{background:rgba(200,160,32,0.1);}
+.msg-bubble{
+  max-width:78%;background:white;
+  border-radius:18px 18px 18px 4px;
+  padding:10px 14px;font-size:14px;
+  color:var(--text);line-height:1.6;
+  box-shadow:0 2px 8px rgba(0,0,0,0.06);
+}
+.msg.user .msg-bubble{
+  background:var(--accent);color:white;
+  border-radius:18px 18px 4px 18px;
+}
+.typing-bubble{
+  background:white;border-radius:18px 18px 18px 4px;
+  padding:12px 16px;display:flex;gap:4px;align-items:center;
+  box-shadow:0 2px 8px rgba(0,0,0,0.06);
+}
+.typing-dot{
+  width:7px;height:7px;background:#ccc;border-radius:50%;
+  animation:typingBounce 1s ease-in-out infinite;
+}
 .typing-dot:nth-child(2){animation-delay:0.15s;}
 .typing-dot:nth-child(3){animation-delay:0.3s;}
-@keyframes typingBounce{0%,60%,100%{transform:translateY(0);}30%{transform:translateY(-6px);background:var(--accent);}}
+@keyframes typingBounce{
+  0%,60%,100%{transform:translateY(0);}
+  30%{transform:translateY(-6px);background:var(--accent);}
+}
+
+/* ── 选择卡片 ── */
 .vehicle-cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;}
-.vehicle-card{background:white;border:2px solid var(--border);border-radius:14px;padding:12px;cursor:pointer;text-align:center;transition:all 0.2s;}
+.vehicle-card{
+  background:white;border:2px solid var(--border);
+  border-radius:14px;padding:12px;cursor:pointer;
+  text-align:center;transition:all 0.2s;
+}
 .vehicle-card:active{transform:scale(0.97);}
 .vehicle-card.selected{border-color:var(--accent);background:#f0f8ff;}
-.vehicle-icon{font-size:28px;margin-bottom:4px;}
-.vehicle-name{font-size:13px;font-weight:700;color:var(--text);}
-.vehicle-cap{font-size:11px;color:var(--text2);margin:2px 0;}
-.vehicle-price{font-size:16px;font-weight:900;color:var(--accent);}
-.confirm-card{background:white;border-radius:18px;padding:18px;box-shadow:0 4px 20px rgba(0,0,0,0.08);margin-top:4px;}
-.confirm-title{font-size:15px;font-weight:900;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
-.confirm-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.v-icon{font-size:28px;margin-bottom:4px;}
+.v-name{font-size:13px;font-weight:700;color:var(--text);}
+.v-cap{font-size:11px;color:var(--text2);margin:2px 0;}
+.v-price{font-size:16px;font-weight:900;color:var(--accent);}
+
+/* 确认卡 */
+.confirm-card{
+  background:white;border-radius:18px;
+  padding:18px;box-shadow:0 4px 20px rgba(0,0,0,0.08);
+}
+.confirm-title{font-size:15px;font-weight:900;color:var(--text);margin-bottom:14px;}
+.confirm-row{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;
+}
 .confirm-row:last-of-type{border:none;}
-.confirm-label{color:var(--text2);width:60px;flex-shrink:0;}
+.confirm-label{color:var(--text2);width:64px;flex-shrink:0;}
 .confirm-value{color:var(--text);font-weight:600;flex:1;}
 .confirm-btns{display:flex;gap:8px;margin-top:14px;}
-.confirm-btn{flex:1;padding:12px;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;}
+.confirm-btn{
+  flex:1;padding:12px;border:none;border-radius:12px;
+  font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;
+}
 .confirm-btn.primary{background:var(--accent);color:white;}
 .confirm-btn.secondary{background:var(--bg);color:var(--text2);}
-.contact-form{background:white;border-radius:18px;padding:18px;box-shadow:0 4px 20px rgba(0,0,0,0.08);margin-top:4px;}
-.form-title{font-size:15px;font-weight:900;color:var(--text);margin-bottom:14px;}
+
+/* 联系表单 */
+.contact-form{
+  background:white;border-radius:18px;
+  padding:18px;box-shadow:0 4px 20px rgba(0,0,0,0.08);
+}
 .form-field{margin-bottom:12px;}
 .form-label{font-size:12px;color:var(--text2);margin-bottom:4px;display:block;}
-.form-input{width:100%;padding:11px 14px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:inherit;outline:none;}
+.form-input{
+  width:100%;padding:11px 14px;background:var(--bg);
+  border:1.5px solid var(--border);border-radius:10px;
+  color:var(--text);font-size:14px;font-family:inherit;outline:none;
+}
 .form-input:focus{border-color:var(--accent);}
 .pay-options{display:flex;gap:8px;margin-top:4px;}
-.pay-opt{flex:1;padding:10px 6px;background:var(--bg);border:2px solid var(--border);border-radius:10px;text-align:center;font-size:12px;font-weight:700;color:var(--text2);cursor:pointer;}
+.pay-opt{
+  flex:1;padding:10px 6px;background:var(--bg);
+  border:2px solid var(--border);border-radius:10px;
+  text-align:center;font-size:12px;font-weight:700;
+  color:var(--text2);cursor:pointer;
+}
 .pay-opt.selected{border-color:var(--accent);color:var(--accent);background:#f0f8ff;}
-.submit-btn{width:100%;margin-top:16px;padding:15px;background:linear-gradient(135deg,var(--accent),#0077b6);color:white;border:none;border-radius:14px;font-size:16px;font-weight:900;font-family:inherit;cursor:pointer;box-shadow:0 6px 20px rgba(0,150,199,0.35);}
-.input-bar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:white;border-top:1px solid var(--border);padding:10px 14px 20px;display:flex;gap:8px;align-items:center;z-index:100;}
-.chat-input{flex:1;background:var(--bg);border:1.5px solid var(--border);border-radius:22px;padding:10px 16px;font-size:14px;color:var(--text);font-family:inherit;outline:none;}
+.submit-btn{
+  width:100%;margin-top:16px;padding:15px;
+  background:linear-gradient(135deg,var(--accent),#0077b6);
+  color:white;border:none;border-radius:14px;
+  font-size:16px;font-weight:900;font-family:inherit;cursor:pointer;
+}
+
+/* ── 底部输入 ── */
+.input-bar{
+  display:flex;gap:8px;align-items:center;
+  padding:10px 14px 24px;
+  background:white;border-top:1px solid var(--border);
+  flex-shrink:0;
+}
+.chat-input{
+  flex:1;background:var(--bg);
+  border:1.5px solid var(--border);border-radius:22px;
+  padding:10px 16px;font-size:14px;color:var(--text);
+  font-family:inherit;outline:none;
+}
 .chat-input:focus{border-color:var(--accent);}
-.send-btn{width:40px;height:40px;background:var(--accent);border:none;border-radius:50%;font-size:16px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:white;}
-.mic-btn{width:40px;height:40px;background:var(--bg);border:1.5px solid var(--border);border-radius:50%;font-size:18px;cursor:pointer;flex-shrink:0;}
-.mic-btn.recording{background:#fff0f0;border-color:var(--red);}
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:999;align-items:flex-end;justify-content:center;}
-.modal-sheet{background:white;border-radius:28px 28px 0 0;padding:28px 24px 40px;width:100%;max-width:480px;}
+.mic-btn{
+  width:44px;height:44px;background:var(--accent);
+  border:none;border-radius:50%;font-size:20px;
+  cursor:pointer;flex-shrink:0;color:white;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 12px rgba(0,150,199,0.4);
+}
+.mic-btn.recording{background:var(--red);animation:micPulse 0.8s ease-in-out infinite;}
+@keyframes micPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.1);}}
+.send-btn{
+  width:40px;height:40px;background:var(--accent);
+  border:none;border-radius:50%;font-size:16px;
+  cursor:pointer;flex-shrink:0;color:white;
+}
+
+/* ── 个人中心侧边栏 ── */
+.profile-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0.5);
+  z-index:200;display:none;
+}
+.profile-overlay.show{display:block;}
+.profile-panel{
+  position:absolute;right:0;top:0;bottom:0;
+  width:82%;max-width:360px;
+  background:white;
+  transform:translateX(100%);
+  transition:transform 0.3s ease;
+  overflow-y:auto;
+}
+.profile-overlay.show .profile-panel{transform:translateX(0);}
+.profile-header{
+  background:linear-gradient(135deg,#1a3a5c,#0d2540);
+  padding:40px 20px 24px;
+}
+.profile-av{
+  width:64px;height:64px;background:rgba(255,255,255,0.15);
+  border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:32px;margin-bottom:12px;
+}
+.profile-name{font-size:18px;font-weight:800;color:white;}
+.profile-phone{font-size:13px;color:rgba(255,255,255,0.6);margin-top:4px;}
+.profile-body{padding:20px 16px;}
+.profile-section{margin-bottom:20px;}
+.profile-section-title{
+  font-size:11px;color:var(--text2);font-weight:700;
+  letter-spacing:1px;margin-bottom:10px;
+}
+.profile-item{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 0;border-bottom:1px solid var(--border);
+  cursor:pointer;
+}
+.profile-item:last-child{border:none;}
+.profile-item-icon{font-size:20px;width:28px;text-align:center;}
+.profile-item-text{flex:1;}
+.profile-item-label{font-size:14px;font-weight:600;color:var(--text);}
+.profile-item-sub{font-size:12px;color:var(--text2);margin-top:2px;}
+.profile-item-arrow{color:var(--text2);font-size:16px;}
+
+/* 积分卡 */
+.pts-card{
+  background:linear-gradient(135deg,#1a3a5c,#0d2540);
+  border-radius:16px;padding:16px;margin-bottom:16px;
+}
+.pts-label{color:var(--gold);font-size:12px;font-weight:800;}
+.pts-num{color:white;font-size:32px;font-weight:900;margin:4px 0;}
+.pts-sub{color:rgba(255,255,255,0.5);font-size:11px;}
+
+/* 历史订单 */
+.order-item{
+  background:var(--bg);border-radius:12px;
+  padding:12px 14px;margin-bottom:8px;
+}
+.order-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.order-type{font-size:13px;font-weight:700;color:var(--text);}
+.order-status{font-size:11px;padding:3px 8px;border-radius:6px;font-weight:700;}
+.order-status.done{background:#e8f8ee;color:var(--green);}
+.order-status.pending{background:#fff8e8;color:var(--gold);}
+.order-detail{font-size:12px;color:var(--text2);}
+
+/* ── 入场动画 ── */
+#splash{
+  position:fixed;inset:0;
+  background:linear-gradient(135deg,#1a3a5c,#0d2540);
+  z-index:9999;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;overflow:hidden;
+}
+#splash-agent{
+  position:absolute;top:15%;right:-200px;
+  animation:agentRunIn 1.2s cubic-bezier(0.22,0.61,0.36,1) 0.2s forwards;
+}
+@keyframes agentRunIn{
+  0%{right:-200px;top:15%;transform:scale(0.25);}
+  60%{right:calc(50% - 40px);top:35%;transform:scale(1.08);}
+  75%{right:calc(50% - 40px);top:35%;transform:scale(0.96);}
+  100%{right:calc(50% - 40px);top:35%;transform:scale(1.0);}
+}
+@keyframes bodyBob{from{transform:translateY(0) rotate(-1.5deg);}to{transform:translateY(-7px) rotate(1.5deg);}}
+@keyframes armFwd{from{transform:rotate(-30deg);}to{transform:rotate(20deg);}}
+@keyframes legFwd{from{transform:rotate(-25deg);}to{transform:rotate(15deg);}}
+@keyframes legBack{from{transform:rotate(15deg);}to{transform:rotate(-25deg);}}
+@keyframes airLine{from{transform:translateX(0);opacity:0.8;}to{transform:translateX(-8px);opacity:0.2;}}
+@keyframes signWave{from{transform:rotate(-5deg);}to{transform:rotate(5deg);}}
+@keyframes haloExpand{0%{opacity:0;transform:scale(0.5);}50%{opacity:1;}100%{opacity:0;transform:scale(2);}}
+@keyframes textFadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+@keyframes loadBar{from{width:0%;}to{width:100%;}}
+@keyframes splashFade{from{opacity:1;}to{opacity:0;pointer-events:none;}}
+
+/* 成功弹窗 */
+.modal-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,0.55);z-index:999;
+  align-items:flex-end;justify-content:center;
+}
+.modal-sheet{
+  background:white;border-radius:28px 28px 0 0;
+  padding:28px 24px 40px;width:100%;max-width:480px;
+}
 .modal-handle{width:40px;height:4px;background:#e0e0e0;border-radius:2px;margin:0 auto 20px;}
+
+/* 2分钟提示 */
+.idle-toast{
+  position:fixed;top:70px;left:50%;transform:translateX(-50%);
+  background:rgba(0,0,0,0.75);color:white;
+  border-radius:20px;padding:8px 18px;font-size:13px;
+  z-index:500;display:none;white-space:nowrap;
+}
 </style>
 </head>
 <body>
 
-<!-- 全屏入场动画 -->
-<div id="splash" style="position:fixed;inset:0;background:linear-gradient(135deg,#1a3a5c,#0d2540);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;">
+<!-- 入场动画 -->
+<div id="splash">
   <div style="position:absolute;width:300px;height:300px;background:radial-gradient(circle,rgba(0,150,199,0.3),transparent);border-radius:50%;animation:haloExpand 2s ease-out 0.5s forwards;opacity:0;"></div>
-  <div id="splash-agent" style="position:absolute;top:15%;right:-200px;animation:agentRunIn 1.2s cubic-bezier(0.22,0.61,0.36,1) 0.2s forwards;">
+  <div id="splash-agent">
     <div style="position:absolute;top:-50px;right:-70px;animation:signWave 0.3s ease-in-out infinite alternate;">
-      <div style="background:white;border:2px solid #c8a020;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:900;color:#1a3a5c;white-space:nowrap;box-shadow:0 3px 10px rgba(0,0,0,0.2);">👋 澳洲出行管家</div>
+      <div style="background:white;border:2px solid #c8a020;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:900;color:#1a3a5c;white-space:nowrap;">👋 澳洲出行管家</div>
       <div style="width:3px;height:30px;background:#8a6020;margin:0 auto;"></div>
     </div>
     <div style="animation:bodyBob 0.2s ease-in-out infinite alternate;position:relative;">
@@ -103,7 +333,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);min-height:100vh
       <div style="position:absolute;top:52px;left:-6px;width:13px;height:36px;background:#1a3a5c;border-radius:6px;transform-origin:top center;animation:armFwd 0.2s ease-in-out infinite alternate;">
         <div style="position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);width:11px;height:11px;background:#f5c98a;border-radius:50%;"></div>
       </div>
-      <div style="position:absolute;top:48px;right:-10px;width:13px;height:36px;background:#1a3a5c;border-radius:6px;transform-origin:top center;transform:rotate(-70deg);">
+      <div style="position:absolute;top:48px;right:-10px;width:13px;height:36px;background:#1a3a5c;border-radius:6px;transform:rotate(-70deg);">
         <div style="position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);width:11px;height:11px;background:#f5c98a;border-radius:50%;"></div>
       </div>
       <div style="display:flex;gap:5px;justify-content:center;margin-top:2px;">
@@ -114,17 +344,18 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);min-height:100vh
           <div style="position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);width:17px;height:7px;background:#1a1a2e;border-radius:3px 5px 3px 3px;"></div>
         </div>
       </div>
-      <div style="position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);display:flex;gap:3px;align-items:flex-end;">
+      <div style="position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);display:flex;gap:3px;">
         <div style="width:18px;height:3px;background:rgba(255,255,255,0.6);border-radius:2px;animation:airLine 0.2s ease-in-out infinite alternate;"></div>
         <div style="width:28px;height:2px;background:rgba(255,255,255,0.4);border-radius:2px;animation:airLine 0.2s ease-in-out 0.05s infinite alternate;"></div>
         <div style="width:20px;height:3px;background:rgba(255,255,255,0.5);border-radius:2px;animation:airLine 0.2s ease-in-out 0.1s infinite alternate;"></div>
       </div>
     </div>
   </div>
-  <div id="splash-text" style="text-align:center;opacity:0;position:absolute;bottom:30%;animation:textFadeIn 0.6s ease 1.6s forwards;">
+  <div style="text-align:center;opacity:0;position:absolute;bottom:30%;animation:textFadeIn 0.6s ease 1.6s forwards;">
     <div style="font-size:28px;font-weight:900;color:white;margin-bottom:8px;">澳洲出行管家</div>
     <div style="font-size:14px;color:rgba(255,255,255,0.6);">华人服务华人 · 安心出行每一程</div>
   </div>
+  <!-- 选择管家 -->
   <div id="agent-choice" style="display:none;position:absolute;inset:0;background:linear-gradient(135deg,#1a3a5c,#0d2540);flex-direction:column;align-items:center;justify-content:center;padding:30px;">
     <div style="font-size:22px;font-weight:900;color:white;margin-bottom:8px;">选择你的专属管家</div>
     <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:36px;">全程陪伴，随时为你服务</div>
@@ -148,68 +379,99 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);min-height:100vh
   </div>
 </div>
 
-<style>
-@keyframes agentRunIn{0%{right:-200px;top:15%;transform:scale(0.25);}60%{right:calc(50% - 40px);top:35%;transform:scale(1.08);}75%{right:calc(50% - 40px);top:35%;transform:scale(0.96);}88%{right:calc(50% - 40px);top:35%;transform:scale(1.02);}100%{right:calc(50% - 40px);top:35%;transform:scale(1.0);}}
-@keyframes bodyBob{from{transform:translateY(0) rotate(-1.5deg);}to{transform:translateY(-7px) rotate(1.5deg);}}
-@keyframes armFwd{from{transform:rotate(-30deg);}to{transform:rotate(20deg);}}
-@keyframes legFwd{from{transform:rotate(-25deg);}to{transform:rotate(15deg);}}
-@keyframes legBack{from{transform:rotate(15deg);}to{transform:rotate(-25deg);}}
-@keyframes airLine{from{transform:translateX(0);opacity:0.8;}to{transform:translateX(-8px);opacity:0.2;}}
-@keyframes signWave{from{transform:rotate(-5deg);}to{transform:rotate(5deg);}}
-@keyframes haloExpand{0%{opacity:0;transform:scale(0.5);}50%{opacity:1;}100%{opacity:0;transform:scale(2);}}
-@keyframes textFadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
-@keyframes loadBar{from{width:0%;}to{width:100%;}}
-@keyframes splashFade{from{opacity:1;}to{opacity:0;pointer-events:none;}}
-</style>
+<!-- 闲置提示 -->
+<div class="idle-toast" id="idle-toast">还在吗？需要帮助随时叫我 😊</div>
 
-<!-- Agent头部 -->
-<div class="agent-header">
-  <div class="agent-avatar" id="agent-avatar">🧑‍✈️</div>
-  <div class="agent-info">
-    <div class="agent-name" id="agent-name">澳小墨</div>
-    <div class="agent-status">墨尔本机场接送专家 · 在线</div>
+<!-- 顶部栏 -->
+<div class="top-bar">
+  <button class="exit-btn" onclick="exitChat()">× 退出</button>
+  <div class="agent-center">
+    <div class="agent-emoji" id="agent-avatar">🧑‍✈️</div>
+    <div class="agent-nm" id="agent-name">澳小墨 · 在线</div>
   </div>
-  <div class="notif-btns">
-    <button class="notif-btn" onclick="openNotif()">
-      <span>🔔</span><span style="font-size:9px;color:rgba(255,255,255,0.6);">通知</span>
-      <div class="notif-dot" id="notif-dot"></div>
-    </button>
-    <button class="notif-btn" onclick="openAnnounce()">
-      <span>📣</span><span style="font-size:9px;color:rgba(255,255,255,0.6);">公告</span>
-      <div class="notif-dot" id="announce-dot"></div>
-    </button>
-  </div>
+  <button class="profile-btn" onclick="openProfile()">👤</button>
 </div>
 
+<!-- 对话区 -->
 <div class="chat-area" id="chat-area"></div>
 
+<!-- 底部输入 -->
 <div class="input-bar">
   <button class="mic-btn" id="mic-btn" onclick="toggleMic()">🎤</button>
-  <input class="chat-input" id="chat-input" placeholder="输入或语音告诉我行程..." onkeydown="if(event.key==='Enter')sendMessage()">
+  <input class="chat-input" id="chat-input" placeholder="输入或按麦克风说话..." onkeydown="if(event.key==='Enter')sendMessage()">
   <button class="send-btn" onclick="sendMessage()">➤</button>
+</div>
+
+<!-- 个人中心侧边栏 -->
+<div class="profile-overlay" id="profile-overlay" onclick="closeProfile(event)">
+  <div class="profile-panel">
+    <div class="profile-header">
+      <div class="profile-av">👤</div>
+      <div class="profile-name" id="p-name">-</div>
+      <div class="profile-phone" id="p-phone">-</div>
+    </div>
+    <div class="profile-body">
+      <!-- 积分卡 -->
+      <div class="pts-card">
+        <div class="pts-label">🏆 我的积分</div>
+        <div class="pts-num" id="p-pts">-</div>
+        <div class="pts-sub">可折现 · 季度末参与分红 · 永不清零</div>
+      </div>
+
+      <!-- 历史订单 -->
+      <div class="profile-section">
+        <div class="profile-section-title">📋 历史订单</div>
+        <div id="p-orders">
+          <div style="text-align:center;color:var(--text2);font-size:13px;padding:16px 0;">暂无订单记录</div>
+        </div>
+      </div>
+
+      <!-- 功能项 -->
+      <div class="profile-section">
+        <div class="profile-section-title">设置</div>
+        <div class="profile-item" onclick="addToHome()">
+          <div class="profile-item-icon">📱</div>
+          <div class="profile-item-text">
+            <div class="profile-item-label">添加到手机桌面</div>
+            <div class="profile-item-sub">下次一秒打开</div>
+          </div>
+          <div class="profile-item-arrow">›</div>
+        </div>
+        <div class="profile-item" onclick="switchAgent()">
+          <div class="profile-item-icon">🔄</div>
+          <div class="profile-item-text">
+            <div class="profile-item-label">切换管家</div>
+            <div class="profile-item-sub" id="p-agent-name">当前：澳小墨</div>
+          </div>
+          <div class="profile-item-arrow">›</div>
+        </div>
+        <div class="profile-item" onclick="logoutPassenger()">
+          <div class="profile-item-icon">🚪</div>
+          <div class="profile-item-text">
+            <div class="profile-item-label">退出账号</div>
+            <div class="profile-item-sub">清除本地信息</div>
+          </div>
+          <div class="profile-item-arrow">›</div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- 成功弹窗 -->
 <div class="modal-overlay" id="success-modal">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div style="text-align:center;font-size:52px;margin-bottom:10px;">🎉</div>
-    <div style="text-align:center;font-size:22px;font-weight:900;color:var(--text);margin-bottom:6px;">预约成功！</div>
+    <div style="text-align:center;font-size:52px;margin-bottom:10px;">✅</div>
+    <div style="text-align:center;font-size:22px;font-weight:900;color:var(--text);margin-bottom:6px;">预约已提交！</div>
     <div style="text-align:center;font-size:13px;color:var(--text2);margin-bottom:20px;">订单号：<span id="suc-id" style="font-weight:700;color:var(--text);"></span></div>
-    <div style="background:linear-gradient(135deg,#1a3a5c,#0d2540);border-radius:16px;padding:16px 20px;margin-bottom:14px;display:flex;align-items:center;gap:14px;">
-      <div style="font-size:32px;">🏆</div>
-      <div style="flex:1;">
-        <div style="color:var(--gold);font-size:12px;font-weight:800;">本次获得积分</div>
-        <div style="color:white;font-size:26px;font-weight:900;" id="suc-pts">+5</div>
-        <div style="color:rgba(255,255,255,0.5);font-size:11px;">积分可折现·季度末参与分红</div>
-      </div>
-      <button onclick="showPointsGuide()" style="background:rgba(200,160,32,0.2);border:1px solid var(--gold);color:var(--gold);border-radius:10px;padding:8px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">查看更多<br>赚积分 →</button>
-    </div>
-    <div style="background:#f0f7ff;border-radius:14px;padding:14px;margin-bottom:12px;">
-      <div style="font-size:13px;font-weight:800;color:var(--text);margin-bottom:8px;">📤 分享给朋友，双方各得20积分</div>
-      <div style="display:flex;gap:8px;">
-        <input id="share-url" readonly style="flex:1;background:white;border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:11px;color:#666;min-width:0;">
-        <button id="copy-btn" onclick="copyShare()" style="background:var(--text);color:white;border:none;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;">📋 复制</button>
+    <div style="background:#f0f7ff;border-radius:14px;padding:16px;margin-bottom:14px;">
+      <div style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:10px;">💰 付款方式</div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.9;">
+        💚 微信转账：<strong style="color:var(--text);">DIVE-DING</strong><br>
+        💳 到车付款<br>
+        🏦 银行转账请联系客服<br>
+        📞 <strong style="color:var(--text);">0449 251 218</strong>
       </div>
     </div>
     <button onclick="addToHome()" style="width:100%;padding:13px;background:var(--bg);border:none;border-radius:14px;font-size:14px;font-weight:700;color:var(--text2);cursor:pointer;margin-bottom:10px;">📱 添加到手机桌面，下次一秒打开</button>
@@ -218,115 +480,97 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);min-height:100vh
 </div>
 
 <script>
-const SUPA_URL = 'https://gxocvpmgfjvmmkkbswgo.supabase.co';
-const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b2N2cG1nZmp2bW1ra2Jzd2dvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyNDc4NzAsImV4cCI6MjA5NTgyMzg3MH0.ExUNuOP8YyHQmItY6cdl1Euj7nOXqQq-rQT5-7aNerE';
-const TENANT_ID = '00000000-0000-0000-0000-000000000001';
+const SUPA_URL='https://gxocvpmgfjvmmkkbswgo.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b2N2cG1nZmp2bW1ra2Jzd2dvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyNDc4NzAsImV4cCI6MjA5NTgyMzg3MH0.ExUNuOP8YyHQmItY6cdl1Euj7nOXqQq-rQT5-7aNerE';
+const TENANT_ID='00000000-0000-0000-0000-000000000001';
 
-const S = {direction:null,address:null,date:null,time:null,vehicle:null,price:null,name:null,phone:null,wechat:null,payment:'wechat',trip_type:'standard',wait_hours:0};
-const VEHICLES = [
+const S={direction:null,address:null,date:null,time:null,vehicle:null,price:null,name:null,phone:null,wechat:null,payment:'wechat',trip_type:'standard',wait_hours:0};
+const VEHICLES=[
   {type:'sedan',icon:'🚗',name:'Sedan 轿车',cap:'1-3人',price:70},
   {type:'mpv',icon:'🚐',name:'MPV 商务车',cap:'4-6人',price:90},
   {type:'large_mpv',icon:'🚌',name:'大型MPV',cap:'7-9人',price:120},
   {type:'van',icon:'🚎',name:'Van 大巴',cap:'10人+',price:160},
 ];
 
-const chatArea = document.getElementById('chat-area');
-function scrollBottom(){ setTimeout(()=>{ chatArea.scrollTop=chatArea.scrollHeight; },100); }
+const chatArea=document.getElementById('chat-area');
+function scrollBottom(){setTimeout(()=>{chatArea.scrollTop=chatArea.scrollHeight;},100);}
 
-function addMsg(html, isUser=false){
-  const div = document.createElement('div');
-  div.className = 'msg'+(isUser?' user':'');
-  div.innerHTML = `<div class="msg-avatar">${isUser?'👤':'🧑‍✈️'}</div><div class="msg-bubble">${html}</div>`;
-  chatArea.appendChild(div);
-  scrollBottom();
+function addMsg(html,isUser=false){
+  const div=document.createElement('div');
+  div.className='msg'+(isUser?' user':'');
+  div.innerHTML=`<div class="msg-av">${isUser?'👤':'🧑‍✈️'}</div><div class="msg-bubble">${html}</div>`;
+  chatArea.appendChild(div);scrollBottom();
   return div;
 }
-
 function addTyping(){
-  const div = document.createElement('div');
-  div.className = 'msg';
-  div.innerHTML = `<div class="msg-avatar">🧑‍✈️</div><div class="typing-bubble"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
-  chatArea.appendChild(div);
-  scrollBottom();
+  const div=document.createElement('div');
+  div.className='msg';
+  div.innerHTML=`<div class="msg-av">🧑‍✈️</div><div class="typing-bubble"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
+  chatArea.appendChild(div);scrollBottom();
   return div;
 }
-
-function delay(ms){ return new Promise(r=>setTimeout(r,ms)); }
-
-async function agentSay(html, ms=800){
-  const t = addTyping();
-  await delay(ms);
-  t.remove();
-  addMsg(html);
-  speak(html);
+function delay(ms){return new Promise(r=>setTimeout(r,ms));}
+async function agentSay(html,ms=800){
+  const t=addTyping();await delay(ms);t.remove();addMsg(html);speak(html);
 }
 
 // ── 语音输出 ──
-let currentAgent = null;
+let currentAgent=null;
 function speak(text){
-  if(!window.speechSynthesis) return;
+  if(!window.speechSynthesis)return;
   window.speechSynthesis.cancel();
-  const clean = text
+  const clean=text
     .replace(/<[^>]*>/g,'')
     .replace(/\*\*([^*]+)\*\*/g,'$1')
-    .replace(/[\u2600-\u27BF]/g,'')
     .replace(/[^\u0000-\u007F\u4E00-\u9FFF\u3000-\u303F\uFF00-\uFFEF\s]/g,'')
-    .replace(/[·•→←\-：:\[\]【】\/\\]/g,' ')
+    .replace(/[·•→←\-：:\[\]【】\/]/g,' ')
     .replace(/\s+/g,' ').trim();
-  if(!clean) return;
-  const u = new SpeechSynthesisUtterance(clean);
-  u.lang='zh-CN';
-  u.rate = currentAgent?.rate||1.0;
-  u.pitch = currentAgent?.pitch||1.0;
-  const voices = window.speechSynthesis.getVoices();
-  const zhVoices = voices.filter(v=>v.lang.startsWith('zh'));
-  if(zhVoices.length>0){
-    const g = localStorage.getItem('au_agent')||'male';
-    const v = g==='female'
-      ? (zhVoices.find(v=>/female|女/i.test(v.name))||zhVoices[zhVoices.length-1])
-      : zhVoices[0];
-    if(v) u.voice=v;
+  if(!clean)return;
+  const u=new SpeechSynthesisUtterance(clean);
+  u.lang='zh-CN';u.rate=currentAgent?.rate||1.0;u.pitch=currentAgent?.pitch||1.0;
+  const voices=window.speechSynthesis.getVoices();
+  const zh=voices.filter(v=>v.lang.startsWith('zh'));
+  if(zh.length>0){
+    const g=localStorage.getItem('au_agent')||'male';
+    const v=g==='female'?(zh.find(v=>/female|女/i.test(v.name))||zh[zh.length-1]):zh[0];
+    if(v)u.voice=v;
   }
   window.speechSynthesis.speak(u);
 }
 
 // ── 语音输入 ──
-let recognition=null, isRecording=false;
+let recognition=null,isRecording=false;
 function toggleMic(){
-  if(!('webkitSpeechRecognition' in window)&&!('SpeechRecognition' in window)){
-    alert('请使用Safari或Chrome'); return;
-  }
-  if(isRecording){ recognition?.stop(); return; }
-  const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
-  recognition = new SR();
-  recognition.lang='zh-CN'; recognition.continuous=false; recognition.interimResults=false;
-  recognition.onstart=()=>{ isRecording=true; document.getElementById('mic-btn').classList.add('recording'); document.getElementById('mic-btn').textContent='🔴'; };
-  recognition.onresult=(e)=>{ document.getElementById('chat-input').value=e.results[0][0].transcript; sendMessage(); };
-  recognition.onend=()=>{ isRecording=false; document.getElementById('mic-btn').classList.remove('recording'); document.getElementById('mic-btn').textContent='🎤'; };
-  recognition.onerror=()=>{ isRecording=false; document.getElementById('mic-btn').classList.remove('recording'); document.getElementById('mic-btn').textContent='🎤'; };
+  if(!('webkitSpeechRecognition' in window)&&!('SpeechRecognition' in window)){alert('请使用Safari或Chrome');return;}
+  if(isRecording){recognition?.stop();return;}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  recognition=new SR();recognition.lang='zh-CN';recognition.continuous=false;recognition.interimResults=false;
+  recognition.onstart=()=>{isRecording=true;document.getElementById('mic-btn').classList.add('recording');document.getElementById('mic-btn').textContent='⏹';};
+  recognition.onresult=(e)=>{document.getElementById('chat-input').value=e.results[0][0].transcript;sendMessage();};
+  recognition.onend=()=>{isRecording=false;document.getElementById('mic-btn').classList.remove('recording');document.getElementById('mic-btn').textContent='🎤';};
+  recognition.onerror=()=>{isRecording=false;document.getElementById('mic-btn').classList.remove('recording');document.getElementById('mic-btn').textContent='🎤';};
   recognition.start();
 }
 
-// ── 身份 & 地址记忆 ──
-function genRef(){ return Math.random().toString(36).substring(2,8).toUpperCase(); }
+// ── 身份 & 地址 ──
+function genRef(){return Math.random().toString(36).substring(2,8).toUpperCase();}
 function savePassenger(name,phone,wechat){
   let p=JSON.parse(localStorage.getItem('au_passenger')||'{}');
-  if(!p.ref) p.ref=genRef();
-  p.name=name; p.phone=phone; p.wechat=wechat;
-  localStorage.setItem('au_passenger',JSON.stringify(p));
-  return p;
+  if(!p.ref)p.ref=genRef();
+  p.name=name;p.phone=phone;p.wechat=wechat;
+  localStorage.setItem('au_passenger',JSON.stringify(p));return p;
 }
 function saveAddress(addr){
-  if(!addr) return;
+  if(!addr)return;
   let a=JSON.parse(localStorage.getItem('au_addresses')||'[]');
-  a=a.filter(x=>x!==addr); a.unshift(addr); a=a.slice(0,3);
+  a=a.filter(x=>x!==addr);a.unshift(addr);a=a.slice(0,3);
   localStorage.setItem('au_addresses',JSON.stringify(a));
 }
-function getSavedAddresses(){ return JSON.parse(localStorage.getItem('au_addresses')||'[]'); }
-function getPassenger(){ return JSON.parse(localStorage.getItem('au_passenger')||'{}'); }
+function getSavedAddresses(){return JSON.parse(localStorage.getItem('au_addresses')||'[]');}
+function getPassenger(){return JSON.parse(localStorage.getItem('au_passenger')||'{}');}
 function getIncomingRef(){
   const r=new URLSearchParams(window.location.search).get('ref');
-  if(r) sessionStorage.setItem('incoming_ref',r);
+  if(r)sessionStorage.setItem('incoming_ref',r);
   return sessionStorage.getItem('incoming_ref')||null;
 }
 
@@ -337,120 +581,136 @@ async function supaInsert(table,data){
     headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
     body:JSON.stringify(data)
   });
-  if(!res.ok){ const e=await res.json(); throw new Error(e.message||'error'); }
+  if(!res.ok){const e=await res.json();throw new Error(e.message||'error');}
+  return res.json();
+}
+async function supaSelect(path){
+  const res=await fetch(SUPA_URL+'/rest/v1/'+path,{
+    headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
+  });
+  if(!res.ok)return[];
   return res.json();
 }
 
-// ── AI 对话 ──
-let aiHistory=[], bookingSubmitted=false;
+// ── 2分钟闲置检测 ──
+let idleTimer=null,idleWarnTimer=null;
+function resetIdle(){
+  clearTimeout(idleTimer);clearTimeout(idleWarnTimer);
+  const toast=document.getElementById('idle-toast');
+  toast.style.display='none';
+  idleTimer=setTimeout(()=>{
+    toast.style.display='block';
+    speak('还在吗？需要帮助随时叫我');
+    idleWarnTimer=setTimeout(()=>{toast.style.display='none';},30000);
+  },120000);
+}
+document.addEventListener('touchstart',resetIdle);
+document.addEventListener('keydown',resetIdle);
+
+// ── 退出对话 ──
+function exitChat(){
+  window.speechSynthesis.cancel();
+  window.location.href='welcome.html';
+}
+
+// ── AI对话 ──
+let aiHistory=[],bookingSubmitted=false;
 
 function buildSystemPrompt(){
-  const saved = getPassenger();
-  const addrs = getSavedAddresses();
-  const yr = new Date().getFullYear();
-  let prompt = `你是澳洲出行管家，专为华人旅客提供墨尔本机场接送服务。回答简短友好，用中文，适当emoji，不透露平台抽成。今年是${yr}年，所有日期都用${yr}年。
+  const saved=getPassenger();
+  const addrs=getSavedAddresses();
+  const yr=new Date().getFullYear();
+  let prompt=`你是澳洲出行管家，专为华人旅客提供墨尔本机场接送服务。回答简短友好，用中文，适当emoji，不透露平台抽成。今年是${yr}年，所有日期用${yr}年。
 
 任务：通过对话收集完整预约信息后显示车型选择。需要收集：订单类型、日期、时间、地址。
 
 【三种订单类型】
 1. 接机（from_airport）：乘客从机场出来，司机接到目的地
 2. 送机（to_airport）：司机从出发地送乘客去机场
-3. 陪同接机（accompanied）：主人需要司机陪同去机场接客人，再一起回家。此类型需额外收集：预计等候几小时（通常2-4小时）
+3. 陪同接机（accompanied）：主人需要司机陪同去机场接客人，再一起回家
 
 【时间确认规则】
 送机：若乘客说的是起飞时间，必须问"需要司机几点到您门口？建议起飞前2小时"。记录司机到达时间。
 接机：若乘客说的是落地时间，必须问"过海关取行李需要时间，预计几点出来上车？通常落地后40-60分钟"。记录上车时间。
-陪同接机：问"您几点出发去机场？客人大概几点落地？预计需要等候几小时？"记录出发时间和等候时长。
+陪同接机：问"您几点出发去机场？预计需要等候几小时？"
 
-价格（墨尔本机场25km内）：Sedan $70（1-3人）、MPV $90（4-6人）、大型MPV $120（7-9人）、Van $160（10人+）。陪同接机额外收等候费：$20/小时
+价格（墨尔本机场25km内）：Sedan $70（1-3人）、MPV $90（4-6人）、大型MPV $120（7-9人）、Van $160（10人+）
+陪同接机额外等候费：$20/小时
 支付：微信、到车付款、银行转账
 
-收集到所有信息（方向+日期+司机到达/上车时间+地址）后，说"好的信息齐了！帮你看看车型 🚗"`;
+收集到所有信息后说"好的信息齐了！帮你看看车型"`;
 
-  if(saved.name) prompt += '\n\n当前用户：'+saved.name+'。称呼时用"'+saved.name+'主人"，体现尊重和专业感。';
-  if(addrs.length>0) prompt += `\n用户常用地址：${addrs[0]}。若用户说"回家""老地址""上次的地址"，直接用此地址，无需再问。`;
+  if(saved.name)prompt+='\n\n当前用户：'+saved.name+'。称呼时用"'+saved.name+'主人"，体现尊重。';
+  if(addrs.length>0)prompt+='\n用户常用地址：'+addrs[0]+'。若用户说"回家""老地址"，直接用此地址，无需再问。';
 
-  prompt += `\n\n【重要】收集到关键信息后，必须在回复末尾加JSON标记：
-[EXTRACTED: {"direction":"from_airport或to_airport","date":"YYYY-MM-DD","time":"HH:MM","address":"完整地址","trip_type":"standard或accompanied","wait_hours":0}]
-- direction：接机=from_airport，送机=to_airport，陪同接机=from_airport（trip_type=accompanied）
-- time：送机填司机到达时间，接机填上车时间，陪同接机填出发时间
-- wait_hours：陪同接机填等候小时数，其他填0
-信息不完整时只填已知字段。`;
+  prompt+=`\n\n【重要】收集到地址后，必须在回复末尾加JSON标记：
+[EXTRACTED: {"direction":"from_airport或to_airport","date":"YYYY-MM-DD","time":"HH:MM","address":"完整地址","trip_type":"standard或accompanied","wait_hours":0}]`;
 
   return prompt;
 }
 
 async function sendMessage(){
-  const input = document.getElementById('chat-input');
-  const msg = input.value.trim();
-  if(!msg) return;
+  const input=document.getElementById('chat-input');
+  const msg=input.value.trim();
+  if(!msg)return;
   input.value='';
+  resetIdle();
   addMsg(msg,true);
   aiHistory.push({role:'user',content:msg});
-  const typing = addTyping();
+  const typing=addTyping();
   try{
-    const res = await fetch('/api/chat',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({system:buildSystemPrompt(),messages:aiHistory})
-    });
-    const data = await res.json();
-    const reply = data.content?.[0]?.text||'抱歉，请再说一遍 😊';
+    const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system:buildSystemPrompt(),messages:aiHistory})});
+    const data=await res.json();
+    const reply=data.content?.[0]?.text||'抱歉，请再说一遍';
     aiHistory.push({role:'assistant',content:reply});
-    if(aiHistory.length>20) aiHistory=aiHistory.slice(-20);
+    if(aiHistory.length>20)aiHistory=aiHistory.slice(-20);
     typing.remove();
-    const match = reply.match(/\[EXTRACTED:\s*({.*?})\]/s);
+    const match=reply.match(/\[EXTRACTED:\s*({.*?})\]/s);
     if(match){
       try{
-        const ex = JSON.parse(match[1]);
-        if(ex.direction) S.direction=ex.direction;
-        if(ex.date) S.date=ex.date;
-        if(ex.time) S.time=ex.time;
-        if(ex.address) S.address=ex.address;
-        if(ex.trip_type) S.trip_type=ex.trip_type;
-        if(ex.wait_hours) S.wait_hours=ex.wait_hours;
+        const ex=JSON.parse(match[1]);
+        if(ex.direction)S.direction=ex.direction;
+        if(ex.date)S.date=ex.date;
+        if(ex.time)S.time=ex.time;
+        if(ex.address)S.address=ex.address;
+        if(ex.trip_type)S.trip_type=ex.trip_type;
+        if(ex.wait_hours)S.wait_hours=ex.wait_hours;
       }catch(e){}
-      const clean = reply.replace(/\[EXTRACTED:.*?\]/s,'').trim();
-      addMsg(clean); speak(clean);
-      if(S.direction&&S.date&&S.time&&S.address){ await delay(800); showVehicleChoice(); }
-    } else {
-      addMsg(reply); speak(reply);
-    }
-  }catch(e){
-    typing.remove();
-    addMsg('网络有点问题，请稍后再试 😅');
-  }
+      const clean=reply.replace(/\[EXTRACTED:.*?\]/s,'').trim();
+      addMsg(clean);speak(clean);
+      if(S.direction&&S.date&&S.time&&S.address){await delay(800);showVehicleChoice();}
+    }else{addMsg(reply);speak(reply);}
+  }catch(e){typing.remove();addMsg('网络有点问题，请稍后再试');}
 }
 
 async function showVehicleChoice(){
-  await agentSay('好的！帮你看看合适的车型，根据人数选一个吧',500);
-  const div = document.createElement('div');
+  await agentSay('帮你看看合适的车型，根据人数选一个吧',500);
+  const div=document.createElement('div');
   div.className='vehicle-cards';
   div.innerHTML=VEHICLES.map(v=>`
     <div class="vehicle-card" onclick="selectVehicle('${v.type}',${v.price},this)">
-      <div class="vehicle-icon">${v.icon}</div>
-      <div class="vehicle-name">${v.name}</div>
-      <div class="vehicle-cap">${v.cap}</div>
-      <div class="vehicle-price">$${v.price}</div>
+      <div class="v-icon">${v.icon}</div>
+      <div class="v-name">${v.name}</div>
+      <div class="v-cap">${v.cap}</div>
+      <div class="v-price">$${v.price}</div>
     </div>`).join('');
-  chatArea.appendChild(div); scrollBottom();
+  chatArea.appendChild(div);scrollBottom();
 }
 
 function selectVehicle(type,price,el){
   document.querySelectorAll('.vehicle-card').forEach(c=>c.classList.remove('selected'));
-  el.classList.add('selected');
-  S.vehicle=type; S.price=price;
+  el.classList.add('selected');S.vehicle=type;S.price=price;
   setTimeout(()=>showConfirm(),400);
 }
 
 async function showConfirm(){
   await agentSay('帮你确认一下行程信息',500);
-  const isAccompanied = S.trip_type==='accompanied';
-  const dirText = isAccompanied?'陪同接机（全程陪同）':S.direction==='from_airport'?'接机（机场出发）':'送机（去机场）';
-  const timeLabel = isAccompanied?'出发时间':S.direction==='from_airport'?'上车时间':'司机到达';
-  const addrLabel = isAccompanied?'出发地/目的地':S.direction==='from_airport'?'目的地':'出发地';
-  const waitFee = isAccompanied ? S.wait_hours*20 : 0;
-  const totalPrice = S.price + waitFee;
+  const isAcc=S.trip_type==='accompanied';
+  const dirText=isAcc?'陪同接机（全程陪同）':S.direction==='from_airport'?'接机':'送机';
+  const timeLabel=isAcc?'出发时间':S.direction==='from_airport'?'上车时间':'司机到达';
+  const addrLabel=isAcc||S.direction==='from_airport'?'目的地':'出发地';
+  const waitFee=isAcc?S.wait_hours*20:0;
+  const total=S.price+waitFee;
   const vInfo=VEHICLES.find(v=>v.type===S.vehicle);
   const div=document.createElement('div');
   div.className='confirm-card';
@@ -461,25 +721,24 @@ async function showConfirm(){
     <div class="confirm-row"><span class="confirm-label">${timeLabel}</span><span class="confirm-value">${S.time}</span></div>
     <div class="confirm-row"><span class="confirm-label">${addrLabel}</span><span class="confirm-value">${S.address}</span></div>
     <div class="confirm-row"><span class="confirm-label">车型</span><span class="confirm-value">${vInfo?.icon} ${vInfo?.name}</span></div>
-    <div class="confirm-row"><span class="confirm-label">车费</span><span class="confirm-value">$${S.price}</span></div>
-    ${isAccompanied?`<div class="confirm-row"><span class="confirm-label">等候费</span><span class="confirm-value">$${waitFee}（${S.wait_hours}小时×$20）</span></div>`:''}
-    <div class="confirm-row"><span class="confirm-label">合计</span><span class="confirm-value" style="color:var(--accent);font-size:18px;font-weight:900;">$${totalPrice}</span></div>
+    ${isAcc?`<div class="confirm-row"><span class="confirm-label">等候费</span><span class="confirm-value">$${waitFee}（${S.wait_hours}小时）</span></div>`:''}
+    <div class="confirm-row"><span class="confirm-label">费用</span><span class="confirm-value" style="color:var(--accent);font-size:18px;font-weight:900;">$${total}</span></div>
     <div class="confirm-btns">
       <button class="confirm-btn secondary" onclick="restartBooking()">✏️ 修改</button>
       <button class="confirm-btn primary" onclick="showContactForm()">✅ 确认下单</button>
     </div>`;
-  chatArea.appendChild(div); scrollBottom();
+  chatArea.appendChild(div);scrollBottom();
 }
 
 async function showContactForm(){
   const saved=getPassenger();
-  await agentSay('最后一步，填联系方式就搞定！',400);
+  await agentSay('最后一步，填一下联系方式就搞定！',400);
   const div=document.createElement('div');
   div.className='contact-form';
   div.innerHTML=`
-    <div class="form-title">📱 联系方式 & 支付</div>
+    <div style="font-size:15px;font-weight:900;color:var(--text);margin-bottom:14px;">📱 联系方式 & 支付</div>
     <div class="form-field"><label class="form-label">你的称呼</label><input class="form-input" id="f-name" placeholder="姓名或昵称" value="${saved.name||''}"></div>
-    <div class="form-field"><label class="form-label">手机号</label><input class="form-input" id="f-phone" type="tel" placeholder="+61 或 +86" value="${saved.phone||''}"></div>
+    <div class="form-field"><label class="form-label">澳洲手机号</label><input class="form-input" id="f-phone" type="tel" placeholder="04XX XXX XXX" value="${saved.phone||''}"></div>
     <div class="form-field"><label class="form-label">微信号（选填）</label><input class="form-input" id="f-wechat" placeholder="微信ID" value="${saved.wechat||''}"></div>
     <div class="form-field"><label class="form-label">付款方式</label>
       <div class="pay-options">
@@ -488,37 +747,33 @@ async function showContactForm(){
         <div class="pay-opt" onclick="selPay(this,'bank_transfer')">🏦 转账</div>
       </div>
     </div>
-    <button class="submit-btn" onclick="submitBooking()">🚀 确认预约 · $${S.price}</button>`;
-  chatArea.appendChild(div); scrollBottom();
+    <button class="submit-btn" onclick="submitBooking()">🚀 确认预约 · $${S.price+(S.trip_type==='accompanied'?S.wait_hours*20:0)}</button>`;
+  chatArea.appendChild(div);scrollBottom();
 }
 
-function selPay(el,val){
-  document.querySelectorAll('.pay-opt').forEach(o=>o.classList.remove('selected'));
-  el.classList.add('selected'); S.payment=val;
-}
-
+function selPay(el,val){document.querySelectorAll('.pay-opt').forEach(o=>o.classList.remove('selected'));el.classList.add('selected');S.payment=val;}
 function restartBooking(){
-  S.direction=null;S.address=null;S.date=null;S.time=null;S.vehicle=null;S.price=null;
+  S.direction=null;S.address=null;S.date=null;S.time=null;S.vehicle=null;S.price=null;S.trip_type='standard';S.wait_hours=0;
   agentSay('没问题！告诉我你想修改什么？',300);
 }
 
+let bookingSubmitted2=false;
 async function submitBooking(){
-  if(bookingSubmitted) return;
+  if(bookingSubmitted2)return;
   const name=document.getElementById('f-name').value.trim();
   const phone=document.getElementById('f-phone').value.trim();
-  if(!name||!phone){ alert('请填写姓名和手机号'); return; }
-  bookingSubmitted=true;
-  S.name=name; S.phone=phone;
-  S.wechat=document.getElementById('f-wechat').value.trim();
+  if(!name||!phone){alert('请填写姓名和手机号');return;}
+  bookingSubmitted2=true;
+  S.name=name;S.phone=phone;S.wechat=document.getElementById('f-wechat').value.trim();
   const passenger=savePassenger(name,phone,S.wechat);
   saveAddress(S.address);
   const scheduledAt=new Date(`${S.date}T${S.time}:00`);
   const isUrgent=(scheduledAt-new Date())/60000<=90;
-  const points=Math.round(S.price*0.1)+5;
+  const isAcc=S.trip_type==='accompanied';
+  const waitFee=isAcc?S.wait_hours*20:0;
+  const finalPrice=S.price+waitFee;
+  const points=Math.round(finalPrice*0.1)+5;
   try{
-    const isAcc = S.trip_type==='accompanied';
-    const waitFee2 = isAcc ? S.wait_hours*20 : 0;
-    const finalPrice = S.price + waitFee2;
     const [trip]=await supaInsert('trips',{
       tenant_id:TENANT_ID,passenger_name:name,passenger_phone:phone,
       passenger_wechat:S.wechat||null,direction:S.direction,
@@ -531,67 +786,185 @@ async function submitBooking(){
       status:'pending',is_urgent:isUrgent,
       trip_type:S.trip_type,wait_hours:S.wait_hours
     });
-    try{ await supaInsert('contacts',{tenant_id:TENANT_ID,full_name:name,phone:phone,wechat_id:S.wechat||null,source:'小红书',status:'customer'}); }catch(e){}
-    if(getIncomingRef()){
-      try{ await supaInsert('referrals',{tenant_id:TENANT_ID,referrer_code:getIncomingRef(),referee_phone:phone,referee_name:name,trip_id:trip.id,points_awarded:20,status:'confirmed'}); }catch(e){}
-    }
+    try{await supaInsert('contacts',{tenant_id:TENANT_ID,full_name:name,phone:phone,wechat_id:S.wechat||null,source:'小红书',status:'customer'});}catch(e){}
+    const ref=getIncomingRef();
+    if(ref){try{await supaInsert('referrals',{tenant_id:TENANT_ID,referrer_code:ref,referee_phone:phone,referee_name:name,trip_id:trip.id,points_awarded:20,status:'confirmed'});}catch(e){}}
     document.getElementById('suc-id').textContent='TRP-'+trip.id.slice(-8).toUpperCase();
-    document.getElementById('suc-pts').textContent='+'+points;
-    document.getElementById('share-url').value=window.location.origin+window.location.pathname+'?ref='+passenger.ref;
     document.getElementById('success-modal').style.display='flex';
+    // 延迟2秒后烟花出现
+    setTimeout(()=>showConfetti(points), 2000);
+    // 触发下单成功通知
+    await agentSay(`太好了，${name}主人！预约已提交，司机会尽快确认并联系您 🎉`,300);
   }catch(e){
-    bookingSubmitted=false;
+    bookingSubmitted2=false;
     alert('提交遇到问题，请截图联系客服\n'+e.message);
   }
 }
 
-function copyShare(){
-  const url=document.getElementById('share-url').value;
-  if(navigator.clipboard) navigator.clipboard.writeText(url).then(()=>{
-    document.getElementById('copy-btn').textContent='✅ 已复制';
-    setTimeout(()=>document.getElementById('copy-btn').textContent='📋 复制',2000);
-  });
+function closeSuccess(){document.getElementById('success-modal').style.display='none';}
+function addToHome(){alert('📱 添加快捷方式：\n\niOS：底部分享 → 添加到主屏幕\nAndroid：右上角菜单 → 添加到桌面');}
+
+// ── 个人中心 ──
+function openProfile(){
+  const saved=getPassenger();
+  document.getElementById('p-name').textContent=saved.name||'未设置';
+  document.getElementById('p-phone').textContent=saved.phone||'未设置';
+  document.getElementById('p-pts').textContent=(saved.pts||0)+' 分';
+  document.getElementById('p-agent-name').textContent='当前：'+(currentAgent?.name||'澳小墨');
+  loadOrderHistory(saved.phone);
+  document.getElementById('profile-overlay').classList.add('show');
 }
-function addToHome(){ alert('📱 添加快捷方式：\n\niOS：底部分享 → 添加到主屏幕\nAndroid：右上角菜单 → 添加到桌面'); }
-function closeSuccess(){ document.getElementById('success-modal').style.display='none'; }
-function showPointsGuide(){ alert('积分赚取：每次下单+5分起，推荐朋友各+20分，推荐司机各+50分。季度末可折现，永不清零！'); }
-function openNotif(){ alert('暂无新通知'); }
-function openAnnounce(){ alert('欢迎使用澳洲出行管家！下单即得积分，季度末可折现。推荐朋友双方各得20积分！'); }
+function closeProfile(e){
+  if(e.target===document.getElementById('profile-overlay'))
+    document.getElementById('profile-overlay').classList.remove('show');
+}
+async function loadOrderHistory(phone){
+  if(!phone)return;
+  try{
+    const orders=await supaSelect(`trips?passenger_phone=eq.${encodeURIComponent(phone)}&order=created_at.desc&limit=5`);
+    const container=document.getElementById('p-orders');
+    if(!orders.length){container.innerHTML='<div style="text-align:center;color:var(--text2);font-size:13px;padding:16px 0;">暂无订单记录</div>';return;}
+    const statusMap={pending:'待确认',confirmed:'已确认',driver_en_route:'司机在途',driver_arrived:'司机已到',in_progress:'行程中',completed:'已完成',cancelled:'已取消'};
+    container.innerHTML=orders.map(o=>{
+      const dt=new Date(o.scheduled_at);
+      const dateStr=dt.toLocaleDateString('zh-CN',{month:'2-digit',day:'2-digit'});
+      const timeStr=dt.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
+      const isDone=o.status==='completed';
+      const dirText=o.direction==='from_airport'?'接机':'送机';
+      return `<div class="order-item">
+        <div class="order-top">
+          <div class="order-type">${dirText} · ${dateStr} ${timeStr}</div>
+          <div class="order-status ${isDone?'done':'pending'}">${statusMap[o.status]||o.status}</div>
+        </div>
+        <div class="order-detail">$${o.total_price} · ${o.vehicle_type}</div>
+      </div>`;
+    }).join('');
+  }catch(e){}
+}
+function switchAgent(){
+  document.getElementById('profile-overlay').classList.remove('show');
+  localStorage.removeItem('au_agent');
+  location.reload();
+}
+function logoutPassenger(){
+  if(confirm('确认退出账号？本地记录将被清除')){
+    localStorage.removeItem('au_passenger');
+    localStorage.removeItem('au_addresses');
+    location.reload();
+  }
+}
 
 // ── 管家选择 ──
-const AGENTS = {
-  male:  {emoji:'🧑‍✈️',name:'澳小墨',pitch:0.8,rate:0.95},
+const AGENTS={
+  male:{emoji:'🧑‍✈️',name:'澳小墨',pitch:0.8,rate:0.95},
   female:{emoji:'👩‍✈️',name:'澳小本',pitch:1.2,rate:1.0},
 };
-
 async function chooseAgent(gender){
   localStorage.setItem('au_agent',gender);
   currentAgent=AGENTS[gender];
   document.getElementById('agent-avatar').textContent=currentAgent.emoji;
-  document.getElementById('agent-name').textContent=currentAgent.name;
+  document.getElementById('agent-name').textContent=currentAgent.name+' · 在线';
   const splash=document.getElementById('splash');
   splash.style.animation='splashFade 0.5s ease forwards';
-  setTimeout(()=>{ splash.style.display='none'; },500);
+  setTimeout(()=>{splash.style.display='none';},500);
   await delay(600);
+  resetIdle();
   const saved=getPassenger();
-  const namePrefix = saved.name ? saved.name+'主人' : '主人';
+  const namePrefix=saved.name?saved.name+'主人':'主人';
   await agentSay(`${namePrefix}，您的出行管家来喽！接机、送机、或者陪您去机场接客人，请问今天需要安排哪种服务？`);
 }
 
-window.onload = function(){
+window.onload=function(){
   window.speechSynthesis.getVoices();
-  speechSynthesis.onvoiceschanged=()=>{ window.speechSynthesis.getVoices(); };
+  speechSynthesis.onvoiceschanged=()=>{window.speechSynthesis.getVoices();};
   const savedGender=localStorage.getItem('au_agent');
   if(savedGender&&AGENTS[savedGender]){
     currentAgent=AGENTS[savedGender];
     document.getElementById('agent-avatar').textContent=currentAgent.emoji;
-    document.getElementById('agent-name').textContent=currentAgent.name;
+    document.getElementById('agent-name').textContent=currentAgent.name+' · 在线';
   }
   setTimeout(()=>{
     document.getElementById('splash-agent').style.display='none';
     document.getElementById('agent-choice').style.display='flex';
   },2400);
 };
+
+// ── 烟花彩带 ──
+function showConfetti(points) {
+  document.getElementById('confetti-pts').textContent = '+' + points;
+  const overlay = document.getElementById('confetti-overlay');
+  overlay.style.display = 'flex';
+  startConfetti();
+}
+
+function closeConfetti() {
+  document.getElementById('confetti-overlay').style.display = 'none';
+  stopConfetti();
+}
+
+let confettiInterval = null;
+const confettiColors = ['#ff3b30','#ff9500','#ffcc00','#34c759','#007aff','#af52de','#ff2d55','#00c7ff'];
+
+function startConfetti() {
+  const canvas = document.getElementById('confetti-canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const pieces = [];
+  for (let i = 0; i < 150; i++) {
+    pieces.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height - canvas.height,
+      w: Math.random() * 10 + 5,
+      h: Math.random() * 6 + 3,
+      color: confettiColors[Math.floor(Math.random() * confettiColors.length)],
+      speed: Math.random() * 3 + 2,
+      angle: Math.random() * 360,
+      spin: Math.random() * 10 - 5,
+      wobble: Math.random() * 3
+    });
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    pieces.forEach(p => {
+      p.y += p.speed;
+      p.angle += p.spin;
+      p.x += Math.sin(p.angle * 0.05) * p.wobble;
+      if (p.y > canvas.height) { p.y = -10; p.x = Math.random() * canvas.width; }
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.angle * Math.PI / 180);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+      ctx.restore();
+    });
+  }
+
+  confettiInterval = setInterval(draw, 16);
+}
+
+function stopConfetti() {
+  if (confettiInterval) { clearInterval(confettiInterval); confettiInterval = null; }
+  const canvas = document.getElementById('confetti-canvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
 </script>
+
+<!-- 烟花彩带层 -->
+<div id="confetti-overlay" style="display:none;position:fixed;inset:0;z-index:9998;pointer-events:all;flex-direction:column;align-items:center;justify-content:center;">
+  <canvas id="confetti-canvas" style="position:absolute;inset:0;width:100%;height:100%;"></canvas>
+  <div style="position:relative;z-index:1;background:white;border-radius:24px;padding:28px 32px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.2);max-width:280px;">
+    <div style="font-size:48px;margin-bottom:10px;">🎉</div>
+    <div style="font-size:20px;font-weight:900;color:var(--text);margin-bottom:6px;">恭喜获得</div>
+    <div style="font-size:40px;font-weight:900;color:var(--accent);margin-bottom:4px;" id="confetti-pts">+5</div>
+    <div style="font-size:14px;font-weight:700;color:var(--text2);margin-bottom:20px;">积分</div>
+    <button onclick="closeConfetti()" style="background:var(--accent);color:white;border:none;border-radius:12px;padding:12px 28px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;">太棒了！</button>
+  </div>
+</div>
+
 </body>
 </html>
