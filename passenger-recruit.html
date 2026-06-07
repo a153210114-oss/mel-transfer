@@ -296,6 +296,80 @@ body{
 </head>
 <body>
 
+<!-- ── 全屏入场动画 ── -->
+<div id="splash" style="position:fixed;inset:0;background:linear-gradient(135deg,#1a3a5c,#0d2540);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;">
+  
+  <!-- 背景光晕 -->
+  <div style="position:absolute;width:300px;height:300px;background:radial-gradient(circle,rgba(0,150,199,0.3),transparent);border-radius:50%;animation:haloExpand 2s ease-out 0.5s forwards;opacity:0;"></div>
+  
+  <!-- 跑步机器人 -->
+  <div id="splash-agent" style="font-size:40px;position:absolute;bottom:45%;transform:translateX(-200px) scale(0.2);animation:agentRunIn 1.2s cubic-bezier(0.22,0.61,0.36,1) 0.3s forwards;">
+    🧑‍✈️
+  </div>
+
+  <!-- 欢迎文字 -->
+  <div id="splash-text" style="text-align:center;opacity:0;position:absolute;bottom:30%;animation:textFadeIn 0.6s ease 1.6s forwards;">
+    <div style="font-size:28px;font-weight:900;color:white;margin-bottom:8px;">澳洲出行管家</div>
+    <div style="font-size:14px;color:rgba(255,255,255,0.6);">华人服务华人 · 安心出行每一程</div>
+  </div>
+
+  <!-- 选择管家性别 -->
+  <div id="agent-choice" style="display:none;position:absolute;inset:0;background:linear-gradient(135deg,#1a3a5c,#0d2540);flex-direction:column;align-items:center;justify-content:center;padding:30px;">
+    <div style="font-size:22px;font-weight:900;color:white;margin-bottom:8px;">选择你的专属管家</div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:36px;">全程陪伴，随时为你服务</div>
+    <div style="display:flex;gap:20px;width:100%;max-width:320px;">
+      <!-- 男生 -->
+      <div onclick="chooseAgent('male')" style="flex:1;background:rgba(255,255,255,0.08);border:2px solid rgba(255,255,255,0.15);border-radius:22px;padding:28px 16px;text-align:center;cursor:pointer;transition:all 0.2s;" 
+        onmouseover="this.style.borderColor='#0096c7'" onmouseout="this.style.borderColor='rgba(255,255,255,0.15)'">
+        <div style="font-size:56px;margin-bottom:12px;">🧑‍✈️</div>
+        <div style="font-size:18px;font-weight:900;color:white;margin-bottom:4px;">小墨</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.5);">男生 · 稳重专业</div>
+        <div style="margin-top:14px;background:#0096c7;color:white;border-radius:10px;padding:8px;font-size:13px;font-weight:700;">选我</div>
+      </div>
+      <!-- 女生 -->
+      <div onclick="chooseAgent('female')" style="flex:1;background:rgba(255,255,255,0.08);border:2px solid rgba(255,255,255,0.15);border-radius:22px;padding:28px 16px;text-align:center;cursor:pointer;transition:all 0.2s;"
+        onmouseover="this.style.borderColor='#e8a0c8'" onmouseout="this.style.borderColor='rgba(255,255,255,0.15)'">
+        <div style="font-size:56px;margin-bottom:12px;">👩‍✈️</div>
+        <div style="font-size:18px;font-weight:900;color:white;margin-bottom:4px;">小美</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.5);">女生 · 温柔亲切</div>
+        <div style="margin-top:14px;background:#c060a0;color:white;border-radius:10px;padding:8px;font-size:13px;font-weight:700;">选我</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 进度条 -->
+  <div style="position:absolute;bottom:15%;width:60%;height:3px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden;">
+    <div style="height:100%;background:rgba(0,150,199,0.8);border-radius:2px;animation:loadBar 1.8s ease 0.5s forwards;width:0%;"></div>
+  </div>
+</div>
+
+<style>
+@keyframes agentRunIn {
+  0%   { transform: translateX(-200px) scale(0.2); }
+  50%  { transform: translateX(0) scale(1.4); }
+  70%  { transform: translateX(0) scale(0.95); }
+  85%  { transform: translateX(0) scale(1.05); }
+  100% { transform: translateX(0) scale(1.0); font-size:120px; }
+}
+@keyframes haloExpand {
+  0%   { opacity:0; transform:scale(0.5); }
+  50%  { opacity:1; }
+  100% { opacity:0; transform:scale(2); }
+}
+@keyframes textFadeIn {
+  from { opacity:0; transform:translateY(10px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+@keyframes loadBar {
+  from { width:0%; }
+  to   { width:100%; }
+}
+@keyframes splashFade {
+  from { opacity:1; }
+  to   { opacity:0; pointer-events:none; }
+}
+</style>
+
 <!-- Agent头部 -->
 <div class="agent-header">
   <div class="agent-avatar" id="agent-avatar">🧑‍✈️</div>
@@ -438,7 +512,19 @@ function speak(text){
   window.speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
   u.lang = 'zh-CN';
-  u.rate = 1.0;
+  u.rate = currentAgent?.rate || 1.0;
+  u.pitch = currentAgent?.pitch || 1.0;
+  // 尝试选择对应性别的声音
+  const voices = window.speechSynthesis.getVoices();
+  const zhVoices = voices.filter(v=>v.lang.startsWith('zh'));
+  if(zhVoices.length > 0){
+    const gender = localStorage.getItem('au_agent')||'male';
+    // 女声一般name里有female/女，男声默认第一个
+    const preferred = gender==='female'
+      ? zhVoices.find(v=>/female|女/i.test(v.name)) || zhVoices[zhVoices.length-1]
+      : zhVoices[0];
+    if(preferred) u.voice = preferred;
+  }
   window.speechSynthesis.speak(u);
 }
 
@@ -782,19 +868,62 @@ function showPointsGuide(){
   alert('🏆 积分赚取方式：\n\n✈️ 每次下单 +5分起\n👥 推荐朋友下单 双方各+20分\n🧑‍✈️ 推荐司机加入 双方各+50分\n\n积分季度末可折现，永不清零！');
 }
 
+// ── 选择管家 ──
+const AGENTS = {
+  male:   { emoji:'🧑‍✈️', name:'澳小墨', pitch:0.8, rate:0.95, greeting:'你好！我是澳小墨 🧑‍✈️<br>专为华人旅客提供墨尔本机场接送<br>告诉我你的行程，我来帮你安排！' },
+  female: { emoji:'👩‍✈️', name:'澳小美', pitch:1.2, rate:1.0,  greeting:'你好！我是澳小美 👩‍✈️<br>很高兴为你服务，告诉我你的行程<br>我来帮你安排墨尔本机场接送 😊' },
+};
+let currentAgent = null;
+
+async function chooseAgent(gender){
+  // 保存选择
+  localStorage.setItem('au_agent', gender);
+  currentAgent = AGENTS[gender];
+
+  // 更新头部
+  document.getElementById('agent-avatar').textContent = currentAgent.emoji;
+  document.getElementById('agent-name').textContent = currentAgent.name;
+
+  // 淡出选择界面
+  const splash = document.getElementById('splash');
+  splash.style.animation = 'splashFade 0.5s ease forwards';
+  setTimeout(()=>{ splash.style.display='none'; }, 500);
+
+  // 等淡出再开口
+  await new Promise(r=>setTimeout(r,600));
+
+  const saved = getPassenger();
+  if(saved.name){
+    await agentSay(`${saved.name}，欢迎回来！✈️<br>告诉我这次的行程，我来帮你安排 😊`);
+  } else {
+    await agentSay(currentAgent.greeting);
+  }
+}
+
 // ── 通知 ──
 function openNotif(){ alert('暂无新通知'); }
 function openAnnounce(){ alert('📣 欢迎使用澳洲出行管家！\n\n下单即得积分，季度末可折现参与分红。\n推荐朋友双方各得20积分！'); }
 
 // ── 启动 ──
 window.onload = async function(){
-  // 检查是否已有身份
-  const saved = getPassenger();
-  if(saved.name){
-    await agentSay(`${saved.name}，欢迎回来！✈️<br>告诉我这次的行程，我来帮你安排 😊`);
-  } else {
-    await agentSay('你好！我是澳小墨 🧑‍✈️<br>专为华人旅客提供墨尔本机场接送<br>告诉我你的行程，我来帮你安排！');
+  // 预加载语音列表
+  window.speechSynthesis.getVoices();
+  speechSynthesis.onvoiceschanged = ()=>{ window.speechSynthesis.getVoices(); };
+
+  // 如果已有选择，直接跳过选择界面
+  const savedGender = localStorage.getItem('au_agent');
+  if(savedGender && AGENTS[savedGender]){
+    currentAgent = AGENTS[savedGender];
+    document.getElementById('agent-avatar').textContent = currentAgent.emoji;
+    document.getElementById('agent-name').textContent = currentAgent.name;
   }
+
+  // 入场动画2.5秒后淡出，切入对话
+  // 动画完后显示选择界面
+  setTimeout(()=>{
+    document.getElementById('splash-agent').style.display='none';
+    document.getElementById('agent-choice').style.display='flex';
+  }, 2400);
 };
 </script>
 </body>
