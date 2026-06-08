@@ -418,7 +418,6 @@ async function sendMessage(){
 
     // 解析标记
     const actionMatch=reply.match(/\[ACTION:\s*(\w+)\s*(\w+)?\]/);
-    const inputMatch=reply.match(/\[INPUT:\s*([^\]]+)\]/);
     const clean=reply.replace(/\[ACTION:.*?\]/,'').replace(/\[INPUT:.*?\]/,'').trim();
 
     // 从对话提取信息
@@ -429,10 +428,7 @@ async function sendMessage(){
     if(actionMatch){
       await delay(800);
       handleAction(actionMatch[1],actionMatch[2]);
-    } else if(inputMatch){
-      await delay(400);
-      showInlineInput(inputMatch[1]);
-    }
+}
   }catch(e){typing.remove();addMsg('网络有问题，请稍后再试');}
 }
 
@@ -477,21 +473,7 @@ function handleAction(action, param){
   }
 }
 
-function showInlineInput(placeholder){
-  const div=document.createElement('div');
-  div.className='inline-input';
-  div.innerHTML=`<input placeholder="${placeholder}" id="inline-inp" onkeydown="if(event.key==='Enter')submitInline(this)">
-    <button class="inline-send" onclick="submitInline(document.getElementById('inline-inp'))">确认</button>`;
-  chatArea.appendChild(div);scrollBottom();
-  setTimeout(()=>document.getElementById('inline-inp')?.focus(),300);
-}
 
-function submitInline(el){
-  const val=el.value.trim();if(!val)return;
-  el.closest('.inline-input').remove();
-  document.getElementById('chat-input').value=val;
-  sendMessage();
-}
 
 // 车型选择
 function showVehicleCards(){
