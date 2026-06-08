@@ -18,49 +18,60 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);min-height:100vh
 .header-top{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
 .back-btn{background:rgba(255,255,255,0.1);border:none;color:rgba(255,255,255,0.7);border-radius:10px;padding:7px 12px;font-size:13px;cursor:pointer;font-family:inherit;}
 .header-title{flex:1;text-align:center;font-size:17px;font-weight:900;color:white;}
-
-/* 发布按钮区 */
-.publish-bar{
-  background:white;padding:12px 14px;
-  display:flex;gap:8px;
-  border-bottom:1px solid var(--border);
-}
-.pub-btn{
-  flex:1;padding:10px;border:none;border-radius:12px;
-  font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;
-}
-.pub-btn-driver{background:linear-gradient(135deg,#1a4a2e,#27ae60);color:white;}
-.pub-btn-tourist{background:linear-gradient(135deg,#0d2040,#0096c7);color:white;}
-
 .tabs{display:flex;border-bottom:1px solid rgba(255,255,255,0.1);}
 .tab{flex:1;text-align:center;padding:10px;font-size:13px;font-weight:700;color:rgba(255,255,255,0.5);cursor:pointer;border-bottom:2px solid transparent;}
 .tab.active{color:white;border-bottom-color:var(--accent);}
+
+.publish-bar{background:white;padding:12px 14px;display:flex;gap:8px;border-bottom:1px solid var(--border);}
+.pub-btn{flex:1;padding:10px;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;}
+.pub-btn-driver{background:linear-gradient(135deg,#1a4a2e,#27ae60);color:white;}
+.pub-btn-tourist{background:linear-gradient(135deg,#0d2040,#0096c7);color:white;}
 
 .filter-bar{background:white;padding:10px 14px;border-bottom:1px solid var(--border);}
 .form-select{width:100%;padding:8px 12px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-size:13px;font-family:inherit;outline:none;}
 
 .post-list{flex:1;padding:14px;display:flex;flex-direction:column;gap:12px;padding-bottom:30px;}
 
-/* 卡片 */
-.post-card{background:white;border-radius:18px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,0.06);border:1.5px solid var(--border);}
+/* 帖子卡片 */
+.post-card{background:white;border-radius:18px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.06);border:1.5px solid var(--border);}
+.post-body{padding:16px;}
 .post-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
 .badge{font-size:11px;font-weight:800;padding:4px 10px;border-radius:20px;}
 .badge-charter{background:#fff8e8;color:#c8a020;}
 .badge-group{background:#e8f8ee;color:#27ae60;}
 .badge-driver{background:#e8f0ff;color:#5856d6;}
 .post-title{font-size:16px;font-weight:800;color:var(--text);margin-bottom:6px;}
-.post-meta{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
+.post-meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
 .meta-tag{font-size:12px;color:var(--text2);background:var(--bg);padding:4px 10px;border-radius:8px;}
 .post-desc{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:12px;background:var(--bg);border-radius:10px;padding:10px 12px;}
-.post-footer{display:flex;justify-content:space-between;align-items:center;}
-.post-author{font-size:12px;color:var(--text2);}
-.seats-row{display:flex;gap:4px;align-items:center;margin-bottom:4px;}
-.seat-dot{width:9px;height:9px;border-radius:50%;}
-.seat-filled{background:var(--accent);}
-.seat-empty{background:var(--border);}
-.contact-btn{background:var(--accent);color:white;border:none;border-radius:10px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;}
-.contact-btn.full{background:#ccc;cursor:default;}
 .post-date{font-size:12px;color:var(--text2);}
+
+/* 进度条 */
+.progress-section{padding:0 16px 14px;}
+.progress-label{display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:6px;}
+.progress-bar{height:8px;background:var(--border);border-radius:4px;overflow:hidden;margin-bottom:8px;}
+.progress-fill{height:100%;background:var(--accent);border-radius:4px;transition:width 0.5s;}
+.participants-row{display:flex;gap:6px;flex-wrap:wrap;}
+.participant-chip{background:var(--bg);border-radius:20px;padding:4px 10px;font-size:11px;color:var(--text2);border:1px solid var(--border);}
+.participant-chip.paid{background:#e8f8ee;color:var(--accent);border-color:var(--accent);}
+
+/* 操作栏 */
+.post-actions{display:flex;gap:0;border-top:1px solid var(--border);}
+.action-btn{flex:1;padding:12px;background:none;border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;color:var(--text2);}
+.action-btn.join{color:white;background:var(--accent);}
+.action-btn.join-charter{color:white;background:var(--gold);}
+.action-btn.full{color:#bbb;cursor:default;}
+.action-btn + .action-btn{border-left:1px solid var(--border);}
+
+/* 跟帖区 */
+.comments-section{background:var(--bg);padding:12px 16px;border-top:1px solid var(--border);}
+.comment-item{margin-bottom:10px;}
+.comment-author{font-size:12px;font-weight:700;color:var(--text);margin-bottom:2px;}
+.comment-text{font-size:13px;color:var(--text2);line-height:1.5;}
+.comment-time{font-size:10px;color:#bbb;margin-top:2px;}
+.comment-input-row{display:flex;gap:8px;margin-top:10px;}
+.comment-input{flex:1;background:white;border:1.5px solid var(--border);border-radius:20px;padding:8px 14px;font-size:13px;color:var(--text);font-family:inherit;outline:none;}
+.comment-submit{background:var(--accent);border:none;border-radius:50%;width:34px;height:34px;color:white;font-size:16px;cursor:pointer;flex-shrink:0;}
 
 /* 弹窗 */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:999;align-items:flex-end;justify-content:center;}
@@ -85,8 +96,15 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);min-height:100vh
 .submit-btn.green{background:linear-gradient(135deg,#27ae60,#1e8449);}
 .submit-btn.blue{background:linear-gradient(135deg,#0096c7,#0077a0);}
 .cancel-btn{width:100%;padding:12px;background:none;border:none;font-size:13px;color:#bbb;cursor:pointer;margin-top:6px;}
-
 .section-divider{font-size:11px;font-weight:800;color:var(--text2);letter-spacing:1px;margin:14px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--border);}
+
+/* 加入弹窗 */
+.join-modal .modal-sheet{background:white;}
+.join-info{background:var(--bg);border-radius:14px;padding:14px;margin-bottom:16px;}
+.join-info-title{font-size:13px;font-weight:800;color:var(--text);margin-bottom:8px;}
+.join-info-row{display:flex;justify-content:space-between;font-size:13px;color:var(--text2);margin-bottom:4px;}
+.join-info-row span:last-child{font-weight:700;color:var(--text);}
+.price-highlight{font-size:28px;font-weight:900;color:var(--accent);text-align:center;margin:16px 0;}
 
 .empty-state{text-align:center;padding:40px 20px;color:var(--text2);}
 .empty-icon{font-size:48px;margin-bottom:12px;}
@@ -106,13 +124,11 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);min-height:100vh
   </div>
 </div>
 
-<!-- 发布按钮区 -->
 <div class="publish-bar">
   <button class="pub-btn pub-btn-driver" onclick="openDriverModal()">🧑‍✈️ 我要发布包车</button>
   <button class="pub-btn pub-btn-tourist" onclick="openTouristModal()">👥 我要组团</button>
 </div>
 
-<!-- 城市筛选 -->
 <div class="filter-bar">
   <select class="form-select" id="city-filter" onchange="loadPosts()">
     <option value="">全部城市</option>
@@ -135,8 +151,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);min-height:100vh
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-title">🚌 发布包车服务</div>
-    <div class="modal-sub">填写车辆信息和服务内容，游客来找你</div>
-
+    <div class="modal-sub">填写车辆信息，游客来预约包车</div>
     <div class="section-divider">车辆信息</div>
     <div class="form-row">
       <div class="form-field">
@@ -171,11 +186,10 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);min-height:100vh
         </select>
       </div>
     </div>
-
     <div class="section-divider">服务与报价</div>
     <div class="form-row">
       <div class="form-field">
-        <label class="form-label">每小时报价（含油）</label>
+        <label class="form-label">每小时报价（含油）$</label>
         <input class="form-input" id="d-hourly" type="number" placeholder="如：80">
       </div>
       <div class="form-field">
@@ -183,39 +197,28 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);min-height:100vh
         <input class="form-input" id="d-avail-date" type="date">
       </div>
     </div>
-
     <div class="form-field">
       <div class="toggle-row">
         <div>
           <div class="toggle-label">提供中文讲解服务</div>
-          <div style="font-size:11px;color:var(--text2);margin-top:2px;">额外收费，请填报价</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:2px;">额外收费</div>
         </div>
         <div class="toggle" id="guide-toggle" onclick="toggleGuide(this)"></div>
       </div>
     </div>
     <div class="form-field" id="guide-rate-field" style="display:none;">
-      <label class="form-label">讲解服务额外报价（每小时）</label>
+      <label class="form-label">讲解额外报价（每小时）$</label>
       <input class="form-input" id="d-guide-rate" type="number" placeholder="如：30">
     </div>
-
     <div class="section-divider">行程擅长</div>
     <div class="form-field">
-      <label class="form-label">擅长路线/景点</label>
-      <textarea class="form-input" id="d-desc" rows="3" placeholder="如：大洋路、菲利普岛、雅拉河谷酒庄、雪山..."></textarea>
+      <textarea class="form-input" id="d-desc" rows="3" placeholder="擅长路线：大洋路、菲利普岛、雅拉河谷酒庄..."></textarea>
     </div>
-
-    <div class="section-divider">联系方式</div>
-    <div class="form-row">
-      <div class="form-field">
-        <label class="form-label">你的称呼</label>
-        <input class="form-input" id="d-name" placeholder="姓名或昵称">
-      </div>
-      <div class="form-field">
-        <label class="form-label">联系微信</label>
-        <input class="form-input" id="d-wechat" placeholder="微信号">
-      </div>
+    <div class="section-divider">你的信息</div>
+    <div class="form-field">
+      <label class="form-label">称呼（显示在帖子）</label>
+      <input class="form-input" id="d-name" placeholder="姓名或昵称">
     </div>
-
     <button class="submit-btn green" onclick="submitDriverPost()">🚌 发布包车信息</button>
     <button class="cancel-btn" onclick="closeDriverModal()">取消</button>
   </div>
@@ -226,8 +229,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);min-height:100vh
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-title">👥 发布组团需求</div>
-    <div class="modal-sub">找同伴一起出行，凑够人数选车</div>
-
+    <div class="modal-sub">找同伴一起出行，凑够人数平台派车</div>
     <div class="section-divider">行程信息</div>
     <div class="form-field">
       <label class="form-label">目的地</label>
@@ -272,29 +274,48 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);min-height:100vh
       </div>
     </div>
     <div class="form-field">
-      <label class="form-label">人均预算（选填）</label>
+      <label class="form-label">人均预算 $（选填）</label>
       <input class="form-input" id="t-budget" type="number" placeholder="如：80">
     </div>
-
     <div class="section-divider">行程说明</div>
     <div class="form-field">
-      <textarea class="form-input" id="t-desc" rows="3" placeholder="简单描述行程计划、偏好、特殊需求..."></textarea>
+      <textarea class="form-input" id="t-desc" rows="3" placeholder="行程计划、偏好、特殊需求..."></textarea>
     </div>
-
-    <div class="section-divider">联系方式</div>
-    <div class="form-row">
-      <div class="form-field">
-        <label class="form-label">你的称呼</label>
-        <input class="form-input" id="t-name" placeholder="姓名或昵称">
-      </div>
-      <div class="form-field">
-        <label class="form-label">联系微信</label>
-        <input class="form-input" id="t-wechat" placeholder="微信号">
-      </div>
+    <div class="section-divider">你的信息</div>
+    <div class="form-field">
+      <label class="form-label">称呼（显示在帖子）</label>
+      <input class="form-input" id="t-name" placeholder="姓名或昵称">
     </div>
-
     <button class="submit-btn blue" onclick="submitTouristPost()">👥 发布组团需求</button>
     <button class="cancel-btn" onclick="closeTouristModal()">取消</button>
+  </div>
+</div>
+
+<!-- ══ 加入/预约弹窗 ══ -->
+<div class="modal-overlay join-modal" id="join-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="join-modal-title">加入组团</div>
+    <div class="modal-sub" id="join-modal-sub">付款后锁定名额，拼团失败自动退款</div>
+    <div class="join-info" id="join-info"></div>
+    <div class="price-highlight" id="join-price"></div>
+    <div class="form-field">
+      <label class="form-label">你的称呼</label>
+      <input class="form-input" id="j-name" placeholder="姓名或昵称">
+    </div>
+    <div class="form-field">
+      <label class="form-label" id="j-seats-label">加入人数</label>
+      <select class="form-input" id="j-seats" onchange="updateJoinPrice()">
+        <option value="1">1人</option>
+        <option value="2">2人</option>
+        <option value="3">3人</option>
+      </select>
+    </div>
+    <div style="background:#fff8e8;border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:12px;color:#c8a020;line-height:1.6;">
+      ⚠️ 付款后名额锁定。若出行前24小时拼团未满员，平台自动全额退款。
+    </div>
+    <button class="submit-btn green" id="join-submit-btn" onclick="submitJoin()">💳 立即付款锁定名额</button>
+    <button class="cancel-btn" onclick="closeJoinModal()">取消</button>
   </div>
 </div>
 
@@ -303,6 +324,7 @@ const SUPA_URL='https://gxocvpmgfjvmmkkbswgo.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b2N2cG1nZmp2bW1ra2Jzd2dvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyNDc4NzAsImV4cCI6MjA5NTgyMzg3MH0.ExUNuOP8YyHQmItY6cdl1Euj7nOXqQq-rQT5-7aNerE';
 const TENANT_ID='00000000-0000-0000-0000-000000000001';
 let currentTab='all';
+let currentJoinPost=null;
 
 async function supaFetch(path,opts={}){
   const res=await fetch(SUPA_URL+'/rest/v1/'+path,{
@@ -325,7 +347,7 @@ async function loadPosts(){
   list.innerHTML='<div class="empty-state"><div class="empty-icon">⏳</div><div>加载中...</div></div>';
   try{
     const city=document.getElementById('city-filter').value;
-    let q=`tour_plaza?status=eq.open&order=created_at.desc&limit=30`;
+    let q=`tour_plaza?status=eq.open&order=created_at.desc&limit=20`;
     if(currentTab!=='all') q+=`&post_type=eq.${currentTab}`;
     if(city) q+=`&city=eq.${encodeURIComponent(city)}`;
     const posts=await supaFetch(q);
@@ -333,89 +355,196 @@ async function loadPosts(){
       list.innerHTML='<div class="empty-state"><div class="empty-icon">🌿</div><div>暂无帖子，来发第一条！</div></div>';
       return;
     }
-    list.innerHTML=posts.map(renderPost).join('');
+    // 加载参与者和留言
+    const postIds=posts.map(p=>p.id);
+    const [participants,comments]=await Promise.all([
+      supaFetch(`tour_participants?post_id=in.(${postIds.join(',')})&order=joined_at.asc`),
+      supaFetch(`tour_comments?post_id=in.(${postIds.join(',')})&order=created_at.asc&limit=100`)
+    ]);
+    list.innerHTML=posts.map(p=>{
+      const pList=participants.filter(x=>x.post_id===p.id);
+      const cList=comments.filter(x=>x.post_id===p.id);
+      return renderPost(p,pList,cList);
+    }).join('');
   }catch(e){
     list.innerHTML='<div class="empty-state"><div class="empty-icon">⚠️</div><div>加载失败，请刷新</div></div>';
   }
 }
 
-function renderPost(p){
+function renderPost(p,participants,comments){
   const isCharter=p.post_type==='charter';
   const isDriver=!!p.driver_id;
-  const isFull=p.status==='full'||(p.filled_seats>=p.total_seats&&!isCharter);
+  const paidCount=participants.filter(x=>x.payment_status==='paid').reduce((s,x)=>s+x.seats,0);
+  const totalFilled=p.filled_seats+paidCount;
+  const isFull=totalFilled>=p.total_seats&&!isCharter;
   const date=new Date(p.travel_date).toLocaleDateString('zh-CN',{month:'2-digit',day:'2-digit'});
   const daysLeft=Math.ceil((new Date(p.travel_date)-new Date())/86400000);
 
-  let seatsHtml='';
-  if(!isCharter&&p.total_seats){
-    const dots=Array.from({length:p.total_seats},(_,i)=>
-      `<div class="seat-dot ${i<p.filled_seats?'seat-filled':'seat-empty'}"></div>`
-    ).join('');
-    seatsHtml=`<div class="seats-row">${dots}<span style="font-size:11px;color:var(--text2);margin-left:4px;">${p.filled_seats}/${p.total_seats}人</span></div>`;
-  }
+  // 进度条
+  const pct=isCharter?100:Math.min(100,Math.round(totalFilled/p.total_seats*100));
+  const participantChips=participants.filter(x=>x.payment_status==='paid')
+    .map(x=>`<span class="participant-chip paid">✓ ${x.name} ${x.seats>1?x.seats+'人':''}</span>`).join('');
 
-  const priceInfo = isCharter&&p.hourly_rate
-    ? `<span class="meta-tag">💰 $${p.hourly_rate}/小时</span>`
-    : p.price_per_person
-    ? `<span class="meta-tag">💰 人均 $${p.price_per_person}</span>`
-    : '';
+  // 留言
+  const commentsHtml=comments.map(c=>`
+    <div class="comment-item">
+      <div class="comment-author">${c.author_name}</div>
+      <div class="comment-text">${c.content}</div>
+      <div class="comment-time">${timeAgo(c.created_at)}</div>
+    </div>`).join('');
 
-  const guideInfo = p.guide_service
-    ? `<span class="meta-tag">🎙️ 提供讲解${p.guide_rate?'+$'+p.guide_rate+'/h':''}</span>`
-    : '';
-
-  const vehicleInfo = p.vehicle_brand
-    ? `<span class="meta-tag">🚗 ${p.vehicle_brand} ${p.vehicle_model||''} ${p.vehicle_seats?p.vehicle_seats+'座':''}</span>`
-    : '';
+  const priceInfo=isCharter&&p.hourly_rate
+    ?`<span class="meta-tag">💰 $${p.hourly_rate}/小时</span>`
+    :p.price_per_person?`<span class="meta-tag">💰 人均 $${p.price_per_person}</span>`:'';
+  const guideInfo=p.guide_service?`<span class="meta-tag">🎙️ 含讲解${p.guide_rate?'+$'+p.guide_rate+'/h':''}</span>`:'';
+  const vehicleInfo=p.vehicle_brand?`<span class="meta-tag">🚗 ${p.vehicle_brand} ${p.vehicle_model||''} ${p.vehicle_seats||''}座</span>`:'';
 
   return `
   <div class="post-card">
-    <div class="post-header">
-      <div style="display:flex;gap:6px;flex-wrap:wrap;">
-        <span class="badge ${isCharter?'badge-charter':'badge-group'}">${isCharter?'🚌 包车':'👥 组团'}</span>
-        ${isDriver?'<span class="badge badge-driver">司机发布</span>':''}
+    <div class="post-body">
+      <div class="post-header">
+        <div style="display:flex;gap:6px;">
+          <span class="badge ${isCharter?'badge-charter':'badge-group'}">${isCharter?'🚌 包车':'👥 组团'}</span>
+          ${isDriver?'<span class="badge badge-driver">司机</span>':''}
+        </div>
+        <span class="post-date">${date}${daysLeft>0?' · '+daysLeft+'天后':' · 今天'}</span>
       </div>
-      <div style="display:flex;align-items:center;gap:6px;">
-        ${isFull?'<span style="font-size:11px;font-weight:800;color:var(--red);background:#fff0f0;padding:3px 8px;border-radius:6px;">已满</span>':''}
-        <span class="post-date">${date}${daysLeft>0?' ('+daysLeft+'天后)':' (今天)'}</span>
+      <div class="post-title">${p.destination}</div>
+      <div class="post-meta">
+        <span class="meta-tag">📍 ${p.city}</span>
+        ${vehicleInfo}${priceInfo}${guideInfo}
       </div>
+      ${p.description?`<div class="post-desc">${p.description}</div>`:''}
+      <div style="font-size:12px;color:var(--text2);">发布者：${p.author_name}</div>
     </div>
-    <div class="post-title">${p.destination}</div>
-    <div class="post-meta">
-      <span class="meta-tag">📍 ${p.city}</span>
-      ${vehicleInfo}
-      ${priceInfo}
-      ${guideInfo}
-    </div>
-    ${p.description?`<div class="post-desc">${p.description}</div>`:''}
-    <div class="post-footer">
-      <div>
-        ${seatsHtml}
-        <div class="post-author">👤 ${p.author_name}</div>
+
+    ${!isCharter?`
+    <div class="progress-section">
+      <div class="progress-label">
+        <span>拼团进度</span>
+        <span>${totalFilled} / ${p.total_seats} 人</span>
       </div>
-      <button class="contact-btn ${isFull?'full':''}"
-        onclick="${isFull?"alert('已满员')":`contactPost('${p.contact_wechat}','${p.id}',${isCharter})`}">
-        ${isFull?'已满员':'💬 联系'}
-      </button>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+      <div class="participants-row">${participantChips}</div>
+    </div>`:''}
+
+    <div class="post-actions">
+      <button class="action-btn" onclick="toggleComments('${p.id}')">💬 留言 ${comments.length>0?'('+comments.length+')':''}</button>
+      ${isFull
+        ?'<button class="action-btn full">已满员</button>'
+        :isCharter
+        ?`<button class="action-btn join-charter" onclick="openJoinModal(${JSON.stringify(p).replace(/"/g,'&quot;')})">📅 预约包车</button>`
+        :`<button class="action-btn join" onclick="openJoinModal(${JSON.stringify(p).replace(/"/g,'&quot;')})">✅ 加入拼团</button>`
+      }
+    </div>
+
+    <!-- 留言区（默认隐藏） -->
+    <div id="comments-${p.id}" style="display:none;">
+      <div class="comments-section">
+        ${commentsHtml||'<div style="font-size:12px;color:var(--text2);text-align:center;padding:8px 0;">暂无留言，来说一句吧</div>'}
+        <div class="comment-input-row">
+          <input class="comment-input" id="ci-${p.id}" placeholder="说点什么...">
+          <button class="comment-submit" onclick="submitComment('${p.id}')">➤</button>
+        </div>
+        <div style="font-size:11px;color:#bbb;margin-top:6px;text-align:center;">留言后填写称呼即可，无需注册</div>
+      </div>
     </div>
   </div>`;
 }
 
-async function contactPost(wechat,postId,isCharter){
-  if(navigator.clipboard) await navigator.clipboard.writeText(wechat);
-  alert('微信号已复制：'+wechat+'\n请打开微信→添加朋友→粘贴搜索');
-  if(!isCharter){
-    try{
-      const posts=await supaFetch(`tour_plaza?id=eq.${postId}`);
-      if(posts.length){
-        const p=posts[0];
-        const newFilled=Math.min(p.filled_seats+1,p.total_seats);
-        const newStatus=newFilled>=p.total_seats?'full':'open';
-        await supaFetch(`tour_plaza?id=eq.${postId}`,{method:'PATCH',body:JSON.stringify({filled_seats:newFilled,status:newStatus})});
-        loadPosts();
-      }
-    }catch(e){}
+function toggleComments(postId){
+  const el=document.getElementById('comments-'+postId);
+  el.style.display=el.style.display==='none'?'block':'none';
+}
+
+async function submitComment(postId){
+  const input=document.getElementById('ci-'+postId);
+  const text=input.value.trim();
+  if(!text)return;
+  const name=prompt('你的称呼？')||'匿名';
+  try{
+    await supaFetch('tour_comments',{method:'POST',body:JSON.stringify({
+      post_id:postId,tenant_id:TENANT_ID,author_name:name,content:text
+    })});
+    input.value='';
+    loadPosts();
+  }catch(e){alert('发送失败');}
+}
+
+// ── 加入/预约弹窗 ──
+function openJoinModal(post){
+  currentJoinPost=post;
+  const isCharter=post.post_type==='charter';
+  document.getElementById('join-modal-title').textContent=isCharter?'📅 预约包车':'✅ 加入拼团';
+  document.getElementById('join-modal-sub').textContent=isCharter
+    ?'选择时长，完成付款后确认行程'
+    :'付款后锁定名额，拼团失败自动退款';
+  document.getElementById('j-seats-label').textContent=isCharter?'包车时长（小时）':'加入人数';
+
+  const infoEl=document.getElementById('join-info');
+  infoEl.innerHTML=`
+    <div class="join-info-title">${post.destination}</div>
+    <div class="join-info-row"><span>📅 日期</span><span>${new Date(post.travel_date).toLocaleDateString('zh-CN')}</span></div>
+    <div class="join-info-row"><span>📍 城市</span><span>${post.city}</span></div>
+    ${isCharter&&post.hourly_rate?`<div class="join-info-row"><span>💰 报价</span><span>$${post.hourly_rate}/小时</span></div>`:''}
+    ${!isCharter&&post.price_per_person?`<div class="join-info-row"><span>💰 人均</span><span>$${post.price_per_person}</span></div>`:''}
+    ${post.guide_service?`<div class="join-info-row"><span>🎙️ 讲解</span><span>+$${post.guide_rate||0}/小时</span></div>`:''}
+  `;
+  updateJoinPrice();
+  document.getElementById('join-modal').classList.add('show');
+}
+
+function updateJoinPrice(){
+  if(!currentJoinPost)return;
+  const seats=parseInt(document.getElementById('j-seats').value)||1;
+  const isCharter=currentJoinPost.post_type==='charter';
+  let price=0;
+  if(isCharter){
+    price=(currentJoinPost.hourly_rate||0)*seats;
+  } else {
+    price=(currentJoinPost.price_per_person||0)*seats;
   }
+  document.getElementById('join-price').textContent=price>0?'$'+price:'价格待定';
+}
+
+function closeJoinModal(){
+  document.getElementById('join-modal').classList.remove('show');
+  currentJoinPost=null;
+}
+
+async function submitJoin(){
+  const name=document.getElementById('j-name').value.trim();
+  if(!name){alert('请填写你的称呼');return;}
+  const seats=parseInt(document.getElementById('j-seats').value)||1;
+  const isCharter=currentJoinPost.post_type==='charter';
+  let amount=0;
+  if(isCharter) amount=(currentJoinPost.hourly_rate||0)*seats;
+  else amount=(currentJoinPost.price_per_person||0)*seats;
+
+  // 模拟付款（后续接Stripe/Square）
+  const confirm=window.confirm(`确认付款 $${amount}？\n\n付款后名额锁定，拼团失败自动退款。`);
+  if(!confirm)return;
+
+  try{
+    await supaFetch('tour_participants',{method:'POST',body:JSON.stringify({
+      post_id:currentJoinPost.id,
+      tenant_id:TENANT_ID,
+      name:name,
+      seats:seats,
+      payment_status:'paid',
+      payment_amount:amount
+    })});
+    // 更新filled_seats
+    const newFilled=currentJoinPost.filled_seats+seats;
+    const newStatus=!isCharter&&newFilled>=currentJoinPost.total_seats?'full':'open';
+    await supaFetch(`tour_plaza?id=eq.${currentJoinPost.id}`,{
+      method:'PATCH',
+      body:JSON.stringify({filled_seats:newFilled,status:newStatus})
+    });
+    closeJoinModal();
+    loadPosts();
+    alert('✅ 名额已锁定！\n\n出行前平台会通知你行程详情。\n若拼团未满，自动全额退款。');
+  }catch(e){alert('提交失败：'+e.message);}
 }
 
 // ── 司机发布 ──
@@ -423,42 +552,34 @@ function openDriverModal(){
   document.getElementById('driver-modal').classList.add('show');
   document.getElementById('d-avail-date').min=new Date().toISOString().split('T')[0];
 }
-function closeDriverModal(){ document.getElementById('driver-modal').classList.remove('show'); }
-
+function closeDriverModal(){document.getElementById('driver-modal').classList.remove('show');}
 function toggleGuide(el){
   el.classList.toggle('on');
   document.getElementById('guide-rate-field').style.display=el.classList.contains('on')?'block':'none';
 }
-
 async function submitDriverPost(){
   const name=document.getElementById('d-name').value.trim();
-  const wechat=document.getElementById('d-wechat').value.trim();
   const brand=document.getElementById('d-brand').value.trim();
   const date=document.getElementById('d-avail-date').value;
-  if(!name||!wechat||!brand||!date){alert('请填写必填项：车辆品牌、可出车日期、称呼、微信');return;}
+  if(!name||!brand||!date){alert('请填写：车辆品牌、可出车日期、称呼');return;}
   const hasGuide=document.getElementById('guide-toggle').classList.contains('on');
-  const data={
-    tenant_id:TENANT_ID,
-    post_type:'charter',
-    title:brand+' '+document.getElementById('d-model').value,
-    city:document.getElementById('d-city').value,
-    travel_date:date,
-    destination:'包车服务',
-    vehicle_brand:brand,
-    vehicle_model:document.getElementById('d-model').value.trim()||null,
-    vehicle_seats:parseInt(document.getElementById('d-seats').value),
-    hourly_rate:parseFloat(document.getElementById('d-hourly').value)||null,
-    guide_service:hasGuide,
-    guide_rate:hasGuide?parseFloat(document.getElementById('d-guide-rate').value)||null:null,
-    description:document.getElementById('d-desc').value.trim()||null,
-    author_name:name,
-    contact_wechat:wechat,
-    status:'open',
-    filled_seats:0,
-    total_seats:parseInt(document.getElementById('d-seats').value)
-  };
   try{
-    await supaFetch('tour_plaza',{method:'POST',body:JSON.stringify(data)});
+    await supaFetch('tour_plaza',{method:'POST',body:JSON.stringify({
+      tenant_id:TENANT_ID,post_type:'charter',
+      title:brand+' '+document.getElementById('d-model').value,
+      city:document.getElementById('d-city').value,
+      travel_date:date,destination:'包车服务',
+      vehicle_brand:brand,
+      vehicle_model:document.getElementById('d-model').value.trim()||null,
+      vehicle_seats:parseInt(document.getElementById('d-seats').value),
+      hourly_rate:parseFloat(document.getElementById('d-hourly').value)||null,
+      guide_service:hasGuide,
+      guide_rate:hasGuide?parseFloat(document.getElementById('d-guide-rate').value)||null:null,
+      description:document.getElementById('d-desc').value.trim()||null,
+      author_name:name,contact_wechat:'',
+      status:'open',filled_seats:0,
+      total_seats:parseInt(document.getElementById('d-seats').value)
+    })});
     closeDriverModal();loadPosts();
     alert('✅ 包车信息已发布！');
   }catch(e){alert('发布失败：'+e.message);}
@@ -469,34 +590,34 @@ function openTouristModal(){
   document.getElementById('tourist-modal').classList.add('show');
   document.getElementById('t-date').min=new Date().toISOString().split('T')[0];
 }
-function closeTouristModal(){ document.getElementById('tourist-modal').classList.remove('show'); }
-
+function closeTouristModal(){document.getElementById('tourist-modal').classList.remove('show');}
 async function submitTouristPost(){
   const name=document.getElementById('t-name').value.trim();
-  const wechat=document.getElementById('t-wechat').value.trim();
   const dest=document.getElementById('t-destination').value.trim();
   const date=document.getElementById('t-date').value;
-  if(!name||!wechat||!dest||!date){alert('请填写必填项：目的地、日期、称呼、微信');return;}
-  const data={
-    tenant_id:TENANT_ID,
-    post_type:'group',
-    title:dest,
-    city:document.getElementById('t-city').value,
-    travel_date:date,
-    destination:dest,
-    filled_seats:parseInt(document.getElementById('t-filled').value),
-    total_seats:parseInt(document.getElementById('t-total').value),
-    price_per_person:parseFloat(document.getElementById('t-budget').value)||null,
-    description:document.getElementById('t-desc').value.trim()||null,
-    author_name:name,
-    contact_wechat:wechat,
-    status:'open'
-  };
+  if(!name||!dest||!date){alert('请填写：目的地、日期、称呼');return;}
   try{
-    await supaFetch('tour_plaza',{method:'POST',body:JSON.stringify(data)});
+    await supaFetch('tour_plaza',{method:'POST',body:JSON.stringify({
+      tenant_id:TENANT_ID,post_type:'group',
+      title:dest,city:document.getElementById('t-city').value,
+      travel_date:date,destination:dest,
+      filled_seats:parseInt(document.getElementById('t-filled').value),
+      total_seats:parseInt(document.getElementById('t-total').value),
+      price_per_person:parseFloat(document.getElementById('t-budget').value)||null,
+      description:document.getElementById('t-desc').value.trim()||null,
+      author_name:name,contact_wechat:'',status:'open'
+    })});
     closeTouristModal();loadPosts();
     alert('✅ 组团需求已发布！');
   }catch(e){alert('发布失败：'+e.message);}
+}
+
+function timeAgo(dateStr){
+  const diff=(new Date()-new Date(dateStr))/60000;
+  if(diff<1)return '刚刚';
+  if(diff<60)return Math.floor(diff)+'分钟前';
+  if(diff<1440)return Math.floor(diff/60)+'小时前';
+  return Math.floor(diff/1440)+'天前';
 }
 
 loadPosts();
