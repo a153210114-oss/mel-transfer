@@ -283,7 +283,7 @@ const LUXURY_VEHICLES=[
 const VEHICLES=[...COMFORT_VEHICLES,...LUXURY_VEHICLES];
 
 // 订单状态
-const S={direction:null,address:null,date:null,time:null,vehicle:null,price:null,name:null,phone:null,wechat:null,payment:'wechat',trip_type:'standard',wait_hours:0};
+const S={direction:null,address:null,date:null,time:null,vehicle:null,price:null,name:null,phone:null,wechat:null,payment:'wechat',trip_type:'standard',wait_hours:0,charter_hours:4,charter_km:0,hourly_rate:0};
 let currentAgent=null, aiHistory=[], isRecording=false, recognition=null, bookingSubmitted=false;
 const chatArea=document.getElementById('chat-area');
 
@@ -434,10 +434,14 @@ async function sendMessage(){
 
 // 从对话提取行程信息
 function extractInfo(userMsg, aiReply){
-  // 方向
-  if(/送机|去机场|飞机/i.test(userMsg)) S.direction='to_airport';
-  if(/接机|回来|落地|到澳洲/i.test(userMsg)) S.direction='from_airport';
-  if(/陪.*去.*接|帮我去接/i.test(userMsg)) S.trip_type='accompanied';
+  // 方向（先判断包车，避免误识别）
+  if(S.trip_type!=='charter'){
+    if(/送机|去机场.*送|送.*机场/i.test(userMsg)) S.direction='to_airport';
+    if(/接机|机场.*接|接.*机场|落地|到澳洲/i.test(userMsg)) S.direction='from_airport';
+    if(/陪.*去.*接|帮我去接/i.test(userMsg)) S.trip_type='accompanied';
+  }
+  // 包车识别
+  if(/包车|租车|办事|旅游|出游|游玩|按小时|几小时/i.test(userMsg)) S.trip_type='charter';
 
   // 日期（今天/明天/后天/具体日期）
   const today=new Date();
@@ -521,7 +525,14 @@ function showVehicleCards(){
 
 function selectVehicle(type,price,el){
   document.querySelectorAll('.vehicle-card').forEach(c=>c.classList.remove('selected'));
-  el.classList.add('selected');S.vehicle=type;S.price=price;
+  el.classList.add('selected');S.vehicle=type;
+  if(S.trip_type==='charter'){
+    S.hourly_rate=price; // price字段存小时单价
+    S.charter_hours=Math.max(4,S.charter_hours);
+    S.price=S.hourly_rate*S.charter_hours; // 实际费用
+  } else {
+    S.price=price;
+  }
   setTimeout(()=>showConfirmCard(),400);
 }
 
@@ -529,12 +540,14 @@ function selectVehicle(type,price,el){
 async function showConfirmCard(){
   await delay(300);
   const isAcc=S.trip_type==='accompanied';
-  const dirText=isAcc?'陪同接机':S.direction==='from_airport'?'接机':'送机';
-  const timeLabel=S.direction==='from_airport'?'上车时间':'司机到达';
-  const addrLabel=S.direction==='from_airport'?'目的地':'出发地';
+  const isCharter=S.trip_type==='charter';
+  const dirText=isCharter?'包车':isAcc?'陪同接机':S.direction==='from_airport'?'接机':'送机';
+  const timeLabel=isCharter?'出发时间':S.direction==='from_airport'?'上车时间':'司机到达';
+  const addrLabel=isCharter?'出发地（选填）':S.direction==='from_airport'?'目的地':'出发地';
   const vInfo=VEHICLES.find(v=>v.type===S.vehicle);
   const waitFee=isAcc?S.wait_hours*20:0;
-  const total=S.price+waitFee;
+  const preCollect=isCharter?S.hourly_rate*12:0; // 包车预收12小时
+  const total=isCharter?S.price:S.price+waitFee;
 
   const div=document.createElement('div');
   div.className='confirm-card';
@@ -543,9 +556,14 @@ async function showConfirmCard(){
     <div class="confirm-row"><span class="confirm-label">类型</span><span class="confirm-value">${dirText}</span></div>
     <div class="confirm-row"><span class="confirm-label">日期</span><span class="confirm-value">${S.date||'未填'}</span></div>
     <div class="confirm-row"><span class="confirm-label">${timeLabel}</span><span class="confirm-value">${S.time||'未填'}</span></div>
-    <div class="confirm-row"><span class="confirm-label">${addrLabel}</span><span class="confirm-value">${S.address||'未填'}</span></div>
+    <div class="confirm-row"><span class="confirm-label">${addrLabel}</span><span class="confirm-value">${S.address||'（出发后确认）'}</span></div>
     <div class="confirm-row"><span class="confirm-label">车型</span><span class="confirm-value">${vInfo?.icon} ${vInfo?.name}</span></div>
-    <div class="confirm-row"><span class="confirm-label">费用</span><span class="confirm-value" style="color:rgba(0,212,255,0.9);font-size:18px;font-weight:900;">$${total}</span></div>
+    ${isCharter?`
+    <div class="confirm-row"><span class="confirm-label">时长</span><span class="confirm-value">${S.charter_hours}小时${S.charter_km>0?'（'+S.charter_km+'km）':''}</span></div>
+    <div class="confirm-row"><span class="confirm-label">单价</span><span class="confirm-value">$${S.hourly_rate}/小时</span></div>
+    <div class="confirm-row"><span class="confirm-label">预收款</span><span class="confirm-value" style="color:rgba(245,166,35,0.9);">$${preCollect}（12小时）<br><span style="font-size:11px;opacity:0.6;">完成后按实际${S.charter_hours}小时结算退款</span></span></div>
+    `:''}
+    <div class="confirm-row"><span class="confirm-label">${isCharter?'实际费用':'费用'}</span><span class="confirm-value" style="color:rgba(0,212,255,0.9);font-size:18px;font-weight:900;">$${total}</span></div>
     <div style="margin-top:12px;">
       <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:8px;">付款方式</div>
       <div class="pay-opts">
@@ -605,6 +623,7 @@ async function submitFromForm(){
 async function submitBooking(){
   if(bookingSubmitted)return;
   bookingSubmitted=true;
+  const isCharter2=S.trip_type==='charter';
   const passenger=savePassenger(S.name,S.phone,S.wechat);
   saveAddress(S.address);
   const scheduledAt=new Date(`${S.date}T${S.time}:00`);
@@ -620,9 +639,12 @@ async function submitBooking(){
       pickup_address:isAcc||S.direction==='to_airport'?S.address:'墨尔本国际机场',
       dropoff_address:isAcc||S.direction==='from_airport'?S.address:'墨尔本国际机场',
       vehicle_type:S.vehicle,scheduled_at:`${S.date}T${S.time}:00`,
-      total_price:finalPrice,payment_method:S.payment,
+      total_price:isCharter2?S.hourly_rate*12:finalPrice,
+      payment_method:S.payment,
       payment_status:S.payment==='bank_transfer'?'pending':'prepaid',
-      prepaid_amount:S.payment!=='bank_transfer'?finalPrice:null,
+      prepaid_amount:S.payment!=='bank_transfer'?(isCharter2?S.hourly_rate*12:finalPrice):null,
+      charter_hours:isCharter2?S.charter_hours:null,
+      hourly_rate:isCharter2?S.hourly_rate:null,
       status:'pending',is_urgent:isUrgent,
       trip_type:S.trip_type,wait_hours:S.wait_hours
     });
