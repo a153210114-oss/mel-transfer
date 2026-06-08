@@ -540,7 +540,9 @@ function speak(text){
   const zh=voices.filter(v=>v.lang.startsWith('zh'));
   if(zh.length>0){
     const g=localStorage.getItem('au_agent')||'male';
-    const v=g==='female'?(zh.find(v=>/female|女/i.test(v.name))||zh[zh.length-1]):zh[0];
+    const cnVoices=voices.filter(v=>v.lang==='zh-CN');
+    const pool=cnVoices.length>0?cnVoices:zh;
+    const v=g==='female'?(pool.find(v=>/female|女|Ting/i.test(v.name))||pool[pool.length-1]):pool[0];
     if(v)u.voice=v;
   }
   window.speechSynthesis.speak(u);
