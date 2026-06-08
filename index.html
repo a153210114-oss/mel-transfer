@@ -212,26 +212,15 @@ body{
 </head>
 <body>
 
-<!-- 管家选择 -->
-<div id="splash">
-  <div class="splash-logo">✈️</div>
-  <div class="splash-title">澳洲出行 AI 管家</div>
-  <div class="splash-sub">选择你的专属管家</div>
-  <div class="agent-opts">
-    <div class="agent-opt" onclick="chooseAgent('male')">
-      <div class="ao-emoji">🧑‍✈️</div>
-      <div class="ao-name">小墨</div>
-      <div class="ao-sub">稳重专业</div>
-      <button class="ao-btn" style="background:#0096c7;color:white;">选我</button>
-    </div>
-    <div class="agent-opt" onclick="chooseAgent('female')">
-      <div class="ao-emoji">👩‍✈️</div>
-      <div class="ao-name">小本</div>
-      <div class="ao-sub">温柔专业</div>
-      <button class="ao-btn" style="background:#c060a0;color:white;">选我</button>
-    </div>
-  </div>
+<!-- 入场动画 -->
+<div id="splash" style="position:fixed;inset:0;z-index:9999;background:linear-gradient(160deg,#0a0f1e,#0d2040);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
+  <div style="font-size:72px;animation:splashBounce 1s ease-out forwards;">👩‍✈️</div>
+  <div style="font-size:22px;font-weight:900;color:white;">澳洲出行 AI 管家</div>
+  <div style="font-size:13px;color:rgba(255,255,255,0.4);">小本为您服务</div>
 </div>
+<style>
+@keyframes splashBounce{0%{transform:scale(0.3);opacity:0;}60%{transform:scale(1.1);}100%{transform:scale(1);opacity:1;}}
+</style>
 
 <div class="chat-area" id="chat-area"></div>
 
@@ -277,12 +266,21 @@ const SUPA_URL='https://gxocvpmgfjvmmkkbswgo.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b2N2cG1nZmp2bW1ra2Jzd2dvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyNDc4NzAsImV4cCI6MjA5NTgyMzg3MH0.ExUNuOP8YyHQmItY6cdl1Euj7nOXqQq-rQT5-7aNerE';
 const TENANT_ID='00000000-0000-0000-0000-000000000001';
 
-const VEHICLES=[
-  {type:'sedan',icon:'🚗',name:'Sedan',cap:'1-3人',price:70},
-  {type:'mpv',icon:'🚐',name:'MPV 商务车',cap:'4-6人',price:90},
-  {type:'large_mpv',icon:'🚌',name:'大型MPV',cap:'7-9人',price:120},
-  {type:'van',icon:'🚎',name:'Van 大巴',cap:'10人+',price:160},
+// 舒适型
+const COMFORT_VEHICLES=[
+  {type:'comfort_5',icon:'🚗',name:'舒适 5座',cap:'1-4人',price:70,seats:5},
+  {type:'comfort_8',icon:'🚐',name:'舒适 8座',cap:'5-7人',price:90,seats:8},
+  {type:'comfort_12',icon:'🚌',name:'舒适 12座',cap:'8-11人',price:120,seats:12},
+  {type:'comfort_15',icon:'🚎',name:'舒适 15座',cap:'12-14人',price:160,seats:15},
 ];
+// 豪华型（+25%）
+const LUXURY_VEHICLES=[
+  {type:'luxury_alpha',icon:'✨',name:'阿尔法 6/7座',cap:'1-6人',price:113,seats:7,brand:'Alfa Romeo'},
+  {type:'luxury_8',icon:'⭐',name:'奔驰 8座',cap:'5-7人',price:113,seats:8,brand:'Mercedes'},
+  {type:'luxury_12',icon:'💎',name:'奔驰 12座',cap:'8-11人',price:150,seats:12,brand:'Mercedes'},
+  {type:'luxury_15',icon:'👑',name:'奔驰 15座',cap:'12-14人',price:200,seats:15,brand:'Mercedes'},
+];
+const VEHICLES=[...COMFORT_VEHICLES,...LUXURY_VEHICLES];
 
 // 订单状态
 const S={direction:null,address:null,date:null,time:null,vehicle:null,price:null,name:null,phone:null,wechat:null,payment:'wechat',trip_type:'standard',wait_hours:0};
@@ -467,7 +465,11 @@ function extractInfo(userMsg, aiReply){
 
 function handleAction(action, param){
   if(action==='show_vehicles'){
-    if(param) S.direction=param==='to_airport'?'to_airport':'from_airport';
+    if(param==='charter'){
+      S.trip_type='charter';
+    } else if(param) {
+      S.direction=param==='to_airport'?'to_airport':'from_airport';
+    }
     showVehicleCards();
   } else if(action==='goto'){
     const map={plaza_charter:'plaza.html?tab=charter',plaza_group:'plaza.html?tab=group',driver:'driver-app.html'};
@@ -494,16 +496,44 @@ function submitInline(el){
 // 车型选择
 function showVehicleCards(){
   Promise.resolve().then(()=>{
-    const div=document.createElement('div');
-    div.className='vehicle-grid';
-    div.innerHTML=VEHICLES.map(v=>`
+    const wrap=document.createElement('div');
+    wrap.style.cssText='display:flex;flex-direction:column;gap:10px;margin-top:4px;';
+
+    // 舒适型
+    const comfortLabel=document.createElement('div');
+    comfortLabel.style.cssText='font-size:11px;font-weight:800;color:rgba(255,255,255,0.4);letter-spacing:1px;padding:0 2px;';
+    comfortLabel.textContent='舒适型';
+    wrap.appendChild(comfortLabel);
+
+    const comfortGrid=document.createElement('div');
+    comfortGrid.className='vehicle-grid';
+    comfortGrid.innerHTML=COMFORT_VEHICLES.map(v=>`
       <div class="vehicle-card" onclick="selectVehicle('${v.type}',${v.price},this)">
         <div class="v-icon">${v.icon}</div>
         <div class="v-name">${v.name}</div>
         <div class="v-cap">${v.cap}</div>
         <div class="v-price">$${v.price}</div>
       </div>`).join('');
-    chatArea.appendChild(div);scrollBottom();
+    wrap.appendChild(comfortGrid);
+
+    // 豪华型
+    const luxLabel=document.createElement('div');
+    luxLabel.style.cssText='font-size:11px;font-weight:800;color:rgba(200,160,32,0.7);letter-spacing:1px;padding:4px 2px 0;';
+    luxLabel.textContent='✨ 豪华型';
+    wrap.appendChild(luxLabel);
+
+    const luxGrid=document.createElement('div');
+    luxGrid.className='vehicle-grid';
+    luxGrid.innerHTML=LUXURY_VEHICLES.map(v=>`
+      <div class="vehicle-card" style="border-color:rgba(200,160,32,0.25);background:rgba(200,160,32,0.06);" onclick="selectVehicle('${v.type}',${v.price},this)">
+        <div class="v-icon">${v.icon}</div>
+        <div class="v-name">${v.name}</div>
+        <div class="v-cap">${v.cap}</div>
+        <div class="v-price" style="color:rgba(200,160,32,0.9);">$${v.price}</div>
+      </div>`).join('');
+    wrap.appendChild(luxGrid);
+
+    chatArea.appendChild(wrap);scrollBottom();
   });
 }
 
@@ -660,36 +690,27 @@ function closeConfetti(){
 }
 
 // 管家选择
-const AGENTS={
-  male:{emoji:'🧑‍✈️',name:'澳小墨',pitch:0.85,rate:0.95},
-  female:{emoji:'👩‍✈️',name:'澳小本',pitch:1.2,rate:1.0},
-};
-
-async function chooseAgent(gender){
-  localStorage.setItem('au_agent',gender);
-  currentAgent=AGENTS[gender];
-  const splash=document.getElementById('splash');
-  splash.style.animation='splashFade 0.5s ease forwards';
-  setTimeout(()=>{splash.style.display='none';},500);
-  await delay(600);
-  const saved=getPassenger();
-  const name=saved.name?saved.name+'主人':'主人';
-  await agentSay(`${name}，您好 ${currentAgent.emoji} 需要什么服务？`,800);
-}
+const AGENT={emoji:'👩‍✈️',name:'澳小本',pitch:1.15,rate:0.98};
 
 window.onload=function(){
   window.speechSynthesis.getVoices();
   speechSynthesis.onvoiceschanged=()=>{window.speechSynthesis.getVoices();};
-  const g=localStorage.getItem('au_agent');
-  if(g&&AGENTS[g]){
-    currentAgent=AGENTS[g];
-    document.getElementById('splash').style.display='none';
-    setTimeout(async()=>{
-      const saved=getPassenger();
-      const name=saved.name?saved.name+'主人':'主人';
-      await agentSay(`${name}，欢迎回来 ${currentAgent.emoji} 今天需要什么？`,600);
-    },400);
-  }
+  currentAgent=AGENT;
+  // 入场动画1.5秒后进入
+  setTimeout(async()=>{
+    const splash=document.getElementById('splash');
+    splash.style.animation='splashFade 0.5s ease forwards';
+    setTimeout(()=>{splash.style.display='none';},500);
+    await delay(700);
+    const saved=getPassenger();
+    const name=saved.name?saved.name+'主人':'主人';
+    const isReturn=!!saved.name;
+    if(isReturn){
+      await agentSay(`${name}，欢迎回来 👩‍✈️ 今天需要什么？`,600);
+    } else {
+      await agentSay(`您好，我是小本 👩‍✈️<br>接送机、包车出游、还是拼团旅行？`,800);
+    }
+  },1500);
 };
 </script>
 </body>
