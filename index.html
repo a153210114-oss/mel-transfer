@@ -11,412 +11,657 @@ body{
   font-family:'Noto Sans SC',sans-serif;
   background:linear-gradient(160deg,#0a0f1e 0%,#0d2040 60%,#0a1628 100%);
   min-height:100vh;max-width:480px;margin:0 auto;
-  display:flex;flex-direction:column;
-  overflow:hidden;height:100vh;
+  display:flex;flex-direction:column;height:100vh;overflow:hidden;
 }
 
-/* ── 对话区 ── */
 .chat-area{
-  flex:1;padding:20px 16px;
-  overflow-y:auto;
-  display:flex;flex-direction:column;
-  gap:14px;
-  padding-bottom:100px;
+  flex:1;padding:16px 14px;overflow-y:auto;
+  display:flex;flex-direction:column;gap:12px;
+  padding-bottom:90px;
 }
 
 .msg{display:flex;gap:10px;align-items:flex-end;}
 .msg.user{flex-direction:row-reverse;}
 .msg-av{
-  width:36px;height:36px;border-radius:50%;
+  width:34px;height:34px;border-radius:50%;
   display:flex;align-items:center;justify-content:center;
-  font-size:20px;flex-shrink:0;
+  font-size:18px;flex-shrink:0;
   background:rgba(0,212,255,0.1);
-  border:1.5px solid rgba(0,212,255,0.2);
+  border:1.5px solid rgba(0,212,255,0.15);
 }
-.msg.user .msg-av{background:rgba(200,160,32,0.1);border-color:rgba(200,160,32,0.2);}
+.msg.user .msg-av{background:rgba(200,160,32,0.1);border-color:rgba(200,160,32,0.15);}
 .msg-bubble{
-  max-width:78%;
-  background:rgba(255,255,255,0.06);
+  max-width:80%;
+  background:rgba(255,255,255,0.07);
   border:1px solid rgba(255,255,255,0.1);
   border-radius:18px 18px 18px 4px;
-  padding:12px 16px;font-size:14px;
-  color:rgba(255,255,255,0.9);
-  line-height:1.7;
-  backdrop-filter:blur(10px);
+  padding:11px 15px;font-size:14px;
+  color:rgba(255,255,255,0.92);
+  line-height:1.7;backdrop-filter:blur(10px);
 }
 .msg.user .msg-bubble{
-  background:rgba(0,150,199,0.25);
-  border-color:rgba(0,150,199,0.3);
+  background:rgba(0,150,199,0.2);
+  border-color:rgba(0,150,199,0.25);
   border-radius:18px 18px 4px 18px;
 }
-
-/* 打字动画 */
 .typing-bubble{
-  background:rgba(255,255,255,0.06);
+  background:rgba(255,255,255,0.07);
   border:1px solid rgba(255,255,255,0.1);
   border-radius:18px 18px 18px 4px;
-  padding:14px 18px;
-  display:flex;gap:5px;align-items:center;
+  padding:13px 16px;display:flex;gap:5px;align-items:center;
 }
-.typing-dot{
-  width:7px;height:7px;
-  background:rgba(0,212,255,0.6);
-  border-radius:50%;
-  animation:typingBounce 1s ease-in-out infinite;
-}
+.typing-dot{width:7px;height:7px;background:rgba(0,212,255,0.5);border-radius:50%;animation:tb 1s ease-in-out infinite;}
 .typing-dot:nth-child(2){animation-delay:0.15s;}
 .typing-dot:nth-child(3){animation-delay:0.3s;}
-@keyframes typingBounce{
-  0%,60%,100%{transform:translateY(0);}
-  30%{transform:translateY(-6px);background:rgba(0,212,255,1);}
-}
+@keyframes tb{0%,60%,100%{transform:translateY(0);}30%{transform:translateY(-6px);background:rgba(0,212,255,1);}}
 
-/* 服务选择卡片 */
-.service-cards{
-  display:flex;flex-direction:column;gap:8px;
-  margin-top:4px;
-}
-.service-card{
-  background:rgba(255,255,255,0.05);
+/* 卡片组 */
+.cards-wrap{display:flex;flex-direction:column;gap:8px;margin-top:4px;}
+
+.choice-card{
+  background:rgba(255,255,255,0.06);
   border:1.5px solid rgba(255,255,255,0.12);
-  border-radius:16px;padding:14px 18px;
-  cursor:pointer;
-  display:flex;align-items:center;gap:14px;
-  transition:all 0.2s;
-  backdrop-filter:blur(10px);
+  border-radius:14px;padding:13px 16px;
+  cursor:pointer;display:flex;align-items:center;gap:12px;
+  transition:all 0.15s;
 }
-.service-card:active{transform:scale(0.98);}
-.service-card.blue{border-color:rgba(0,150,199,0.4);background:rgba(0,150,199,0.1);}
-.service-card.green{border-color:rgba(39,174,96,0.4);background:rgba(39,174,96,0.1);}
-.service-card.gold{border-color:rgba(200,160,32,0.4);background:rgba(200,160,32,0.1);}
-.service-icon{font-size:28px;flex-shrink:0;}
-.service-text h4{font-size:15px;font-weight:800;color:white;margin-bottom:3px;}
-.service-text p{font-size:12px;color:rgba(255,255,255,0.5);}
-.service-arrow{margin-left:auto;color:rgba(255,255,255,0.3);font-size:18px;}
+.choice-card:active{transform:scale(0.98);}
+.choice-card.selected{border-color:rgba(0,212,255,0.6);background:rgba(0,212,255,0.12);}
+.choice-card.blue{border-color:rgba(0,150,199,0.3);background:rgba(0,150,199,0.08);}
+.choice-card.green{border-color:rgba(39,174,96,0.3);background:rgba(39,174,96,0.08);}
+.choice-card.gold{border-color:rgba(200,160,32,0.3);background:rgba(200,160,32,0.08);}
+.card-icon{font-size:24px;flex-shrink:0;}
+.card-text h4{font-size:14px;font-weight:800;color:white;margin-bottom:2px;}
+.card-text p{font-size:12px;color:rgba(255,255,255,0.45);}
+.card-arrow{margin-left:auto;color:rgba(255,255,255,0.3);font-size:16px;}
 
-/* ── 底部输入 ── */
+/* 车型卡片 */
+.vehicle-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;}
+.vehicle-card{
+  background:rgba(255,255,255,0.06);
+  border:1.5px solid rgba(255,255,255,0.1);
+  border-radius:14px;padding:14px 12px;
+  cursor:pointer;text-align:center;transition:all 0.15s;
+}
+.vehicle-card:active{transform:scale(0.97);}
+.vehicle-card.selected{border-color:rgba(0,212,255,0.6);background:rgba(0,212,255,0.12);}
+.v-icon{font-size:28px;margin-bottom:6px;}
+.v-name{font-size:13px;font-weight:700;color:white;}
+.v-cap{font-size:11px;color:rgba(255,255,255,0.4);margin:3px 0;}
+.v-price{font-size:17px;font-weight:900;color:rgba(0,212,255,0.9);}
+
+/* 确认卡 */
+.confirm-card{
+  background:rgba(255,255,255,0.06);
+  border:1.5px solid rgba(255,255,255,0.12);
+  border-radius:18px;padding:18px;
+}
+.confirm-row{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);font-size:13px;
+}
+.confirm-row:last-of-type{border:none;}
+.confirm-label{color:rgba(255,255,255,0.4);width:64px;flex-shrink:0;}
+.confirm-value{color:rgba(255,255,255,0.9);font-weight:600;flex:1;}
+.confirm-btns{display:flex;gap:8px;margin-top:14px;}
+.confirm-btn{
+  flex:1;padding:13px;border:none;border-radius:12px;
+  font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;
+}
+.confirm-btn.primary{background:linear-gradient(135deg,#0096c7,#0077a0);color:white;}
+.confirm-btn.secondary{background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);border:1px solid rgba(255,255,255,0.1);}
+
+/* 文字输入框（内嵌） */
+.inline-input{
+  background:rgba(255,255,255,0.06);
+  border:1.5px solid rgba(255,255,255,0.15);
+  border-radius:14px;padding:12px 16px;
+  display:flex;gap:8px;align-items:center;margin-top:4px;
+}
+.inline-input input{
+  flex:1;background:none;border:none;outline:none;
+  color:white;font-size:14px;font-family:inherit;
+}
+.inline-input input::placeholder{color:rgba(255,255,255,0.3);}
+.inline-send{
+  background:rgba(0,150,199,0.4);border:none;border-radius:8px;
+  color:white;padding:6px 12px;font-size:13px;cursor:pointer;
+  font-family:inherit;font-weight:700;
+}
+
+/* 支付选项 */
+.pay-opts{display:flex;gap:8px;margin-top:4px;}
+.pay-opt{
+  flex:1;padding:10px 6px;
+  background:rgba(255,255,255,0.05);
+  border:1.5px solid rgba(255,255,255,0.1);
+  border-radius:10px;text-align:center;
+  font-size:12px;font-weight:700;
+  color:rgba(255,255,255,0.5);cursor:pointer;
+}
+.pay-opt.selected{border-color:rgba(0,212,255,0.5);color:rgba(0,212,255,0.9);background:rgba(0,212,255,0.08);}
+
+/* 底部输入 */
 .input-bar{
   position:fixed;bottom:0;left:50%;transform:translateX(-50%);
   width:100%;max-width:480px;
-  background:rgba(10,15,30,0.95);
+  background:rgba(8,12,25,0.97);
   backdrop-filter:blur(20px);
-  border-top:1px solid rgba(255,255,255,0.08);
-  padding:12px 16px 28px;
+  border-top:1px solid rgba(255,255,255,0.07);
+  padding:10px 14px 24px;
   display:flex;gap:10px;align-items:center;
 }
 .chat-input{
-  flex:1;background:rgba(255,255,255,0.08);
-  border:1.5px solid rgba(255,255,255,0.12);
-  border-radius:24px;
-  padding:11px 18px;font-size:14px;
-  color:white;font-family:inherit;outline:none;
+  flex:1;background:rgba(255,255,255,0.07);
+  border:1.5px solid rgba(255,255,255,0.1);
+  border-radius:24px;padding:11px 18px;
+  font-size:14px;color:white;font-family:inherit;outline:none;
 }
-.chat-input::placeholder{color:rgba(255,255,255,0.3);}
-.chat-input:focus{border-color:rgba(0,212,255,0.4);}
+.chat-input::placeholder{color:rgba(255,255,255,0.28);}
+.chat-input:focus{border-color:rgba(0,212,255,0.35);}
 .mic-btn{
-  width:46px;height:46px;
+  width:44px;height:44px;
   background:linear-gradient(135deg,#0096c7,#0077a0);
-  border:none;border-radius:50%;
-  font-size:20px;cursor:pointer;
-  flex-shrink:0;color:white;
-  display:flex;align-items:center;justify-content:center;
-  box-shadow:0 4px 16px rgba(0,150,199,0.4);
-  transition:all 0.2s;
+  border:none;border-radius:50%;font-size:20px;
+  cursor:pointer;color:white;flex-shrink:0;
+  box-shadow:0 4px 14px rgba(0,150,199,0.35);
 }
-.mic-btn.recording{
-  background:linear-gradient(135deg,#ff3b30,#cc2222);
-  animation:micPulse 0.8s ease-in-out infinite;
-  box-shadow:0 4px 16px rgba(255,59,48,0.5);
-}
-@keyframes micPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
+.mic-btn.recording{background:linear-gradient(135deg,#ff3b30,#cc2222);animation:mp 0.8s ease-in-out infinite;}
+@keyframes mp{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
 .send-btn{
-  width:46px;height:46px;
-  background:rgba(255,255,255,0.1);
-  border:1.5px solid rgba(255,255,255,0.15);
-  border-radius:50%;font-size:18px;
-  cursor:pointer;color:white;
-  display:flex;align-items:center;justify-content:center;
+  width:44px;height:44px;
+  background:rgba(255,255,255,0.08);
+  border:1.5px solid rgba(255,255,255,0.12);
+  border-radius:50%;font-size:16px;cursor:pointer;color:white;
 }
 
 /* 管家选择 */
 #splash{
-  position:fixed;inset:0;
+  position:fixed;inset:0;z-index:9999;
   background:linear-gradient(160deg,#0a0f1e,#0d2040);
-  z-index:9999;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;
-  padding:30px;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;padding:30px;
 }
-.agent-choice-title{
-  font-size:22px;font-weight:900;color:white;
-  margin-bottom:8px;text-align:center;
-}
-.agent-choice-sub{
-  font-size:13px;color:rgba(255,255,255,0.4);
-  margin-bottom:40px;text-align:center;
-}
-.agent-options{display:flex;gap:16px;width:100%;max-width:320px;}
+.splash-logo{font-size:44px;margin-bottom:16px;}
+.splash-title{font-size:22px;font-weight:900;color:white;margin-bottom:6px;}
+.splash-sub{font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:40px;}
+.agent-opts{display:flex;gap:14px;width:100%;max-width:320px;}
 .agent-opt{
   flex:1;background:rgba(255,255,255,0.05);
   border:2px solid rgba(255,255,255,0.1);
   border-radius:22px;padding:24px 14px;
   text-align:center;cursor:pointer;
-  transition:all 0.2s;
 }
 .agent-opt:active{transform:scale(0.97);}
-.agent-opt-emoji{font-size:52px;margin-bottom:12px;}
-.agent-opt-name{font-size:18px;font-weight:900;color:white;margin-bottom:4px;}
-.agent-opt-sub{font-size:12px;color:rgba(255,255,255,0.4);}
-.agent-opt-btn{
-  margin-top:14px;border-radius:10px;
-  padding:8px;font-size:13px;font-weight:700;border:none;cursor:pointer;width:100%;
-}
+.ao-emoji{font-size:50px;margin-bottom:10px;}
+.ao-name{font-size:17px;font-weight:900;color:white;margin-bottom:3px;}
+.ao-sub{font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:14px;}
+.ao-btn{width:100%;border:none;border-radius:10px;padding:9px;font-size:13px;font-weight:700;cursor:pointer;}
 
 @keyframes splashFade{from{opacity:1;}to{opacity:0;pointer-events:none;}}
+
+/* 成功弹窗 */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:999;align-items:flex-end;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal-sheet{background:#0d1f3c;border-radius:28px 28px 0 0;padding:28px 22px 44px;width:100%;max-width:480px;border-top:1px solid rgba(255,255,255,0.1);}
+.modal-handle{width:40px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:0 auto 20px;}
+
+/* 烟花 */
+#confetti-overlay{display:none;position:fixed;inset:0;z-index:9998;pointer-events:all;flex-direction:column;align-items:center;justify-content:center;}
 </style>
 </head>
 <body>
 
 <!-- 管家选择 -->
 <div id="splash">
-  <div style="font-size:48px;margin-bottom:16px;">✈️</div>
-  <div class="agent-choice-title">澳洲出行 AI 管家</div>
-  <div class="agent-choice-sub">选择你的专属管家</div>
-  <div class="agent-options">
+  <div class="splash-logo">✈️</div>
+  <div class="splash-title">澳洲出行 AI 管家</div>
+  <div class="splash-sub">选择你的专属管家</div>
+  <div class="agent-opts">
     <div class="agent-opt" onclick="chooseAgent('male')">
-      <div class="agent-opt-emoji">🧑‍✈️</div>
-      <div class="agent-opt-name">小墨</div>
-      <div class="agent-opt-sub">男生 · 稳重专业</div>
-      <button class="agent-opt-btn" style="background:#0096c7;color:white;">选我</button>
+      <div class="ao-emoji">🧑‍✈️</div>
+      <div class="ao-name">小墨</div>
+      <div class="ao-sub">稳重专业</div>
+      <button class="ao-btn" style="background:#0096c7;color:white;">选我</button>
     </div>
     <div class="agent-opt" onclick="chooseAgent('female')">
-      <div class="agent-opt-emoji">👩‍✈️</div>
-      <div class="agent-opt-name">小本</div>
-      <div class="agent-opt-sub">女生 · 温柔专业</div>
-      <button class="agent-opt-btn" style="background:#c060a0;color:white;">选我</button>
+      <div class="ao-emoji">👩‍✈️</div>
+      <div class="ao-name">小本</div>
+      <div class="ao-sub">温柔专业</div>
+      <button class="ao-btn" style="background:#c060a0;color:white;">选我</button>
     </div>
   </div>
 </div>
 
-<!-- 对话区 -->
 <div class="chat-area" id="chat-area"></div>
 
-<!-- 底部输入 -->
 <div class="input-bar">
   <button class="mic-btn" id="mic-btn" onclick="toggleMic()">🎤</button>
-  <input class="chat-input" id="chat-input"
-    placeholder="说话或输入..."
-    onkeydown="if(event.key==='Enter')sendMessage()">
+  <input class="chat-input" id="chat-input" placeholder="说话或输入..." onkeydown="if(event.key==='Enter')sendMessage()">
   <button class="send-btn" onclick="sendMessage()">➤</button>
 </div>
 
+<!-- 成功弹窗 -->
+<div class="modal-overlay" id="success-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div style="text-align:center;font-size:50px;margin-bottom:10px;">✅</div>
+    <div style="text-align:center;font-size:20px;font-weight:900;color:white;margin-bottom:6px;">预约已提交！</div>
+    <div style="text-align:center;font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:20px;">订单号：<span id="suc-id" style="color:white;font-weight:700;"></span></div>
+    <div style="background:rgba(255,255,255,0.05);border-radius:14px;padding:16px;margin-bottom:14px;">
+      <div style="font-size:13px;color:rgba(255,255,255,0.6);line-height:1.9;">
+        💚 微信转账：<strong style="color:white;">DIVE-DING</strong><br>
+        💳 到车付款<br>
+        🏦 银行转账请联系客服<br>
+        📞 <strong style="color:white;">0449 251 218</strong>
+      </div>
+    </div>
+    <button onclick="closeSuccess()" style="width:100%;padding:14px;background:rgba(0,150,199,0.3);border:1.5px solid rgba(0,150,199,0.4);border-radius:14px;color:white;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">好的！</button>
+  </div>
+</div>
+
+<!-- 烟花 -->
+<div id="confetti-overlay">
+  <canvas id="confetti-canvas" style="position:absolute;inset:0;width:100%;height:100%;"></canvas>
+  <div style="position:relative;z-index:1;background:#0d1f3c;border-radius:24px;padding:28px 32px;text-align:center;border:1px solid rgba(255,255,255,0.1);max-width:280px;">
+    <div style="font-size:48px;margin-bottom:10px;">🎉</div>
+    <div style="font-size:18px;font-weight:900;color:white;margin-bottom:6px;">恭喜获得</div>
+    <div style="font-size:42px;font-weight:900;color:rgba(0,212,255,0.9);margin-bottom:4px;" id="confetti-pts">+5</div>
+    <div style="font-size:14px;color:rgba(255,255,255,0.4);margin-bottom:20px;">积分</div>
+    <button onclick="closeConfetti()" style="background:linear-gradient(135deg,#0096c7,#0077a0);color:white;border:none;border-radius:12px;padding:12px 28px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;width:100%;">太棒了！</button>
+  </div>
+</div>
+
 <script>
-const AGENTS = {
-  male:  {emoji:'🧑‍✈️', name:'澳小墨', pitch:0.85, rate:0.95},
-  female:{emoji:'👩‍✈️', name:'澳小本', pitch:1.2,  rate:1.0},
-};
-let currentAgent = null;
-let aiHistory = [];
-let isRecording = false;
-let recognition = null;
+const SUPA_URL='https://gxocvpmgfjvmmkkbswgo.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b2N2cG1nZmp2bW1ra2Jzd2dvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyNDc4NzAsImV4cCI6MjA5NTgyMzg3MH0.ExUNuOP8YyHQmItY6cdl1Euj7nOXqQq-rQT5-7aNerE';
+const TENANT_ID='00000000-0000-0000-0000-000000000001';
 
-const chatArea = document.getElementById('chat-area');
+const VEHICLES=[
+  {type:'sedan',icon:'🚗',name:'Sedan',cap:'1-3人',price:70},
+  {type:'mpv',icon:'🚐',name:'MPV 商务车',cap:'4-6人',price:90},
+  {type:'large_mpv',icon:'🚌',name:'大型MPV',cap:'7-9人',price:120},
+  {type:'van',icon:'🚎',name:'Van 大巴',cap:'10人+',price:160},
+];
 
-function scrollBottom(){ setTimeout(()=>{ chatArea.scrollTop=chatArea.scrollHeight; },100); }
+// 订单状态
+const S={direction:null,address:null,date:null,time:null,vehicle:null,price:null,name:null,phone:null,wechat:null,payment:'wechat',trip_type:'standard',wait_hours:0};
+let currentAgent=null, aiHistory=[], isRecording=false, recognition=null, bookingSubmitted=false;
+const chatArea=document.getElementById('chat-area');
 
-function addMsg(html, isUser=false){
+function scrollBottom(){setTimeout(()=>{chatArea.scrollTop=chatArea.scrollHeight;},100);}
+
+function addMsg(html,isUser=false){
   const div=document.createElement('div');
   div.className='msg'+(isUser?' user':'');
-  const emoji = currentAgent?.emoji||'🧑‍✈️';
-  div.innerHTML=`<div class="msg-av">${isUser?'👤':emoji}</div><div class="msg-bubble">${html}</div>`;
-  chatArea.appendChild(div);scrollBottom();
-  return div;
+  const av=isUser?'👤':(currentAgent?.emoji||'🧑‍✈️');
+  div.innerHTML=`<div class="msg-av">${av}</div><div class="msg-bubble">${html}</div>`;
+  chatArea.appendChild(div);scrollBottom();return div;
 }
 
 function addTyping(){
-  const div=document.createElement('div');
-  div.className='msg';
-  const emoji=currentAgent?.emoji||'🧑‍✈️';
-  div.innerHTML=`<div class="msg-av">${emoji}</div><div class="typing-bubble"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
-  chatArea.appendChild(div);scrollBottom();
-  return div;
+  const div=document.createElement('div');div.className='msg';
+  div.innerHTML=`<div class="msg-av">${currentAgent?.emoji||'🧑‍✈️'}</div><div class="typing-bubble"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
+  chatArea.appendChild(div);scrollBottom();return div;
 }
 
 function delay(ms){return new Promise(r=>setTimeout(r,ms));}
+async function agentSay(html,ms=700){const t=addTyping();await delay(ms);t.remove();addMsg(html);speak(html);}
 
-async function agentSay(html, ms=800){
-  const t=addTyping();
-  await delay(ms);
-  t.remove();
-  addMsg(html);
-  speak(html);
-}
-
-// ── 语音输出 ──
+// 语音
 function speak(text){
   if(!window.speechSynthesis)return;
   window.speechSynthesis.cancel();
-  const clean=text
-    .replace(/<[^>]*>/g,'')
-    .replace(/\*\*([^*]+)\*\*/g,'$1')
+  const clean=text.replace(/<[^>]*>/g,'').replace(/\*\*([^*]+)\*\*/g,'$1')
     .replace(/[^\u0000-\u007F\u4E00-\u9FFF\u3000-\u303F\uFF00-\uFFEF\s，。！？、：；]/g,'')
     .replace(/\s+/g,' ').trim();
   if(!clean)return;
   const u=new SpeechSynthesisUtterance(clean);
-  u.lang='zh-CN';
-  u.rate=currentAgent?.rate||1.0;
-  u.pitch=currentAgent?.pitch||1.0;
+  u.lang='zh-CN';u.rate=currentAgent?.rate||1.0;u.pitch=currentAgent?.pitch||1.0;
   const voices=window.speechSynthesis.getVoices();
-  if(voices.length>0){
+  const cn=voices.filter(v=>v.lang==='zh-CN');
+  if(cn.length>0){
     const g=localStorage.getItem('au_agent')||'male';
-    // 优先zh-CN，其次zh-TW，排除粤语
-    const cnVoices=voices.filter(v=>v.lang==='zh-CN');
-    const twVoices=voices.filter(v=>v.lang==='zh-TW');
-    const pool=cnVoices.length>0?cnVoices:twVoices;
-    if(pool.length>0){
-      const v=g==='female'?(pool.find(v=>/female|女|Ting|tingting/i.test(v.name))||pool[pool.length-1]):pool[0];
-      if(v)u.voice=v;
-    }
+    const v=g==='female'?(cn.find(v=>/female|女|Ting/i.test(v.name))||cn[cn.length-1]):cn[0];
+    if(v)u.voice=v;
   }
   window.speechSynthesis.speak(u);
 }
 
-// ── 语音输入 ──
 function toggleMic(){
-  if(!('webkitSpeechRecognition' in window)&&!('SpeechRecognition' in window)){
-    alert('请使用Safari或Chrome');return;
-  }
+  if(!('webkitSpeechRecognition' in window)&&!('SpeechRecognition' in window)){alert('请使用Safari或Chrome');return;}
   if(isRecording){recognition?.stop();return;}
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  recognition=new SR();
-  recognition.lang='zh-CN';recognition.continuous=false;recognition.interimResults=false;
-  recognition.onstart=()=>{
-    isRecording=true;
-    document.getElementById('mic-btn').classList.add('recording');
-    document.getElementById('mic-btn').textContent='⏹';
-  };
-  recognition.onresult=(e)=>{
-    document.getElementById('chat-input').value=e.results[0][0].transcript;
-    sendMessage();
-  };
-  recognition.onend=()=>{
-    isRecording=false;
-    document.getElementById('mic-btn').classList.remove('recording');
-    document.getElementById('mic-btn').textContent='🎤';
-  };
+  recognition=new SR();recognition.lang='zh-CN';recognition.continuous=false;recognition.interimResults=false;
+  recognition.onstart=()=>{isRecording=true;document.getElementById('mic-btn').classList.add('recording');document.getElementById('mic-btn').textContent='⏹';};
+  recognition.onresult=(e)=>{document.getElementById('chat-input').value=e.results[0][0].transcript;sendMessage();};
+  recognition.onend=()=>{isRecording=false;document.getElementById('mic-btn').classList.remove('recording');document.getElementById('mic-btn').textContent='🎤';};
   recognition.onerror=recognition.onend;
   recognition.start();
 }
 
-// ── AI对话 ──
-const SYSTEM_PROMPT = `你是澳洲出行AI管家，简洁自然地对话，像真人助理一样。
+// 身份
+function genRef(){return Math.random().toString(36).substring(2,8).toUpperCase();}
+function getPassenger(){return JSON.parse(localStorage.getItem('au_passenger')||'{}');}
+function savePassenger(name,phone,wechat){
+  let p=JSON.parse(localStorage.getItem('au_passenger')||'{}');
+  if(!p.ref)p.ref=genRef();p.name=name;p.phone=phone;p.wechat=wechat;
+  localStorage.setItem('au_passenger',JSON.stringify(p));return p;
+}
+function getSavedAddresses(){return JSON.parse(localStorage.getItem('au_addresses')||'[]');}
+function saveAddress(addr){
+  if(!addr)return;let a=getSavedAddresses();
+  a=a.filter(x=>x!==addr);a.unshift(addr);a=a.slice(0,3);
+  localStorage.setItem('au_addresses',JSON.stringify(a));
+}
 
-能力：机场接送（接机/送机）、旅游包车、组团拼车、司机工作台。
+// Supabase
+async function supaInsert(table,data){
+  const res=await fetch(SUPA_URL+'/rest/v1/'+table,{
+    method:'POST',
+    headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
+    body:JSON.stringify(data)
+  });
+  if(!res.ok){const e=await res.json();throw new Error(e.message||'error');}
+  return res.json();
+}
 
-规则：
-- 听明白用户需求后，在回复末尾加对应标记触发服务卡片
-- 不确定时简短追问一句，不要罗列所有服务
-- 回复控制在1-2句，自然口语，不重复废话
-- 不要每次都说"好的"、"当然"、"没问题"
+// ── System Prompt ──
+function buildPrompt(){
+  const saved=getPassenger();
+  const addrs=getSavedAddresses();
+  const yr=new Date().getFullYear();
+  let p=`你是澳洲出行AI管家，性格直接简洁，像朋友一样自然对话。今年${yr}年。
 
-标记（加在回复最后）：
-[GOTO: passenger_to] 送机
-[GOTO: passenger_from] 接机
-[GOTO: plaza_charter] 旅游包车
-[GOTO: plaza_group] 组团拼车
-[GOTO: driver] 司机入口
-[SHOW_CARDS] 不确定时显示所有选项`;
+服务范围：机场接送（接机/送机/陪同接机）、旅游包车、组团拼车、司机工作台。
 
+【对话规则】
+- 每次最多2句话，不废话
+- 不用"好的""当然""没问题"开头
+- 已收集到的信息不再重复询问
+- 确认意图后立即收集缺少的信息
+
+【信息收集完成后加标记】
+送机（收集到：时间+出发地）→ [ACTION: show_vehicles to_airport]
+接机（收集到：上车时间+目的地）→ [ACTION: show_vehicles from_airport]
+陪同接机（收集到：时间+地址+等候时长）→ [ACTION: show_vehicles accompanied]
+旅游包车 → [ACTION: goto plaza_charter]
+组团拼车 → [ACTION: goto plaza_group]
+司机入口 → [ACTION: goto driver]
+
+【时间规则】
+送机：问"几点需要司机到门口？"（不是起飞时间）
+接机：问"落地后大概几点出关上车？"（不是落地时间）
+
+【地址规则】`;
+
+  if(saved.name) p+=`\n当前用户：${saved.name}，称呼"${saved.name}主人"。`;
+  if(addrs.length>0) p+=`\n常用地址：${addrs[0]}。用户说"回家"直接用此地址。`;
+  p+=`\n\n需要输入框时在回复末尾加：[INPUT: placeholder文字]`;
+  return p;
+}
+
+// ── 发送消息 ──
 async function sendMessage(){
   const input=document.getElementById('chat-input');
-  const msg=input.value.trim();
-  if(!msg)return;
+  const msg=input.value.trim();if(!msg)return;
   input.value='';
   addMsg(msg,true);
   aiHistory.push({role:'user',content:msg});
   const typing=addTyping();
   try{
-    const res=await fetch('/api/chat',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({system:SYSTEM_PROMPT,messages:aiHistory})
-    });
+    const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({system:buildPrompt(),messages:aiHistory})});
     const data=await res.json();
     const reply=data.content?.[0]?.text||'请再说一遍';
     aiHistory.push({role:'assistant',content:reply});
-    if(aiHistory.length>10)aiHistory=aiHistory.slice(-10);
+    if(aiHistory.length>20)aiHistory=aiHistory.slice(-20);
     typing.remove();
 
-    // 检查跳转指令
-    const gotoMatch=reply.match(/\[GOTO:\s*(\w+)\]/);
-    const showCards=reply.includes('[SHOW_CARDS]');
-    const cleanReply=reply.replace(/\[GOTO:.*?\]/,'').replace('[SHOW_CARDS]','').trim();
+    // 解析标记
+    const actionMatch=reply.match(/\[ACTION:\s*(\w+)\s*(\w+)?\]/);
+    const inputMatch=reply.match(/\[INPUT:\s*([^\]]+)\]/);
+    const clean=reply.replace(/\[ACTION:.*?\]/,'').replace(/\[INPUT:.*?\]/,'').trim();
 
-    addMsg(cleanReply);
-    speak(cleanReply);
+    // 从对话提取信息
+    extractInfo(msg, reply);
 
-    if(gotoMatch){
-      await delay(1200);
-      gotoPage(gotoMatch[1]);
-    } else if(showCards){
-      await delay(600);
-      showServiceCards();
+    addMsg(clean);speak(clean);
+
+    if(actionMatch){
+      await delay(800);
+      handleAction(actionMatch[1],actionMatch[2]);
+    } else if(inputMatch){
+      await delay(400);
+      showInlineInput(inputMatch[1]);
     }
-  }catch(e){
-    typing.remove();
-    addMsg('网络有点问题，请稍后再试');
+  }catch(e){typing.remove();addMsg('网络有问题，请稍后再试');}
+}
+
+// 从对话提取行程信息
+function extractInfo(userMsg, aiReply){
+  // 方向
+  if(/送机|去机场|飞机/i.test(userMsg)) S.direction='to_airport';
+  if(/接机|回来|落地|到澳洲/i.test(userMsg)) S.direction='from_airport';
+  if(/陪.*去.*接|帮我去接/i.test(userMsg)) S.trip_type='accompanied';
+
+  // 日期（今天/明天/后天/具体日期）
+  const today=new Date();
+  if(/今天/i.test(userMsg)) S.date=today.toISOString().split('T')[0];
+  if(/明天/i.test(userMsg)){const d=new Date(today);d.setDate(d.getDate()+1);S.date=d.toISOString().split('T')[0];}
+  if(/后天/i.test(userMsg)){const d=new Date(today);d.setDate(d.getDate()+2);S.date=d.toISOString().split('T')[0];}
+  const dateMatch=userMsg.match(/(\d{1,2})[月\/\-](\d{1,2})/);
+  if(dateMatch) S.date=`${today.getFullYear()}-${dateMatch[1].padStart(2,'0')}-${dateMatch[2].padStart(2,'0')}`;
+
+  // 时间
+  const timeMatch=userMsg.match(/(\d{1,2})[点:：时](\d{0,2})/);
+  if(timeMatch) S.time=`${timeMatch[1].padStart(2,'0')}:${(timeMatch[2]||'00').padStart(2,'0')}`;
+
+  // 地址（回家用历史地址）
+  const addrs=getSavedAddresses();
+  if(/回家|回我家|老地址/i.test(userMsg)&&addrs.length>0) S.address=addrs[0];
+}
+
+function handleAction(action, param){
+  if(action==='show_vehicles'){
+    if(param) S.direction=param==='to_airport'?'to_airport':'from_airport';
+    showVehicleCards();
+  } else if(action==='goto'){
+    const map={plaza_charter:'plaza.html?tab=charter',plaza_group:'plaza.html?tab=group',driver:'driver-app.html'};
+    if(map[param]) setTimeout(()=>window.location.href=map[param],800);
   }
 }
 
-function gotoPage(target){
-  const map={
-    passenger_to: 'passenger-recruit.html?type=to_airport',
-    passenger_from: 'passenger-recruit.html?type=from_airport',
-    plaza_charter: 'plaza.html?tab=charter',
-    plaza_group: 'plaza.html?tab=group',
-    driver: 'driver-app.html'
-  };
-  const url=map[target];
-  if(url){
-    agentSay('好的，帮你跳转过去！😊',300).then(()=>{
-      setTimeout(()=>window.location.href=url, 1000);
-    });
-  }
-}
-
-function showServiceCards(){
+function showInlineInput(placeholder){
   const div=document.createElement('div');
-  div.className='service-cards';
+  div.className='inline-input';
+  div.innerHTML=`<input placeholder="${placeholder}" id="inline-inp" onkeydown="if(event.key==='Enter')submitInline(this)">
+    <button class="inline-send" onclick="submitInline(document.getElementById('inline-inp'))">确认</button>`;
+  chatArea.appendChild(div);scrollBottom();
+  setTimeout(()=>document.getElementById('inline-inp')?.focus(),300);
+}
+
+function submitInline(el){
+  const val=el.value.trim();if(!val)return;
+  el.closest('.inline-input').remove();
+  document.getElementById('chat-input').value=val;
+  sendMessage();
+}
+
+// 车型选择
+function showVehicleCards(){
+  agentSay('选个车型吧',400).then(()=>{
+    const div=document.createElement('div');
+    div.className='vehicle-grid';
+    div.innerHTML=VEHICLES.map(v=>`
+      <div class="vehicle-card" onclick="selectVehicle('${v.type}',${v.price},this)">
+        <div class="v-icon">${v.icon}</div>
+        <div class="v-name">${v.name}</div>
+        <div class="v-cap">${v.cap}</div>
+        <div class="v-price">$${v.price}</div>
+      </div>`).join('');
+    chatArea.appendChild(div);scrollBottom();
+  });
+}
+
+function selectVehicle(type,price,el){
+  document.querySelectorAll('.vehicle-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');S.vehicle=type;S.price=price;
+  setTimeout(()=>showConfirmCard(),400);
+}
+
+// 确认卡
+async function showConfirmCard(){
+  await agentSay('确认一下行程',400);
+  const isAcc=S.trip_type==='accompanied';
+  const dirText=isAcc?'陪同接机':S.direction==='from_airport'?'接机':'送机';
+  const timeLabel=S.direction==='from_airport'?'上车时间':'司机到达';
+  const addrLabel=S.direction==='from_airport'?'目的地':'出发地';
+  const vInfo=VEHICLES.find(v=>v.type===S.vehicle);
+  const waitFee=isAcc?S.wait_hours*20:0;
+  const total=S.price+waitFee;
+
+  const div=document.createElement('div');
+  div.className='confirm-card';
   div.innerHTML=`
-    <div class="service-card blue" onclick="gotoPage('passenger_to')">
-      <div class="service-icon">✈️</div>
-      <div class="service-text"><h4>送机</h4><p>送您去机场，准时安心</p></div>
-      <div class="service-arrow">›</div>
+    <div style="font-size:14px;font-weight:900;color:white;margin-bottom:12px;">📋 行程确认</div>
+    <div class="confirm-row"><span class="confirm-label">类型</span><span class="confirm-value">${dirText}</span></div>
+    <div class="confirm-row"><span class="confirm-label">日期</span><span class="confirm-value">${S.date||'未填'}</span></div>
+    <div class="confirm-row"><span class="confirm-label">${timeLabel}</span><span class="confirm-value">${S.time||'未填'}</span></div>
+    <div class="confirm-row"><span class="confirm-label">${addrLabel}</span><span class="confirm-value">${S.address||'未填'}</span></div>
+    <div class="confirm-row"><span class="confirm-label">车型</span><span class="confirm-value">${vInfo?.icon} ${vInfo?.name}</span></div>
+    <div class="confirm-row"><span class="confirm-label">费用</span><span class="confirm-value" style="color:rgba(0,212,255,0.9);font-size:18px;font-weight:900;">$${total}</span></div>
+    <div style="margin-top:12px;">
+      <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:8px;">付款方式</div>
+      <div class="pay-opts">
+        <div class="pay-opt selected" onclick="selPay(this,'wechat')">💚 微信</div>
+        <div class="pay-opt" onclick="selPay(this,'cash')">💳 到车付</div>
+        <div class="pay-opt" onclick="selPay(this,'bank_transfer')">🏦 转账</div>
+      </div>
     </div>
-    <div class="service-card blue" onclick="gotoPage('passenger_from')">
-      <div class="service-icon">🛬</div>
-      <div class="service-text"><h4>接机</h4><p>落地就有车，无需等待</p></div>
-      <div class="service-arrow">›</div>
-    </div>
-    <div class="service-card green" onclick="gotoPage('plaza_charter')">
-      <div class="service-icon">🚌</div>
-      <div class="service-text"><h4>旅游包车</h4><p>大洋路、菲利普岛...</p></div>
-      <div class="service-arrow">›</div>
-    </div>
-    <div class="service-card green" onclick="gotoPage('plaza_group')">
-      <div class="service-icon">👥</div>
-      <div class="service-text"><h4>组团拼车</h4><p>找同伴，AA制出行</p></div>
-      <div class="service-arrow">›</div>
-    </div>
-    <div class="service-card gold" onclick="gotoPage('driver')">
-      <div class="service-icon">🧑‍✈️</div>
-      <div class="service-text"><h4>我是司机</h4><p>进入工作台接单</p></div>
-      <div class="service-arrow">›</div>
-    </div>
-  `;
+    <div class="confirm-btns">
+      <button class="confirm-btn secondary" onclick="restartBooking()">✏️ 修改</button>
+      <button class="confirm-btn primary" onclick="showContactStep()">✅ 确认</button>
+    </div>`;
   chatArea.appendChild(div);scrollBottom();
 }
 
-// ── 管家选择 ──
+function selPay(el,val){
+  document.querySelectorAll('.pay-opt').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');S.payment=val;
+}
+
+function restartBooking(){
+  S.direction=null;S.address=null;S.date=null;S.time=null;S.vehicle=null;S.price=null;S.trip_type='standard';S.wait_hours=0;
+  agentSay('告诉我想修改什么？',300);
+}
+
+// 联系方式步骤
+async function showContactStep(){
+  const saved=getPassenger();
+  if(saved.name&&saved.phone){
+    // 已有身份，直接下单
+    S.name=saved.name;S.phone=saved.phone;S.wechat=saved.wechat||'';
+    await submitBooking();
+    return;
+  }
+  await agentSay('最后填一下联系方式',400);
+  const div=document.createElement('div');
+  div.className='confirm-card';
+  div.innerHTML=`
+    <div style="font-size:14px;font-weight:900;color:white;margin-bottom:12px;">📱 联系方式</div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <input id="c-name" placeholder="称呼/姓名" style="background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.12);border-radius:10px;padding:10px 14px;color:white;font-size:14px;font-family:inherit;outline:none;" value="${saved.name||''}">
+      <input id="c-phone" placeholder="澳洲手机号 04XX XXX XXX" type="tel" style="background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.12);border-radius:10px;padding:10px 14px;color:white;font-size:14px;font-family:inherit;outline:none;" value="${saved.phone||''}">
+      <input id="c-wechat" placeholder="微信号（选填）" style="background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.12);border-radius:10px;padding:10px 14px;color:white;font-size:14px;font-family:inherit;outline:none;" value="${saved.wechat||''}">
+    </div>
+    <button onclick="submitFromForm()" style="width:100%;margin-top:14px;padding:14px;background:linear-gradient(135deg,#0096c7,#0077a0);color:white;border:none;border-radius:12px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;">🚀 确认预约</button>`;
+  chatArea.appendChild(div);scrollBottom();
+}
+
+async function submitFromForm(){
+  const name=document.getElementById('c-name')?.value.trim();
+  const phone=document.getElementById('c-phone')?.value.trim();
+  if(!name||!phone){alert('请填写姓名和手机号');return;}
+  S.name=name;S.phone=phone;S.wechat=document.getElementById('c-wechat')?.value.trim()||'';
+  await submitBooking();
+}
+
+async function submitBooking(){
+  if(bookingSubmitted)return;
+  bookingSubmitted=true;
+  const passenger=savePassenger(S.name,S.phone,S.wechat);
+  saveAddress(S.address);
+  const scheduledAt=new Date(`${S.date}T${S.time}:00`);
+  const isUrgent=(scheduledAt-new Date())/60000<=90;
+  const isAcc=S.trip_type==='accompanied';
+  const waitFee=isAcc?S.wait_hours*20:0;
+  const finalPrice=S.price+waitFee;
+  const points=Math.floor(finalPrice/10);
+  try{
+    const [trip]=await supaInsert('trips',{
+      tenant_id:TENANT_ID,passenger_name:S.name,passenger_phone:S.phone,
+      passenger_wechat:S.wechat||null,direction:S.direction,
+      pickup_address:isAcc||S.direction==='to_airport'?S.address:'墨尔本国际机场',
+      dropoff_address:isAcc||S.direction==='from_airport'?S.address:'墨尔本国际机场',
+      vehicle_type:S.vehicle,scheduled_at:`${S.date}T${S.time}:00`,
+      total_price:finalPrice,payment_method:S.payment,
+      payment_status:S.payment==='bank_transfer'?'pending':'prepaid',
+      prepaid_amount:S.payment!=='bank_transfer'?finalPrice:null,
+      status:'pending',is_urgent:isUrgent,
+      trip_type:S.trip_type,wait_hours:S.wait_hours
+    });
+    try{await supaInsert('contacts',{tenant_id:TENANT_ID,full_name:S.name,phone:S.phone,wechat_id:S.wechat||null,source:'AI管家',status:'customer'});}catch(e){}
+    document.getElementById('suc-id').textContent='TRP-'+trip.id.slice(-8).toUpperCase();
+    document.getElementById('success-modal').classList.add('show');
+    setTimeout(()=>showConfetti(points),1800);
+    await agentSay(`${S.name}主人，预约成功！司机会尽快确认并联系您 🎉`,300);
+  }catch(e){
+    bookingSubmitted=false;
+    alert('提交遇到问题，请截图联系客服\n'+e.message);
+  }
+}
+
+function closeSuccess(){document.getElementById('success-modal').classList.remove('show');}
+
+// 烟花
+let confettiInterval=null;
+function showConfetti(points){
+  document.getElementById('confetti-pts').textContent='+'+points;
+  document.getElementById('confetti-overlay').style.display='flex';
+  const canvas=document.getElementById('confetti-canvas');
+  const ctx=canvas.getContext('2d');
+  canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+  const colors=['#00d4ff','#f5a623','#00c896','#ff4d6d','#a855f7','#ffffff'];
+  const pieces=Array.from({length:120},()=>({
+    x:Math.random()*canvas.width,y:Math.random()*canvas.height-canvas.height,
+    w:Math.random()*10+5,h:Math.random()*6+3,
+    color:colors[Math.floor(Math.random()*colors.length)],
+    speed:Math.random()*3+2,angle:Math.random()*360,
+    spin:Math.random()*10-5,wobble:Math.random()*3
+  }));
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    pieces.forEach(p=>{
+      p.y+=p.speed;p.angle+=p.spin;p.x+=Math.sin(p.angle*0.05)*p.wobble;
+      if(p.y>canvas.height){p.y=-10;p.x=Math.random()*canvas.width;}
+      ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.angle*Math.PI/180);
+      ctx.fillStyle=p.color;ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);ctx.restore();
+    });
+  }
+  confettiInterval=setInterval(draw,16);
+}
+function closeConfetti(){
+  document.getElementById('confetti-overlay').style.display='none';
+  if(confettiInterval){clearInterval(confettiInterval);confettiInterval=null;}
+}
+
+// 管家选择
+const AGENTS={
+  male:{emoji:'🧑‍✈️',name:'澳小墨',pitch:0.85,rate:0.95},
+  female:{emoji:'👩‍✈️',name:'澳小本',pitch:1.2,rate:1.0},
+};
+
 async function chooseAgent(gender){
   localStorage.setItem('au_agent',gender);
   currentAgent=AGENTS[gender];
@@ -424,27 +669,22 @@ async function chooseAgent(gender){
   splash.style.animation='splashFade 0.5s ease forwards';
   setTimeout(()=>{splash.style.display='none';},500);
   await delay(600);
-
-  const saved=JSON.parse(localStorage.getItem('au_passenger')||'{}');
-  const namePrefix=saved.name?saved.name+'主人':'主人';
-  await agentSay(`${namePrefix}，您好！我是${currentAgent.name} ${currentAgent.emoji}<br>我可以帮您安排<strong>接机送机</strong>、<strong>旅游包车</strong>或<strong>组团出行</strong><br>请问今天需要什么服务？`,1000);
-  await delay(500);
-  showServiceCards();
+  const saved=getPassenger();
+  const name=saved.name?saved.name+'主人':'主人';
+  await agentSay(`${name}，您好 ${currentAgent.emoji} 需要什么服务？`,800);
 }
 
-// ── 启动 ──
 window.onload=function(){
   window.speechSynthesis.getVoices();
   speechSynthesis.onvoiceschanged=()=>{window.speechSynthesis.getVoices();};
-  const savedGender=localStorage.getItem('au_agent');
-  if(savedGender&&AGENTS[savedGender]){
-    currentAgent=AGENTS[savedGender];
-    // 已选过管家，直接进
+  const g=localStorage.getItem('au_agent');
+  if(g&&AGENTS[g]){
+    currentAgent=AGENTS[g];
     document.getElementById('splash').style.display='none';
     setTimeout(async()=>{
-      const saved=JSON.parse(localStorage.getItem('au_passenger')||'{}');
-      const namePrefix=saved.name?saved.name+'主人':'主人';
-      await agentSay(`${namePrefix}，欢迎回来 ${currentAgent.emoji} 今天需要什么？`,800);
+      const saved=getPassenger();
+      const name=saved.name?saved.name+'主人':'主人';
+      await agentSay(`${name}，欢迎回来 ${currentAgent.emoji} 今天需要什么？`,600);
     },400);
   }
 };
