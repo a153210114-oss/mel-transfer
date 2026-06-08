@@ -547,28 +547,52 @@ async function submitJoin(){
   }catch(e){alert('提交失败：'+e.message);}
 }
 
+
+// 多日期选择
+let availDates = [];
+function addAvailDate(dateStr) {
+  if (!dateStr || availDates.includes(dateStr)) return;
+  availDates.push(dateStr);
+  availDates.sort();
+  renderDateTags();
+}
+function removeAvailDate(dateStr) {
+  availDates = availDates.filter(d => d !== dateStr);
+  renderDateTags();
+}
+function renderDateTags() {
+  const wrap = document.getElementById('date-picker-wrap');
+  if (!wrap) return;
+  wrap.innerHTML = availDates.map(d => {
+    const display = new Date(d).toLocaleDateString('zh-CN', {month:'2-digit', day:'2-digit'});
+    return `<div style="background:var(--accent);color:white;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px;">
+      ${display}
+      <span onclick="removeAvailDate('${d}')" style="cursor:pointer;opacity:0.7;">×</span>
+    </div>`;
+  }).join('');
+}
+
 // ── 司机发布 ──
 function openDriverModal(){
+  availDates=[];
+  renderDateTags();
   document.getElementById('driver-modal').classList.add('show');
   document.getElementById('d-avail-date').min=new Date().toISOString().split('T')[0];
 }
 function closeDriverModal(){document.getElementById('driver-modal').classList.remove('show');}
-function toggleGuide(el){
-  el.classList.toggle('on');
-  document.getElementById('guide-rate-field').style.display=el.classList.contains('on')?'block':'none';
-}
+
 async function submitDriverPost(){
   const name=document.getElementById('d-name').value.trim();
   const brand=document.getElementById('d-brand').value.trim();
   const date=document.getElementById('d-avail-date').value;
   if(!name||!brand||!date){alert('请填写：车辆品牌、可出车日期、称呼');return;}
-  const hasGuide=document.getElementById('guide-toggle').classList.contains('on');
+
   try{
     await supaFetch('tour_plaza',{method:'POST',body:JSON.stringify({
       tenant_id:TENANT_ID,post_type:'charter',
       title:brand+' '+document.getElementById('d-model').value,
       city:document.getElementById('d-city').value,
-      travel_date:date,destination:'包车服务',
+      travel_date:availDates[0]||date,destination:'包车服务',
       vehicle_brand:brand,
       vehicle_model:document.getElementById('d-model').value.trim()||null,
       vehicle_seats:parseInt(document.getElementById('d-seats').value),
@@ -600,7 +624,7 @@ async function submitTouristPost(){
     await supaFetch('tour_plaza',{method:'POST',body:JSON.stringify({
       tenant_id:TENANT_ID,post_type:'group',
       title:dest,city:document.getElementById('t-city').value,
-      travel_date:date,destination:dest,
+      travel_date:availDates[0]||date,destination:dest,
       filled_seats:parseInt(document.getElementById('t-filled').value),
       total_seats:parseInt(document.getElementById('t-total').value),
       price_per_person:parseFloat(document.getElementById('t-budget').value)||null,
