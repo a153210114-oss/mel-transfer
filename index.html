@@ -457,9 +457,12 @@ function extractInfo(userMsg, aiReply){
   const timeMatch=userMsg.match(/(\d{1,2})[点:：时](\d{0,2})/);
   if(timeMatch) S.time=`${timeMatch[1].padStart(2,'0')}:${(timeMatch[2]||'00').padStart(2,'0')}`;
 
-  // 地址（回家用历史地址）
+  // 地址提取
   const addrs=getSavedAddresses();
-  if(/回家|回我家|老地址/i.test(userMsg)&&addrs.length>0) S.address=addrs[0];
+  if(/回家|回我家|老地址|从家|家里/i.test(userMsg)&&addrs.length>0) S.address=addrs[0];
+  // 等候时长
+  const waitMatch=userMsg.match(/等.*?(\d+)\s*小时/);
+  if(waitMatch) S.wait_hours=parseInt(waitMatch[1]);
 }
 
 function handleAction(action, param){
@@ -490,7 +493,7 @@ function submitInline(el){
 
 // 车型选择
 function showVehicleCards(){
-  agentSay('选个车型吧',400).then(()=>{
+  Promise.resolve().then(()=>{
     const div=document.createElement('div');
     div.className='vehicle-grid';
     div.innerHTML=VEHICLES.map(v=>`
@@ -512,7 +515,7 @@ function selectVehicle(type,price,el){
 
 // 确认卡
 async function showConfirmCard(){
-  await agentSay('确认一下行程',400);
+  await delay(300);
   const isAcc=S.trip_type==='accompanied';
   const dirText=isAcc?'陪同接机':S.direction==='from_airport'?'接机':'送机';
   const timeLabel=S.direction==='from_airport'?'上车时间':'司机到达';
