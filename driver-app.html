@@ -843,6 +843,138 @@ function markNotificationsRead() {
   if (dot) dot.style.display = 'none';
 }
 
+
+// ── 包车发布 ──
+let charterDates = [];
+let bookedDates = []; // 已预约日期
+
+async function openCharterPublish() {
+  document.getElementById('charter-modal').style.display = 'flex';
+  document.getElementById('charter-date-input').min = new Date().toISOString().split('T')[0];
+  charterDates = [];
+  renderCharterDateTags();
+
+  // 自动填车辆信息
+  const info = document.getElementById('charter-vehicle-info');
+  if (currentDriver) {
+    try {
+      const vehicles = await supa(`vehicles?driver_id=eq.${currentDriver.id}&is_active=eq.true&limit=1`);
+      if (vehicles.length > 0) {
+        const v = vehicles[0];
+        info.innerHTML = `<strong>${v.brand||''} ${v.model||''}</strong> · ${v.seats||''}座 · 车牌：${v.plate_number||''}`;
+        // 存车辆信息
+        window.charterVehicle = v;
+      } else {
+        info.innerHTML = '<span style="color:var(--red);">请先在注册页面填写车辆信息</span>';
+      }
+    } catch(e) {
+      info.textContent = '获取车辆信息失败';
+    }
+
+    // 获取已预约日期
+    try {
+      const trips = await supa(`trips?driver_id=eq.${currentDriver.id}&status=in.(confirmed,dispatched,driver_en_route)&select=scheduled_at`);
+      bookedDates = trips.map(t => t.scheduled_at.split('T')[0]);
+    } catch(e) {}
+  }
+}
+
+function closeCharterModal() {
+  document.getElementById('charter-modal').style.display = 'none';
+}
+
+function addCharterDate(dateStr) {
+  if (!dateStr) return;
+  if (bookedDates.includes(dateStr)) {
+    alert('该日期已有预约订单，无法选择');
+    return;
+  }
+  if (charterDates.includes(dateStr)) return;
+  charterDates.push(dateStr);
+  charterDates.sort();
+  renderCharterDateTags();
+}
+
+function removeCharterDate(dateStr) {
+  charterDates = charterDates.filter(d => d !== dateStr);
+  renderCharterDateTags();
+}
+
+function renderCharterDateTags() {
+  const wrap = document.getElementById('charter-date-tags');
+  if (!wrap) return;
+  wrap.innerHTML = charterDates.map(d => {
+    const isBooked = bookedDates.includes(d);
+    const display = new Date(d).toLocaleDateString('zh-CN', {month:'2-digit', day:'2-digit'});
+    return `<div style="background:${isBooked?'var(--border)':'rgba(39,174,96,0.2)'};color:${isBooked?'var(--text3)':'var(--green)'};border:1px solid ${isBooked?'var(--border)':'rgba(39,174,96,0.4)'};border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px;">
+      ${display}${isBooked?' (已预约)':''}
+      ${!isBooked?`<span onclick="removeCharterDate('${d}')" style="cursor:pointer;opacity:0.6;">×</span>`:''}
+    </div>`;
+  }).join('');
+}
+
+async function submitCharterPost() {
+  const hourly = parseFloat(document.getElementById('charter-hourly').value);
+  const city = document.getElementById('charter-city').value;
+  if (!hourly) { alert('请填写每小时报价'); return; }
+  if (charterDates.length === 0) { alert('请至少选择一个可出车日期'); return; }
+
+  const v = window.charterVehicle;
+  const data = {
+    tenant_id: TENANT_ID,
+    post_type: 'charter',
+    title: `${v?.brand||''} ${v?.model||''} ${v?.seats||''}座 包车`,
+    city: city,
+    travel_date: charterDates[0],
+    destination: '包车服务',
+    vehicle_brand: v?.brand||null,
+    vehicle_model: v?.model||null,
+    vehicle_seats: v?.seats||null,
+    hourly_rate: hourly,
+    available_dates: JSON.stringify(charterDates),
+    booked_dates: '[]',
+    driver_id: currentDriver.id,
+    author_name: currentDriver.full_name,
+    contact_wechat: currentDriver.wechat_id||'',
+    description: document.getElementById('charter-desc').value.trim()||null,
+    status: 'open',
+    filled_seats: 0,
+    total_seats: v?.seats||8
+  };
+
+  try {
+    await supaPost('tour_plaza', data);
+    closeCharterModal();
+    alert('✅ 包车信息已发布到旅游广场！');
+    // 更新计数
+    loadCharterCount();
+  } catch(e) {
+    alert('发布失败：' + e.message);
+  }
+}
+
+async function loadCharterCount() {
+  if (!currentDriver) return;
+  try {
+    const posts = await supa(`tour_plaza?driver_id=eq.${currentDriver.id}&status=eq.open&post_type=eq.charter`);
+    const el = document.getElementById('charter-posts-count');
+    if (el) el.textContent = posts.length > 0 ? `当前已发布 ${posts.length} 条包车信息` : '';
+  } catch(e) {}
+}
+
+async function supaPost(table, data) {
+  const res = await fetch(SUPA_URL + '/rest/v1/' + table, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY,
+      'Content-Type': 'application/json', 'Prefer': 'return=representation'
+    },
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) { const e = await res.json(); throw new Error(e.message||'error'); }
+  return res.json();
+}
+
 </script>
 </head>
 <body>
@@ -1469,6 +1601,21 @@ function markNotificationsRead() {
     </div>
   </div>
 
+  <!-- 包车发布入口 -->
+  <div class="section-title">🚌 包车服务</div>
+  <div style="margin:0 16px 16px;">
+    <button onclick="openCharterPublish()" style="
+      width:100%;padding:16px;
+      background:linear-gradient(135deg,rgba(39,174,96,0.15),rgba(0,150,100,0.1));
+      border:1.5px solid rgba(39,174,96,0.3);
+      border-radius:14px;cursor:pointer;text-align:left;
+    ">
+      <div style="font-size:15px;font-weight:800;color:var(--text);margin-bottom:4px;">📅 发布可出车日期</div>
+      <div style="font-size:12px;color:var(--text3);">在旅游广场展示您的车辆，接受包车预约</div>
+    </button>
+    <div id="charter-posts-count" style="font-size:12px;color:var(--text3);text-align:center;margin-top:8px;"></div>
+  </div>
+
   <!-- 推荐明细 -->
   <div class="section-title">🤝 推荐明细</div>
   <div style="margin:0 16px;">
@@ -1834,6 +1981,7 @@ function showNewOrderBanner(count) {
 
 // ── 加载首页 ──
 async function loadProfile() {
+  loadCharterCount();
   if (!currentDriver) return;
   try {
     // 基本信息
@@ -2526,6 +2674,63 @@ function submitReg() {
     <div style="font-size:44px;font-weight:900;color:var(--accent);margin-bottom:4px;" id="driver-confetti-pts">+10</div>
     <div style="font-size:15px;font-weight:700;color:var(--text2);margin-bottom:22px;">积分</div>
     <button onclick="closeDriverConfetti()" style="background:var(--accent);color:var(--bg);border:none;border-radius:12px;padding:12px 28px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;width:100%;">收到！继续加油 💪</button>
+  </div>
+</div>
+
+
+<!-- 包车发布弹窗 -->
+<div id="charter-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:999;align-items:flex-end;justify-content:center;">
+  <div style="background:var(--surface);border-radius:28px 28px 0 0;padding:24px 20px 44px;width:100%;max-width:480px;max-height:85vh;overflow-y:auto;border-top:1px solid var(--border);">
+    <div style="width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 18px;"></div>
+    <div style="font-size:16px;font-weight:900;color:var(--text);margin-bottom:4px;">🚌 发布包车服务</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:18px;">您的车辆信息将自动填入</div>
+
+    <!-- 车辆信息（自动填入，只读） -->
+    <div style="background:var(--surface2);border-radius:12px;padding:14px;margin-bottom:16px;border:1px solid var(--border);">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:8px;font-weight:700;">您的车辆</div>
+      <div id="charter-vehicle-info" style="font-size:13px;color:var(--text);">加载中...</div>
+    </div>
+
+    <!-- 每小时报价 -->
+    <div style="margin-bottom:14px;">
+      <label style="font-size:12px;color:var(--text2);margin-bottom:4px;display:block;font-weight:700;">每小时报价（含油费）</label>
+      <input id="charter-hourly" type="number" placeholder="如：80"
+        style="width:100%;padding:11px 14px;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:inherit;outline:none;">
+    </div>
+
+    <!-- 城市 -->
+    <div style="margin-bottom:14px;">
+      <label style="font-size:12px;color:var(--text2);margin-bottom:4px;display:block;font-weight:700;">所在城市</label>
+      <select id="charter-city" style="width:100%;padding:11px 14px;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:inherit;outline:none;">
+        <option value="墨尔本">墨尔本</option>
+        <option value="悉尼">悉尼</option>
+        <option value="布里斯班">布里斯班</option>
+        <option value="珀斯">珀斯</option>
+        <option value="阿德莱德">阿德莱德</option>
+        <option value="堪培拉">堪培拉</option>
+        <option value="塔斯马尼亚">塔斯马尼亚</option>
+      </select>
+    </div>
+
+    <!-- 可出车日期（多选，自动灰化已预约日期） -->
+    <div style="margin-bottom:14px;">
+      <label style="font-size:12px;color:var(--text2);margin-bottom:6px;display:block;font-weight:700;">可出车日期</label>
+      <div id="charter-date-tags" style="display:flex;flex-wrap:wrap;gap:6px;min-height:32px;margin-bottom:8px;"></div>
+      <input id="charter-date-input" type="date"
+        style="width:100%;padding:11px 14px;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:inherit;outline:none;"
+        onchange="addCharterDate(this.value);this.value=''">
+      <div style="font-size:11px;color:var(--text3);margin-top:4px;">已预约日期将显示为灰色，不可选</div>
+    </div>
+
+    <!-- 擅长路线 -->
+    <div style="margin-bottom:16px;">
+      <label style="font-size:12px;color:var(--text2);margin-bottom:4px;display:block;font-weight:700;">擅长路线（选填）</label>
+      <textarea id="charter-desc" rows="2" placeholder="如：大洋路、菲利普岛、雅拉河谷..."
+        style="width:100%;padding:11px 14px;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:inherit;outline:none;resize:none;"></textarea>
+    </div>
+
+    <button onclick="submitCharterPost()" style="width:100%;padding:14px;background:linear-gradient(135deg,#27ae60,#1e8449);color:white;border:none;border-radius:14px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;">🚌 发布到旅游广场</button>
+    <button onclick="closeCharterModal()" style="width:100%;padding:12px;background:none;border:none;font-size:13px;color:var(--text3);cursor:pointer;margin-top:6px;">取消</button>
   </div>
 </div>
 
