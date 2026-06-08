@@ -269,7 +269,10 @@ function speak(text){
   const zh=voices.filter(v=>v.lang.startsWith('zh'));
   if(zh.length>0){
     const g=localStorage.getItem('au_agent')||'male';
-    const v=g==='female'?(zh.find(v=>/female|女/i.test(v.name))||zh[zh.length-1]):zh[0];
+    // 优先普通话，排除粤语
+    const mandarin=zh.filter(v=>!(/cantonese|yue|粤|HK|hk/i.test(v.name+v.lang)));
+    const pool=mandarin.length>0?mandarin:zh;
+    const v=g==='female'?(pool.find(v=>/female|女/i.test(v.name))||pool[pool.length-1]):pool[0];
     if(v)u.voice=v;
   }
   window.speechSynthesis.speak(u);
