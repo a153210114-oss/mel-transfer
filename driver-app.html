@@ -978,30 +978,92 @@ async function supaPost(table, data) {
 }
 
 
-function loadMessagePage() {
-  // 合并通知到消息页
+async function loadMessagePage() {
   const notifyList = document.getElementById('message-notify-list');
   if (!notifyList || !currentDriver) return;
+
+  // 1. 系统通知（未完成事项）
   const items = [];
   if (!currentDriver.vehicle_type) items.push({icon:'🚗', text:'车辆信息未完善，请到"我的"完成注册', action:"switchPage('profile')"});
   if (!currentDriver.bank_account) items.push({icon:'💳', text:'收款账户未设置', action:"switchPage('profile')"});
   if (!currentDriver.wechat_id) items.push({icon:'💬', text:'微信号未填写', action:"switchPage('profile')"});
 
-  // 更新红点
-  const dot = document.getElementById('message-dot');
-  if (dot) dot.style.display = items.length > 0 ? 'block' : 'none';
+  // 2. 新包车需求（最近24小时）
+  let charterDemands = [];
+  try {
+    const since = new Date(Date.now()-24*60*60*1000).toISOString();
+    charterDemands = await supa(`tour_plaza?post_type=eq.charter&status=eq.open&driver_id=is.null&created_at=gte.${since}&order=created_at.desc&limit=5`);
+  } catch(e) {}
 
-  if (items.length === 0) {
-    notifyList.innerHTML = '';
-    return;
-  }
-  notifyList.innerHTML = '<div style="font-size:11px;font-weight:800;color:var(--red);letter-spacing:1px;margin-bottom:6px;">⚠️ 待完成事项</div>' +
-    items.map(item => `
+  // 更新红点
+  const totalCount = items.length + charterDemands.length;
+  const dot = document.getElementById('message-dot');
+  if (dot) dot.style.display = totalCount > 0 ? 'block' : 'none';
+
+  let html = '';
+
+  // 系统通知
+  if (items.length > 0) {
+    html += '<div style="font-size:11px;font-weight:800;color:var(--red);letter-spacing:1px;margin-bottom:6px;">⚠️ 待完成事项</div>';
+    html += items.map(item => `
     <div onclick="${item.action}" style="background:var(--surface);border-radius:14px;padding:12px 16px;display:flex;align-items:center;gap:12px;border:1px solid var(--border);cursor:pointer;border-left:3px solid var(--red);margin-bottom:8px;">
       <div style="font-size:20px;">${item.icon}</div>
       <div style="flex:1;font-size:13px;color:var(--text);">${item.text}</div>
       <div style="color:var(--text3);">›</div>
     </div>`).join('');
+  }
+
+  // 包车需求
+  if (charterDemands.length > 0) {
+    html += '<div style="font-size:11px;font-weight:800;color:var(--gold);letter-spacing:1px;margin:10px 0 6px;">🚌 新包车需求</div>';
+    html += charterDemands.map(p => {
+      const date = new Date(p.travel_date).toLocaleDateString('zh-CN',{month:'2-digit',day:'2-digit'});
+      return `
+      <div style="background:var(--surface);border-radius:14px;padding:14px 16px;border:1px solid var(--border);border-left:3px solid var(--gold);margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <div style="font-size:13px;font-weight:800;color:var(--text);">${p.destination||'包车需求'}</div>
+          <div style="font-size:11px;color:var(--text3);">${date}</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+          <span style="font-size:11px;background:rgba(245,166,35,0.1);color:var(--gold);padding:3px 8px;border-radius:6px;">📍 ${p.city}</span>
+          <span style="font-size:11px;background:rgba(245,166,35,0.1);color:var(--gold);padding:3px 8px;border-radius:6px;">👥 ${p.total_seats}人</span>
+          ${p.budget?`<span style="font-size:11px;background:rgba(245,166,35,0.1);color:var(--gold);padding:3px 8px;border-radius:6px;">💰 出价$${p.budget}</span>`:''}
+        </div>
+        ${p.description?`<div style="font-size:12px;color:var(--text2);margin-bottom:8px;">${p.description}</div>`:''}
+        <div style="display:flex;gap:8px;">
+          <button onclick="acceptCharterDemand('${p.id}','${p.contact_wechat}')" style="flex:1;padding:8px;background:linear-gradient(135deg,#27ae60,#1e8449);color:white;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">✅ 我来接</button>
+          <button onclick="shareCharterDemand('${p.id}')" style="flex:1;padding:8px;background:rgba(0,150,199,0.15);color:var(--accent);border:1px solid rgba(0,150,199,0.3);border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">📤 推荐给朋友</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  notifyList.innerHTML = html || '';
+}
+
+async function acceptCharterDemand(postId, passengerPhone) {
+  if (!currentDriver) { alert('请先登录'); return; }
+  try {
+    // 更新tour_plaza标记已接单
+    await fetch(SUPA_URL+'/rest/v1/tour_plaza?id=eq.'+postId, {
+      method:'PATCH',
+      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({accepted_driver_id:currentDriver.id, status:'full'})
+    });
+    alert('✅ 已接单！请联系乘客确认行程
+手机：'+passengerPhone);
+    loadMessagePage();
+  } catch(e) { alert('操作失败：'+e.message); }
+}
+
+function shareCharterDemand(postId) {
+  const url = `${location.origin}/plaza.html?highlight=${postId}`;
+  if (navigator.share) {
+    navigator.share({title:'包车需求', text:'有乘客需要包车，看看你是否感兴趣', url});
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(url);
+    alert('链接已复制！分享给司机朋友，他们接单后您获得推荐积分');
+  }
 }
 
 async function loadPublishPage() {
@@ -1012,6 +1074,40 @@ async function loadPublishPage() {
     if (el) el.textContent = posts.length > 0 ? `已发布 ${posts.length} 条，有效期内` : '暂无发布';
   } catch(e) {}
 }
+
+
+// 定期检查新包车需求，语音通知
+let lastCheckedDemand = null;
+async function checkNewCharterDemands() {
+  if (!currentDriver) return;
+  try {
+    const since = lastCheckedDemand || new Date(Date.now()-5*60*1000).toISOString();
+    const demands = await supa(`tour_plaza?post_type=eq.charter&status=eq.open&driver_id=is.null&created_at=gte.${since}&limit=1`);
+    if (demands.length > 0) {
+      const p = demands[0];
+      lastCheckedDemand = new Date().toISOString();
+      // 语音播报
+      speakDriver(`新包车需求！${p.city}，${p.total_seats}人，${p.destination||''}，请查看消息栏`);
+      // 消息红点
+      const dot = document.getElementById('message-dot');
+      if (dot) dot.style.display = 'block';
+    }
+  } catch(e) {}
+}
+
+function speakDriver(text) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'zh-CN'; u.rate = 1.0; u.pitch = 1.1;
+  const voices = window.speechSynthesis.getVoices();
+  const cn = voices.filter(v => v.lang === 'zh-CN');
+  if (cn.length > 0) u.voice = cn.find(v=>/female|女|Ting/i.test(v.name)) || cn[0];
+  window.speechSynthesis.speak(u);
+}
+
+// 每2分钟检查一次
+setInterval(checkNewCharterDemands, 120000);
 
 </script>
 </head>
