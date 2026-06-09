@@ -676,20 +676,41 @@ function extractInfo(msg){
   const today=new Date();
   const yr=today.getFullYear();
   const mo=today.getMonth()+1;
-  if(/今天/i.test(msg))S.date=today.toISOString().split('T')[0];
-  if(/明天/i.test(msg)){const d=new Date(today);d.setDate(d.getDate()+1);S.date=d.toISOString().split('T')[0];}
+  const todayDay=today.getDay(); // 0=周日
+
+  // 今天/明天/后天
+  if(/今天|今日/i.test(msg))S.date=today.toISOString().split('T')[0];
+  if(/明天|明日/i.test(msg)){const d=new Date(today);d.setDate(d.getDate()+1);S.date=d.toISOString().split('T')[0];}
   if(/后天/i.test(msg)){const d=new Date(today);d.setDate(d.getDate()+2);S.date=d.toISOString().split('T')[0];}
+  if(/大后天/i.test(msg)){const d=new Date(today);d.setDate(d.getDate()+3);S.date=d.toISOString().split('T')[0];}
+
+  // 星期/礼拜/周
+  const weekMap={'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'日':0,'天':0,'1':1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':0};
+  const weekMatch=msg.match(/(?:这个?|本|下个?|下下个?)?(?:星期|礼拜|周)([一二三四五六七日天\d])/);
+  if(weekMatch){
+    const target=weekMap[weekMatch[1]];
+    if(target!==undefined){
+      const isNext=/下下/.test(msg);
+      const isThisNext=/下/.test(msg)&&!isNext;
+      let diff=target-todayDay;
+      if(isNext||(diff<=0&&!(/这|本/.test(msg))))diff+=7;
+      if(isNext&&diff<=7)diff+=7;
+      const d=new Date(today);d.setDate(d.getDate()+diff);
+      S.date=d.toISOString().split('T')[0];
+    }
+  }
+
   // 月/日格式：6月15号、6/15
   const dateMatch=msg.match(/(\d{1,2})[月\/\-](\d{1,2})/);
   if(dateMatch)S.date=`${yr}-${dateMatch[1].padStart(2,'0')}-${dateMatch[2].padStart(2,'0')}`;
-  // 只有日期：15号、15日（用当月或下月）
-  const dayOnlyMatch=msg.match(/^(\d{1,2})[号日]$|[^月](\d{1,2})[号日]/);
-  if(dayOnlyMatch&&!dateMatch){
-    const day=parseInt(dayOnlyMatch[1]||dayOnlyMatch[2]);
+
+  // 只有日期：15号、15日
+  const dayOnlyMatch=msg.match(/(?:^|[^月\/\d])(\d{1,2})[号日]/);
+  if(dayOnlyMatch&&!dateMatch&&!weekMatch){
+    const day=parseInt(dayOnlyMatch[1]);
     if(day>=1&&day<=31){
-      // 如果这个日期在今天之前，用下个月
       const targetDate=new Date(yr,mo-1,day);
-      if(targetDate<today) targetDate.setMonth(targetDate.getMonth()+1);
+      if(targetDate<=today)targetDate.setMonth(targetDate.getMonth()+1);
       S.date=targetDate.toISOString().split('T')[0];
     }
   }
