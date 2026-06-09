@@ -1114,7 +1114,7 @@ function speakDriver(text) {
 setInterval(checkNewCharterDemands, 120000);
 
 
-async function loadAndShowPendingTrips() {
+async function loadAndShowPendingTrips_deprecated() {
   const listEl = document.getElementById('pending-trips');
   const btn = document.getElementById('pending-btn');
 
@@ -1169,6 +1169,59 @@ async function loadAndShowPendingTrips() {
   } catch(e) {
     listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--red);">加载失败</div>';
   }
+}
+
+
+async function goToPendingTrips() {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const trips = await supa(
+      `public_trips?driver_id=is.null&status=eq.pending&scheduled_at=gte.${today}T00:00:00&tenant_id=eq.${TENANT_ID}&order=scheduled_at.asc&limit=10`
+    );
+    if (!trips || trips.length === 0) {
+      alert('暂无待接订单');
+      return;
+    }
+    if (trips.length === 1) {
+      goToDetail(trips[0].id);
+    } else {
+      // 多个订单，显示选择列表
+      showTripSelectSheet(trips);
+    }
+  } catch(e) {
+    alert('加载失败，请重试');
+  }
+}
+
+function showTripSelectSheet(trips) {
+  // 移除旧的
+  document.getElementById('trip-select-sheet')?.remove();
+  const sheet = document.createElement('div');
+  sheet.id = 'trip-select-sheet';
+  sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:999;display:flex;align-items:flex-end;justify-content:center;';
+  sheet.innerHTML = `
+    <div style="background:var(--surface);border-radius:28px 28px 0 0;padding:20px 16px 40px;width:100%;max-width:430px;max-height:70vh;overflow-y:auto;">
+      <div style="width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px;"></div>
+      <div style="font-size:15px;font-weight:800;color:var(--text);margin-bottom:14px;">📋 待接订单（${trips.length}个）</div>
+      ${trips.map(t => {
+        const dt = new Date(t.scheduled_at);
+        const dateStr = dt.toLocaleDateString('zh-CN',{month:'2-digit',day:'2-digit'});
+        const timeStr = dt.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
+        const dirText = t.trip_type==='charter'?'包车':t.direction==='from_airport'?'接机':'送机';
+        return `<div onclick="document.getElementById('trip-select-sheet').remove();goToDetail('${t.id}')"
+          style="background:var(--surface2);border-radius:12px;padding:12px 14px;margin-bottom:8px;cursor:pointer;border:1px solid var(--border);">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+            <span style="font-size:13px;font-weight:800;color:var(--text);">${dirText}</span>
+            <span style="font-size:12px;color:var(--text2);">${dateStr} ${timeStr}</span>
+          </div>
+          <div style="font-size:12px;color:var(--text2);">${t.pickup_address}</div>
+          <div style="text-align:right;margin-top:4px;font-size:13px;font-weight:800;color:var(--accent);">$${t.total_price}</div>
+        </div>`;
+      }).join('')}
+      <button onclick="document.getElementById('trip-select-sheet').remove()" style="width:100%;padding:12px;background:none;border:none;color:var(--text3);font-size:13px;cursor:pointer;margin-top:4px;">关闭</button>
+    </div>`;
+  sheet.onclick = e => { if(e.target===sheet) sheet.remove(); };
+  document.body.appendChild(sheet);
 }
 
 </script>
@@ -1298,9 +1351,10 @@ async function loadAndShowPendingTrips() {
       <div class="stat-num accent" id="stat-done">0</div>
       <div class="stat-label">今日完成</div>
     </div>
-    <div class="stat-box" style="cursor:pointer;" onclick="loadAndShowPendingTrips()">
+    <div class="stat-box" style="cursor:pointer;position:relative;" onclick="goToPendingTrips()">
       <div class="stat-num gold" id="stat-pending">0</div>
-      <div class="stat-label">待接订单</div>
+      <div class="stat-label">待接订单 ›</div>
+      <span id="pending-count-badge" style="display:none;position:absolute;top:4px;right:4px;background:var(--red);color:white;border-radius:8px;font-size:10px;font-weight:800;padding:1px 6px;"></span>
     </div>
     <div class="stat-box">
       <div class="stat-num green">4.9</div>
@@ -1308,20 +1362,8 @@ async function loadAndShowPendingTrips() {
     </div>
   </div>
 
-  <!-- 待接订单按钮 -->
-  <div style="margin:0 16px 16px;">
-    <button onclick="loadAndShowPendingTrips()" id="pending-btn"
-      style="width:100%;padding:14px;background:linear-gradient(135deg,rgba(0,212,255,0.15),rgba(0,150,199,0.1));
-      border:1.5px solid rgba(0,212,255,0.3);border-radius:14px;color:var(--accent);
-      font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;
-      display:flex;align-items:center;justify-content:center;gap:8px;">
-      📋 查看待接订单
-      <span id="pending-count-badge" style="background:var(--red);color:white;border-radius:10px;font-size:11px;font-weight:800;padding:2px 8px;display:none;"></span>
-    </button>
-  </div>
-
-  <!-- 待处理订单列表（折叠） -->
-  <div id="pending-trips" style="display:none;margin:0 16px 16px;">
+  <!-- 待处理订单列表 -->
+  <div id="pending-trips">
     <!-- 动态加载 -->
   </div>
 
