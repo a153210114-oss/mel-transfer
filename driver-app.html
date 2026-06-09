@@ -1173,24 +1173,16 @@ async function loadAndShowPendingTrips_deprecated() {
 
 
 async function goToPendingTrips() {
-  try {
-    const today = new Date().toISOString().split('T')[0];
-    const trips = await supa(
-      `public_trips?driver_id=is.null&status=eq.pending&scheduled_at=gte.${today}T00:00:00&tenant_id=eq.${TENANT_ID}&order=scheduled_at.asc&limit=10`
-    );
-    if (!trips || trips.length === 0) {
-      alert('暂无待接订单');
-      return;
-    }
-    if (trips.length === 1) {
-      goToDetail(trips[0].id);
-    } else {
-      // 多个订单，显示选择列表
-      showTripSelectSheet(trips);
-    }
-  } catch(e) {
-    alert('加载失败，请重试');
+  const trips = window._pendingTrips;
+  if (!trips || trips.length === 0) {
+    // 重新加载
+    await loadHome();
+    const fresh = window._pendingTrips;
+    if (!fresh || fresh.length === 0) { alert('暂无待接订单'); return; }
+    fresh.length === 1 ? goToDetail(fresh[0].id) : showTripSelectSheet(fresh);
+    return;
   }
+  trips.length === 1 ? goToDetail(trips[0].id) : showTripSelectSheet(trips);
 }
 
 function showTripSelectSheet(trips) {
@@ -1222,6 +1214,22 @@ function showTripSelectSheet(trips) {
     </div>`;
   sheet.onclick = e => { if(e.target===sheet) sheet.remove(); };
   document.body.appendChild(sheet);
+}
+
+
+async function rejectTrip() {
+  if (!currentTripId) return;
+  if (!confirm('确认拒绝这个订单？')) return;
+  try {
+    await fetch(SUPA_URL+`/rest/v1/trips?id=eq.${currentTripId}`, {
+      method:'PATCH',
+      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({status:'cancelled'})
+    });
+    goBack('page-home');
+    loadHome();
+    speakDriver('订单已拒绝');
+  } catch(e) { alert('操作失败'); }
 }
 
 </script>
@@ -1351,10 +1359,9 @@ function showTripSelectSheet(trips) {
       <div class="stat-num accent" id="stat-done">0</div>
       <div class="stat-label">今日完成</div>
     </div>
-    <div class="stat-box" style="cursor:pointer;position:relative;" onclick="goToPendingTrips()">
+    <div class="stat-box" style="cursor:pointer;position:relative;border:1.5px solid rgba(0,212,255,0.3);background:rgba(0,212,255,0.05);border-radius:12px;" onclick="goToPendingTrips()">
       <div class="stat-num gold" id="stat-pending">0</div>
-      <div class="stat-label">待接订单 ›</div>
-      <span id="pending-count-badge" style="display:none;position:absolute;top:4px;right:4px;background:var(--red);color:white;border-radius:8px;font-size:10px;font-weight:800;padding:1px 6px;"></span>
+      <div class="stat-label" style="color:var(--accent);">待接 › 查看</div>
     </div>
     <div class="stat-box">
       <div class="stat-num green">4.9</div>
@@ -1381,7 +1388,7 @@ function showTripSelectSheet(trips) {
         <div class="topbar-title">订单详情</div>
         <div class="topbar-sub">单号 #TRP-20240604-008</div>
       </div>
-      <span class="status-tag tag-waiting">⏳ 待确认</span>
+      <span class="status-tag tag-waiting" id="detail-status-badge">📋 新订单</span>
     </div>
   </div>
 
@@ -1406,7 +1413,7 @@ function showTripSelectSheet(trips) {
     <div class="step-line done"></div>
     <div class="step">
       <div class="step-circle active">2</div>
-      <div class="step-label">待确认</div>
+      <div class="step-label">等待接单</div>
     </div>
     <div class="step-line"></div>
     <div class="step">
@@ -1517,7 +1524,8 @@ function showTripSelectSheet(trips) {
     </div>
 
     <!-- 操作按钮 -->
-    <button class="action-btn btn-primary" onclick="handleAcceptBtn()" id="accept-trip-btn">${isGuestMode?'🔒 审核后可接单':'✅ 接受订单'}</button>
+    <button class="action-btn btn-primary" onclick="handleAcceptBtn()" id="accept-trip-btn" style="flex:2;">✅ 接单</button>
+    <button class="action-btn" onclick="rejectTrip()" style="flex:1;background:rgba(255,77,109,0.15);color:var(--red);border:1px solid rgba(255,77,109,0.3);">❌ 拒绝</button>
     <button class="action-btn btn-danger" onclick="declineTrip()">✗ 拒绝</button>
 
   </div>
@@ -2313,7 +2321,7 @@ function showNewOrderBanner(count) {
     animation: slideDown 0.3s ease;
   `;
   banner.innerHTML = `🔔 有 ${count} 个新订单！点击查看`;
-  speakDriver(`师傅，有${count}个新订单，请查看`);
+  setTimeout(()=>speakDriver(`师傅，有${count}个新订单，请查看`), 500);
   banner.onclick = () => { banner.remove(); loadHome(); };
   document.body.appendChild(banner);
 
@@ -2451,27 +2459,26 @@ async function loadHome() {
       ...myTrips.filter(t => ['confirmed','dispatched','pending'].includes(t.status))
     ].sort((a,b) => new Date(a.scheduled_at) - new Date(b.scheduled_at));
 
-    // 渲染
+    // 只渲染当前进行中的任务
     const container = document.getElementById('pending-trips');
     let html = '';
 
-    // 当前单
     if (currentTrips.length > 0) {
-      html += '<div class="section-label">🚗 当前任务</div>';
+      html += '<div class="section-label" style="padding:0 16px;margin-bottom:8px;">🚗 当前任务</div>';
       html += currentTrips.map(t => renderTripCard(t, true)).join('');
     }
 
-    // 预约单
-    if (upcomingTrips.length > 0) {
-      html += '<div class="section-label">📅 预约订单</div>';
-      html += upcomingTrips.map(t => renderTripCard(t, false)).join('');
-    }
-
-    if (!html) {
-      html = '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">暂无待处理订单</div></div>';
-    }
-
     container.innerHTML = html;
+
+    // 更新待接订单红点
+    const badge = document.getElementById('pending-count-badge');
+    if (badge) {
+      badge.textContent = upcomingTrips.length;
+      badge.style.display = upcomingTrips.length > 0 ? 'inline' : 'none';
+    }
+    
+    // 存储待接订单供点击使用
+    window._pendingTrips = upcomingTrips;
 
   } catch(e) {
     console.error('加载失败', e);
@@ -2807,7 +2814,17 @@ async function loadTripDetail(tripId) {
 
     // Update detail page with real data
     document.querySelector('#page-detail .topbar-sub').textContent = `单号 #TRP-${t.id.slice(-8).toUpperCase()}`;
-    document.querySelector('#page-detail .status-tag').textContent = '⏳ 待确认';
+    document.querySelector('#page-detail .status-tag').textContent = '📋 新订单';
+  const acceptBtn = document.getElementById('accept-trip-btn');
+  if (acceptBtn) {
+    if (isGuestMode) {
+      acceptBtn.textContent = '🔒 审核后可接单';
+      acceptBtn.style.opacity = '0.5';
+    } else {
+      acceptBtn.textContent = '✅ 接单';
+      acceptBtn.style.opacity = '1';
+    }
+  }
 
     // Passenger info
     const vals = document.querySelectorAll('#page-detail .info-val');
