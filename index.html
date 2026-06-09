@@ -266,7 +266,7 @@ let isRecording = false;
 let recognition = null;
 let bookingSubmitted = false;
 
-const S={direction:null,address:null,date:null,time:null,vehicle:null,price:null,
+const S={direction:null,address:null,date:null,time:null,vehicle:null,price:null,base_price:0,surcharge:0,distance_km:0,
   name:null,phone:null,wechat:null,payment:'wechat',
   trip_type:'standard',wait_hours:0,charter_hours:4,charter_km:0,hourly_rate:0};
 
@@ -741,12 +741,20 @@ function showVehicleCards(){
   chatArea.appendChild(wrap);scrollBottom();
 }
 
-function selectVehicle(type,price,el){
+async function selectVehicle(type,price,el){
   document.querySelectorAll('.vehicle-card').forEach(c=>c.classList.remove('selected'));
   el.classList.add('selected');S.vehicle=type;
-  if(S.trip_type==='charter'){S.hourly_rate=price;S.price=S.hourly_rate*S.charter_hours;}
-  else S.price=price;
-  setTimeout(()=>showConfirmCard(),400);
+  if(S.trip_type==='charter'){
+    S.hourly_rate=price;S.price=S.hourly_rate*S.charter_hours;
+    setTimeout(()=>showConfirmCard(),400);
+  } else {
+    S.base_price=price;
+    // 计算距离附加费
+    const surcharge = S.address ? await calcDistanceSurcharge(S.address, S.direction) : 0;
+    S.surcharge = surcharge;
+    S.price = price + surcharge;
+    setTimeout(()=>showConfirmCard(),400);
+  }
 }
 
 async function showConfirmCard(){
@@ -774,6 +782,7 @@ async function showConfirmCard(){
     <div class="confirm-row"><span class="confirm-label">预收款</span><span class="confirm-value" style="color:rgba(245,166,35,0.9);">$${preCollect}<br><span style="font-size:11px;opacity:0.6;">完成后按$${total}结算退差价</span></span></div>
     `:''}
     ${isAcc?`<div class="confirm-row"><span class="confirm-label">等候费</span><span class="confirm-value">$${waitFee}（${S.wait_hours}小时）</span></div>`:''}
+    ${S.distance_km?`<div class="confirm-row"><span class="confirm-label">距离</span><span class="confirm-value">${S.distance_km}km${S.surcharge>0?' (超出'+(S.distance_km-25)+'km，附加$'+S.surcharge+')':' (25km内)'}</span></div>`:''}
     <div class="confirm-row"><span class="confirm-label">费用</span><span class="confirm-value" style="color:rgba(0,212,255,0.9);font-size:18px;font-weight:900;">$${total}</span></div>
     <div style="margin-top:10px;">
       <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:6px;">付款方式</div>
@@ -847,7 +856,10 @@ async function submitBooking(){
       status:'pending',is_urgent:isUrgent,
       trip_type:S.trip_type,wait_hours:S.wait_hours,
       charter_hours:isCharter?S.charter_hours:null,
-      hourly_rate:isCharter?S.hourly_rate:null
+      hourly_rate:isCharter?S.hourly_rate:null,
+      passenger_count:1,
+      distance_km:S.distance_km||null,
+      surcharge:S.surcharge||null
     });
     try{await supaInsert('contacts',{tenant_id:TENANT_ID,full_name:S.name,phone:S.phone,wechat_id:S.wechat||null,source:'AI管家',status:'customer'});}catch(e){}
     document.getElementById('suc-id').textContent='TRP-'+trip.id.slice(-8).toUpperCase();
@@ -883,6 +895,38 @@ function showConfetti(pts){
   confettiInterval=setInterval(draw,16);
 }
 function closeConfetti(){document.getElementById('confetti-overlay').style.display='none';if(confettiInterval){clearInterval(confettiInterval);confettiInterval=null;}}
+
+// ── 距离计算 ──
+const AIRPORT_COORDS = {
+  melbourne: {lat:-37.6690,lng:144.8410},
+  avalon: {lat:-38.0394,lng:144.4690}
+};
+const BASE_KM = 25;
+const SURCHARGE_PER_KM = 1;
+
+async function calcDistanceSurcharge(address, direction) {
+  if (!window.google || !address) return 0;
+  try {
+    const service = new google.maps.DistanceMatrixService();
+    const airport = AIRPORT_COORDS.melbourne;
+    const airportLatLng = new google.maps.LatLng(airport.lat, airport.lng);
+
+    return new Promise((resolve) => {
+      service.getDistanceMatrix({
+        origins: direction === 'to_airport' ? [address] : [airportLatLng],
+        destinations: direction === 'to_airport' ? [airportLatLng] : [address],
+        travelMode: google.maps.TravelMode.DRIVING,
+      }, (response, status) => {
+        if (status !== 'OK') { resolve(0); return; }
+        const km = response.rows[0].elements[0].distance.value / 1000;
+        S.distance_km = Math.round(km);
+        const surcharge = km > BASE_KM ? Math.round((km - BASE_KM) * SURCHARGE_PER_KM) : 0;
+        resolve(surcharge);
+      });
+    });
+  } catch(e) { return 0; }
+}
+
 // ── Google Maps 地址自动补全 ──
 let autocomplete = null;
 
