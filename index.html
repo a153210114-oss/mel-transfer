@@ -674,11 +674,25 @@ function extractInfo(msg){
   if(/包车|租车|办事|旅游|出游|按小时|几小时/i.test(msg))S.trip_type='charter';
 
   const today=new Date();
+  const yr=today.getFullYear();
+  const mo=today.getMonth()+1;
   if(/今天/i.test(msg))S.date=today.toISOString().split('T')[0];
   if(/明天/i.test(msg)){const d=new Date(today);d.setDate(d.getDate()+1);S.date=d.toISOString().split('T')[0];}
   if(/后天/i.test(msg)){const d=new Date(today);d.setDate(d.getDate()+2);S.date=d.toISOString().split('T')[0];}
+  // 月/日格式：6月15号、6/15
   const dateMatch=msg.match(/(\d{1,2})[月\/\-](\d{1,2})/);
-  if(dateMatch)S.date=`${today.getFullYear()}-${dateMatch[1].padStart(2,'0')}-${dateMatch[2].padStart(2,'0')}`;
+  if(dateMatch)S.date=`${yr}-${dateMatch[1].padStart(2,'0')}-${dateMatch[2].padStart(2,'0')}`;
+  // 只有日期：15号、15日（用当月或下月）
+  const dayOnlyMatch=msg.match(/^(\d{1,2})[号日]$|[^月](\d{1,2})[号日]/);
+  if(dayOnlyMatch&&!dateMatch){
+    const day=parseInt(dayOnlyMatch[1]||dayOnlyMatch[2]);
+    if(day>=1&&day<=31){
+      // 如果这个日期在今天之前，用下个月
+      const targetDate=new Date(yr,mo-1,day);
+      if(targetDate<today) targetDate.setMonth(targetDate.getMonth()+1);
+      S.date=targetDate.toISOString().split('T')[0];
+    }
+  }
 
   const timeMatch=msg.match(/(\d{1,2})[点:：时](\d{0,2})/);
   if(timeMatch)S.time=`${timeMatch[1].padStart(2,'0')}:${(timeMatch[2]||'00').padStart(2,'0')}`;
@@ -829,7 +843,13 @@ async function submitFromForm(){
 }
 
 async function submitBooking(){
-  if(bookingSubmitted)return;bookingSubmitted=true;
+  if(bookingSubmitted)return;
+  // 验证必填信息
+  if(!S.date){alert('请告诉管家出行日期');return;}
+  if(!S.time){alert('请告诉管家出发时间');return;}
+  if(!S.address){alert('请告诉管家出发地址');return;}
+  if(!S.vehicle){alert('请选择车型');return;}
+  bookingSubmitted=true;
   const isCharter=S.trip_type==='charter';
   const isAcc=S.trip_type==='accompanied';
   let p=getPassenger();if(!p.ref)p.ref=genRef();
