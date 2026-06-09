@@ -98,6 +98,16 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);min-height:100vh
 .divider-label{font-size:11px;font-weight:800;color:var(--text2);letter-spacing:1px;margin:4px 0 8px;}
 
 .empty{text-align:center;padding:24px 0;color:var(--text2);font-size:13px;}
+.topic-btn{flex-shrink:0;padding:6px 14px;background:white;border:1.5px solid var(--border);border-radius:20px;font-size:12px;font-weight:700;color:var(--text2);cursor:pointer;white-space:nowrap;}
+.topic-btn.active{background:var(--text);color:white;border-color:var(--text);}
+.chat-msg{background:white;border-radius:14px;padding:12px 14px;border:1px solid var(--border);}
+.chat-msg-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.chat-msg-author{font-size:12px;font-weight:800;color:var(--text);}
+.chat-msg-time{font-size:11px;color:var(--text2);}
+.chat-msg-content{font-size:13px;color:var(--text);line-height:1.6;margin-bottom:8px;}
+.chat-msg-footer{display:flex;align-items:center;gap:10px;}
+.like-btn{font-size:12px;color:var(--text2);cursor:pointer;background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:3px 10px;}
+.like-btn.liked{color:var(--red);border-color:var(--red);background:#fff0f0;}
 </style>
 </head>
 <body>
@@ -142,6 +152,17 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);min-height:100vh
     <div class="main-btn-title">拼团广场</div>
     <div class="main-btn-sub">找同伴·AA出行</div>
     <div class="expand-hint" id="group-hint">▼ 点击展开</div>
+  </div>
+</div>
+<div style="padding:0 14px 14px;">
+  <div class="main-btn" id="chat-btn" onclick="toggleSection('chat')" style="width:100%;">
+    <div class="main-btn-top">
+      <div class="main-btn-icon">💬</div>
+      <span class="count-badge" id="chat-badge" style="background:#ff6b6b;color:white;display:none;"></span>
+    </div>
+    <div class="main-btn-title">聊天广场</div>
+    <div class="main-btn-sub">机场攻略·景点游记·包车经验·落地指南·自由聊天</div>
+    <div class="expand-hint" id="chat-hint">▼ 点击展开</div>
   </div>
 </div>
 
@@ -339,6 +360,26 @@ async function supaFetch(path,opts={}){
 
 // ── 展开/收起 ──
 function toggleSection(type){
+  if(type==='chat'&&activeSection==='chat'){
+    document.getElementById('chat-section').style.display='none';
+    document.getElementById('chat-hint').textContent='▼ 点击展开';
+    document.getElementById('chat-btn').className='main-btn';
+    activeSection=null;return;
+  }
+  if(type==='chat'){
+    if(activeSection){
+      document.getElementById(activeSection+'-section').style.display='none';
+      document.getElementById(activeSection+'-hint').textContent='▼ 点击展开';
+      document.getElementById(activeSection+'-btn').className='main-btn';
+    }
+    document.getElementById('chat-section').style.display='block';
+    document.getElementById('chat-hint').textContent='▲ 收起';
+    document.getElementById('chat-btn').className='main-btn';
+    document.getElementById('chat-btn').style.borderColor='#ff6b6b';
+    activeSection='chat';
+    loadMessages();
+    return;
+  }
   if(activeSection===type){
     document.getElementById(type+'-section').style.display='none';
     document.getElementById(type+'-hint').textContent='▼ 点击展开';
@@ -419,7 +460,7 @@ function renderSupplyCard(p){
       <span class="badge badge-supply">🚗 司机供车</span>
       <span class="card-date">可约${avail.length}天</span>
     </div>
-    <div class="card-title">${p.vehicle_brand||''} ${p.vehicle_model||''} ${p.vehicle_seats||''}座</div>
+    <div class="card-title">${p.vehicle_brand||''} ${p.vehicle_model||''} ${p.vehicle_seats?p.vehicle_seats+'座':''}</div>
     <div class="card-meta">
       <span class="meta-tag">📍 ${p.city}</span>
       ${p.hourly_rate?`<span class="meta-tag">💰 $${p.hourly_rate}/小时</span>`:''}
@@ -503,7 +544,7 @@ async function openBookModal(postId, preDate){
     const avail=dates.filter(d=>!booked.includes(d));
 
     document.getElementById('book-content').innerHTML=`
-      <div style="font-size:17px;font-weight:900;color:var(--text);margin-bottom:4px;">${p.vehicle_brand||''} ${p.vehicle_model||''} ${p.vehicle_seats||''}座</div>
+      <div style="font-size:17px;font-weight:900;color:var(--text);margin-bottom:4px;">${p.vehicle_brand||''} ${p.vehicle_model||''} ${p.vehicle_seats?p.vehicle_seats+'座':''}</div>
       <div style="font-size:13px;color:var(--text2);margin-bottom:14px;">📍 ${p.city} · 💰 $${p.hourly_rate}/小时（最少4小时）</div>
       ${p.description?`<div class="card-desc" style="margin-bottom:14px;">${p.description}</div>`:''}
 
@@ -678,6 +719,107 @@ async function joinGroup(postId){
 }
 
 loadAll();
+
+// ── 聊天广场 ──
+let currentTopic = 'airport';
+const topicLabels = {
+  airport:'🛬 机场攻略', scenic:'🗺️ 景点游记',
+  charter:'🚗 包车经验', newbie:'🏠 落地指南', free:'💬 自由聊天'
+};
+
+function switchTopic(topic, el) {
+  currentTopic = topic;
+  document.querySelectorAll('.topic-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('chat-topic-label').textContent = topicLabels[topic]+'发言';
+  loadMessages();
+}
+
+async function loadMessages() {
+  const el = document.getElementById('chat-list');
+  el.innerHTML = '<div class="empty">加载中...</div>';
+  try {
+    const msgs = await supaFetch(`chat_messages?topic=eq.${currentTopic}&order=created_at.desc&limit=30`);
+    if (!msgs.length) { el.innerHTML = '<div class="empty">还没有人发言，来说第一句！</div>'; return; }
+    el.innerHTML = msgs.reverse().map(renderMessage).join('');
+    el.scrollTop = el.scrollHeight;
+  } catch(e) { el.innerHTML = '<div class="empty">加载失败</div>'; }
+}
+
+function renderMessage(m) {
+  const time = new Date(m.created_at).toLocaleDateString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+  const typeIcon = m.author_type==='driver'?'🧑‍✈️':'👤';
+  return `
+  <div class="chat-msg">
+    <div class="chat-msg-header">
+      <div class="chat-msg-author">${typeIcon} ${m.author_name}</div>
+      <div class="chat-msg-time">${time}</div>
+    </div>
+    <div class="chat-msg-content">${m.content}</div>
+    <div class="chat-msg-footer">
+      <div class="like-btn" onclick="likeMessage('${m.id}',this)">👍 ${m.likes||0}</div>
+    </div>
+  </div>`;
+}
+
+async function postMessage() {
+  const author = document.getElementById('chat-author').value.trim();
+  const content = document.getElementById('chat-content').value.trim();
+  if (!author||!content) { alert('请填写称呼和内容'); return; }
+  try {
+    await supaFetch('chat_messages', { method:'POST', body: JSON.stringify({
+      tenant_id: TENANT_ID,
+      topic: currentTopic,
+      author_name: author,
+      author_type: 'passenger',
+      content: content,
+      likes: 0
+    })});
+    document.getElementById('chat-content').value = '';
+    loadMessages();
+  } catch(e) { alert('发送失败'); }
+}
+
+async function likeMessage(id, el) {
+  if (el.classList.contains('liked')) return;
+  try {
+    const msgs = await supaFetch(`chat_messages?id=eq.${id}`);
+    if (!msgs.length) return;
+    const newLikes = (msgs[0].likes||0) + 1;
+    await supaFetch(`chat_messages?id=eq.${id}`, {method:'PATCH', body:JSON.stringify({likes:newLikes})});
+    el.classList.add('liked');
+    el.textContent = '👍 ' + newLikes;
+  } catch(e) {}
+}
+
 </script>
+
+<!-- 聊天广场展开区 -->
+<div class="section" id="chat-section">
+
+  <!-- 话题切换 -->
+  <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:12px;-webkit-overflow-scrolling:touch;">
+    <div class="topic-btn active" onclick="switchTopic('airport',this)">🛬 机场攻略</div>
+    <div class="topic-btn" onclick="switchTopic('scenic',this)">🗺️ 景点游记</div>
+    <div class="topic-btn" onclick="switchTopic('charter',this)">🚗 包车经验</div>
+    <div class="topic-btn" onclick="switchTopic('newbie',this)">🏠 落地指南</div>
+    <div class="topic-btn" onclick="switchTopic('free',this)">💬 自由聊天</div>
+  </div>
+
+  <!-- 消息列表 -->
+  <div id="chat-list" style="display:flex;flex-direction:column;gap:10px;margin-bottom:12px;"></div>
+
+  <!-- 发消息 -->
+  <div style="background:white;border-radius:16px;padding:12px;border:1.5px solid var(--border);">
+    <div style="font-size:12px;color:var(--text2);margin-bottom:8px;font-weight:700;" id="chat-topic-label">💬 在「机场攻略」发言</div>
+    <div style="display:flex;gap:8px;margin-bottom:8px;">
+      <input id="chat-author" placeholder="称呼" style="width:90px;padding:8px 10px;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-family:inherit;outline:none;">
+      <input id="chat-content" placeholder="说点什么..." style="flex:1;padding:8px 10px;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-family:inherit;outline:none;" onkeydown="if(event.key==='Enter')postMessage()">
+    </div>
+    <button onclick="postMessage()" style="width:100%;padding:9px;background:linear-gradient(135deg,#ff6b6b,#ee5a24);color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">发送</button>
+  </div>
+
+</div>
+
 </body>
 </html>

@@ -863,7 +863,7 @@ async function openCharterPublish() {
       const vehicles = await supa(`vehicles?driver_id=eq.${currentDriver.id}&is_active=eq.true&limit=1`);
       if (vehicles.length > 0) {
         const v = vehicles[0];
-        info.innerHTML = `<strong>${v.brand||''} ${v.model||''}</strong> · ${v.seats||''}座 · 车牌：${v.plate_number||''}`;
+        info.innerHTML = `<strong>${v.brand||''} ${v.model||''}</strong> · ${v.seats?v.seats+'座':''} · 车牌：${v.plate_number||''}（座位数如有误请到注册页修改）`;
         // 存车辆信息
         window.charterVehicle = v;
       } else {
@@ -1663,11 +1663,21 @@ setInterval(checkNewCharterDemands, 120000);
       <div class="field-row">
         <div class="field">
           <label class="field-label">车牌号</label>
-          <input class="field-input" type="text" placeholder="如 ABC123">
+          <input class="field-input" id="reg-plate" type="text" placeholder="如 ABC123">
         </div>
         <div class="field">
           <label class="field-label">颜色</label>
-          <input class="field-input" type="text" placeholder="如 白色">
+          <input class="field-input" id="reg-color" type="text" placeholder="如 白色">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label class="field-label">实际座位数</label>
+          <input class="field-input" id="reg-seats" type="number" placeholder="如 8" min="1" max="30">
+        </div>
+        <div class="field">
+          <label class="field-label">品牌型号</label>
+          <input class="field-input" id="reg-brand-model" type="text" placeholder="如 Toyota HiAce">
         </div>
       </div>
       <div class="upload-box">
