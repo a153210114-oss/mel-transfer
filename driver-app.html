@@ -1173,16 +1173,21 @@ async function loadAndShowPendingTrips_deprecated() {
 
 
 async function goToPendingTrips() {
-  const trips = window._pendingTrips;
-  if (!trips || trips.length === 0) {
-    // 重新加载
-    await loadHome();
-    const fresh = window._pendingTrips;
-    if (!fresh || fresh.length === 0) { alert('暂无待接订单'); return; }
-    fresh.length === 1 ? goToDetail(fresh[0].id) : showTripSelectSheet(fresh);
-    return;
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const trips = await supa(
+      `public_trips?driver_id=is.null&status=eq.pending&scheduled_at=gte.${today}T00:00:00&tenant_id=eq.${TENANT_ID}&order=scheduled_at.asc&limit=20`
+    );
+    if (!trips || trips.length === 0) { alert('暂无待接订单'); return; }
+    if (trips.length === 1) {
+      goToDetail(trips[0].id);
+    } else {
+      showTripSelectSheet(trips);
+    }
+  } catch(e) {
+    alert('加载失败，请重试');
+    console.error(e);
   }
-  trips.length === 1 ? goToDetail(trips[0].id) : showTripSelectSheet(trips);
 }
 
 function showTripSelectSheet(trips) {
