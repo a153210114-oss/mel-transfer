@@ -1001,7 +1001,7 @@ function useAddress(addr, el) {
   el.style.color = 'rgba(0,212,255,0.9)';
 }
 
-function confirmAddress() {
+async function confirmAddress() {
   const val = document.getElementById('addr-input')?.value.trim();
   if (!val) { alert('请输入地址'); return; }
   S.address = val;
