@@ -222,7 +222,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);min-height:100vh
       <label class="form-label">称呼（显示在帖子）</label>
       <input class="form-input" id="d-name" placeholder="姓名或昵称">
     </div>
-    <button class="submit-btn green" onclick="submitDriverPost()">🚌 发布包车信息</button>
+    <button class="submit-btn green" onclick="submitCharterRequest()">🚌 发布包车需求</button>
     <button class="cancel-btn" onclick="closeDriverModal()">取消</button>
   </div>
 </div>
@@ -808,6 +808,42 @@ async function loadCharterDot() {
 function joinGroup(postId, wechat) {
   if (navigator.clipboard) navigator.clipboard.writeText(wechat);
   alert('微信号已复制：' + wechat + '\n请添加组织者微信加入拼团');
+}
+
+
+async function submitCharterRequest() {
+  const name = document.getElementById('d-name').value.trim();
+  const phone = document.getElementById('d-phone').value.trim();
+  const date = document.getElementById('d-avail-date').value;
+  const city = document.getElementById('d-city').value;
+  if (!name||!phone||!date) { alert('请填写称呼、手机号和日期'); return; }
+
+  const seats = parseInt(document.getElementById('d-seats').value);
+  const hours = parseInt(document.getElementById('d-hours').value);
+  const budget = parseFloat(document.getElementById('d-hourly').value)||null;
+
+  const data = {
+    tenant_id: TENANT_ID,
+    post_type: 'charter',
+    title: `包车需求 · ${city}`,
+    city: city,
+    travel_date: date,
+    destination: document.getElementById('d-desc').value.trim()||'待定',
+    total_seats: seats,
+    filled_seats: 1,
+    budget: budget,
+    description: `${seats}人出行，预计${hours}小时${document.getElementById('d-desc').value.trim()?'，'+document.getElementById('d-desc').value.trim():''}`,
+    author_name: name,
+    contact_wechat: phone, // 用手机号存，不对外显示
+    status: 'open'
+  };
+
+  try {
+    await supaFetch('tour_plaza', { method: 'POST', body: JSON.stringify(data) });
+    closeDriverModal();
+    loadAll();
+    alert('✅ 包车需求已发布！司机看到后会联系您');
+  } catch(e) { alert('发布失败：' + e.message); }
 }
 
 </script>
