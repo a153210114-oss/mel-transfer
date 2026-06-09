@@ -821,6 +821,8 @@ function checkPendingItems() {
   // 显示红点
   const dot = document.getElementById('notify-dot');
   if (dot) dot.style.display = items.length > 0 ? 'block' : 'none';
+  const mdot = document.getElementById('message-dot');
+  if (mdot) mdot.style.display = items.length > 0 ? 'block' : 'none';
 
   // 渲染通知列表
   const list = document.getElementById('notify-list');
@@ -973,6 +975,42 @@ async function supaPost(table, data) {
   });
   if (!res.ok) { const e = await res.json(); throw new Error(e.message||'error'); }
   return res.json();
+}
+
+
+function loadMessagePage() {
+  // 合并通知到消息页
+  const notifyList = document.getElementById('message-notify-list');
+  if (!notifyList || !currentDriver) return;
+  const items = [];
+  if (!currentDriver.vehicle_type) items.push({icon:'🚗', text:'车辆信息未完善，请到"我的"完成注册', action:"switchPage('profile')"});
+  if (!currentDriver.bank_account) items.push({icon:'💳', text:'收款账户未设置', action:"switchPage('profile')"});
+  if (!currentDriver.wechat_id) items.push({icon:'💬', text:'微信号未填写', action:"switchPage('profile')"});
+
+  // 更新红点
+  const dot = document.getElementById('message-dot');
+  if (dot) dot.style.display = items.length > 0 ? 'block' : 'none';
+
+  if (items.length === 0) {
+    notifyList.innerHTML = '';
+    return;
+  }
+  notifyList.innerHTML = '<div style="font-size:11px;font-weight:800;color:var(--red);letter-spacing:1px;margin-bottom:6px;">⚠️ 待完成事项</div>' +
+    items.map(item => `
+    <div onclick="${item.action}" style="background:var(--surface);border-radius:14px;padding:12px 16px;display:flex;align-items:center;gap:12px;border:1px solid var(--border);cursor:pointer;border-left:3px solid var(--red);margin-bottom:8px;">
+      <div style="font-size:20px;">${item.icon}</div>
+      <div style="flex:1;font-size:13px;color:var(--text);">${item.text}</div>
+      <div style="color:var(--text3);">›</div>
+    </div>`).join('');
+}
+
+async function loadPublishPage() {
+  if (!currentDriver) return;
+  try {
+    const posts = await supa(`tour_plaza?driver_id=eq.${currentDriver.id}&status=eq.open&post_type=eq.charter`);
+    const el = document.getElementById('publish-charter-count');
+    if (el) el.textContent = posts.length > 0 ? `已发布 ${posts.length} 条，有效期内` : '暂无发布';
+  } catch(e) {}
 }
 
 </script>
@@ -1320,8 +1358,89 @@ async function supaPost(table, data) {
 </div>
 
 
-<!-- 公告页 -->
-<div class="page" id="page-announce">
+
+<!-- 发布页 -->
+<div class="page" id="page-publish">
+  <div class="topbar" style="display:flex;align-items:center;gap:12px;padding:14px 16px;">
+    <div style="width:40px;height:40px;background:rgba(0,212,255,0.1);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;border:1.5px solid rgba(0,212,255,0.2);">🧑‍✈️</div>
+    <div><div style="font-size:15px;font-weight:800;color:var(--text);">发布服务</div><div style="font-size:11px;color:var(--text2);">让更多乘客找到你</div></div>
+  </div>
+  <div style="padding:16px;display:flex;flex-direction:column;gap:12px;">
+
+    <!-- 发布包车 -->
+    <div style="background:var(--surface);border-radius:18px;padding:20px;border:1px solid var(--border);">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <div style="font-size:28px;">🚌</div>
+        <div>
+          <div style="font-size:15px;font-weight:800;color:var(--text);">发布可供包车</div>
+          <div style="font-size:12px;color:var(--text2);">在旅游广场展示您的车辆</div>
+        </div>
+      </div>
+      <div id="publish-charter-count" style="font-size:12px;color:var(--text3);margin-bottom:12px;"></div>
+      <button onclick="openCharterPublish()" style="width:100%;padding:12px;background:linear-gradient(135deg,rgba(39,174,96,0.2),rgba(0,150,100,0.1));border:1.5px solid rgba(39,174,96,0.3);border-radius:12px;color:var(--green);font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">
+        📅 选择可出车日期发布
+      </button>
+    </div>
+
+    <!-- 发起拼团 -->
+    <div style="background:var(--surface);border-radius:18px;padding:20px;border:1px solid var(--border);">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <div style="font-size:28px;">👥</div>
+        <div>
+          <div style="font-size:15px;font-weight:800;color:var(--text);">发起旅游拼团</div>
+          <div style="font-size:12px;color:var(--text2);">组织游客，您来开车</div>
+        </div>
+      </div>
+      <button onclick="window.location.href='plaza.html?tab=group'" style="width:100%;padding:12px;background:linear-gradient(135deg,rgba(0,150,199,0.2),rgba(0,100,200,0.1));border:1.5px solid rgba(0,150,199,0.3);border-radius:12px;color:var(--accent);font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">
+        👥 前往拼团广场发布
+      </button>
+    </div>
+
+    <!-- 旅游广场入口 -->
+    <div onclick="window.location.href='plaza.html'" style="background:var(--surface);border-radius:18px;padding:16px 20px;border:1px solid var(--border);display:flex;align-items:center;gap:12px;cursor:pointer;">
+      <div style="font-size:24px;">🌿</div>
+      <div style="flex:1;">
+        <div style="font-size:14px;font-weight:800;color:var(--text);">旅游广场</div>
+        <div style="font-size:12px;color:var(--text2);">查看所有包车和拼团帖子</div>
+      </div>
+      <div style="color:var(--text3);">›</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- 消息页（公告+通知合并） -->
+<div class="page" id="page-message">
+  <div class="topbar" style="display:flex;align-items:center;gap:12px;padding:14px 16px;">
+    <div style="width:40px;height:40px;background:rgba(0,212,255,0.1);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;border:1.5px solid rgba(0,212,255,0.2);">🧑‍✈️</div>
+    <div><div style="font-size:15px;font-weight:800;color:var(--text);">消息中心</div><div style="font-size:11px;color:var(--text2);">公告与通知</div></div>
+  </div>
+  <div style="padding:16px;display:flex;flex-direction:column;gap:10px;">
+
+    <!-- 未完成事项通知 -->
+    <div id="message-notify-list"></div>
+
+    <!-- 平台公告 -->
+    <div style="font-size:11px;font-weight:800;color:var(--text2);letter-spacing:1px;margin:4px 0 6px;">📣 平台公告</div>
+    <div style="background:var(--surface);border-radius:14px;padding:14px 16px;border:1px solid var(--border);">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+        <div style="font-size:13px;font-weight:800;color:var(--text);">欢迎加入澳洲出行</div>
+        <div style="font-size:11px;color:var(--text3);">今天</div>
+      </div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.7;">感谢您成为合伙人！我们帮您经营人脉、管理客户，让您赚更多钱，省出更多时间陪伴家人。</div>
+    </div>
+    <div style="background:var(--surface);border-radius:14px;padding:14px 16px;border:1px solid var(--border);">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+        <div style="font-size:13px;font-weight:800;color:var(--text);">平台使用指南</div>
+        <div style="font-size:11px;color:var(--text3);">今天</div>
+      </div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.7;">任务页查看待接订单 · 发布页发布包车服务 · 完成行程后点击完成 · 有问题找助理</div>
+    </div>
+  </div>
+</div>
+
+<!-- 公告页（保留但不显示） -->
+<div class="page" id="page-announce" style="display:none!important;">
   <div class="topbar" style="display:flex;align-items:center;gap:12px;padding:14px 16px;">
     <div style="width:40px;height:40px;background:rgba(0,212,255,0.1);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🧑‍✈️</div>
     <div><div style="font-size:15px;font-weight:800;color:var(--text);">澳小墨</div><div style="font-size:11px;color:var(--text2);">平台公告</div></div>
@@ -1669,13 +1788,13 @@ async function supaPost(table, data) {
     <div class="nav-icon">📋</div>
     <div class="nav-label">任务</div>
   </div>
-  <div class="nav-item" id="nav-announce" onclick="switchPage('announce')">
-    <div class="nav-icon" style="position:relative;">📣<span id="announce-dot" style="display:none;position:absolute;top:-2px;right:-2px;width:8px;height:8px;background:var(--red);border-radius:50%;"></span></div>
-    <div class="nav-label">公告</div>
+  <div class="nav-item" id="nav-publish" onclick="switchPage('publish')">
+    <div class="nav-icon">➕</div>
+    <div class="nav-label">发布</div>
   </div>
-  <div class="nav-item" id="nav-notify" onclick="switchPage('notify')">
-    <div class="nav-icon" style="position:relative;">🔔<span id="notify-dot" style="display:none;position:absolute;top:-2px;right:-2px;width:8px;height:8px;background:var(--red);border-radius:50%;"></span></div>
-    <div class="nav-label">通知</div>
+  <div class="nav-item" id="nav-message" onclick="switchPage('message')">
+    <div class="nav-icon" style="position:relative;">💬<span id="message-dot" style="display:none;position:absolute;top:-2px;right:-2px;width:8px;height:8px;background:var(--red);border-radius:50%;"></span></div>
+    <div class="nav-label">消息</div>
   </div>
   <div class="nav-item" id="nav-profile" onclick="switchPage('profile')">
     <div class="nav-icon">👤</div>

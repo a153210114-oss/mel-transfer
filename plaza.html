@@ -342,8 +342,7 @@ function switchTab(tab,el){
   currentTab=tab;
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
-  loadPosts();
-loadCharterDot();
+  loadAll();
 }
 
 async function loadPosts(){
