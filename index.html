@@ -194,6 +194,127 @@ body{
 /* 烟花 */
 #confetti-overlay{display:none;position:fixed;inset:0;z-index:9998;pointer-events:all;flex-direction:column;align-items:center;justify-content:center;}
 </style>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAHGLzz7_TpG2MLnqT1kCROeNIzRr-EQac&libraries=places&language=zh-CN">
+// ── Google Maps 地址自动补全 ──
+let autocomplete = null;
+
+function initAddressAutocomplete() {
+  if (!window.google || !window.google.maps) return;
+
+  // 找到当前对话中的地址输入框（如果有）
+  const addressInputs = document.querySelectorAll('.address-autocomplete');
+  addressInputs.forEach(input => {
+    if (input.dataset.autocompleteInit) return;
+    input.dataset.autocompleteInit = 'true';
+    const ac = new google.maps.places.Autocomplete(input, {
+      componentRestrictions: { country: 'au' },
+      fields: ['formatted_address', 'geometry', 'name'],
+      types: ['address']
+    });
+    ac.addListener('place_changed', () => {
+      const place = ac.getPlace();
+      if (place.formatted_address) {
+        input.value = place.formatted_address;
+        S.address = place.formatted_address;
+        saveAddress(place.formatted_address);
+      }
+    });
+  });
+}
+
+// 显示地址输入卡片（带自动补全）
+async function showAddressInput(label, onConfirm) {
+  const div = document.createElement('div');
+  div.className = 'confirm-card';
+  div.innerHTML = `
+    <div style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.6);margin-bottom:8px;">${label}</div>
+    <input class="address-autocomplete" id="addr-input" placeholder="输入地址，自动补全..."
+      style="width:100%;background:rgba(255,255,255,0.08);border:1.5px solid rgba(255,255,255,0.15);
+      border-radius:10px;padding:12px 14px;color:white;font-size:14px;font-family:inherit;outline:none;">
+    <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;" id="addr-suggestions"></div>
+    <button onclick="confirmAddress()" style="width:100%;margin-top:12px;padding:12px;
+      background:rgba(0,150,199,0.3);border:1.5px solid rgba(0,150,199,0.4);
+      border-radius:10px;color:white;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">
+      确认地址
+    </button>`;
+  chatArea.appendChild(div);
+  scrollBottom();
+
+  // 显示常用地址
+  const addrs = getSavedAddresses();
+  if (addrs.length > 0) {
+    const suggestEl = document.getElementById('addr-suggestions');
+    if (suggestEl) {
+      suggestEl.innerHTML = addrs.map(a =>
+        `<div onclick="useAddress('${a.replace(/'/g,"\'")}',this)"
+          style="font-size:11px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);
+          border-radius:8px;padding:4px 10px;cursor:pointer;color:rgba(255,255,255,0.7);">
+          📍 ${a.length>25?a.substring(0,25)+'...':a}
+        </div>`
+      ).join('');
+    }
+  }
+
+  setTimeout(() => {
+    initAddressAutocomplete();
+    document.getElementById('addr-input')?.focus();
+  }, 300);
+
+  window._addrConfirmCallback = onConfirm;
+}
+
+function useAddress(addr, el) {
+  document.getElementById('addr-input').value = addr;
+  S.address = addr;
+  document.querySelectorAll('#addr-suggestions > div').forEach(d => d.style.borderColor = 'rgba(255,255,255,0.1)');
+  el.style.borderColor = 'rgba(0,212,255,0.5)';
+  el.style.color = 'rgba(0,212,255,0.9)';
+}
+
+function confirmAddress() {
+  const val = document.getElementById('addr-input')?.value.trim();
+  if (!val) { alert('请输入地址'); return; }
+  S.address = val;
+  saveAddress(val);
+  // 移除地址输入卡片
+  document.querySelectorAll('.confirm-card').forEach(c => {
+    if (c.querySelector('#addr-input')) c.remove();
+  });
+  addMsg(val, true);
+  aiHistory.push({role:'user', content: '我的地址是：' + val});
+  // 检查信息是否完整
+  if (S.direction && S.date && S.time && S.address) {
+    showVehicleCards();
+  } else {
+    sendMessage();
+  }
+}
+
+// GPS自动定位
+function getGPSLocation() {
+  if (!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(async pos => {
+    const lat = pos.coords.latitude;
+    const lng = pos.coords.longitude;
+    try {
+      const res = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=AIzaSyAHGLzz7_TpG2MLnqT1kCROeNIzRr-EQac&language=zh-CN`
+      );
+      const data = await res.json();
+      if (data.results && data.results[0]) {
+        const addr = data.results[0].formatted_address;
+        S.address = addr;
+        saveAddress(addr);
+        // 填入输入框
+        const inp = document.getElementById('addr-input');
+        if (inp) inp.value = addr;
+        await agentSay(`已定位到：${addr}`, 300);
+      }
+    } catch(e) {}
+  });
+}
+
+</script>
 </head>
 <body>
 
@@ -697,7 +818,13 @@ function handleAction(action,param){
   if(action==='show_vehicles'){
     if(param==='charter')S.trip_type='charter';
     else if(param)S.direction=param;
-    showVehicleCards();
+    // 如果地址未填，先收集地址
+    if(!S.address&&S.trip_type!=='charter'){
+      const label=S.direction==='from_airport'?'🏠 送您去哪里？':'🏠 从哪里出发？';
+      showAddressInput(label);
+    } else {
+      showVehicleCards();
+    }
   } else if(action==='goto'){
     const map={plaza:'plaza.html',driver:'driver-app.html'};
     if(map[param])setTimeout(()=>window.location.href=map[param],800);
@@ -797,6 +924,8 @@ async function showContactStep(){
       <input id="c-wechat" placeholder="微信号（选填）" style="background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.12);border-radius:10px;padding:10px 14px;color:white;font-size:14px;font-family:inherit;outline:none;" value="${saved.wechat||''}">
     </div>
     <button onclick="submitFromForm()" style="width:100%;margin-top:14px;padding:14px;background:linear-gradient(135deg,#0096c7,#0077a0);color:white;border:none;border-radius:12px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;">🚀 确认预约</button>`;
+  // 初始化地址自动补全
+  setTimeout(()=>initAddressAutocomplete(), 300);
   chatArea.appendChild(div);scrollBottom();
 }
 
