@@ -723,6 +723,10 @@ function toggleAssistantMic() {
     alert('请使用Safari或Chrome'); return;
   }
   if (assistantRecording) { assistantRecognition?.stop(); return; }
+  // 请求麦克风权限
+  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    navigator.mediaDevices.getUserMedia({audio:true}).catch(()=>{});
+  }
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   assistantRecognition = new SR();
   assistantRecognition.lang = 'zh-CN';
@@ -1401,7 +1405,7 @@ setInterval(checkNewCharterDemands, 120000);
     </div>
 
     <!-- 操作按钮 -->
-    <button class="action-btn btn-primary" onclick="isGuestMode?alert('请先完善资料并等待审核后才能接单'):acceptTrip()" style="${isGuestMode?'opacity:0.5':''}">${isGuestMode?'🔒 审核后可接单':'✅ 接受订单'}</button>
+    <button class="action-btn btn-primary" onclick="handleAcceptBtn()" id="accept-trip-btn">${isGuestMode?'🔒 审核后可接单':'✅ 接受订单'}</button>
     <button class="action-btn btn-danger" onclick="declineTrip()">✗ 拒绝</button>
 
   </div>
@@ -2197,6 +2201,7 @@ function showNewOrderBanner(count) {
     animation: slideDown 0.3s ease;
   `;
   banner.innerHTML = `🔔 有 ${count} 个新订单！点击查看`;
+  speakDriver(`师傅，有${count}个新订单，请查看`);
   banner.onclick = () => { banner.remove(); loadHome(); };
   document.body.appendChild(banner);
 
@@ -2662,6 +2667,7 @@ function switchPage(name) {
 }
 
 function goToDetail(tripId) {
+  console.log("goToDetail called with:", tripId);
   if (tripId) currentTripId = tripId;
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-detail').classList.add('active');
@@ -2774,6 +2780,19 @@ function toggleStatus(el) { setStatus('at_depot'); }
 function selectVtype(el) {
   document.querySelectorAll('.vtype-card').forEach(c => c.classList.remove('selected'));
   el.classList.add('selected');
+}
+
+
+function handleAcceptBtn() {
+  if (isGuestMode) {
+    alert('请先完善资料并等待审核后才能接单');
+    return;
+  }
+  if (!currentTripId) {
+    alert('请先选择订单');
+    return;
+  }
+  acceptTrip();
 }
 
 async function acceptTrip() {
