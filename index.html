@@ -768,6 +768,8 @@ async function sendMessage(){
       body:JSON.stringify({system:buildPrompt(),messages:aiHistory})});
     const data=await res.json();
     const reply=data.content?.[0]?.text||'请再说一遍';
+    window._lastAIReply=reply; // debug
+    console.log('AI回复：',reply);
     aiHistory.push({role:'assistant',content:reply});
     if(aiHistory.length>20)aiHistory=aiHistory.slice(-20);
     typing.remove();
@@ -780,7 +782,7 @@ async function sendMessage(){
       await delay(800);
       handleAction(actionMatch[1],actionMatch[2]);
     }
-  }catch(e){typing.remove();addMsg('网络有问题，请稍后再试');}
+  }catch(e){typing.remove();addMsg('错误：'+e.message);console.error('sendMessage error:',e);}
 }
 
 function extractInfo(msg){
