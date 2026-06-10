@@ -1210,14 +1210,23 @@ function showTripSelectSheet(trips, title='📋 订单列表') {
         const dateStr = dt.toLocaleDateString('zh-CN',{month:'2-digit',day:'2-digit'});
         const timeStr = dt.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
         const dirText = t.trip_type==='charter'?'包车':t.direction==='from_airport'?'接机':'送机';
-        return `<div onclick="document.getElementById('trip-select-sheet').remove();goToDetail('${t.id}')"
-          style="background:var(--surface2);border-radius:12px;padding:12px 14px;margin-bottom:8px;cursor:pointer;border:1px solid var(--border);">
-          <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-            <span style="font-size:13px;font-weight:800;color:var(--text);">${dirText}</span>
-            <span style="font-size:12px;color:var(--text2);">${dateStr} ${timeStr}</span>
+        const hasDriver = t.driver_id === currentDriver?.id;
+        return `<div style="background:var(--surface2);border-radius:12px;padding:12px 14px;margin-bottom:8px;border:1px solid var(--border);">
+          <div onclick="document.getElementById('trip-select-sheet').remove();goToDetail('${t.id}')" style="cursor:pointer;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+              <span style="font-size:13px;font-weight:800;color:var(--text);">${dirText}</span>
+              <span style="font-size:12px;color:var(--text2);">${dateStr} ${timeStr}</span>
+            </div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:4px;">${t.pickup_address}</div>
+            <div style="text-align:right;font-size:13px;font-weight:800;color:var(--accent);">$${t.total_price}</div>
           </div>
-          <div style="font-size:12px;color:var(--text2);">${t.pickup_address}</div>
-          <div style="text-align:right;margin-top:4px;font-size:13px;font-weight:800;color:var(--accent);">$${t.total_price}</div>
+          ${hasDriver?`
+          <div style="border-top:1px solid var(--border);margin-top:8px;padding-top:8px;">
+            <button onclick="showCancelPolicy('${t.id}')"
+              style="width:100%;padding:8px;background:rgba(255,77,109,0.1);border:1px solid rgba(255,77,109,0.3);border-radius:8px;color:var(--red);font-size:12px;font-weight:700;cursor:pointer;">
+              取消订单
+            </button>
+          </div>`:''}
         </div>`;
       }).join('')}
       <button onclick="document.getElementById('trip-select-sheet').remove()" style="width:100%;padding:12px;background:none;border:none;color:var(--text3);font-size:13px;cursor:pointer;margin-top:4px;">关闭</button>
@@ -1240,6 +1249,58 @@ async function rejectTrip() {
     loadHome();
     speakDriver('订单已拒绝');
   } catch(e) { alert('操作失败'); }
+}
+
+
+function showCancelPolicy(tripId) {
+  document.getElementById('trip-select-sheet')?.remove();
+  const sheet = document.createElement('div');
+  sheet.id = 'cancel-policy-sheet';
+  sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:flex-end;justify-content:center;';
+  sheet.innerHTML = `
+    <div style="background:var(--surface);border-radius:28px 28px 0 0;padding:24px 20px 44px;width:100%;max-width:430px;">
+      <div style="width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px;"></div>
+      <div style="font-size:16px;font-weight:900;color:var(--text);margin-bottom:12px;">📋 取消政策</div>
+      <div style="background:var(--surface2);border-radius:12px;padding:14px;margin-bottom:16px;font-size:13px;color:var(--text2);line-height:1.8;">
+        · 出发前<strong style="color:var(--text);">24小时以上</strong>取消：免费<br>
+        · 出发前<strong style="color:var(--text);">2-24小时</strong>取消：扣50%<br>
+        · 出发前<strong style="color:var(--text);">2小时内</strong>取消：扣100%<br><br>
+        取消后订单将重新推送给所有司机。
+      </div>
+      <div style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:16px;text-align:center;">确定要取消这个订单吗？</div>
+      <div style="display:flex;gap:10px;">
+        <button onclick="document.getElementById('cancel-policy-sheet').remove()"
+          style="flex:1;padding:13px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:14px;font-weight:700;cursor:pointer;">
+          返回
+        </button>
+        <button onclick="confirmCancelTrip('${tripId}')"
+          style="flex:1;padding:13px;background:rgba(255,77,109,0.15);border:1px solid rgba(255,77,109,0.4);border-radius:12px;color:var(--red);font-size:14px;font-weight:700;cursor:pointer;">
+          确认取消
+        </button>
+      </div>
+    </div>`;
+  sheet.onclick = e => { if(e.target===sheet) sheet.remove(); };
+  document.body.appendChild(sheet);
+}
+
+async function confirmCancelTrip(tripId) {
+  document.getElementById('cancel-policy-sheet')?.remove();
+  try {
+    await fetch(SUPA_URL+`/rest/v1/trips?id=eq.${tripId}`, {
+      method:'PATCH',
+      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({
+        status:'pending',
+        driver_id:null,
+        cancelled_reason:'司机取消，重新派单'
+      })
+    });
+    speakDriver('订单已取消，重新推给其他司机');
+    loadHome();
+    alert('✅ 订单已取消，系统将重新推送给其他司机');
+  } catch(e) {
+    alert('操作失败：' + e.message);
+  }
 }
 
 </script>
