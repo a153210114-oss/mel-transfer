@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>国内并联特快语音连线</title>
+    <!-- 引入你现有的 Supabase 官方标准轻量脚本，确保能正常连上海外主库 -->
+    <script src="https://jsdelivr.net"></script>
+    <style>
+        body { font-family: -apple-system, sans-serif; padding: 20px; background: #f5f5f7; text-align: center; }
+        .container { max-width: 400px; margin: 0 auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        #status { font-weight: bold; color: #86868b; margin-bottom: 15px; }
+        #text-screen { height: 250px; border: 1px solid #e5e5ea; border-radius: 8px; padding: 10px; overflow-y: auto; text-align: left; background: #fafafa; margin-bottom: 20px; font-size: 14px; line-height: 1.5; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
+        .btn-start { background: #34c759; color: white; }
+        .btn-stop { background: #ff3b30; color: white; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>AI 语音连线 (并联测试版)</h2>
+    <div id="status">状态：未连接</div>
+    <div id="text-screen">*(点击开始连线，对电脑/手机说话即可。AI 的回复会在这里以打字机流式显示。)*\n</div>
+    
+    <button id="action-btn" class="btn btn-start" onclick="toggleConnect()">开始连线</button>
+</div>
+
+<script>
+    const SILICONFLOW_API_KEY = “sk-roiuyrvsunbhtzvzozikfpycwndwsxqyibtbubglrvviqppd”;
+    
+    // 这里依然填你之前在旧页面里用过的、你自己的海外 Supabase 凭证
+    const supabase_URL= "https://gxocvpmgfjvmmkkbswgo.supabase.co";
+    const supabase_KEY= "sb_publishable_2qNlP6uBbVkqjgjMz60pGw_YSxRxzr_";
+    // ──────────────────────────────────────────────────
+
+    // 初始化你的海外主数据库连接
+    const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let isConnected = false;
+    let chatHistory = []; // 🔥 核心：并联内存。通话期间所有的对话只存在这里，绝不碰海外数据库！
+    let currentAiReply = "";
+
+    // 模拟语音转文字后的文本，方便你今天先在本地把整个“并联同步”流程百分百跑通
+    const mockUserSpeeches = ["你好，我想了解澳洲生活", "这边华人多吗？", "谢谢，我先挂了"];
+    let speechIndex = 0;
+
+    // 控制连线与挂断
+    async function toggleConnect() {
+        const btn = document.getElementById("action-btn");
+        const status = document.getElementById("status");
+
+        if (!isConnected) {
+            // 【进入连线】
+            isConnected = true;
+            speechIndex = 0;
+            chatHistory = []; // 清空上一次的内存
+            btn.innerText = "挂断电话 (断开并同步数据)";
+            btn.className = "btn btn-stop";
+            status.innerText = "状态：通话中 (国内专线畅通)...";
+            
+            // 模拟用户开始说话
+            simulateUserSpeech();
+        } else {
+            // 【点击挂断】关键的并联同步触发点
+            isConnected = false;
+            btn.disabled = true;
+            btn.innerText = "正在同步到海外主库...";
+            status.innerText = "状态：正在把通话记录默默打包同步给海外主数据库...";
+
+            await syncDataToSupabase();
+            
+            // 重置状态
+            btn.disabled = false;
+            btn.innerText = "开始连线";
+            btn.className = "btn btn-start";
+            status.innerText = "状态：同步成功！未连接";
+            speechIndex = 0;
+        }
+    }
+
+    // 模拟国内用户说话（后续我们会让 VAD 录音库真正替换这里）
+    function simulateUserSpeech() {
+        if (!isConnected) return;
+        if (speechIndex >= mockUserSpeeches.length) {
+            document.getElementById("status").innerText = "状态：模拟说话结束，请点击挂断。";
+            return;
+        }
+
+        let userText = mockUserSpeeches[speechIndex];
+        speechIndex++;
+
+        const screen = document.getElementById("text-screen");
+        screen.innerHTML += `<p style="color:#007aff;"><b>我：</b>${userText}</p>`;
+        screen.scrollTop = screen.scrollHeight;
+
+        // 呼叫国内/香港的特快专线 API
+        callDomesticFastAPI(userText);
+    }
+
+    // 🚀 并联特快专线：直连中国香港/国内的 DeepSeek 节点（免翻墙，超低延迟）
+    async function callDomesticFastAPI(text) {
+        currentAiReply = "";
+        const screen = document.getElementById("text-screen");
+        screen.innerHTML += `<p id="ai-typing-${speechIndex}"><b>AI：</b></p>`;
+        const aiParagraph = document.getElementById(`ai-typing-${speechIndex}`);
+
+        try {
+            // 呼叫硅基流动
+            const response = await fetch("https://siliconflow.cn", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${SILICONFLOW_API_KEY}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    model: "deepseek-ai/DeepSeek-V3", // 性价比之王，完全不限流
+                    messages: [
+                        { role: "system", content: "你是一个在澳洲的华人生活助手，用亲切的大白话回答。" },
+                        ...chatHistory.map(h => ({ role: h.role, content: h.content })),
+                        { role: "user", content: text }
+                    ],
+                    stream: true // 开启流式打字机效果！
+                })
+            });
+
+            // 纯原生 JS 处理流式数据（打字机蹦字核心）
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder("utf-8");
+            
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                
+                const chunk = decoder.decode(value, { stream: true });
+                const lines = chunk.split("\n");
+                
+                for (let line of lines) {
+                    if (line.startsWith("data: ")) {
+                        const jsonStr = line.slice(6).trim();
+                        if (jsonStr === "[DONE]") break;
+                        try {
+                            const json = JSON.parse(jsonStr);
+                            const content = json.choices[0].delta.content || "";
+                            currentAiReply += content;
+                            aiParagraph.innerHTML = `<b>AI：</b>${currentAiReply}`;
+                            screen.scrollTop = screen.scrollHeight;
+                        } catch (e) {}
+                    }
+                }
+            }
+
+            // 🔥 说话结束，把这一轮对话锁进“本地内存数组”，绝不触碰海外数据库
+            chatHistory.push({ role: "user", content: text });
+            chatHistory.push({ role: "assistant", content: currentAiReply });
+
+            // 2秒后模拟下一句对话
+            setTimeout(simulateUserSpeech, 2000);
+
+        } catch (error) {
+            aiParagraph.innerHTML = `<span style="color:red;">专线连接失败: ${error.message}</span>`;
+        }
+    }
+
+    // 💾 后台默默存盘（共用数据库逻辑）：通话完全结束后，把一整包历史记录一次性发给海外主库
+   async function syncDataToSupabase() {
+    if (chatHistory.length === 0) return;
+
+    try {
+        // 1. 循环本地内存，把每一条对话都准备好
+        const rowsToInsert = chatHistory.map(item => {
+            return {
+                author_type: item.role === "user" ? "user" : "assistant",
+                content: item.content,
+                created_at: new Date()
+            };
+        });
+
+        // 2. 正确呼叫你的表名 chat_messages，批量插入
+        const { data, error } = await supabase
+            .from("chat_messages")
+            .insert(rowsToInsert);
+
+        if (error) throw error;
+        console.log("国内并联专线：后台同步海外 Supabase 成功！");
+    } catch (error) {
+        console.error("同步失败:", error);
+        alert("海外主库同步失败，但聊天记录已保存在本地，错误信息: " + error.message);
+    }
+}
+
+        }
+    }
+</script>
+
+</body>
+</html>
+
