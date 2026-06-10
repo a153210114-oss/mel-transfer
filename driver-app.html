@@ -1437,95 +1437,6 @@ async function rejectTrip() {
 
   <div class="detail-body">
 
-    <!-- 乘客信息 -->
-    <div class="section-title" style="padding-left:0">👤 乘客信息</div>
-    <div class="info-block">
-      <div class="info-row">
-        <div class="info-key">姓名</div>
-        <div class="info-val">王小红</div>
-      </div>
-      <div class="info-row">
-        <div class="info-key">电话</div>
-        <div class="info-val mono accent">+86 138 0000 0000</div>
-      </div>
-      <div class="info-row">
-        <div class="info-key">微信</div>
-        <div class="info-val" id="detail-wechat">未填写</div>
-      </div>
-      <div class="info-row">
-        <div class="info-key">人数 / 行李</div>
-        <div class="info-val">3人 / 5件行李箱</div>
-      </div>
-    </div>
-
-    <!-- 行程信息 -->
-    <div class="section-title" style="padding-left:0">✈️ 行程信息</div>
-    <div class="info-block">
-      <div class="info-row">
-        <div class="info-key">类型</div>
-        <div class="info-val green">接机</div>
-      </div>
-      <div class="info-row">
-        <div class="info-key">航班号</div>
-        <div class="info-val mono">CX 168</div>
-      </div>
-      <div class="info-row">
-        <div class="info-key">约定接机时间</div>
-        <div class="info-val mono accent">14:30</div>
-      </div>
-      <div class="info-row">
-        <div class="info-key">接客地点</div>
-        <div class="info-val" style="font-size:12px">T2 国际到达大厅出口</div>
-      </div>
-      <div class="info-row">
-        <div class="info-key">目的地</div>
-        <div class="info-val" style="font-size:12px">33 Swanston St, CBD</div>
-      </div>
-      <div class="info-row">
-        <div class="info-key">距离</div>
-        <div class="info-val mono">23 km</div>
-      </div>
-    </div>
-
-    <!-- 费用 -->
-    <div class="section-title" style="padding-left:0">💰 费用明细</div>
-    <div class="info-block">
-      <div class="info-row">
-        <div class="info-key">基础价（Sedan）</div>
-        <div class="info-val mono">$70.00</div>
-      </div>
-      <div class="info-row">
-        <div class="info-key">超距附加</div>
-        <div class="info-val mono">$0.00</div>
-      </div>
-      <div class="info-row">
-        <div class="info-key">时段附加</div>
-        <div class="info-val mono">$0.00</div>
-      </div>
-      <div class="info-row">
-        <div class="info-key">等待费</div>
-        <div class="info-val mono" style="color:var(--text3)">待结算</div>
-      </div>
-      <div class="info-row" style="background:rgba(245,166,35,0.05)">
-        <div class="info-key" style="font-weight:600">总计</div>
-        <div class="info-val mono gold" style="font-size:18px">$70.00</div>
-      </div>
-      <div class="info-row">
-        <div class="info-key">支付方式</div>
-        <div class="info-val">💚 微信支付（已预收）</div>
-      </div>
-      <div class="info-row">
-        <div class="info-key">你的到手（85%）</div>
-        <div class="info-val mono green">$59.50</div>
-      </div>
-    </div>
-
-    <!-- 联系乘客 -->
-    <div class="call-row">
-      <button class="call-btn" onclick="callPassenger()">📞 致电乘客</button>
-      <button class="call-btn" onclick="wechatPassenger()">💬 微信联系</button>
-    </div>
-
     <!-- 操作按钮 -->
     <button class="action-btn btn-primary" onclick="handleAcceptBtn()" id="accept-trip-btn" style="flex:2;">✅ 接单</button>
     <button class="action-btn" onclick="rejectTrip()" style="flex:1;background:rgba(255,77,109,0.15);color:var(--red);border:1px solid rgba(255,77,109,0.3);">❌ 拒绝</button>
@@ -2798,54 +2709,85 @@ function goToDetail(tripId) {
 
 async function loadTripDetail(tripId) {
   try {
-    // 已接单查完整信息，未接单查public_trips
-    let trips = await supa(`trips?id=eq.${tripId}&driver_id=eq.${currentDriver.id}`);
+    let trips = await supa(`trips?id=eq.${tripId}&driver_id=eq.${currentDriver?.id}`);
     if (!trips || trips.length === 0) {
       trips = await supa(`public_trips?id=eq.${tripId}`);
     }
     if (!trips || trips.length === 0) return;
     const t = trips[0];
-    const scheduledDt = new Date(t.scheduled_at);
-    const time = scheduledDt.toLocaleTimeString('zh',{hour:'2-digit',minute:'2-digit'});
-    const dateStr = scheduledDt.toLocaleDateString('zh',{month:'2-digit',day:'2-digit'});
+    const dt = new Date(t.scheduled_at);
+    const timeStr = dt.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
+    const dateStr = dt.toLocaleDateString('zh-CN',{month:'2-digit',day:'2-digit'});
     const isPickup = t.direction === 'from_airport';
+    const isCharter = t.trip_type === 'charter';
+    const dirText = isCharter?'包车':isPickup?'接机':'送机';
+    const statusMap = {pending:'等待接单',confirmed:'已接单',driver_en_route:'前往中',driver_arrived:'已到达',in_progress:'行程中',completed:'已完成',cancelled:'已取消'};
 
-    // 存scheduled_at供acceptTrip判断
-    const timeEl = document.getElementById('detail-time');
-    if(timeEl) timeEl.dataset.scheduled = t.scheduled_at;
+    // 更新顶部
+    try { document.querySelector('#page-detail .topbar-sub').textContent = `单号 TRP-${t.id.slice(-8).toUpperCase()}`; } catch(e){}
 
-    // Update detail page with real data
-    document.querySelector('#page-detail .topbar-sub').textContent = `单号 #TRP-${t.id.slice(-8).toUpperCase()}`;
-    try { const st=document.querySelector('#page-detail .status-tag'); if(st) st.textContent='📋 新订单'; } catch(e){}
-  try {
-    const acceptBtn = document.getElementById('accept-trip-btn');
-    if (acceptBtn) {
-      acceptBtn.textContent = isGuestMode ? '🔒 审核后可接单' : '✅ 接单';
-      acceptBtn.style.opacity = isGuestMode ? '0.5' : '1';
-    }
-  } catch(e) {}
+    // 动态渲染内容
+    const container = document.getElementById('detail-dynamic-content');
+    if (!container) return;
 
-    // Passenger info
-    const vals = document.querySelectorAll('#page-detail .info-val');
-    if (vals[0]) vals[0].textContent = t.passenger_name || '-';
-    if (vals[1]) { vals[1].textContent = t.passenger_phone || '-'; vals[1].className = 'info-val mono accent'; }
-    const wechatEl = document.getElementById('detail-wechat');
-    if (wechatEl) wechatEl.textContent = t.passenger_wechat || '未填写';
+    container.innerHTML = `
+      <!-- 地图区域 -->
+      <div class="detail-map" style="margin-bottom:0;">
+        <div class="map-placeholder">
+          <div style="font-size:36px">🗺️</div>
+          <div class="map-label">${t.pickup_address} → ${t.dropoff_address}</div>
+          ${t.distance_km?`<div class="map-label" style="font-size:11px;opacity:0.6;">${t.distance_km}km</div>`:''}
+        </div>
+        <button class="map-nav-btn" onclick="openNavigation()">🧭 导航</button>
+      </div>
 
-    // Trip info rows
-    document.querySelectorAll('#page-detail .info-row').forEach(row => {
-      const key = row.querySelector('.info-key')?.textContent;
-      const val = row.querySelector('.info-val');
-      if (!val) return;
-      if (key === '类型') val.textContent = isPickup ? '接机' : '送机';
-      if (key === '航班号') val.textContent = t.flight_number || '-';
-      if (key === '约定接机时间') val.textContent = time;
-      if (key === '距离') val.textContent = (t.distance_km || '?') + ' km';
-      if (key === '微信') val.textContent = t.passenger_wechat || '未填写';
-    });
+      <!-- 乘客信息 -->
+      <div class="section-title" style="padding-left:0;margin-top:14px;">👤 乘客信息</div>
+      <div class="info-block">
+        <div class="info-row"><div class="info-key">姓名</div><div class="info-val">${t.passenger_name||'-'}</div></div>
+        <div class="info-row"><div class="info-key">电话</div><div class="info-val mono accent">${t.passenger_phone||'-'}</div></div>
+        <div class="info-row"><div class="info-key">微信</div><div class="info-val" id="detail-wechat">${t.passenger_wechat||'未填写'}</div></div>
+      </div>
 
-    // Price
-    document.querySelector('.trip-price') && (document.querySelector('#page-detail .trip-price') || {textContent:''});
+      <!-- 行程信息 -->
+      <div class="section-title" style="padding-left:0;">✈️ 行程信息</div>
+      <div class="info-block">
+        <div class="info-row"><div class="info-key">类型</div><div class="info-val green">${dirText}</div></div>
+        <div class="info-row"><div class="info-key">日期时间</div><div class="info-val mono accent">${dateStr} ${timeStr}</div></div>
+        <div class="info-row"><div class="info-key">接客地点</div><div class="info-val" style="font-size:12px;" id="detail-pickup-addr">${t.pickup_address||'-'}</div></div>
+        <div class="info-row"><div class="info-key">目的地</div><div class="info-val" style="font-size:12px;" id="detail-dropoff-addr">${t.dropoff_address||'-'}</div></div>
+        ${t.distance_km?`<div class="info-row"><div class="info-key">距离</div><div class="info-val mono">${t.distance_km} km</div></div>`:''}
+        ${isCharter?`<div class="info-row"><div class="info-key">时长</div><div class="info-val">${t.charter_hours||4}小时</div></div>`:''}
+      </div>
+
+      <!-- 费用 -->
+      <div class="section-title" style="padding-left:0;">💰 费用</div>
+      <div class="info-block">
+        <div class="info-row"><div class="info-key">车型</div><div class="info-val">${t.vehicle_type||'-'}</div></div>
+        ${t.surcharge>0?`<div class="info-row"><div class="info-key">附加费</div><div class="info-val">$${t.surcharge}</div></div>`:''}
+        <div class="info-row"><div class="info-key">合计</div><div class="info-val mono accent" style="font-size:16px;font-weight:900;">$${t.total_price}</div></div>
+        <div class="info-row"><div class="info-key">付款</div><div class="info-val">与司机线下结算</div></div>
+      </div>
+
+      <!-- 状态 -->
+      <div class="info-block" style="margin-bottom:80px;">
+        <div class="info-row"><div class="info-key">状态</div><div class="info-val">${statusMap[t.status]||t.status}</div></div>
+      </div>
+    `;
+
+    // 更新接单按钮
+    try {
+      const acceptBtn = document.getElementById('accept-trip-btn');
+      if (acceptBtn) {
+        acceptBtn.textContent = isGuestMode ? '🔒 审核后可接单' : '✅ 接单';
+        acceptBtn.style.opacity = isGuestMode ? '0.5' : '1';
+        // 已有司机接单则隐藏按钮
+        if (t.driver_id && t.driver_id !== currentDriver?.id) {
+          acceptBtn.style.display = 'none';
+          document.querySelector('.action-btn[onclick="rejectTrip()"]')?.style && (document.querySelector('.action-btn[onclick="rejectTrip()"]').style.display='none');
+        }
+      }
+    } catch(e) {}
 
   } catch(e) { console.error('订单详情加载失败', e); }
 }
