@@ -1174,22 +1174,28 @@ async function loadAndShowPendingTrips_deprecated() {
 async function goToPendingTrips() {
   try {
     const today = new Date().toISOString().split('T')[0];
-    const trips = await supa(
+    // 先查已接单
+    const myTrips = currentDriver ? await supa(
+      `trips?driver_id=eq.${currentDriver.id}&status=in.(confirmed,dispatched,driver_en_route,driver_arrived,in_progress)&scheduled_at=gte.${today}T00:00:00&order=scheduled_at.asc&limit=5`
+    ) : [];
+    if (myTrips && myTrips.length > 0) {
+      // 已接单：显示待完成任务列表
+      showTripSelectSheet(myTrips, '🚗 待完成任务');
+      return;
+    }
+    // 待接单列表
+    const pending = await supa(
       `public_trips?driver_id=is.null&status=eq.pending&scheduled_at=gte.${today}T00:00:00&tenant_id=eq.${TENANT_ID}&order=scheduled_at.asc&limit=20`
     );
-    if (!trips || trips.length === 0) { alert('暂无待接订单'); return; }
-    if (trips.length === 1) {
-      goToDetail(trips[0].id);
-    } else {
-      showTripSelectSheet(trips);
-    }
+    if (!pending || pending.length === 0) { alert('暂无待接订单'); return; }
+    showTripSelectSheet(pending, '📋 待接订单');
   } catch(e) {
     alert('加载失败，请重试');
     console.error(e);
   }
 }
 
-function showTripSelectSheet(trips) {
+function showTripSelectSheet(trips, title='📋 订单列表') {
   // 移除旧的
   document.getElementById('trip-select-sheet')?.remove();
   const sheet = document.createElement('div');
@@ -1198,7 +1204,7 @@ function showTripSelectSheet(trips) {
   sheet.innerHTML = `
     <div style="background:var(--surface);border-radius:28px 28px 0 0;padding:20px 16px 40px;width:100%;max-width:430px;max-height:70vh;overflow-y:auto;">
       <div style="width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px;"></div>
-      <div style="font-size:15px;font-weight:800;color:var(--text);margin-bottom:14px;">📋 待接订单（${trips.length}个）</div>
+      <div style="font-size:15px;font-weight:800;color:var(--text);margin-bottom:14px;">${title}（${trips.length}个）</div>
       ${trips.map(t => {
         const dt = new Date(t.scheduled_at);
         const dateStr = dt.toLocaleDateString('zh-CN',{month:'2-digit',day:'2-digit'});
@@ -1363,9 +1369,9 @@ async function rejectTrip() {
       <div class="stat-num accent" id="stat-done">0</div>
       <div class="stat-label">今日完成</div>
     </div>
-    <div class="stat-box" style="cursor:pointer;position:relative;border:1.5px solid rgba(0,212,255,0.3);background:rgba(0,212,255,0.05);border-radius:12px;" onclick="goToPendingTrips()">
+    <div class="stat-box" style="cursor:pointer;position:relative;border:1.5px solid rgba(0,212,255,0.3);background:rgba(0,212,255,0.05);border-radius:12px;" id="pending-stat-box" onclick="goToPendingTrips()">
       <div class="stat-num gold" id="stat-pending">0</div>
-      <div class="stat-label" style="color:var(--accent);">待接 › 查看</div>
+      <div class="stat-label" style="color:var(--accent);" id="pending-stat-label">待接·查看</div>
     </div>
     <div class="stat-box">
       <div class="stat-num green">4.9</div>
@@ -2350,6 +2356,25 @@ async function loadHome() {
     const done    = myTrips.filter(t => t.status === 'completed');
 
     document.getElementById('stat-pending').textContent = pending.length;
+    // 判断是否有已接单的订单
+    const myConfirmed = myTrips ? myTrips.filter(t=>['confirmed','dispatched','driver_en_route','driver_arrived','in_progress'].includes(t.status)) : [];
+    const label = document.getElementById('pending-stat-label');
+    if (label) {
+      if (myConfirmed.length > 0) {
+        label.textContent = '已接单';
+        label.style.color = 'var(--green)';
+        document.getElementById('stat-pending').textContent = myConfirmed.length;
+        document.getElementById('stat-pending').style.color = 'var(--green)';
+        document.getElementById('pending-stat-box').style.borderColor = 'rgba(0,200,150,0.3)';
+        document.getElementById('pending-stat-box').style.background = 'rgba(0,200,150,0.05)';
+      } else {
+        label.textContent = '待接·查看';
+        label.style.color = 'var(--accent)';
+        document.getElementById('stat-pending').style.color = 'var(--gold)';
+        document.getElementById('pending-stat-box').style.borderColor = 'rgba(0,212,255,0.3)';
+        document.getElementById('pending-stat-box').style.background = 'rgba(0,212,255,0.05)';
+      }
+    }
     document.getElementById('stat-done').textContent    = done.length;
     document.getElementById('today-count').textContent  = done.length;
 
