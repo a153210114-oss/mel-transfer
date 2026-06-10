@@ -168,11 +168,11 @@ const N8N_WEBHOOK_URL = "https://primary-production-68f8.up.railway.app/webhook/
     }
 
     // 💾 后台默默存盘（共用数据库逻辑）：通话完全结束后，把一整包历史记录一次性发给海外主库
-   async function syncDataToSupabase() {
+ async function syncDataToSupabase() {
     if (chatHistory.length === 0) return;
 
     try {
-        // 1. 循环本地内存，把每一条对话都准备好
+        // 1. 整理数据格式，准备写入 Supabase
         const rowsToInsert = chatHistory.map(item => {
             return {
                 author_type: item.role === "user" ? "user" : "assistant",
@@ -181,23 +181,34 @@ const N8N_WEBHOOK_URL = "https://primary-production-68f8.up.railway.app/webhook/
             };
         });
 
-        // 2. 正确呼叫你的表名 chat_messages，批量插入
-        const { data, error } = await supabase
-            .from("chat_messages")
-            .insert(rowsToInsert);
-
+        // 批量插入到你的海外 Supabase 主库
+        const { data, error } = await supabase.from("chat_messages").insert(rowsToInsert);
         if (error) throw error;
         console.log("国内并联专线：后台同步海外 Supabase 成功！");
+
+        // 🚀 2. 真正的硬核连线：把一整包客服聊天记录“一键发射”给你的 n8n 派单触发器
+        console.log("正在跨国连接：将通话数据发射给 n8n...");
+        const n8nResponse = await fetch(N8N_WEBHOOK_URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                source: "voice_agent", // 告诉 n8n 这是并联语音页面传过来的
+                customer_phone: "墨尔本华人客户语音", 
+                chat_summary: chatHistory, // 聊天记录一键砸进 n8n 去自动算价派单！
+                timestamp: new Date().toISOString()
+            })
+        });
+
+        if (n8nResponse.ok) {
+            console.log("🎉 成功跨国触发 n8n 派单工作流！");
+        } else {
+            console.warn("n8n 连接回应异常，状态码:", n8nResponse.status);
+        }
+
     } catch (error) {
-        console.error("同步失败:", error);
-        alert("海外主库同步失败，但聊天记录已保存在本地，错误信息: " + error.message);
+        console.error("同步或连线失败:", error);
+        alert("后台同步或连线失败，错误信息: " + error.message);
     }
 }
-
-        }
-    }
-</script>
-
-</body>
-</html>
-
