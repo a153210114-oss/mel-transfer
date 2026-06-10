@@ -2816,17 +2816,14 @@ async function loadTripDetail(tripId) {
 
     // Update detail page with real data
     document.querySelector('#page-detail .topbar-sub').textContent = `单号 #TRP-${t.id.slice(-8).toUpperCase()}`;
-    document.querySelector('#page-detail .status-tag').textContent = '📋 新订单';
-  const acceptBtn = document.getElementById('accept-trip-btn');
-  if (acceptBtn) {
-    if (isGuestMode) {
-      acceptBtn.textContent = '🔒 审核后可接单';
-      acceptBtn.style.opacity = '0.5';
-    } else {
-      acceptBtn.textContent = '✅ 接单';
-      acceptBtn.style.opacity = '1';
+    try { const st=document.querySelector('#page-detail .status-tag'); if(st) st.textContent='📋 新订单'; } catch(e){}
+  try {
+    const acceptBtn = document.getElementById('accept-trip-btn');
+    if (acceptBtn) {
+      acceptBtn.textContent = isGuestMode ? '🔒 审核后可接单' : '✅ 接单';
+      acceptBtn.style.opacity = isGuestMode ? '0.5' : '1';
     }
-  }
+  } catch(e) {}
 
     // Passenger info
     const vals = document.querySelectorAll('#page-detail .info-val');
