@@ -33,15 +33,9 @@
     // 这里依然填你之前在旧页面里用过的、你自己的海外 Supabase 凭证
     const supabase_URL= "https://gxocvpmgfjvmmkkbswgo.supabase.co";
     const supabase_KEY= "sb_publishable_2qNlP6uBbVkqjgjMz60pGw_YSxRxzr_";
-
-
-
-const N8N_WEBHOOK_URL = "https://primary-production-68f8.up.railway.app/webhook/new-trip-dispatch";
-
-
-    // 初始化你的海外主数据库连接
+    const N8N_WEBHOOK_URL = "https://primary-production-68f8.up.railway.app/webhook/new-trip-dispatch";
+   // 初始化你的海外主数据库连接
     const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
     let isConnected = false;
     let chatHistory = []; // 🔥 核心：并联内存。通话期间所有的对话只存在这里，绝不碰海外数据库！
     let currentAiReply = "";
@@ -49,13 +43,11 @@ const N8N_WEBHOOK_URL = "https://primary-production-68f8.up.railway.app/webhook/
     // 模拟语音转文字后的文本，方便你今天先在本地把整个“并联同步”流程百分百跑通
     const mockUserSpeeches = ["你好，我想了解澳洲生活", "这边华人多吗？", "谢谢，我先挂了"];
     let speechIndex = 0;
-
-    // 控制连线与挂断
+   // 控制连线与挂断
     async function toggleConnect() {
         const btn = document.getElementById("action-btn");
         const status = document.getElementById("status");
-
-        if (!isConnected) {
+   if (!isConnected) {
             // 【进入连线】
             isConnected = true;
             speechIndex = 0;
