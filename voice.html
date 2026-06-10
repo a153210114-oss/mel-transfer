@@ -185,7 +185,8 @@
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({
+            body: JSON.stringify
+                ({
                 source: "voice_agent", // 告诉 n8n 这是并联语音页面传过来的
                 customer_phone: "墨尔本华人客户语音", 
                 chat_summary: chatHistory, // 聊天记录一键砸进 n8n 去自动算价派单！
