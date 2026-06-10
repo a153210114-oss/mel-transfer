@@ -43,13 +43,7 @@
     const N8N_WEBHOOK_URL = "https://primary-production-68f8.up.railway.app/webhook/new-trip-dispatch"
 
     // 自动检测微信环境并进行全屏拦截引导
-    window.onload = function() {
-        const ua = navigator.userAgent.toLowerCase();
-        if (ua.match(/MicroMessenger/i) == "micromessenger") {
-            document.getElementById("wechat-mask").style.display = "block";
-        }
-    };
-
+    
     // 初始化海外数据库连接
     const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
