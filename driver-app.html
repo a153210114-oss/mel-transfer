@@ -1054,8 +1054,7 @@ async function acceptCharterDemand(postId, passengerPhone) {
       headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'},
       body:JSON.stringify({accepted_driver_id:currentDriver.id, status:'full'})
     });
-    alert('✅ 已接单！请联系乘客确认行程
-手机：'+passengerPhone);
+    alert('✅ 已接单！请联系乘客确认行程\n手机：'+passengerPhone);
     loadMessagePage();
   } catch(e) { alert('操作失败：'+e.message); }
 }
