@@ -3018,8 +3018,14 @@ async function declineTrip() {
 }
 
 function openNavigation() {
-  const addr = document.getElementById('detail-dropoff-addr')?.textContent?.trim() || 
-               document.getElementById('detail-pickup-addr')?.textContent?.trim() || '';
+  // 先找目的地，再找接客地点
+  const dropoff = document.getElementById('detail-dropoff-addr')?.textContent?.trim();
+  const pickup = document.getElementById('detail-pickup-addr')?.textContent?.trim();
+  console.log('导航地址:', {pickup, dropoff});
+  // 送机用目的地（机场），接机用dropoff（乘客家）
+  const addr = (dropoff && dropoff !== '墨尔本国际机场' && dropoff !== '-') ? dropoff :
+               (pickup && pickup !== '墨尔本国际机场' && pickup !== '-') ? pickup :
+               dropoff || pickup || '';
   if (!addr || addr === '-') { alert('地址未填写'); return; }
 
   const encoded = encodeURIComponent(addr);
