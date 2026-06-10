@@ -1392,7 +1392,6 @@ async function rejectTrip() {
         <div class="topbar-title">订单详情</div>
         <div class="topbar-sub">单号 #TRP-20240604-008</div>
       </div>
-      <span class="status-tag tag-waiting" id="detail-status-badge">📋 新订单</span>
     </div>
   </div>
 
@@ -1530,7 +1529,6 @@ async function rejectTrip() {
     <!-- 操作按钮 -->
     <button class="action-btn btn-primary" onclick="handleAcceptBtn()" id="accept-trip-btn" style="flex:2;">✅ 接单</button>
     <button class="action-btn" onclick="rejectTrip()" style="flex:1;background:rgba(255,77,109,0.15);color:var(--red);border:1px solid rgba(255,77,109,0.3);">❌ 拒绝</button>
-    <button class="action-btn btn-danger" onclick="declineTrip()">✗ 拒绝</button>
 
   </div>
 </div>
@@ -3020,7 +3018,28 @@ async function declineTrip() {
 }
 
 function openNavigation() {
-  alert('即将打开 Google Maps 导航\n目的地：33 Swanston St, Melbourne CBD');
+  const addr = document.getElementById('detail-pickup')?.textContent || 
+               document.getElementById('detail-dropoff')?.textContent || '';
+  if (!addr || addr === '-') { alert('地址未填写'); return; }
+
+  const encoded = encodeURIComponent(addr);
+  // 弹出选择
+  const sheet = document.createElement('div');
+  sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:flex-end;justify-content:center;';
+  sheet.innerHTML = `
+    <div style="background:var(--surface);border-radius:28px 28px 0 0;padding:20px 16px 40px;width:100%;max-width:430px;">
+      <div style="width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px;"></div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:14px;text-align:center;">导航到：${addr}</div>
+      <a href="https://maps.google.com/?daddr=${encoded}" target="_blank"
+        style="display:block;padding:14px;background:var(--accent);color:var(--bg);border-radius:12px;text-align:center;font-size:14px;font-weight:800;text-decoration:none;margin-bottom:10px;"
+        onclick="sheet.remove()">🗺️ Google Maps</a>
+      <a href="https://maps.apple.com/?daddr=${encoded}" target="_blank"
+        style="display:block;padding:14px;background:var(--surface2);color:var(--text);border-radius:12px;text-align:center;font-size:14px;font-weight:800;text-decoration:none;margin-bottom:10px;"
+        onclick="sheet.remove()">🗺️ Apple Maps</a>
+      <button onclick="this.closest('div').parentElement.remove()" style="width:100%;padding:12px;background:none;border:none;color:var(--text3);font-size:13px;cursor:pointer;">取消</button>
+    </div>`;
+  sheet.onclick = e => { if(e.target===sheet) sheet.remove(); };
+  document.body.appendChild(sheet);
 }
 
 function callPassenger() {
