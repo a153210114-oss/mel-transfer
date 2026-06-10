@@ -1330,8 +1330,9 @@ function toggleGlobalMic() {
     globalRecording = true;
     const btn = document.getElementById('global-mic-btn');
     btn.textContent = '🔴';
-    btn.style.background = 'linear-gradient(135deg,#ff3b30,#cc2222)';
-    btn.style.boxShadow = '0 4px 16px rgba(255,59,48,0.5)';
+    btn.style.background = 'rgba(255,59,48,0.2)';
+    btn.style.borderColor = 'rgba(255,59,48,0.5)';
+    btn.style.boxShadow = '0 4px 16px rgba(255,59,48,0.4)';
     btn.style.animation = 'mp 0.8s ease-in-out infinite';
   };
   globalRecognition.onresult = (e) => {
@@ -1348,9 +1349,10 @@ function toggleGlobalMic() {
   globalRecognition.onend = () => {
     globalRecording = false;
     const btn = document.getElementById('global-mic-btn');
-    btn.textContent = '🎤';
-    btn.style.background = 'linear-gradient(135deg,#0096c7,#0077a0)';
-    btn.style.boxShadow = '0 4px 16px rgba(0,150,199,0.4)';
+    btn.textContent = '🧑‍✈️';
+    btn.style.background = 'rgba(0,212,255,0.15)';
+    btn.style.borderColor = 'rgba(0,212,255,0.4)';
+    btn.style.boxShadow = '0 4px 16px rgba(0,150,199,0.3)';
     btn.style.animation = 'none';
   };
   globalRecognition.onerror = globalRecognition.onend;
@@ -1358,24 +1360,44 @@ function toggleGlobalMic() {
 }
 
 function handleGlobalVoiceCommand(text) {
-  // 语音快捷指令
-  if (/接单|接受/.test(text)) {
+  console.log('语音指令：', text);
+  if (/接单|接受|我来接/.test(text)) {
     handleAcceptBtn();
-  } else if (/上线|候单/.test(text)) {
+    speakDriver('正在接单');
+  } else if (/拒绝|不接/.test(text)) {
+    rejectTrip();
+  } else if (/上线|候单|开始接单/.test(text)) {
     setStatus('at_depot');
-    speakDriver('已切换为上线候单');
-  } else if (/下线/.test(text)) {
+    speakDriver('已上线候单');
+  } else if (/下线|不接单|休息/.test(text)) {
     setStatus('offline');
     speakDriver('已下线');
-  } else if (/订单|任务/.test(text)) {
+  } else if (/导航|带路|怎么走/.test(text)) {
+    openNavigation();
+  } else if (/打电话|联系乘客|电话/.test(text)) {
+    callPassenger();
+  } else if (/完成|到了|行程结束/.test(text)) {
+    document.querySelector('.btn-complete')?.click();
+    speakDriver('正在完成行程');
+  } else if (/订单|任务|首页/.test(text)) {
     switchPage('home');
     speakDriver('已切换到任务页');
-  } else if (/助理/.test(text)) {
+  } else if (/发布|包车/.test(text)) {
+    switchPage('publish');
+    speakDriver('已切换到发布页');
+  } else if (/消息|通知|公告/.test(text)) {
+    switchPage('message');
+  } else if (/我的|个人|设置/.test(text)) {
+    switchPage('profile');
+  } else if (/助理|帮我|问一下/.test(text)) {
     switchPage('assistant');
+    setTimeout(() => assistantSend(text), 600);
+  } else if (/取消订单/.test(text)) {
+    goToPendingTrips();
   } else {
-    // 转发给助理处理
+    // 其他全部转给助理
     switchPage('assistant');
-    setTimeout(() => assistantSend(text), 500);
+    setTimeout(() => assistantSend(text), 600);
   }
 }
 
@@ -3238,12 +3260,11 @@ function submitReg() {
 <!-- 全局语音按钮 -->
 <div id="global-mic-wrap" style="position:fixed;right:16px;bottom:75px;z-index:200;">
   <button id="global-mic-btn" onclick="toggleGlobalMic()"
-    style="width:48px;height:48px;border-radius:50%;border:none;cursor:pointer;
-    background:linear-gradient(135deg,#0096c7,#0077a0);
-    color:white;font-size:22px;
-    box-shadow:0 4px 16px rgba(0,150,199,0.4);
+    style="width:50px;height:50px;border-radius:50%;border:2px solid rgba(0,212,255,0.4);cursor:pointer;
+    background:rgba(0,212,255,0.15);backdrop-filter:blur(10px);
+    font-size:24px;box-shadow:0 4px 16px rgba(0,150,199,0.3);
     display:flex;align-items:center;justify-content:center;
-    transition:all 0.2s;">🎤</button>
+    transition:all 0.2s;">🧑‍✈️</button>
 </div>
 
 </body>

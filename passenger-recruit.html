@@ -437,6 +437,14 @@ body{
           </div>
           <div class="profile-item-arrow">›</div>
         </div>
+        <div class="profile-item" onclick="showCancelOrderPanel()">
+          <div class="profile-item-icon">❌</div>
+          <div class="profile-item-text">
+            <div class="profile-item-label">取消订单</div>
+            <div class="profile-item-sub">查看并取消有效订单</div>
+          </div>
+          <div class="profile-item-arrow">›</div>
+        </div>
         <div class="profile-item" onclick="switchAgent()">
           <div class="profile-item-icon">🔄</div>
           <div class="profile-item-text">
@@ -962,6 +970,174 @@ function stopConfetti() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
+
+// ── 全局语音控制 ──
+let globalRec = null;
+let globalRecActive = false;
+
+function toggleGlobalVoice() {
+  if (globalRecActive) { globalRec?.stop(); return; }
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    alert('请使用Safari或Chrome'); return;
+  }
+  if (navigator.mediaDevices?.getUserMedia) {
+    navigator.mediaDevices.getUserMedia({audio:true}).catch(()=>{});
+  }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  globalRec = new SR();
+  globalRec.lang = 'zh-CN'; globalRec.continuous = false; globalRec.interimResults = false;
+
+  globalRec.onstart = () => {
+    globalRecActive = true;
+    const btn = document.getElementById('global-agent-btn');
+    const dot = document.getElementById('global-voice-status');
+    btn.style.background = 'rgba(255,59,48,0.2)';
+    btn.style.borderColor = 'rgba(255,59,48,0.5)';
+    btn.textContent = '🔴';
+    dot.style.display = 'block';
+    dot.style.background = '#ff3b30';
+  };
+  globalRec.onresult = (e) => {
+    const text = e.results[0][0].transcript;
+    handlePassengerVoice(text);
+  };
+  globalRec.onend = () => {
+    globalRecActive = false;
+    const btn = document.getElementById('global-agent-btn');
+    const dot = document.getElementById('global-voice-status');
+    btn.style.background = 'rgba(0,150,199,0.15)';
+    btn.style.borderColor = 'rgba(0,150,199,0.4)';
+    btn.textContent = '👩‍✈️';
+    dot.style.display = 'none';
+  };
+  globalRec.onerror = globalRec.onend;
+  globalRec.start();
+}
+
+function handlePassengerVoice(text) {
+  // 直接发给AI处理
+  document.getElementById('chat-input').value = text;
+  sendMessage();
+  // 语音快捷指令
+  if (/确认|没问题|对的|好的/.test(text)) {
+    document.querySelector('.confirm-btn.primary')?.click();
+  } else if (/修改|不对|取消|返回/.test(text)) {
+    document.querySelector('.confirm-btn.secondary')?.click();
+  } else if (/取消订单/.test(text)) {
+    showCancelOrderPanel();
+  }
+}
+
+// ── 乘客取消订单 ──
+async function showCancelOrderPanel() {
+  const saved = getPassenger();
+  if (!saved.phone) { alert('请先登录'); return; }
+
+  // 查询乘客最近的有效订单
+  try {
+    const trips = await supaGet(
+      `trips?passenger_phone=eq.${encodeURIComponent(saved.phone)}&status=in.(pending,confirmed,dispatched)&order=scheduled_at.desc&limit=5`
+    );
+    if (!trips || trips.length === 0) {
+      speak('您没有可取消的订单');
+      return;
+    }
+
+    const sheet = document.createElement('div');
+    sheet.id = 'cancel-order-sheet';
+    sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:flex-end;justify-content:center;';
+    sheet.innerHTML = `
+      <div style="background:white;border-radius:28px 28px 0 0;padding:24px 20px 44px;width:100%;max-width:480px;max-height:85vh;overflow-y:auto;">
+        <div style="width:40px;height:4px;background:#e0e0e0;border-radius:2px;margin:0 auto 18px;"></div>
+        <div style="font-size:16px;font-weight:900;color:var(--text);margin-bottom:14px;">📋 我的订单</div>
+        ${trips.map(t => {
+          const dt = new Date(t.scheduled_at);
+          const dateStr = dt.toLocaleDateString('zh-CN',{month:'2-digit',day:'2-digit'});
+          const timeStr = dt.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
+          const dirText = t.direction==='from_airport'?'接机':'送机';
+          const statusMap = {pending:'等待司机',confirmed:'已确认',dispatched:'司机出发中'};
+          return `
+          <div style="background:var(--bg);border-radius:14px;padding:14px;margin-bottom:10px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+              <span style="font-size:14px;font-weight:800;color:var(--text);">${dirText}</span>
+              <span style="font-size:12px;color:var(--text2);">${dateStr} ${timeStr}</span>
+            </div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:8px;">$${t.total_price} · ${statusMap[t.status]||t.status}</div>
+            <button onclick="showPassengerCancelPolicy('${t.id}','${t.scheduled_at}')"
+              style="width:100%;padding:9px;background:#fff0f0;border:1px solid #ffcccc;border-radius:10px;color:var(--red);font-size:13px;font-weight:700;cursor:pointer;">
+              取消这个订单
+            </button>
+          </div>`;
+        }).join('')}
+        <button onclick="document.getElementById('cancel-order-sheet').remove()"
+          style="width:100%;padding:12px;background:none;border:none;font-size:13px;color:#bbb;cursor:pointer;">关闭</button>
+      </div>`;
+    sheet.onclick = e => { if(e.target===sheet) sheet.remove(); };
+    document.body.appendChild(sheet);
+  } catch(e) { alert('加载失败'); }
+}
+
+function showPassengerCancelPolicy(tripId, scheduledAt) {
+  document.getElementById('cancel-order-sheet')?.remove();
+  const now = new Date();
+  const tripTime = new Date(scheduledAt);
+  const hoursLeft = (tripTime - now) / 3600000;
+  let feeText, feeColor;
+  if (hoursLeft > 24) {
+    feeText = '免费取消，不收任何费用'; feeColor = '#27ae60';
+  } else if (hoursLeft > 2) {
+    feeText = '需支付50%取消费'; feeColor = '#c8a020';
+  } else {
+    feeText = '需支付100%费用（出发前2小时内）'; feeColor = '#ff3b30';
+  }
+
+  const sheet = document.createElement('div');
+  sheet.id = 'cancel-policy-sheet';
+  sheet.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:flex-end;justify-content:center;';
+  sheet.innerHTML = `
+    <div style="background:white;border-radius:28px 28px 0 0;padding:24px 20px 44px;width:100%;max-width:480px;">
+      <div style="width:40px;height:4px;background:#e0e0e0;border-radius:2px;margin:0 auto 18px;"></div>
+      <div style="font-size:16px;font-weight:900;color:var(--text);margin-bottom:12px;">⚠️ 取消政策</div>
+      <div style="background:var(--bg);border-radius:12px;padding:14px;margin-bottom:14px;font-size:13px;color:var(--text2);line-height:1.8;">
+        · 出发前 <strong>24小时以上</strong>：免费取消<br>
+        · 出发前 <strong>2-24小时</strong>：扣除50%费用<br>
+        · 出发前 <strong>2小时内</strong>：扣除100%费用
+      </div>
+      <div style="background:#fff8e8;border-radius:10px;padding:12px;margin-bottom:16px;text-align:center;">
+        <div style="font-size:13px;color:${feeColor};font-weight:800;">${feeText}</div>
+      </div>
+      <div style="font-size:14px;font-weight:800;color:var(--text);text-align:center;margin-bottom:16px;">确定要取消这个订单吗？</div>
+      <div style="display:flex;gap:10px;">
+        <button onclick="document.getElementById('cancel-policy-sheet').remove()"
+          style="flex:1;padding:13px;background:var(--bg);border:1.5px solid var(--border);border-radius:12px;color:var(--text2);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">
+          返回
+        </button>
+        <button onclick="confirmPassengerCancel('${tripId}')"
+          style="flex:1;padding:13px;background:#fff0f0;border:1.5px solid #ffcccc;border-radius:12px;color:var(--red);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">
+          确认取消
+        </button>
+      </div>
+    </div>`;
+  sheet.onclick = e => { if(e.target===sheet) sheet.remove(); };
+  document.body.appendChild(sheet);
+}
+
+async function confirmPassengerCancel(tripId) {
+  document.getElementById('cancel-policy-sheet')?.remove();
+  try {
+    const res = await fetch(SUPA_URL+'/rest/v1/trips?id=eq.'+tripId, {
+      method:'PATCH',
+      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({status:'cancelled', driver_id:null})
+    });
+    if (!res.ok) throw new Error('取消失败');
+    speak('订单已取消');
+    await agentSay('好的，订单已取消 ✅ 如需重新预约随时告诉我', 300);
+  } catch(e) {
+    alert('取消失败：' + e.message);
+  }
+}
+
 </script>
 
 <!-- 烟花彩带层 -->
@@ -974,6 +1150,17 @@ function stopConfetti() {
     <div style="font-size:14px;font-weight:700;color:var(--text2);margin-bottom:20px;">积分</div>
     <button onclick="closeConfetti()" style="background:var(--accent);color:white;border:none;border-radius:12px;padding:12px 28px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;">太棒了！</button>
   </div>
+</div>
+
+
+<!-- 全局管家语音按钮 -->
+<div id="global-agent-wrap" style="position:fixed;right:16px;bottom:90px;z-index:200;">
+  <button id="global-agent-btn" onclick="toggleGlobalVoice()"
+    style="width:50px;height:50px;border-radius:50%;border:2px solid rgba(0,150,199,0.4);cursor:pointer;
+    background:rgba(0,150,199,0.15);backdrop-filter:blur(10px);
+    font-size:24px;box-shadow:0 4px 16px rgba(0,150,199,0.3);
+    display:flex;align-items:center;justify-content:center;transition:all 0.2s;">👩‍✈️</button>
+  <div id="global-voice-status" style="position:absolute;top:-6px;right:-6px;width:14px;height:14px;border-radius:50%;background:#27ae60;border:2px solid white;display:none;"></div>
 </div>
 
 </body>
