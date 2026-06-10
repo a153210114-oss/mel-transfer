@@ -2532,11 +2532,11 @@ function renderTripCard(t, isCurrent=false) {
         <div class="route-addrs">
           <div class="route-addr">
             <div class="route-addr-label">${isPickup?'接客地点':'出发地'}</div>
-            ${isPickup?'墨尔本国际机场':t.pickup_address}
+            <span id="detail-pickup-addr">${isPickup?'墨尔本国际机场':t.pickup_address}</span>
           </div>
           <div class="route-addr">
             <div class="route-addr-label">${isPickup?'目的地':'送达机场'}</div>
-            ${t.dropoff_address}
+            <span id="detail-dropoff-addr">${t.dropoff_address}</span>
           </div>
         </div>
       </div>
@@ -3018,8 +3018,8 @@ async function declineTrip() {
 }
 
 function openNavigation() {
-  const addr = document.getElementById('detail-pickup')?.textContent || 
-               document.getElementById('detail-dropoff')?.textContent || '';
+  const addr = document.getElementById('detail-dropoff-addr')?.textContent?.trim() || 
+               document.getElementById('detail-pickup-addr')?.textContent?.trim() || '';
   if (!addr || addr === '-') { alert('地址未填写'); return; }
 
   const encoded = encodeURIComponent(addr);
