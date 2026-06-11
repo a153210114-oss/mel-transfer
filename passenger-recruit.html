@@ -500,7 +500,30 @@ const SUPA_URL='https://gxocvpmgfjvmmkkbswgo.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b2N2cG1nZmp2bW1ra2Jzd2dvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyNDc4NzAsImV4cCI6MjA5NTgyMzg3MH0.ExUNuOP8YyHQmItY6cdl1Euj7nOXqQq-rQT5-7aNerE';
 const TENANT_ID='00000000-0000-0000-0000-000000000001';
 
-const S={direction:null,address:null,date:null,time:null,vehicle:null,price:null,name:null,phone:null,wechat:null,payment:'wechat',trip_type:'standard',wait_hours:0};
+const S={direction:null,address:null,date:null,time:null,vehicle:null,price:null,base_price:0,surcharge:0,distance_km:0,name:null,phone:null,wechat:null,trip_type:'standard',wait_hours:0};
+const BASE_KM=25, SURCHARGE_PER_KM=1;
+const AIRPORT_COORDS={lat:-37.6690,lng:144.8410};
+
+async function calcDistanceSurcharge(address,direction){
+  if(!window.google||!address)return 0;
+  try{
+    const service=new google.maps.DistanceMatrixService();
+    const airportLatLng=new google.maps.LatLng(AIRPORT_COORDS.lat,AIRPORT_COORDS.lng);
+    return new Promise((resolve)=>{
+      service.getDistanceMatrix({
+        origins:direction==='to_airport'?[address]:[airportLatLng],
+        destinations:direction==='to_airport'?[airportLatLng]:[address],
+        travelMode:google.maps.TravelMode.DRIVING,
+      },(response,status)=>{
+        if(status!=='OK'){resolve(0);return;}
+        const km=response.rows[0].elements[0].distance.value/1000;
+        S.distance_km=Math.round(km);
+        const surcharge=km>BASE_KM?Math.round((km-BASE_KM)*SURCHARGE_PER_KM):0;
+        resolve(surcharge);
+      });
+    });
+  }catch(e){return 0;}
+}
 const VEHICLES=[
   {type:'sedan',icon:'🚗',name:'Sedan 轿车',cap:'1-3人',price:70},
   {type:'mpv',icon:'🚐',name:'MPV 商务车',cap:'4-6人',price:90},
@@ -720,9 +743,19 @@ async function showVehicleChoice(){
   chatArea.appendChild(div);scrollBottom();
 }
 
-function selectVehicle(type,price,el){
+async function selectVehicle(type,price,el){
   document.querySelectorAll('.vehicle-card').forEach(c=>c.classList.remove('selected'));
-  el.classList.add('selected');S.vehicle=type;S.price=price;
+  el.classList.add('selected');
+  S.vehicle=type; S.base_price=price; S.price=price; S.surcharge=0;
+  // 计算距离附加费
+  if(S.address && S.direction){
+    const surcharge=await calcDistanceSurcharge(S.address,S.direction);
+    if(surcharge>0){
+      S.surcharge=surcharge;
+      S.price=price+surcharge;
+      await agentSay(`您的地址距机场约${S.distance_km}km，超出${S.distance_km-25}km，参考附加费AUD ${surcharge}，参考合计AUD ${S.price}，最终与司机线下确认`,400);
+    }
+  }
   setTimeout(()=>showConfirm(),400);
 }
 
@@ -745,7 +778,12 @@ async function showConfirm(){
     <div class="confirm-row"><span class="confirm-label">${addrLabel}</span><span class="confirm-value">${S.address}</span></div>
     <div class="confirm-row"><span class="confirm-label">车型</span><span class="confirm-value">${vInfo?.icon} ${vInfo?.name}</span></div>
     ${isAcc?`<div class="confirm-row"><span class="confirm-label">等候费</span><span class="confirm-value">$${waitFee}（${S.wait_hours}小时）</span></div>`:''}
-    <div class="confirm-row"><span class="confirm-label">费用</span><span class="confirm-value" style="color:var(--accent);font-size:18px;font-weight:900;">$${total}<span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);margin-left:5px;">参考价，与司机线下确认</span></span></div>
+    \${S.distance_km?`<div class="confirm-row"><span class="confirm-label">距离</span><span class="confirm-value">\${S.distance_km}km\${S.surcharge>0?' (超出'+(\${S.distance_km}-25)+'km，附加AUD '+S.surcharge+')':' (25km内)'}</span></div>`:''}
+    <div class="confirm-row"><span class="confirm-label">费用</span><span class="confirm-value" style="color:var(--accent);font-size:18px;font-weight:900;">AUD \${total}</span></div>
+    <div style="background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.25);border-radius:10px;padding:10px 14px;margin:6px 0 4px;text-align:center;">
+      <div style="font-size:13px;color:rgba(245,166,35,0.9);font-weight:700;">⚠️ 以上为市场参考价</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.55);margin-top:4px;">实际费用请与司机确认后再付款</div>
+    </div>
     <div class="confirm-btns">
       <button class="confirm-btn secondary" onclick="restartBooking()">✏️ 修改</button>
       <button class="confirm-btn primary" onclick="showContactForm()">✅ 确认下单</button>
@@ -763,11 +801,9 @@ async function showContactForm(){
     <div class="form-field"><label class="form-label">你的称呼</label><input class="form-input" id="f-name" placeholder="姓名或昵称" value="${saved.name||''}"></div>
     <div class="form-field"><label class="form-label">澳洲手机号</label><input class="form-input" id="f-phone" type="tel" placeholder="04XX XXX XXX" value="${saved.phone||''}"></div>
     <div class="form-field"><label class="form-label">微信号（选填）</label><input class="form-input" id="f-wechat" placeholder="微信ID" value="${saved.wechat||''}"></div>
-    <div class="form-field"><label class="form-label">付款方式</label>
-      <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px 14px;font-size:13px;color:rgba(255,255,255,0.6);line-height:1.9;">
-        💚 微信转账：<strong style="color:white;">DIVE-DING</strong><br>
-        💳 到车付款<br>
-        🏦 银行转账请联系客服
+    <div class="form-field">
+      <div style="background:rgba(0,212,255,0.06);border:1px solid rgba(0,212,255,0.2);border-radius:10px;padding:12px 14px;font-size:13px;color:rgba(255,255,255,0.7);text-align:center;">
+        💬 预约确认后，请与司机确认费用并完成付款
       </div>
     </div>
     <button class="submit-btn" onclick="submitBooking()">🚀 确认预约 · 参考AUD ${S.price+(S.trip_type==='accompanied'?S.wait_hours*20:0)}</button>`;
@@ -803,7 +839,7 @@ async function submitBooking(){
       pickup_address:isAcc||S.direction==='to_airport'?S.address:'墨尔本国际机场',
       dropoff_address:isAcc||S.direction==='from_airport'?S.address:'墨尔本国际机场',
       vehicle_type:S.vehicle,scheduled_at:`${S.date}T${S.time}:00`,
-      total_price:finalPrice,payment_method:'offline',
+      total_price:finalPrice,base_price:S.base_price,distance_km:S.distance_km||null,surcharge:S.surcharge||null,payment_method:'offline',
       payment_status:'pending',
       prepaid_amount:null,
       status:'pending',is_urgent:isUrgent,
