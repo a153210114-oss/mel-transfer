@@ -324,16 +324,172 @@ function speak(text){
 }
 
 // ── 语音输入 ──
+// ── 连续语音对话 ──
+let voiceMode = false; // 是否在连续语音模式
+let isSpeaking = false; // Bot是否在说话
+let isUserSpeaking = false; // 用户是否在说话
+
 function toggleMic(){
   if(!('webkitSpeechRecognition' in window)&&!('SpeechRecognition' in window)){alert('请使用Safari或Chrome');return;}
-  if(isRecording){recognition?.stop();return;}
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  recognition=new SR();recognition.lang='zh-CN';recognition.continuous=false;recognition.interimResults=false;
-  recognition.onstart=()=>{isRecording=true;document.getElementById('mic-btn').classList.add('recording');document.getElementById('mic-btn').textContent='⏹';const vi=document.getElementById('voice-indicator');if(vi)vi.style.display='block';};
-  recognition.onresult=(e)=>{document.getElementById('chat-input').value=e.results[0][0].transcript;sendMessage();};
-  recognition.onend=()=>{isRecording=false;document.getElementById('mic-btn').classList.remove('recording');document.getElementById('mic-btn').textContent='🎤';const vi=document.getElementById('voice-indicator');if(vi)vi.style.display='none';};
-  recognition.onerror=recognition.onend;
-  recognition.start();
+  if(voiceMode){
+    stopVoiceMode();
+  } else {
+    startVoiceMode();
+  }
+}
+
+function startVoiceMode(){
+  if(navigator.mediaDevices?.getUserMedia){
+    navigator.mediaDevices.getUserMedia({audio:true}).catch(()=>{});
+  }
+  voiceMode = true;
+  const btn = document.getElementById('mic-btn');
+  btn.textContent = '🔴';
+  btn.classList.add('recording');
+  const vi = document.getElementById('voice-indicator');
+  if(vi){ vi.style.display='block'; vi.textContent='🎙️ 连续对话中...'; }
+  startListeningLoop();
+}
+
+function stopVoiceMode(){
+  voiceMode = false;
+  recognition?.stop();
+  window.speechSynthesis.cancel();
+  const btn = document.getElementById('mic-btn');
+  btn.textContent = '🎤';
+  btn.classList.remove('recording');
+  const vi = document.getElementById('voice-indicator');
+  if(vi) vi.style.display='none';
+}
+
+function startListeningLoop(){
+  if(!voiceMode) return;
+  const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.lang = 'zh-CN';
+  recognition.continuous = false; // 每段识别完整语句
+  recognition.interimResults = true; // 实时显示中间结果
+
+  recognition.onstart = () => {
+    isRecording = true;
+    isUserSpeaking = false;
+    updateVoiceStatus('👂 听着...');
+  };
+
+  recognition.onspeechstart = () => {
+    isUserSpeaking = true;
+    // 用户开始说话，立即打断Bot
+    if(isSpeaking){
+      window.speechSynthesis.cancel();
+      isSpeaking = false;
+    }
+    updateVoiceStatus('🗣️ 说话中...');
+  };
+
+  recognition.onspeechend = () => {
+    isUserSpeaking = false;
+    updateVoiceStatus('⏳ 理解中...');
+  };
+
+  recognition.onresult = (e) => {
+    // 实时显示中间结果
+    const interim = Array.from(e.results)
+      .map(r => r[0].transcript).join('');
+    document.getElementById('chat-input').value = interim;
+
+    // 最终结果才发送
+    if(e.results[e.results.length-1].isFinal){
+      const finalText = interim.trim();
+      if(finalText){
+        document.getElementById('chat-input').value = '';
+        sendVoiceMessage(finalText);
+      }
+    }
+  };
+
+  recognition.onend = () => {
+    isRecording = false;
+    // Bot说话时不重启监听，说完再重启
+    if(voiceMode && !isSpeaking){
+      setTimeout(startListeningLoop, 300);
+    }
+  };
+
+  recognition.onerror = (e) => {
+    if(e.error === 'no-speech' && voiceMode){
+      setTimeout(startListeningLoop, 500);
+    }
+  };
+
+  try { recognition.start(); } catch(e){}
+}
+
+function updateVoiceStatus(text){
+  const vi = document.getElementById('voice-indicator');
+  if(vi) vi.textContent = text;
+}
+
+async function sendVoiceMessage(text){
+  addMsg(text, true);
+  aiHistory.push({role:'user', content:text});
+  if(currentRole==='passenger') extractInfo(text);
+
+  const typing = addTyping();
+  updateVoiceStatus('💭 思考中...');
+
+  try{
+    const prompt = currentRole==='driver' ? buildDriverPrompt() : buildPrompt();
+    const res = await fetch('/api/chat',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({system:prompt, messages:aiHistory})
+    });
+    const data = await res.json();
+    const reply = data.content?.[0]?.text || '请再说一遍';
+    aiHistory.push({role:'assistant', content:reply});
+    if(aiHistory.length>20) aiHistory=aiHistory.slice(-20);
+    typing.remove();
+
+    const actionMatch = reply.match(/\[ACTION:\s*(\w+)\s*(\w+)?\]/);
+    const clean = reply.replace(/\[ACTION:.*?\]/,'').trim();
+    addMsg(clean);
+
+    // 语音播报，播完后重启监听
+    isSpeaking = true;
+    updateVoiceStatus('🔊 回答中...');
+    speakAndResume(clean, ()=>{
+      isSpeaking = false;
+      if(voiceMode) {
+        updateVoiceStatus('👂 听着...');
+        startListeningLoop();
+      }
+    });
+
+    if(actionMatch){
+      await delay(800);
+      handleAction(actionMatch[1], actionMatch[2]);
+    }
+  } catch(e){
+    typing.remove();
+    addMsg('错误：'+e.message);
+    isSpeaking = false;
+    if(voiceMode) startListeningLoop();
+  }
+}
+
+function speakAndResume(text, onDone){
+  if(!window.speechSynthesis){ onDone && onDone(); return; }
+  window.speechSynthesis.cancel();
+  const clean = text.replace(/<[^>]*>/g,'').trim();
+  if(!clean){ onDone && onDone(); return; }
+  const u = new SpeechSynthesisUtterance(clean);
+  u.lang='zh-CN'; u.rate=1.05; u.pitch=1.1;
+  const voices = window.speechSynthesis.getVoices();
+  const cn = voices.filter(v=>v.lang==='zh-CN');
+  if(cn.length>0) u.voice = cn.find(v=>/female|女|Ting/i.test(v.name))||cn[cn.length-1];
+  u.onend = () => { onDone && onDone(); };
+  u.onerror = () => { onDone && onDone(); };
+  window.speechSynthesis.speak(u);
 }
 
 // ── 身份和数据 ──
@@ -688,7 +844,8 @@ async function sendMessage(){
 
     const actionMatch=reply.match(/\[ACTION:\s*(\w+)\s*(\w+)?\]/);
     const clean=reply.replace(/\[ACTION:.*?\]/,'').trim();
-    addMsg(clean);speak(clean);
+    addMsg(clean);
+    if(!voiceMode) speak(clean); // 语音模式下由sendVoiceMessage处理
 
     if(actionMatch){
       await delay(800);
