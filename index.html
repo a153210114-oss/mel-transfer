@@ -262,6 +262,12 @@ let currentRole = null; // 'passenger' | 'driver'
 let currentGender = null; // 'male' | 'female'
 let agentEmoji = '👩‍✈️'; // 默认小本
 let agentName = '小本';
+window._ttsVoice = 'FunAudioLLM/CosyVoice2-0.5B:diana';
+// 恢复已存性别
+(function(){
+  const g = localStorage.getItem('au_gender');
+  if(g === 'female'){ agentEmoji='🧑‍✈️'; agentName='小墨'; window._ttsVoice='FunAudioLLM/CosyVoice2-0.5B:charles'; }
+})();
 let aiHistory = [];
 let isRecording = false;
 let recognition = null;
@@ -452,7 +458,7 @@ async function speak(text) {
   try {
     const res = await fetch('/api/tts', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ text: clean })
+      body: JSON.stringify({ text: clean, voice: window._ttsVoice||'FunAudioLLM/CosyVoice2-0.5B:diana' })
     });
     if(!res.ok) return;
     const data = await res.json();
@@ -612,6 +618,8 @@ async function sendVoiceMessage(text){
 
     // 从AI回复里补提取时间/地址/方向（AI可能复述了用户说的信息）
     extractInfo(reply);
+    // 智能识别用户性别
+    detectUserGender(text);
     
     // 提取用户画像
     extractProfileFromChat(text, reply);
@@ -658,7 +666,7 @@ async function speakAndResume(text, onDone) {
   try {
     const res = await fetch('/api/tts', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ text: clean })
+      body: JSON.stringify({ text: clean, voice: window._ttsVoice||'FunAudioLLM/CosyVoice2-0.5B:diana' })
     });
     if(!res.ok){ onDone && onDone(); return; }
     const data = await res.json();
@@ -700,13 +708,56 @@ function guessGender(name){
   return null;
 }
 
-// 根据用户性别决定管家性别（异性）
+// 根据用户性别决定管家性别（异性）+ TTS音色
 function setAgentByUserGender(userGender){
-  currentGender=userGender;
+  if(currentGender === userGender) return; // 没变就不动
+  currentGender = userGender;
+  localStorage.setItem('au_gender', userGender);
   if(userGender==='female'){
-    agentEmoji='🧑‍✈️';agentName='小墨';
+    agentEmoji='🧑‍✈️'; agentName='小墨';
+    window._ttsVoice = 'FunAudioLLM/CosyVoice2-0.5B:charles'; // 男声
   } else {
-    agentEmoji='👩‍✈️';agentName='小本';
+    agentEmoji='👩‍✈️'; agentName='小本';
+    window._ttsVoice = 'FunAudioLLM/CosyVoice2-0.5B:diana'; // 女声
+  }
+  // 更新顶部头像
+  const av = document.getElementById('agent-avatar');
+  const nm = document.getElementById('agent-name');
+  if(av) av.textContent = agentEmoji;
+  if(nm) nm.textContent = agentName + ' · 在线';
+}
+
+// 智能识别用户性别
+function detectUserGender(text){
+  const saved = localStorage.getItem('au_gender');
+  if(saved) return; // 已确认，不再覆盖
+
+  // 1. 明确声明
+  if(/我是男|本人男|男生|男士|先生|老爷们/.test(text)){
+    setAgentByUserGender('male'); return;
+  }
+  if(/我是女|本人女|女生|女士|小姐|姐姐|妹妹/.test(text)){
+    setAgentByUserGender('female'); return;
+  }
+
+  // 2. 名字推断（登录后的姓名）
+  const p = getPassenger();
+  if(p.name){
+    if(/[丽芳梅红霞燕玲娟秀英华兰凤莲慧云珍]/.test(p.name)){
+      setAgentByUserGender('female'); return;
+    }
+    if(/[军强明伟刚勇磊峰超杰涛波宇龙斌]/.test(p.name)){
+      setAgentByUserGender('male'); return;
+    }
+  }
+
+  // 3. 语气词推断（弱信号，仅作初始化）
+  const femaleWords = /嗯嗯|好呀|好的呀|哎呀|宝宝|老公|我家先生/;
+  const maleWords = /哥们|老铁|兄弟|媳妇|老婆|我家小孩他妈/;
+  if(femaleWords.test(text) && !maleWords.test(text)){
+    setAgentByUserGender('female');
+  } else if(maleWords.test(text) && !femaleWords.test(text)){
+    setAgentByUserGender('male');
   }
 }
 

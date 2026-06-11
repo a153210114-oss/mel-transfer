@@ -616,8 +616,9 @@ async function speak(text){
   if(!clean)return;
   stopTTS();
   try{
+    const voice=window._ttsVoice||(localStorage.getItem('au_gender')==='female'?'FunAudioLLM/CosyVoice2-0.5B:charles':'FunAudioLLM/CosyVoice2-0.5B:diana');
     const res=await fetch('/api/tts',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({text:clean})});
+      body:JSON.stringify({text:clean,voice})});
     if(!res.ok)return;
     const data=await res.json();
     if(!data.audio)return;
