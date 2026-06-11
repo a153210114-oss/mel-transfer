@@ -618,6 +618,10 @@ async function sendVoiceMessage(text){
 
     // 从AI回复里补提取时间/地址/方向（AI可能复述了用户说的信息）
     extractInfo(reply);
+    // 检测AI是否在引导地址输入→显示粘贴快捷卡
+    if(/复制.*地址|粘贴.*地址|地址.*输入框|把地址|copy.*address/i.test(reply)){
+      showPasteAddressHint();
+    }
     // 智能识别用户性别
     detectUserGender(text);
 
@@ -1150,6 +1154,12 @@ A：创始合伙人永久3倍积分加成，平台越大积分越值钱，就像
 送机：问"几点要司机到门口"
 接机：问"几点出关上车"（不说"落地时间"）
 
+【地址困难处理】
+当用户说不清地址、地址说错、地址是中文描述时：
+1. 先试GPS定位："我帮您定位一下，您现在在目的地吗？"→触发[ACTION: gps_locate]
+2. 如果不在目的地："您可以把地址复制到输入框发给我，或者告诉我附近的标志性建筑"
+3. 绝对不要让用户反复拼读英文地址，一次说不清就换方式
+
 【8种场景示例】
 场景1·送机完整信息
 用户：明天早上7点送我去机场，从Box Hill出发
@@ -1336,6 +1346,9 @@ async function handleAction(action,param){
     } else {
       showVehicleCards();
     }
+  } else if(action==='gps_locate'){
+    // AI引导GPS定位目的地
+    await gpsConfirmAddress('destination');
   } else if(action==='goto'){
     const map={plaza:'plaza.html',driver:'driver-app.html'};
     if(map[param])setTimeout(()=>window.location.href=map[param],800);
@@ -1579,6 +1592,58 @@ async function calcDistanceSurcharge(address, direction) {
   } catch(e) { return 0; }
 }
 
+
+// ── 粘贴地址快捷提示卡 ──
+function showPasteAddressHint(){
+  // 避免重复显示
+  if(document.getElementById('paste-addr-hint')) return;
+  const div = document.createElement('div');
+  div.id = 'paste-addr-hint';
+  div.className = 'confirm-card';
+  div.style.cssText = 'border:1.5px solid rgba(0,212,255,0.3);';
+  div.innerHTML = `
+    <div style="font-size:13px;color:rgba(255,255,255,0.7);margin-bottom:12px;">
+      📋 地址说不清楚？试试这几个方法：
+    </div>
+    <button onclick="pasteAndFocus()" style="width:100%;padding:11px;background:rgba(0,150,199,0.2);
+      border:1px solid rgba(0,150,199,0.4);border-radius:10px;color:white;font-size:14px;
+      font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:8px;">
+      📋 从手机粘贴地址
+    </button>
+    <button onclick="gpsConfirmAddress('destination');this.closest('.confirm-card').remove();"
+      style="width:100%;padding:11px;background:rgba(39,174,96,0.15);
+      border:1px solid rgba(39,174,96,0.3);border-radius:10px;color:rgba(255,255,255,0.8);
+      font-size:13px;cursor:pointer;font-family:inherit;margin-bottom:8px;">
+      📍 用GPS定位我现在的位置
+    </button>
+    <div style="font-size:12px;color:rgba(255,255,255,0.35);text-align:center;">
+      或者告诉我附近的购物中心/学校名称
+    </div>`;
+  chatArea.appendChild(div);
+  scrollBottom();
+}
+
+async function pasteAndFocus(){
+  try{
+    const text = await navigator.clipboard.readText();
+    if(text && text.trim().length > 3){
+      document.getElementById('chat-input').value = text.trim();
+      document.getElementById('paste-addr-hint')?.remove();
+      // 自动发送
+      sendMessage();
+    } else {
+      document.getElementById('chat-input').focus();
+      document.getElementById('paste-addr-hint')?.remove();
+    }
+  } catch(e){
+    // 没有剪贴板权限，聚焦输入框让用户手动粘贴
+    const input = document.getElementById('chat-input');
+    input.focus();
+    input.placeholder = '长按这里粘贴地址...';
+    document.getElementById('paste-addr-hint')?.remove();
+    speak('请长按输入框，选择粘贴');
+  }
+}
 
 // ── GPS定位确认地址 ──
 async function gpsConfirmAddress() {
