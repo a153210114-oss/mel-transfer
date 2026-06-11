@@ -336,39 +336,89 @@ function saveProfile(updates){
 }
 
 // AI提取用户信息并存入画像
-async function extractProfileFromChat(userMsg, botReply){
-  const profile = getProfile();
-  // 简单规则提取（不需要额外API调用）
-  
-  // 地址
-  const addrMatch = userMsg.match(/我住([^，。！？\s]{5,30})/);
+async // ── 用户画像自动化升级系统 ──
+function extractProfileFromChat(userMsg, botReply){
+  const p = getProfile();
+  const now = new Date().toISOString();
+  const combined = userMsg + ' ' + (botReply||'');
+
+  // ── 1. 地址学习（多次出现自动升级为常用地址）──
+  const addrMatch = userMsg.match(/我住([^，。！？\s,]{5,30})/);
   if(addrMatch) saveProfile({home_address: addrMatch[1]});
-  
-  // 家庭人数
-  const familyMatch = userMsg.match(/我们?([2-9]|[一两三四五六七八九十]+)个人/);
-  if(familyMatch){
-    const numMap={'两':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10};
-    const n = parseInt(familyMatch[1]) || numMap[familyMatch[1]];
-    if(n) saveProfile({family_size: n});
+
+  // ── 2. 行程历史计数（自动识别高频用户）──
+  const tripCount = (p.trip_count||0) + (S.direction ? 1 : 0);
+  if(S.direction) saveProfile({trip_count: tripCount, last_trip_at: now});
+
+  // ── 3. 出发时间规律（统计早/中/晚偏好）──
+  if(S.time){
+    const h = parseInt(S.time.split(':')[0]);
+    const timePref = h < 10 ? 'early_morning' : h < 14 ? 'morning' : h < 19 ? 'afternoon' : 'evening';
+    const timeCount = p.time_counts || {};
+    timeCount[timePref] = (timeCount[timePref]||0) + 1;
+    // 超过3次同一时段→升级为偏好
+    const maxPref = Object.entries(timeCount).sort((a,b)=>b[1]-a[1])[0];
+    saveProfile({time_counts: timeCount, preferred_time: maxPref?.[0]});
   }
 
-  // 偏好车型
-  if(/8座|八座|商务车|mpv/i.test(userMsg)) saveProfile({preferred_vehicle:'comfort_8'});
-  if(/5座|五座|轿车|sedan/i.test(userMsg)) saveProfile({preferred_vehicle:'comfort_5'});
-  if(/奔驰|豪华|高档/i.test(userMsg)) saveProfile({preferred_vehicle:'luxury'});
+  // ── 4. 车型偏好（选车行为自动记录）──
+  if(S.vehicle) {
+    const vCount = p.vehicle_counts || {};
+    vCount[S.vehicle] = (vCount[S.vehicle]||0) + 1;
+    const maxV = Object.entries(vCount).sort((a,b)=>b[1]-a[1])[0];
+    saveProfile({vehicle_counts: vCount, preferred_vehicle: maxV?.[0]});
+  }
 
-  // 出行习惯
-  if(/早点|早一点|提前/i.test(userMsg)) saveProfile({prefers_early: true});
-  if(/经常.*机场|常跑机场/i.test(userMsg)) saveProfile({frequent_airport: true});
+  // ── 5. 家庭画像（关键词触发，一次性升级）──
+  const numMap={'两':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10};
+  const famMatch = userMsg.match(/我们?([2-9]|[两三四五六七八九十]+)个人/);
+  if(famMatch){ const n=parseInt(famMatch[1])||numMap[famMatch[1]]; if(n) saveProfile({family_size:n}); }
+  if(!p.has_spouse && /老婆|太太|妻子|老公|先生|丈夫/.test(combined)) saveProfile({has_spouse:true});
+  if(!p.has_kids && /小孩|孩子|儿子|女儿|宝宝/.test(combined)) saveProfile({has_kids:true});
+  if(!p.has_elders && /爸妈|父母|老人|爷爷|奶奶/.test(combined)) saveProfile({has_elders:true});
 
-  // 航班信息
+  // ── 6. 出行场景偏好（接机/送机/包车比例）──
+  if(S.direction || S.trip_type==='charter'){
+    const sceneCount = p.scene_counts || {};
+    const scene = S.trip_type==='charter' ? 'charter' : S.direction;
+    sceneCount[scene] = (sceneCount[scene]||0) + 1;
+    saveProfile({scene_counts: sceneCount});
+  }
+
+  // ── 7. 航班信息 ──
   const flightMatch = userMsg.match(/([A-Z]{2}\d{3,4})/i);
   if(flightMatch) saveProfile({last_flight: flightMatch[0].toUpperCase()});
 
-  // 家庭成员
-  if(/老婆|太太|妻子/.test(userMsg)) saveProfile({has_spouse: true});
-  if(/小孩|孩子|儿子|女儿/.test(userMsg)) saveProfile({has_kids: true});
-  if(/爸妈|父母|老人/.test(userMsg)) saveProfile({has_elders: true});
+  // ── 8. 高频用户标签自动升级 ──
+  if(tripCount >= 3 && !p.is_frequent) saveProfile({is_frequent: true});
+  if(tripCount >= 10 && !p.is_vip) saveProfile({is_vip: true});
+
+  // ── 9. 习惯推断：早机/提前偏好 ──
+  if(/早点|早一点|提前|宁早勿晚/.test(combined)) saveProfile({prefers_early: true});
+  if(/经常.*机场|常跑机场|每个月|每周/.test(combined)) saveProfile({frequent_airport: true});
+}
+
+// 画像注入Prompt（让AI知道用户是谁）
+function buildProfileContext(){
+  const p = getProfile();
+  if(!p || Object.keys(p).length === 0) return '';
+  let ctx = '';
+  if(p.is_vip) ctx += '\n⭐ VIP用户（已完成10+次订单），直接叫"老朋友"。';
+  else if(p.is_frequent) ctx += '\n👤 老用户（已完成3+次订单）。';
+  if(p.preferred_vehicle) ctx += `\n常用车型：${p.preferred_vehicle}，选车时优先展示。`;
+  if(p.preferred_time){
+    const timeLabel = {early_morning:'清晨（6-10点）',morning:'上午（10-14点）',afternoon:'下午（14-19点）',evening:'晚上（19点后）'};
+    ctx += `\n出行习惯：偏好${timeLabel[p.preferred_time]||p.preferred_time}出发。`;
+  }
+  if(p.family_size) ctx += `\n通常${p.family_size}人出行。`;
+  if(p.has_kids) ctx += '\n有小孩同行，注意安全座椅提示。';
+  if(p.has_elders) ctx += '\n有老人同行，建议宽敞车型。';
+  if(p.frequent_airport) ctx += '\n高频机场用户，可直接问日期时间。';
+  if(p.scene_counts){
+    const topScene = Object.entries(p.scene_counts).sort((a,b)=>b[1]-a[1])[0];
+    if(topScene) ctx += `\n最常用服务：${topScene[0]==='to_airport'?'送机':topScene[0]==='from_airport'?'接机':'包车'}。`;
+  }
+  return ctx;
 }
 
 // 构建个性化问候
@@ -992,6 +1042,7 @@ function buildPrompt(){
 
 地址规则：`;
   if(saved.name)p+=`\n用户：${saved.name}，称呼"${saved.name}主人"。`;
+  p+=buildProfileContext();
   if(addrs.length>0)p+=`\n常用地址：${addrs[0]}。说"回家"直接用。`;
   return p;
 }
