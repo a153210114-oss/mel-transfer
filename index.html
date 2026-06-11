@@ -763,7 +763,7 @@ function extractInfo(msg){
   if(kmMatch){S.charter_km=parseInt(kmMatch[1]);S.charter_hours=Math.max(4,Math.ceil(S.charter_km/50));}
 }
 
-function handleAction(action,param){
+async function handleAction(action,param){
   if(action==='show_vehicles'){
     if(param==='charter')S.trip_type='charter';
     else if(param)S.direction=param;
