@@ -300,6 +300,32 @@ body{
   border-radius:20px;padding:8px 18px;font-size:13px;
   z-index:500;display:none;white-space:nowrap;
 }
+
+/* ── 底部导航 ── */
+.bottom-nav{
+  display:flex;
+  background:#0d1f3c;
+  border-top:1px solid rgba(255,255,255,0.08);
+  flex-shrink:0;
+}
+.nav-item{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  padding:8px 4px 10px;gap:3px;cursor:pointer;
+  font-size:10px;color:rgba(255,255,255,0.4);
+  border:none;background:none;font-family:inherit;
+}
+.nav-item.active{color:#00d4ff;}
+.nav-icon{font-size:20px;line-height:1;}
+.nav-badge-dot{
+  position:relative;display:inline-block;
+}
+.nav-badge-dot::after{
+  content:'';position:absolute;top:-2px;right:-4px;
+  width:7px;height:7px;border-radius:50%;
+  background:#ff4d6d;border:1.5px solid #0d1f3c;
+  display:none;
+}
+.nav-badge-dot.has-badge::after{display:block;}
 </style>
 </head>
 <body>
@@ -402,6 +428,19 @@ body{
   <button class="send-btn" onclick="sendMessage()">➤</button>
 </div>
 
+<!-- 底部导航 -->
+<div class="bottom-nav">
+  <button class="nav-item active" onclick="switchTab('orders')">
+    <span class="nav-icon">📋</span>订单
+  </button>
+  <button class="nav-item" onclick="switchTab('messages')">
+    <span class="nav-icon nav-badge-dot" id="msg-badge">📨</span>消息
+  </button>
+  <button class="nav-item" onclick="openProfile()">
+    <span class="nav-icon">👤</span>我的
+  </button>
+</div>
+
 <!-- 个人中心侧边栏 -->
 <div class="profile-overlay" id="profile-overlay" onclick="closeProfile(event)">
   <div class="profile-panel">
@@ -481,13 +520,9 @@ body{
     <div style="text-align:center;font-size:52px;margin-bottom:10px;">✅</div>
     <div style="text-align:center;font-size:22px;font-weight:900;color:var(--text);margin-bottom:6px;">预约已提交！</div>
     <div style="text-align:center;font-size:13px;color:var(--text2);margin-bottom:20px;">订单号：<span id="suc-id" style="font-weight:700;color:var(--text);"></span></div>
-    <div style="background:#f0f7ff;border-radius:14px;padding:16px;margin-bottom:14px;">
-      <div style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:10px;">💰 付款方式</div>
-      <div style="font-size:13px;color:var(--text2);line-height:1.9;">
-        💚 微信转账：<strong style="color:var(--text);">DIVE-DING</strong><br>
-        💳 到车付款<br>
-        🏦 银行转账请联系客服<br>
-        📞 <strong style="color:var(--text);">0449 251 218</strong>
+    <div style="background:#f0f9ff;border-radius:14px;padding:16px;margin-bottom:14px;text-align:center;">
+      <div style="font-size:14px;color:var(--text2);line-height:1.8;">
+        💬 司机确认后会通过平台消息联系您<br>请与司机确认费用并完成付款
       </div>
     </div>
     <button onclick="addToHome()" style="width:100%;padding:13px;background:var(--bg);border:none;border-radius:14px;font-size:14px;font-weight:700;color:var(--text2);cursor:pointer;margin-bottom:10px;">📱 添加到手机桌面，下次一秒打开</button>
@@ -650,6 +685,16 @@ document.addEventListener('touchstart',resetIdle);
 document.addEventListener('keydown',resetIdle);
 
 // ── 退出对话 ──
+function switchTab(tab){
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  if(tab==='orders'){
+    openProfile(); // 个人中心里已有历史订单
+  } else if(tab==='messages'){
+    speak('消息功能即将上线，司机确认订单后会在这里通知您');
+  }
+}
+
 function exitChat(){
   window.speechSynthesis.cancel();
   window.location.href='index.html';
@@ -681,7 +726,7 @@ function buildSystemPrompt(){
 
 价格（墨尔本机场25km内）：Sedan $70（1-3人）、MPV $90（4-6人）、大型MPV $120（7-9人）、Van $160（10人+）
 陪同接机额外等候费：$20/小时
-支付：微信、到车付款、银行转账
+支付：线下与司机确认后付款
 
 收集到所有信息后说"好的信息齐了！帮你看看车型"`;
 
