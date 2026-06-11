@@ -620,6 +620,27 @@ async function sendVoiceMessage(text){
     extractInfo(reply);
     // 智能识别用户性别
     detectUserGender(text);
+
+    // 联系方式收集模式：从语音里提取姓名和电话
+    if(window._contactListening){
+      const phoneMatch = text.match(/0[45]\d{8}|\d{4}\s?\d{3}\s?\d{3}/);
+      const nameMatch = text.match(/(?:我叫|姓名|称呼|叫我|我是)\s*([^\s，。！？]{2,5})/)||
+                        (text.length<=5 && !phoneMatch ? [null, text.trim()] : null);
+      if(phoneMatch){
+        document.getElementById('c-phone').value = phoneMatch[0].replace(/\s/g,'');
+      }
+      if(nameMatch && nameMatch[1]){
+        document.getElementById('c-name').value = nameMatch[1];
+      }
+      // 如果姓名和电话都有了，自动提交
+      const name = document.getElementById('c-name')?.value.trim();
+      const phone = document.getElementById('c-phone')?.value.trim();
+      if(name && phone){
+        window._contactListening = false;
+        await delay(500);
+        await submitFromForm();
+      }
+    }
     
     // 提取用户画像
     extractProfileFromChat(text, reply);
@@ -958,7 +979,23 @@ function showServiceCards(){
 }
 
 function gotoPassenger(type){
-  window.location.href=`passenger-recruit.html?type=${type}`;
+  // 把AI收集的信息带过去，passenger-recruit自动填入
+  const params = new URLSearchParams();
+  params.set('type', type);
+  if(S.date) params.set('date', S.date);
+  if(S.time) params.set('time', S.time);
+  if(S.address) params.set('address', encodeURIComponent(S.address));
+  if(S.vehicle) params.set('vehicle', S.vehicle);
+  if(S.price) params.set('price', S.price);
+  if(S.base_price) params.set('base_price', S.base_price);
+  if(S.surcharge) params.set('surcharge', S.surcharge);
+  if(S.distance_km) params.set('distance_km', S.distance_km);
+  if(S.trip_type) params.set('trip_type', S.trip_type);
+  if(S.charter_hours) params.set('charter_hours', S.charter_hours);
+  if(S.wait_hours) params.set('wait_hours', S.wait_hours);
+  const ref = sessionStorage.getItem('incoming_ref');
+  if(ref) params.set('ref', ref);
+  window.location.href = 'passenger-recruit.html?' + params.toString();
 }
 
 // ── 司机模式选择 ──
@@ -1409,19 +1446,24 @@ function restartBooking(){S.direction=null;S.address=null;S.date=null;S.time=nul
 async function showContactStep(){
   const saved=getPassenger();
   if(saved.name&&saved.phone){S.name=saved.name;S.phone=saved.phone;S.wechat=saved.wechat||'';await submitBooking();return;}
-  await agentSay('最后填一下联系方式',400);
+
+  // 新用户：AI语音问，用户语音答，同时显示小表单备用
+  await agentSay('快好了！请问怎么称呼您，方便联系的手机号是多少？',400);
+
   const div=document.createElement('div');div.className='confirm-card';
+  const title = localStorage.getItem('au_gender')==='female'?'小姐':'先生';
   div.innerHTML=`
-    <div style="font-size:14px;font-weight:900;color:white;margin-bottom:12px;">📱 联系方式</div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:10px;">也可以直接填写 👇</div>
     <div style="display:flex;flex-direction:column;gap:10px;">
-      <input id="c-name" placeholder="称呼/姓名" style="background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.12);border-radius:10px;padding:10px 14px;color:white;font-size:14px;font-family:inherit;outline:none;" value="${saved.name||''}">
-      <input id="c-phone" placeholder="澳洲手机号" type="tel" style="background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.12);border-radius:10px;padding:10px 14px;color:white;font-size:14px;font-family:inherit;outline:none;" value="${saved.phone||''}">
-      <input id="c-wechat" placeholder="微信号（选填）" style="background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.12);border-radius:10px;padding:10px 14px;color:white;font-size:14px;font-family:inherit;outline:none;" value="${saved.wechat||''}">
+      <input id="c-name" placeholder="姓名/称呼" style="background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.12);border-radius:10px;padding:11px 14px;color:white;font-size:15px;font-family:inherit;outline:none;" value="${saved.name||''}">
+      <input id="c-phone" placeholder="澳洲手机号" type="tel" style="background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.12);border-radius:10px;padding:11px 14px;color:white;font-size:15px;font-family:inherit;outline:none;" value="${saved.phone||''}">
+      <input id="c-wechat" placeholder="微信号（选填，方便司机联系）" style="background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.12);border-radius:10px;padding:11px 14px;color:white;font-size:14px;font-family:inherit;outline:none;" value="${saved.wechat||''}">
     </div>
     <button onclick="submitFromForm()" style="width:100%;margin-top:14px;padding:14px;background:linear-gradient(135deg,#0096c7,#0077a0);color:white;border:none;border-radius:12px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;">🚀 确认预约</button>`;
-  // 初始化地址自动补全
-  setTimeout(()=>initAddressAutocomplete(), 300);
   chatArea.appendChild(div);scrollBottom();
+
+  // 监听下一条语音消息，尝试自动提取姓名和电话
+  window._contactListening = true;
 }
 
 async function submitFromForm(){

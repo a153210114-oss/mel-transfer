@@ -2404,33 +2404,63 @@ async function checkNewOrders() {
   } catch(e) { console.error('刷新检查失败', e); }
 }
 
-function showNewOrderBanner(count) {
-  // 震动（手机端）
-  if (navigator.vibrate) {
-    navigator.vibrate([200, 100, 200, 100, 400]);
-  }
+async function showNewOrderBanner(count) {
+  if(navigator.vibrate) navigator.vibrate([200,100,200,100,400]);
   const existing = document.getElementById('new-order-banner');
-  if (existing) existing.remove();
+  if(existing) existing.remove();
 
-  const banner = document.createElement('div');
-  banner.id = 'new-order-banner';
-  banner.style.cssText = `
-    position:fixed; top:0; left:50%; transform:translateX(-50%);
-    width:100%; max-width:430px;
-    background:linear-gradient(135deg,#00c896,#00a87a);
-    color:#fff; text-align:center;
-    padding:14px 20px; font-size:15px; font-weight:700;
-    z-index:999; cursor:pointer;
-    box-shadow:0 4px 20px rgba(0,200,150,0.4);
-    animation: slideDown 0.3s ease;
+  // 拉取最新一条pending订单摘要
+  let trip = null;
+  try{
+    const today = new Date().toISOString().split('T')[0];
+    const trips = await supa(
+      `trips?driver_id=is.null&status=eq.pending&scheduled_at=gte.${today}T00:00:00&tenant_id=eq.${TENANT_ID}&order=scheduled_at.asc&limit=1`
+    );
+    if(trips && trips.length) trip = trips[0];
+  }catch(e){}
+
+  const timeStr = trip?.scheduled_at ? new Date(trip.scheduled_at).toLocaleString('zh-CN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '--';
+  const dirText = trip?.trip_type==='charter'?'包车':trip?.direction==='to_airport'?'送机':'接机';
+  const priceStr = trip?.total_price ? `AUD ${trip.total_price}` : '--';
+  const addrStr = trip?.pickup_address||trip?.address||'--';
+
+  const overlay = document.createElement('div');
+  overlay.id = 'new-order-banner';
+  overlay.style.cssText = `
+    position:fixed;inset:0;background:rgba(0,0,0,0.75);
+    z-index:9999;display:flex;align-items:center;justify-content:center;
+    animation:fadeIn 0.2s ease;
   `;
-  banner.innerHTML = `🔔 有 ${count} 个新订单！点击查看`;
-  setTimeout(()=>speakDriver(`师傅，有${count}个新订单，请查看`), 500);
-  banner.onclick = () => { banner.remove(); loadHome(); };
-  document.body.appendChild(banner);
+  overlay.innerHTML = `
+    <div style="background:linear-gradient(135deg,#0d1f3c,#0a2840);border:2px solid rgba(0,200,150,0.4);
+      border-radius:24px;padding:28px 24px;width:88%;max-width:380px;text-align:center;">
+      <div style="font-size:36px;margin-bottom:8px;">🔔</div>
+      <div style="font-size:18px;font-weight:900;color:#00c896;margin-bottom:4px;">新订单！</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:20px;">共 ${count} 个待接订单</div>
+      <div style="background:rgba(255,255,255,0.05);border-radius:14px;padding:14px;margin-bottom:20px;text-align:left;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+          <span style="color:rgba(255,255,255,0.5);font-size:13px;">${dirText}</span>
+          <span style="color:#00c896;font-weight:800;font-size:15px;">${priceStr}<span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.3);margin-left:4px;">参考</span></span>
+        </div>
+        <div style="font-size:13px;color:white;margin-bottom:4px;">📍 ${addrStr.slice(0,40)}</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.4);">⏰ ${timeStr}</div>
+      </div>
+      <button onclick="document.getElementById('new-order-banner').remove();loadHome();switchPage('home');"
+        style="width:100%;padding:15px;background:linear-gradient(135deg,#00c896,#00a87a);color:white;
+        border:none;border-radius:14px;font-size:16px;font-weight:900;cursor:pointer;font-family:inherit;margin-bottom:10px;">
+        🚗 查看订单
+      </button>
+      <button onclick="document.getElementById('new-order-banner').remove();"
+        style="width:100%;padding:11px;background:none;border:1px solid rgba(255,255,255,0.1);
+        color:rgba(255,255,255,0.4);border-radius:14px;font-size:13px;cursor:pointer;font-family:inherit;">
+        稍后再说
+      </button>
+    </div>`;
 
-  // 5秒后自动消失
-  setTimeout(() => { if (banner.parentNode) banner.remove(); }, 5000);
+  setTimeout(()=>speakDriver(`老板，有${count}个新订单，请查看`), 500);
+  document.body.appendChild(overlay);
+  // 30秒后自动消失
+  setTimeout(()=>{ if(overlay.parentNode) overlay.remove(); }, 30000);
 }
 
 // ── 加载首页 ──
