@@ -1038,6 +1038,7 @@ function showVehicleCards(){
       <div class="v-name">${v.name}</div>
       <div class="v-cap">${v.cap}</div>
       <div class="v-price">$${v.price}</div>
+      <div style="font-size:9px;color:rgba(255,255,255,0.35);margin-top:1px;">参考价</div>
     </div>`).join('');
 
   const ll=document.createElement('div');ll.className='vehicle-group-label gold';ll.textContent='✨ 豪华型';
@@ -1048,6 +1049,7 @@ function showVehicleCards(){
       <div class="v-name">${v.name}</div>
       <div class="v-cap">${v.cap}</div>
       <div class="v-price">$${v.price}</div>
+      <div style="font-size:9px;color:rgba(200,160,32,0.45);margin-top:1px;">参考价</div>
     </div>`).join('');
 
   wrap.appendChild(cl);wrap.appendChild(cg);wrap.appendChild(ll);wrap.appendChild(lg);
@@ -1071,8 +1073,8 @@ async function selectVehicle(type,price,el){
         S.price=price+surcharge;
         // 更新确认卡费用显示
         const feeEl=document.querySelector('.confirm-value[data-fee]');
-        if(feeEl) feeEl.textContent='$'+S.price;
-        await agentSay(`您的地址距机场约${S.distance_km}km，超出${S.distance_km-25}km，附加费$${surcharge}，合计$${S.price}`,400);
+        if(feeEl) feeEl.innerHTML='$'+S.price+'<span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);margin-left:5px;">参考价，与司机线下确认</span>';
+        await agentSay(`您的地址距机场约${S.distance_km}km，超出${S.distance_km-25}km，参考附加费$${surcharge}，参考合计$${S.price}，最终与司机线下确认`,400);
       }
     }
   }
@@ -1104,7 +1106,7 @@ async function showConfirmCard(){
     `:''}
     ${isAcc?`<div class="confirm-row"><span class="confirm-label">等候费</span><span class="confirm-value">$${waitFee}（${S.wait_hours}小时）</span></div>`:''}
     ${S.distance_km?`<div class="confirm-row"><span class="confirm-label">距离</span><span class="confirm-value">${S.distance_km}km${S.surcharge>0?' (超出'+(S.distance_km-25)+'km，附加$'+S.surcharge+')':' (25km内)'}</span></div>`:''}
-    <div class="confirm-row"><span class="confirm-label">费用</span><span class="confirm-value" style="color:rgba(0,212,255,0.9);font-size:18px;font-weight:900;" data-fee>$${total}</span></div>
+    <div class="confirm-row"><span class="confirm-label">费用</span><span class="confirm-value" style="color:rgba(0,212,255,0.9);font-size:18px;font-weight:900;" data-fee>$${total}<span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);margin-left:5px;">参考价，与司机线下确认</span></span></div>
     <div style="margin-top:10px;background:rgba(39,174,96,0.08);border:1px solid rgba(39,174,96,0.2);border-radius:10px;padding:10px 12px;">
       <div style="font-size:12px;color:rgba(255,255,255,0.6);line-height:1.7;">
         💰 付款方式由您与司机直接协商<br>

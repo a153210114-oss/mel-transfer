@@ -1185,7 +1185,7 @@ async function loadAndShowPendingTrips_deprecated() {
         <div style="font-size:12px;color:var(--text2);">${t.pickup_address}</div>
         <div style="display:flex;justify-content:space-between;margin-top:6px;">
           <span style="font-size:12px;color:var(--text3);">${t.vehicle_type||''}</span>
-          <span style="font-size:13px;font-weight:800;color:var(--accent);">$${t.total_price}</span>
+          <span style="font-size:13px;font-weight:800;color:var(--accent);">$${t.total_price}</span><span style="font-size:10px;color:rgba(255,255,255,0.3);margin-left:3px;">参考</span>
         </div>
       </div>`;
     }).join('');
@@ -1242,7 +1242,7 @@ function showTripSelectSheet(trips, title='📋 订单列表') {
               <span style="font-size:12px;color:var(--text2);">${dateStr} ${timeStr}</span>
             </div>
             <div style="font-size:12px;color:var(--text2);margin-bottom:4px;">${t.pickup_address}</div>
-            <div style="text-align:right;font-size:13px;font-weight:800;color:var(--accent);">$${t.total_price}</div>
+            <div style="text-align:right;font-size:13px;font-weight:800;color:var(--accent);">$${t.total_price}<div style="font-size:10px;font-weight:400;color:rgba(255,255,255,0.3);">参考价</div></div>
           </div>
           ${hasDriver?`
           <div style="border-top:1px solid var(--border);margin-top:8px;padding-top:8px;">
@@ -2665,7 +2665,7 @@ function renderTripCard(t, isCurrent=false) {
         <div class="trip-meta-item">🧳 ${t.luggage_count}件</div>
         <div class="trip-meta-item">📍 ${t.distance_km||'?'}km</div>
       </div>
-      <div class="trip-price">$${t.total_price}</div>
+      <div class="trip-price">$${t.total_price}<span style="font-size:10px;font-weight:400;color:rgba(255,255,255,0.35);margin-left:4px;">参考</span></div>
     </div>
   </div>`;
 }
@@ -2972,8 +2972,8 @@ async function loadTripDetail(tripId) {
       <div class="info-block">
         <div class="info-row"><div class="info-key">车型</div><div class="info-val">${t.vehicle_type||'-'}</div></div>
         ${t.surcharge>0?`<div class="info-row"><div class="info-key">附加费</div><div class="info-val">$${t.surcharge}</div></div>`:''}
-        <div class="info-row"><div class="info-key">合计</div><div class="info-val mono accent" style="font-size:16px;font-weight:900;">$${t.total_price}</div></div>
-        <div class="info-row"><div class="info-key">付款</div><div class="info-val">与司机线下结算</div></div>
+        <div class="info-row"><div class="info-key">合计</div><div class="info-val mono accent" style="font-size:16px;font-weight:900;">$${t.total_price}<span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);margin-left:5px;">参考价</span></div></div>
+        <div class="info-row"><div class="info-key">结算</div><div class="info-val" style="color:rgba(255,255,255,0.5);font-size:12px;">与乘客线下确认实收金额</div></div>
       </div>
 
       <!-- 状态 -->
