@@ -304,6 +304,28 @@ function delay(ms){return new Promise(r=>setTimeout(r,ms));}
 async function agentSay(html,ms=700){const t=addTyping();await delay(ms);t.remove();addMsg(html);speak(html);}
 
 
+
+function fixMessageRoles(messages) {
+  // 确保以user开头，且user/assistant交替
+  const fixed = [];
+  let lastRole = null;
+  for (const m of messages) {
+    if (!m.content?.trim()) continue;
+    if (m.role === lastRole) {
+      // 同role合并内容
+      if (fixed.length > 0) {
+        fixed[fixed.length-1].content += '\n' + m.content;
+      }
+    } else {
+      fixed.push({role: m.role, content: m.content});
+      lastRole = m.role;
+    }
+  }
+  // 必须以user开头
+  while (fixed.length > 0 && fixed[0].role !== 'user') fixed.shift();
+  return fixed;
+}
+
 // ── 用户画像 ──
 function getProfile(){ return JSON.parse(localStorage.getItem('au_profile')||'{}'); }
 function saveProfile(updates){
@@ -490,7 +512,7 @@ function updateVoiceStatus(text){
 
 async function sendVoiceMessage(text){
   addMsg(text, true);
-  aiHistory.push({role:'user', content:text});
+  if(text && text.trim()) aiHistory.push({role:'user',content:text.trim()});
   if(currentRole==='passenger') extractInfo(text);
 
   const typing = addTyping();
@@ -498,10 +520,11 @@ async function sendVoiceMessage(text){
 
   try{
     const prompt = currentRole==='driver' ? buildDriverPrompt() : buildPrompt();
+    const cleanHistory = fixMessageRoles(aiHistory.slice(-20));
     const res = await fetch('/api/chat',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({system:prompt, messages:aiHistory})
+      body:JSON.stringify({system:prompt, messages:cleanHistory})
     });
     const data = await res.json();
     const reply = data.content?.[0]?.text || '请再说一遍';
@@ -886,7 +909,7 @@ async function sendMessage(){
   const msg=input.value.trim();if(!msg)return;
   input.value='';
   addMsg(msg,true);
-  aiHistory.push({role:'user',content:msg});
+  if(msg && msg.trim()) aiHistory.push({role:'user',content:msg.trim()});
 
   // 提取信息（仅乘客模式）
   if(currentRole==='passenger') extractInfo(msg);
@@ -894,8 +917,10 @@ async function sendMessage(){
   const typing=addTyping();
   try{
     const prompt = currentRole==='driver' ? buildDriverPrompt() : buildPrompt();
+    // 过滤空消息，确保role交替
+    const cleanHistory = fixMessageRoles(aiHistory.slice(-20));
     const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({system:prompt,messages:aiHistory})});
+      body:JSON.stringify({system:prompt,messages:cleanHistory})});
     const data=await res.json();
     const reply=data.content?.[0]?.text||'请再说一遍';
     window._lastAIReply=reply; // debug
