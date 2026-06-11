@@ -86,7 +86,7 @@ module.exports = async function handler(req, res) {
     const enrichedSystem = await enrichSystemPrompt(system || '', messages);
 
     const response = await client.messages.create({
-      model: 'claude-haiku-4-5',
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 600,
       system: enrichedSystem,
       messages: messages.slice(-12) // 保留最近12条
