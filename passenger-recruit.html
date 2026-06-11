@@ -729,7 +729,7 @@ function buildSystemPrompt(){
 【三种订单类型】
 1. 接机（from_airport）：乘客从机场出来，司机接到目的地
 2. 送机（to_airport）：司机从出发地送乘客去机场
-3. 陪同接机（accompanied）：主人需要司机陪同去机场接客人，再一起回家
+3. 陪同接机（accompanied）：用户需要司机陪同去机场接客人，再一起回家
 
 【时间确认规则】
 送机：若乘客说的是起飞时间，必须问"需要司机几点到您门口？建议起飞前2小时"。记录司机到达时间。
@@ -742,7 +742,7 @@ function buildSystemPrompt(){
 
 收集到所有信息后说"好的信息齐了！帮你看看车型"`;
 
-  if(saved.name)prompt+='\n\n当前用户：'+saved.name+'。称呼时用"'+saved.name+'主人"，体现尊重。';
+  if(saved.name){const _t=localStorage.getItem('au_gender')==='female'?'小姐':'先生';prompt+='\n\n当前用户：'+saved.name+'。称呼"'+saved.name+_t+'"，体现尊重。';}
   if(addrs.length>0)prompt+='\n用户常用地址：'+addrs[0]+'。若用户说"回家""老地址"，直接用此地址，无需再问。';
 
   prompt+=`\n\n【重要】收集到地址后，必须在回复末尾加JSON标记：
@@ -910,7 +910,7 @@ async function submitBooking(){
     // 延迟2秒后烟花出现
     setTimeout(()=>showConfetti(points), 2000);
     // 触发下单成功通知
-    await agentSay(`太好了，${name}主人！预约已提交，司机会尽快确认并联系您 🎉`,300);
+    await agentSay(`太好了，${name}${localStorage.getItem("au_gender")==="female"?"小姐":"先生"}！预约已提交，司机会尽快确认并联系您 🎉`,300);
   }catch(e){
     bookingSubmitted2=false;
     alert('提交遇到问题，请截图联系客服\n'+e.message);
@@ -986,7 +986,7 @@ async function chooseAgent(gender){
   await delay(600);
   resetIdle();
   const saved=getPassenger();
-  const namePrefix=saved.name?saved.name+'主人':'主人';
+  const namePrefix=saved.name?saved.name+(localStorage.getItem("au_gender")==="female"?"小姐":"先生"):'先生';
   await agentSay(`${namePrefix}，您的出行管家来喽！接机、送机、或者陪您去机场接客人，请问今天需要安排哪种服务？`);
 }
 
@@ -1014,7 +1014,7 @@ window.onload=function(){
       S.direction=urlType;
     }
     setTimeout(async()=>{
-      const namePrefix=saved.name?saved.name+'主人':'主人';
+      const namePrefix=saved.name?saved.name+(localStorage.getItem("au_gender")==="female"?"小姐":"先生"):'先生';
       const greet=urlType==='to_airport'?
         `${namePrefix}，送机服务 ✈️ 几号几点出发，从哪里出发？`:
         urlType==='from_airport'?
