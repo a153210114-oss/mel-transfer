@@ -520,7 +520,8 @@ async function sendVoiceMessage(text){
 
   try{
     const prompt = currentRole==='driver' ? buildDriverPrompt() : buildPrompt();
-    const cleanHistory = fixMessageRoles(aiHistory.slice(-20));
+    let cleanHistory = fixMessageRoles(aiHistory.slice(-20));
+    if(cleanHistory.length===0) cleanHistory=[{role:'user',content:text.trim()||'你好'}];
     const res = await fetch('/api/chat',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
@@ -918,7 +919,8 @@ async function sendMessage(){
   try{
     const prompt = currentRole==='driver' ? buildDriverPrompt() : buildPrompt();
     // 过滤空消息，确保role交替
-    const cleanHistory = fixMessageRoles(aiHistory.slice(-20));
+    let cleanHistory = fixMessageRoles(aiHistory.slice(-20));
+    if(cleanHistory.length===0) cleanHistory=[{role:'user',content:msg.trim()||'你好'}];
     const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({system:prompt,messages:cleanHistory})});
     const data=await res.json();
