@@ -592,10 +592,68 @@ function updateVoiceStatus(text){
   if(vi) vi.textContent = text;
 }
 
+// ── 谐音纠错表 ──
+const HOMOPHONES = [
+  // 送机 谐音
+  {wrong:/宋集|送集|宋机|松鸡|松机|颂机|送鸡/g, right:'送机'},
+  // 接机 谐音
+  {wrong:/阶级|接急|姐急|接集|截机|街机|阶机/g, right:'接机'},
+  // 包车 谐音
+  {wrong:/炮车|跑车(?!.*跑车跑车)|抱车|保车|豹车/g, right:'包车'},
+  // 机场 谐音
+  {wrong:/鸡场|机厂|及场/g, right:'机场'},
+  // 墨尔本 谐音
+  {wrong:/墨尔笨|默尔本|莫尔本/g, right:'墨尔本'},
+];
+
+// 方言关键词检测
+const DIALECT_SIGNALS = {
+  cantonese: /系咩|唔係|点解|咁样|几时|而家|喺边|搭车|落机|边度|OK嘅|啱㗎/,
+  hokkien: /哪里去|安怎|遮|欲去叨|叨位/,
+};
+
+function correctHomophones(text){
+  let corrected = text;
+  for(const h of HOMOPHONES){
+    if(h.wrong.test(corrected)){
+      const original = corrected;
+      corrected = corrected.replace(h.wrong, h.right);
+      // 提示用户已纠错
+      if(original !== corrected){
+        window._lastCorrection = {original, corrected, keyword: h.right};
+      }
+    }
+    h.wrong.lastIndex = 0; // 重置regex
+  }
+  return corrected;
+}
+
+function detectDialect(text){
+  if(DIALECT_SIGNALS.cantonese.test(text)) return 'cantonese';
+  if(DIALECT_SIGNALS.hokkien.test(text)) return 'hokkien';
+  return null;
+}
+
 async function sendVoiceMessage(text){
-  addMsg(text, true);
-  if(text && text.trim()) aiHistory.push({role:'user',content:text.trim()});
-  if(currentRole==='passenger') extractInfo(text);
+  // 谐音纠错
+  const corrected = correctHomophones(text);
+  const displayText = corrected !== text ?
+    `${corrected} <span style="font-size:11px;color:rgba(0,212,255,0.6);">（已识别"${text}"→"${corrected}"）</span>` :
+    text;
+  addMsg(displayText, true);
+  if(text && text.trim()) aiHistory.push({role:'user',content:corrected.trim()});
+  if(currentRole==='passenger') extractInfo(corrected);
+
+  // 方言检测
+  const dialect = detectDialect(text);
+  if(dialect && !localStorage.getItem('dialect_noticed')){
+    localStorage.setItem('dialect_noticed', dialect);
+    if(dialect==='cantonese'){
+      setTimeout(()=>agentSay('我听到你用广东话，你可以继续用广东话或普通话跟我说，都OK嘅😊'),500);
+    } else {
+      setTimeout(()=>agentSay('你也可以用习惯的语言跟我说话，普通话、广东话都可以'),500);
+    }
+  }
 
   const typing = addTyping();
   updateVoiceStatus('💭 思考中...');
@@ -1124,6 +1182,18 @@ A：创始合伙人永久3倍积分加成，平台越大积分越值钱，就像
 "圣诞节要带一大家子去菲利普岛？在广场发个包车需求，司机来抢单，价格透明，省去来回沟通的麻烦。"
 
 当用户说"想出去玩/找人拼车/景点/大洋路/菲利普岛/威利士"等，引导去旅游广场：[ACTION: goto plaza]
+
+【语音识别容错——以下谐音已在前端自动纠正，AI直接按纠正后文字处理】
+宋集/送集/松鸡 → 送机
+阶级/姐急/接急/街机 → 接机
+炮车/跑车（送机语境）→ 包车
+如AI仍收到疑似谐音词，主动确认："您说的是送机吗？"
+
+【方言交互】
+- 用户用广东话：用广东话回应，混入"嘅/㗎/咁/而家/搭车/落机"等词，保持亲切
+- 用户用普通话：普通话回应
+- 不确定方言时：普通话为主，可说"你可以用广东话或普通话跟我说，都可以的"
+- 广东话常用词对照：送机=送机、落机=接机、搭车=坐车、边度=哪里、几时=什么时候
 
 【华人词库——自动识别以下说法】
 打飞的/坐飞机/赶飞机 → 送机
