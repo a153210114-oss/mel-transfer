@@ -545,7 +545,7 @@ function speak(text){
   const u=new SpeechSynthesisUtterance(clean);
   u.lang='zh-CN';u.rate=currentAgent?.rate||1.0;u.pitch=currentAgent?.pitch||1.0;
   const voices=window.speechSynthesis.getVoices();
-  const zh=voices.filter(v=>v.lang.startsWith('zh'));
+  const zh=voices.filter(v=>v.lang==='zh-CN');
   if(zh.length>0){
     const g=localStorage.getItem('au_agent')||'male';
     const cnVoices=voices.filter(v=>v.lang==='zh-CN');
@@ -763,13 +763,13 @@ async function showContactForm(){
     <div class="form-field"><label class="form-label">澳洲手机号</label><input class="form-input" id="f-phone" type="tel" placeholder="04XX XXX XXX" value="${saved.phone||''}"></div>
     <div class="form-field"><label class="form-label">微信号（选填）</label><input class="form-input" id="f-wechat" placeholder="微信ID" value="${saved.wechat||''}"></div>
     <div class="form-field"><label class="form-label">付款方式</label>
-      <div class="pay-options">
-        <div class="pay-opt selected" onclick="selPay(this,'wechat')">💚 微信</div>
-        <div class="pay-opt" onclick="selPay(this,'cash')">💳 到车付</div>
-        <div class="pay-opt" onclick="selPay(this,'bank_transfer')">🏦 转账</div>
+      <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px 14px;font-size:13px;color:rgba(255,255,255,0.6);line-height:1.9;">
+        💚 微信转账：<strong style="color:white;">DIVE-DING</strong><br>
+        💳 到车付款<br>
+        🏦 银行转账请联系客服
       </div>
     </div>
-    <button class="submit-btn" onclick="submitBooking()">🚀 确认预约 · 参考$${S.price+(S.trip_type==='accompanied'?S.wait_hours*20:0)}</button>`;
+    <button class="submit-btn" onclick="submitBooking()">🚀 确认预约 · 参考AUD ${S.price+(S.trip_type==='accompanied'?S.wait_hours*20:0)}</button>`;
   chatArea.appendChild(div);scrollBottom();
 }
 
@@ -802,9 +802,9 @@ async function submitBooking(){
       pickup_address:isAcc||S.direction==='to_airport'?S.address:'墨尔本国际机场',
       dropoff_address:isAcc||S.direction==='from_airport'?S.address:'墨尔本国际机场',
       vehicle_type:S.vehicle,scheduled_at:`${S.date}T${S.time}:00`,
-      total_price:finalPrice,payment_method:S.payment,
-      payment_status:S.payment==='bank_transfer'?'pending':'prepaid',
-      prepaid_amount:S.payment!=='bank_transfer'?finalPrice:null,
+      total_price:finalPrice,payment_method:'offline',
+      payment_status:'pending',
+      prepaid_amount:null,
       status:'pending',is_urgent:isUrgent,
       trip_type:S.trip_type,wait_hours:S.wait_hours
     });
