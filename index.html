@@ -303,6 +303,65 @@ function addTyping(){
 function delay(ms){return new Promise(r=>setTimeout(r,ms));}
 async function agentSay(html,ms=700){const t=addTyping();await delay(ms);t.remove();addMsg(html);speak(html);}
 
+
+// ── 用户画像 ──
+function getProfile(){ return JSON.parse(localStorage.getItem('au_profile')||'{}'); }
+function saveProfile(updates){
+  const p = getProfile();
+  Object.assign(p, updates);
+  localStorage.setItem('au_profile', JSON.stringify(p));
+  console.log('画像更新：', updates);
+}
+
+// AI提取用户信息并存入画像
+async function extractProfileFromChat(userMsg, botReply){
+  const profile = getProfile();
+  // 简单规则提取（不需要额外API调用）
+  
+  // 地址
+  const addrMatch = userMsg.match(/我住([^，。！？\s]{5,30})/);
+  if(addrMatch) saveProfile({home_address: addrMatch[1]});
+  
+  // 家庭人数
+  const familyMatch = userMsg.match(/我们?([2-9]|[一两三四五六七八九十]+)个人/);
+  if(familyMatch){
+    const numMap={'两':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10};
+    const n = parseInt(familyMatch[1]) || numMap[familyMatch[1]];
+    if(n) saveProfile({family_size: n});
+  }
+
+  // 偏好车型
+  if(/8座|八座|商务车|mpv/i.test(userMsg)) saveProfile({preferred_vehicle:'comfort_8'});
+  if(/5座|五座|轿车|sedan/i.test(userMsg)) saveProfile({preferred_vehicle:'comfort_5'});
+  if(/奔驰|豪华|高档/i.test(userMsg)) saveProfile({preferred_vehicle:'luxury'});
+
+  // 出行习惯
+  if(/早点|早一点|提前/i.test(userMsg)) saveProfile({prefers_early: true});
+  if(/经常.*机场|常跑机场/i.test(userMsg)) saveProfile({frequent_airport: true});
+
+  // 航班信息
+  const flightMatch = userMsg.match(/([A-Z]{2}\d{3,4})/i);
+  if(flightMatch) saveProfile({last_flight: flightMatch[0].toUpperCase()});
+
+  // 家庭成员
+  if(/老婆|太太|妻子/.test(userMsg)) saveProfile({has_spouse: true});
+  if(/小孩|孩子|儿子|女儿/.test(userMsg)) saveProfile({has_kids: true});
+  if(/爸妈|父母|老人/.test(userMsg)) saveProfile({has_elders: true});
+}
+
+// 构建个性化问候
+function buildPersonalGreeting(){
+  const p = getProfile();
+  const saved = getPassenger();
+  const hints = [];
+  if(p.home_address) hints.push(`住址${p.home_address}`);
+  if(p.family_size) hints.push(`家里${p.family_size}人`);
+  if(p.preferred_vehicle) hints.push(`偏好${p.preferred_vehicle}`);
+  if(p.frequent_airport) hints.push('常跑机场');
+  if(p.has_elders) hints.push('家有老人');
+  return hints.join('，');
+}
+
 // ── 语音 ──
 function speak(text){
   if(!window.speechSynthesis)return;
@@ -449,6 +508,9 @@ async function sendVoiceMessage(text){
     aiHistory.push({role:'assistant', content:reply});
     if(aiHistory.length>20) aiHistory=aiHistory.slice(-20);
     typing.remove();
+    
+    // 提取用户画像
+    extractProfileFromChat(text, reply);
 
     const actionMatch = reply.match(/\[ACTION:\s*(\w+)\s*(\w+)?\]/);
     const clean = reply.replace(/\[ACTION:.*?\]/,'').trim();
@@ -841,6 +903,9 @@ async function sendMessage(){
     aiHistory.push({role:'assistant',content:reply});
     if(aiHistory.length>20)aiHistory=aiHistory.slice(-20);
     typing.remove();
+    
+    // 从对话中提取用户画像
+    extractProfileFromChat(msg, reply);
 
     const actionMatch=reply.match(/\[ACTION:\s*(\w+)\s*(\w+)?\]/);
     const clean=reply.replace(/\[ACTION:.*?\]/,'').trim();
