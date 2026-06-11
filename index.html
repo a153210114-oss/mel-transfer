@@ -559,6 +559,9 @@ async function sendVoiceMessage(text){
     aiHistory.push({role:'assistant', content:reply});
     if(aiHistory.length>20) aiHistory=aiHistory.slice(-20);
     typing.remove();
+
+    // 从AI回复里补提取时间/地址/方向（AI可能复述了用户说的信息）
+    extractInfo(reply);
     
     // 提取用户画像
     extractProfileFromChat(text, reply);
@@ -923,36 +926,69 @@ function buildPrompt(){
   const saved=getPassenger();
   const addrs=getSavedAddresses();
   const yr=new Date().getFullYear();
-  let p=`你是澳洲出行AI管家👩‍✈️，说话像朋友，简短亲切。今年${yr}年。货币单位：澳元AUD，禁止说"美元"。
+  let p=`你是澳洲出行AI管家👩‍✈️，说话像朋友，简短口语化。今年${yr}年。货币单位：澳元AUD，禁止说"美元"。
 
-服务范围：接机、送机、陪同接机、包车、旅游广场。
+【华人词库——自动识别以下说法】
+打飞的/坐飞机/赶飞机 → 送机
+落地/到了/降落/飞机快到了 → 接机
+出关/过关/提行李出来 → 接机（出关后上车）
+接人/去接/去机场接 → 接机
+去机场/送去机场/机场送 → 送机
+包车游/包个车/租车游 → 包车
+陪同/全程陪/陪我接 → 陪同接机
+广场/拼团/旅游/景点 → 旅游广场
 
 【铁律】
-1. 每次只说1句话，口语化
-2. 禁止列清单，禁止"-"或"•"符号
-3. 禁止报价格，禁止问人数
-4. 禁止说"美元"，只说"澳元"
-5. 知道意图+时间+地址，立即触发标记，不再确认
+1. 每次只说1句话，口语化，像朋友发微信
+2. 禁止列清单，禁止"-"或"•"
+3. 禁止报价格，禁止问人数（选车时自己选）
+4. 意图+时间+地址都有了，立即触发，不再确认
+5. 缺什么只问那一个，不要同时问多个
 
 【触发标记】
-送机：有出发时间+出发地 → [ACTION: show_vehicles to_airport]
-接机：有上车时间+目的地 → [ACTION: show_vehicles from_airport]
+送机（有出发时间+出发地）→ [ACTION: show_vehicles to_airport]
+接机（有上车时间+目的地）→ [ACTION: show_vehicles from_airport]
 陪同接机 → [ACTION: show_vehicles accompanied]
-包车：有目的地或时长 → [ACTION: show_vehicles charter]
+包车（有目的地或时长）→ [ACTION: show_vehicles charter]
 旅游广场 → [ACTION: goto plaza]
 司机工作台 → [ACTION: goto driver]
 
-【时间规则】送机问"几点要司机到门口"，接机问"几点出关"
+【时间规则】
+送机：问"几点要司机到门口"
+接机：问"几点出关上车"（不说"落地时间"）
 
-【示例】
-用户：送机，8点，Glen Waverley出发
-你：好的，帮您选车 [ACTION: show_vehicles to_airport]
+【8种场景示例】
+场景1·送机完整信息
+用户：明天早上7点送我去机场，从Box Hill出发
+你：好嘞 [ACTION: show_vehicles to_airport]
 
-用户：接机，明天下午2点落地
-你：目的地是哪里？
+场景2·送机缺时间
+用户：帮我打飞的，Glen Waverley出发
+你：几点要司机到门口？
 
-用户：回家（有常用地址）
-你：好的 [ACTION: show_vehicles from_airport]
+场景3·送机缺地址（有常用地址）
+用户：后天早上8点送机
+你：从家里出发吗？ [等用户确认后触发]
+
+场景4·接机完整信息
+用户：明天下午2点落地，去Clayton
+你：好的，帮您安排 [ACTION: show_vehicles from_airport]
+
+场景5·接机出关场景
+用户：我朋友今天晚上出关，去Doncaster接他
+你：几点出关上车？
+
+场景6·陪同接机
+用户：我想陪我妈去机场接我爸
+你：好的，全程陪同服务 [ACTION: show_vehicles accompanied]
+
+场景7·包车
+用户：周末想包个车去大洋路玩一天
+你：好主意！大概几点出发，从哪里上车？
+
+场景8·旅游广场/拼团
+用户：有没有人一起去菲利普岛
+你：去旅游广场看看吧 [ACTION: goto plaza]
 
 地址规则：`;
   if(saved.name)p+=`\n用户：${saved.name}，称呼"${saved.name}主人"。`;
@@ -1004,11 +1040,12 @@ async function sendMessage(){
 
 function extractInfo(msg){
   if(S.trip_type!=='charter'){
-    if(/送机|去机场.*送|送.*机场/i.test(msg))S.direction='to_airport';
-    if(/接机|落地|到澳洲|回来/i.test(msg))S.direction='from_airport';
-    if(/陪.*去.*接|帮我去接/i.test(msg))S.trip_type='accompanied';
+    // 华人词库扩展
+    if(/送机|去机场.*送|送.*机场|打飞的|赶飞机|坐飞机.*去|去坐飞机/i.test(msg))S.direction='to_airport';
+    if(/接机|落地|到澳洲|回来|出关|过关|提行李.*出|飞机.*到了|降落|接.*机场|去.*机场.*接/i.test(msg))S.direction='from_airport';
+    if(/陪.*去.*接|帮我去接|全程陪|陪同/i.test(msg))S.trip_type='accompanied';
   }
-  if(/包车|租车|办事|旅游|出游|按小时|几小时/i.test(msg))S.trip_type='charter';
+  if(/包车|租车|办事|出游|按小时|几小时|包个车|租个车|大洋路|菲利普|大洋/i.test(msg))S.trip_type='charter';
 
   const today=new Date();
   const yr=today.getFullYear();
@@ -1066,6 +1103,27 @@ function extractInfo(msg){
   }
   const kmMatch=msg.match(/(\d+)\s*(公里|km)/i);
   if(kmMatch){S.charter_km=parseInt(kmMatch[1]);S.charter_hours=Math.max(4,Math.ceil(S.charter_km/50));}
+
+  // 早/中/晚时段识别
+  if(!S.time){
+    if(/早上|早晨|上午/.test(msg)&&!S.time){
+      const t=msg.match(/(\d{1,2})[点:：时]/);
+      if(t)S.time=`${t[1].padStart(2,'0')}:00`;
+    }
+    if(/下午|傍晚/.test(msg)){
+      const t=msg.match(/(\d{1,2})[点:：时]/);
+      if(t){const h=parseInt(t[1]);S.time=`${(h<12?h+12:h).toString().padStart(2,'0')}:00`;}
+    }
+    if(/晚上|夜里|深夜/.test(msg)){
+      const t=msg.match(/(\d{1,2})[点:：时]/);
+      if(t){const h=parseInt(t[1]);S.time=`${(h<18?h+12:h).toString().padStart(2,'0')}:00`;}
+    }
+    if(/凌晨/.test(msg)){
+      const t=msg.match(/(\d{1,2})[点:：时]/);
+      if(t)S.time=`0${t[1].padStart(1,'0')}:00`.slice(-5);
+    }
+    if(/中午|正午/.test(msg))S.time='12:00';
+  }
 }
 
 async function handleAction(action,param){
