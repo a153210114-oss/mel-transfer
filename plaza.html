@@ -402,6 +402,7 @@ function toggleSection(type){
 // ── 加载数据 ──
 async function loadAll(){
   try{
+    console.log('loadAll: starting...');
     const city=document.getElementById('city-filter').value;
     let q='tour_plaza?status=eq.open';
     if(city) q+=`&city=eq.${encodeURIComponent(city)}`;
@@ -414,7 +415,7 @@ async function loadAll(){
     const gb=document.getElementById('group-badge');
     if(gb){gb.textContent=groups.length;gb.style.display=groups.length>0?'block':'none';}
     if(activeSection) loadSection(activeSection);
-  }catch(e){}
+  }catch(e){console.error('loadAll error:',e);}
 }
 
 async function loadSection(type){
@@ -718,7 +719,7 @@ async function joinGroup(postId){
   }catch(e){alert('操作失败');}
 }
 
-loadAll();
+document.addEventListener('DOMContentLoaded', ()=>{ loadAll(); });
 
 // ── 聊天广场 ──
 let currentTopic = 'airport';

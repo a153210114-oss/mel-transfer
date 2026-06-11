@@ -332,6 +332,12 @@ body{
 
 <!-- 入场动画 -->
 <div id="splash">
+  <div style="position:absolute;top:16px;left:16px;z-index:10;">
+    <button onclick="window.location.href='index.html'"
+      style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.2);
+      color:rgba(255,255,255,0.8);border-radius:10px;padding:7px 14px;
+      font-size:13px;cursor:pointer;font-family:inherit;">← 返回</button>
+  </div>
   <div style="position:absolute;width:300px;height:300px;background:radial-gradient(circle,rgba(0,150,199,0.3),transparent);border-radius:50%;animation:haloExpand 2s ease-out 0.5s forwards;opacity:0;"></div>
   <div id="splash-agent">
     <div style="position:absolute;top:-50px;right:-70px;animation:signWave 0.3s ease-in-out infinite alternate;">
@@ -383,6 +389,12 @@ body{
   </div>
   <!-- 选择管家 -->
   <div id="agent-choice" style="display:none;position:absolute;inset:0;background:linear-gradient(135deg,#1a3a5c,#0d2540);flex-direction:column;align-items:center;justify-content:center;padding:30px;">
+  <div style="position:absolute;top:16px;left:16px;">
+    <button onclick="window.location.href='index.html'"
+      style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);
+      color:rgba(255,255,255,0.7);border-radius:10px;padding:7px 14px;
+      font-size:13px;cursor:pointer;font-family:inherit;">← 返回</button>
+  </div>
     <div style="font-size:22px;font-weight:900;color:white;margin-bottom:8px;">选择你的专属管家</div>
     <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:36px;">全程陪伴，随时为你服务</div>
     <div style="display:flex;gap:20px;width:100%;max-width:320px;">
@@ -1011,11 +1023,26 @@ window.onload=function(){
       await agentSay(greet, 600);
     }, 400);
   } else {
-    // 新用户，正常入场动画
-    setTimeout(()=>{
-      document.getElementById('splash-agent').style.display='none';
-      document.getElementById('agent-choice').style.display='flex';
-    },2400);
+    // 新用户：读取URL参数，跳过splash直接进对话
+    const urlType=new URLSearchParams(window.location.search).get('type');
+    if(urlType){
+      // 从index带参数跳来，直接跳过splash
+      S.direction=urlType;
+      document.getElementById('splash').style.display='none';
+      document.getElementById('agent-choice').style.display='none';
+      setTimeout(async()=>{
+        const greet=urlType==='to_airport'?
+          `您好 ${currentAgent?.emoji||'👩‍✈️'} 送机服务，几号几点出发，从哪里出发？`:
+          `您好 ${currentAgent?.emoji||'👩‍✈️'} 接机服务，几号落地，去哪里？`;
+        await agentSay(greet,600);
+      },400);
+    } else {
+      // 正常入场动画
+      setTimeout(()=>{
+        document.getElementById('splash-agent').style.display='none';
+        document.getElementById('agent-choice').style.display='flex';
+      },2400);
+    }
   }
 };
 
