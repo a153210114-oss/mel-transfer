@@ -28,36 +28,13 @@ async function getWeather(city = 'Melbourne') {
   }
 }
 
-// 航班查询（AviationStack，需要API key）
-async function getFlightInfo(flightNumber) {
-  const key = process.env.AVIATIONSTACK_KEY;
-  if (!key) return null;
-  try {
-    const res = await fetch(
-      `http://api.aviationstack.com/v1/flights?access_key=${key}&flight_iata=${flightNumber}&limit=1`
-    );
-    const data = await res.json();
-    if (!data.data || data.data.length === 0) return null;
-    const f = data.data[0];
-    return {
-      flight: f.flight?.iata,
-      status: f.flight_status,
-      departure: {
-        airport: f.departure?.airport,
-        scheduled: f.departure?.scheduled,
-        actual: f.departure?.actual,
-        delay: f.departure?.delay
-      },
-      arrival: {
-        airport: f.arrival?.airport,
-        scheduled: f.arrival?.scheduled,
-        estimated: f.arrival?.estimated,
-        delay: f.arrival?.delay
-      }
-    };
-  } catch(e) {
-    return null;
-  }
+// 航班查询 - 直接给FlightAware链接
+function getFlightLink(flightNumber) {
+  const fn = flightNumber.toUpperCase().replace(/\s/g, '');
+  return {
+    flightAware: `https://www.flightaware.com/live/flight/${fn}`,
+    flight: fn
+  };
 }
 
 // 构建工具结果注入到系统提示
@@ -80,24 +57,18 @@ async function enrichSystemPrompt(system, messages) {
   // 检测航班号（如QF1, VA443, CX101等）
   const flightMatch = lastMsg.match(/([A-Z]{2}\d{3,4}|[A-Z]{3}\d{3,4})/i);
   if (flightMatch) {
-    const f = await getFlightInfo(flightMatch[0].toUpperCase());
-    if (f) {
-      const arrivalTime = f.arrival.estimated || f.arrival.scheduled;
-      const delayMsg = f.arrival.delay ? `延误${f.arrival.delay}分钟` : '准点';
-      extra += `\n\n【实时航班信息】
-航班：${f.flight}，状态：${f.status}，${delayMsg}
-出发：${f.departure.airport}，计划${f.departure.scheduled?.slice(11,16)}
-抵达：${f.arrival.airport}，预计${arrivalTime?.slice(11,16)}
-请根据航班状态给出接机建议。`;
-    }
+    const f = getFlightLink(flightMatch[0]);
+    extra += `\n\n【航班查询】
+用户提到航班 ${f.flight}，请告知：
+1. 可以在 FlightAware 查看实时状态：${f.flightAware}
+2. 建议出关后再联系司机确认接机时间
+3. 如果航班延误，司机会等待，请保持联系`;
   }
 
-  // 检测路况/交通
-  if (/堵车|路况|塞车|交通|要多久|几分钟/i.test(lastMsg)) {
-    extra += `\n\n【出行提示】墨尔本早高峰7:30-9:00，晚高峰4:30-6:30，CityLink/EastLink收费路段。请提醒乘客预留充裕时间。`;
-  }
 
-  return system + extra;
+
+  const noTransitRule = '\n\n【重要限制】不提供任何公共交通、出租车、Uber、拼车等地面交通信息和建议。如用户询问，礼貌说明我们专注私人接送服务。';
+  return system + noTransitRule + extra;
 }
 
 module.exports = async function handler(req, res) {
