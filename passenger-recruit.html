@@ -530,30 +530,31 @@ async function agentSay(html,ms=800){
   const t=addTyping();await delay(ms);t.remove();addMsg(html);speak(html);
 }
 
-// ── 语音输出 ──
+// ── 语音输出（SiliconFlow TTS）──
 let currentAgent=null;
-function speak(text){
-  if(!window.speechSynthesis)return;
-  window.speechSynthesis.cancel();
-  const clean=text
-    .replace(/<[^>]*>/g,'')
-    .replace(/\*\*([^*]+)\*\*/g,'$1')
-    .replace(/[^\u0000-\u007F\u4E00-\u9FFF\u3000-\u303F\uFF00-\uFFEF\s]/g,'')
-    .replace(/[·•→←\-：:\[\]【】\/]/g,' ')
-    .replace(/\s+/g,' ').trim();
+let ttsAudio=null;
+
+function stopTTS(){
+  if(ttsAudio){ ttsAudio.pause(); ttsAudio.src=''; ttsAudio=null; }
+}
+
+async function speak(text){
+  const clean=text.replace(/<[^>]*>/g,'').replace(/\*\*([^*]+)\*\*/g,'$1')
+    .replace(/\s+/g,' ')
+    .replace(/AUD\s*([\d.]+)/g,'澳元$1').replace(/A\$([\d.]+)/g,'澳元$1').replace(/\$([\d.]+)/g,'澳元$1')
+    .replace(/美元/g,'澳元').trim();
   if(!clean)return;
-  const u=new SpeechSynthesisUtterance(clean);
-  u.lang='zh-CN';u.rate=currentAgent?.rate||1.0;u.pitch=currentAgent?.pitch||1.0;
-  const voices=window.speechSynthesis.getVoices();
-  const zh=voices.filter(v=>v.lang==='zh-CN');
-  if(zh.length>0){
-    const g=localStorage.getItem('au_agent')||'male';
-    const cnVoices=voices.filter(v=>v.lang==='zh-CN');
-    const pool=cnVoices.length>0?cnVoices:zh;
-    const v=g==='female'?(pool.find(v=>/female|女|Ting/i.test(v.name))||pool[pool.length-1]):pool[0];
-    if(v)u.voice=v;
-  }
-  window.speechSynthesis.speak(u);
+  stopTTS();
+  try{
+    const res=await fetch('/api/tts',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text:clean})});
+    if(!res.ok)return;
+    const data=await res.json();
+    if(!data.audio)return;
+    const audio=new Audio('data:audio/mp3;base64,'+data.audio);
+    ttsAudio=audio;
+    audio.play().catch(()=>{});
+  }catch(e){console.warn('TTS:',e.message);}
 }
 
 // ── 语音输入 ──
