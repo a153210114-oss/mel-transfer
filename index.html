@@ -527,8 +527,9 @@ async function sendVoiceMessage(text){
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({system:prompt, messages:cleanHistory})
     });
+    if(!res.ok){const t=await res.text();throw new Error('HTTP'+res.status+': '+t.slice(0,200));}
     const data = await res.json();
-    const reply = data.content?.[0]?.text || '请再说一遍';
+    const reply = data.content?.[0]?.text || data.error || '请再说一遍';
     aiHistory.push({role:'assistant', content:reply});
     if(aiHistory.length>20) aiHistory=aiHistory.slice(-20);
     typing.remove();
@@ -923,8 +924,9 @@ async function sendMessage(){
     if(cleanHistory.length===0) cleanHistory=[{role:'user',content:msg.trim()||'你好'}];
     const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({system:prompt,messages:cleanHistory})});
+    if(!res.ok){const t=await res.text();throw new Error('HTTP'+res.status+': '+t.slice(0,200));}
     const data=await res.json();
-    const reply=data.content?.[0]?.text||'请再说一遍';
+    const reply=data.content?.[0]?.text||data.error||'请再说一遍';
     window._lastAIReply=reply; // debug
     console.log('AI回复：',reply);
     aiHistory.push({role:'assistant',content:reply});
