@@ -1298,71 +1298,107 @@ async function gpsConfirmAddress() {
   }
 }
 
+// 从GPS地址提取街道（去掉门牌号）
+function extractStreet(addr) {
+  return addr.replace(/^\d+[A-Za-z]?\/?\d*\s+/, '').trim();
+}
+
+// 门牌号修正
+function showNumberFixInput(gpsAddr) {
+  document.querySelectorAll('.addr-confirm-card').forEach(c => c.remove());
+  const street = extractStreet(gpsAddr);
+  const div = document.createElement('div');
+  div.className = 'confirm-card addr-confirm-card';
+  div.innerHTML = `
+    <div style="font-size:13px;color:rgba(255,255,255,0.6);margin-bottom:4px;">输入正确的门牌号</div>
+    <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-bottom:10px;">街道：${street}</div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <input id="number-fix-input" placeholder="如：13" inputmode="text"
+        style="flex:1;background:rgba(255,255,255,0.08);border:1.5px solid rgba(0,150,199,0.4);
+        border-radius:10px;padding:11px 14px;color:white;font-size:16px;font-family:inherit;outline:none;">
+      <button onclick="confirmNumberFix('${gpsAddr.replace(/'/g, "\'")}')"
+        style="padding:11px 18px;background:rgba(0,150,199,0.3);border:1.5px solid rgba(0,150,199,0.4);
+        border-radius:10px;color:white;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">确认</button>
+    </div>`;
+  chatArea.appendChild(div);
+  scrollBottom();
+  setTimeout(() => document.getElementById('number-fix-input')?.focus(), 200);
+}
+
+function confirmNumberFix(gpsAddr) {
+  const val = document.getElementById('number-fix-input')?.value.trim();
+  if (!val) { alert('请输入门牌号'); return; }
+  const corrected = val + ' ' + extractStreet(gpsAddr);
+  useGPSAddr(corrected, null);
+}
+
 // 显示GPS定位确认卡（含地图图钉）
 async function showAddressConfirm(gpsAddr, savedAddrs, label) {
   const div = document.createElement('div');
-  div.className = 'confirm-card';
+  div.className = 'confirm-card addr-confirm-card';
 
-  // 编码地址用于地图
   const encoded = encodeURIComponent(gpsAddr);
-  const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${encoded}&zoom=15&size=360x160&markers=color:red%7C${encoded}&key=AIzaSyAHGLzz7_TpG2MLnqT1kCROeNIzRr-EQac`;
+  const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${encoded}&zoom=16&size=360x160&markers=color:red%7C${encoded}&key=AIzaSyAHGLzz7_TpG2MLnqT1kCROeNIzRr-EQac`;
 
-  // 有历史地址且不同，变成选择题
   const diffAddr = savedAddrs.length > 0 && savedAddrs[0].trim() !== gpsAddr.trim();
   const savedAddr = savedAddrs[0];
 
   let questionHtml = '';
   if (diffAddr) {
-    // 选择题模式
     questionHtml = `
-      <div style="font-size:13px;color:rgba(255,255,255,0.7);margin-bottom:10px;font-weight:600;">
-        是下面这个地址，还是 <span style="color:rgba(0,212,255,0.9);">${savedAddr}</span>？
-      </div>
-      <div onclick="useGPSAddr('${gpsAddr.replace(/'/g,"\'")}',null)"
+      <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:8px;">选择出发地址：</div>
+      <div onclick="useGPSAddr('${gpsAddr.replace(/'/g, "\'")}',null)"
         style="background:rgba(0,150,199,0.1);border:1.5px solid rgba(0,150,199,0.3);border-radius:12px;padding:10px 14px;margin-bottom:8px;cursor:pointer;">
-        <div style="font-size:10px;color:rgba(0,212,255,0.6);margin-bottom:2px;">📍 当前定位</div>
+        <div style="font-size:10px;color:rgba(0,212,255,0.6);margin-bottom:2px;">📍 当前定位 — 点击确认</div>
         <div style="font-size:13px;color:white;font-weight:600;">${gpsAddr}</div>
       </div>
-      <div onclick="useGPSAddr('${savedAddr.replace(/'/g,"\'")}',null)"
+      <div onclick="useGPSAddr('${savedAddr.replace(/'/g, "\'")}',null)"
         style="background:rgba(255,255,255,0.05);border:1.5px solid rgba(255,255,255,0.12);border-radius:12px;padding:10px 14px;margin-bottom:8px;cursor:pointer;">
-        <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-bottom:2px;">📌 常用地址</div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-bottom:2px;">📌 常用地址 — 点击确认</div>
         <div style="font-size:13px;color:rgba(255,255,255,0.85);font-weight:600;">${savedAddr}</div>
       </div>`;
   } else {
-    // 只有GPS地址
     questionHtml = `
-      <div onclick="useGPSAddr('${gpsAddr.replace(/'/g,"\'")}',null)"
+      <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:8px;">确认出发地址：</div>
+      <div onclick="useGPSAddr('${gpsAddr.replace(/'/g, "\'")}',null)"
         style="background:rgba(0,150,199,0.1);border:1.5px solid rgba(0,150,199,0.3);border-radius:12px;padding:10px 14px;margin-bottom:8px;cursor:pointer;">
-        <div style="font-size:10px;color:rgba(0,212,255,0.6);margin-bottom:2px;">📍 当前定位</div>
+        <div style="font-size:10px;color:rgba(0,212,255,0.6);margin-bottom:2px;">📍 当前定位 — 点击确认</div>
         <div style="font-size:13px;color:white;font-weight:600;">${gpsAddr}</div>
       </div>`;
   }
 
   div.innerHTML = `
     <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:8px;">${label}</div>
-    <!-- 地图图钉 -->
     <div style="border-radius:12px;overflow:hidden;margin-bottom:10px;position:relative;">
       <img src="${mapUrl}" style="width:100%;height:140px;object-fit:cover;display:block;"
         onerror="this.parentElement.style.display='none'">
       <div style="position:absolute;bottom:6px;right:8px;background:rgba(0,0,0,0.5);border-radius:6px;padding:3px 8px;font-size:10px;color:white;">Google Maps</div>
     </div>
     ${questionHtml}
-    <button onclick="showManualAddressInput()"
-      style="width:100%;padding:10px;background:none;border:1px solid rgba(255,255,255,0.1);
-      border-radius:10px;color:rgba(255,255,255,0.4);font-size:12px;cursor:pointer;font-family:inherit;margin-top:4px;">
-      ✏️ 输入其他地址
-    </button>`;
+    <div style="display:flex;gap:8px;margin-top:4px;">
+      <button onclick="showNumberFixInput('${gpsAddr.replace(/'/g, "\'")}' )"
+        style="flex:1;padding:9px;background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.25);
+        border-radius:10px;color:rgba(245,166,35,0.8);font-size:12px;cursor:pointer;font-family:inherit;">
+        🔢 门牌号不对
+      </button>
+      <button onclick="showManualAddressInput()"
+        style="flex:1;padding:9px;background:none;border:1px solid rgba(255,255,255,0.1);
+        border-radius:10px;color:rgba(255,255,255,0.4);font-size:12px;cursor:pointer;font-family:inherit;">
+        ✏️ 换个地址
+      </button>
+    </div>`;
 
   chatArea.appendChild(div);
   scrollBottom();
 
-  // 语音播报
   if (diffAddr) {
-    speak(`是当前定位${gpsAddr}，还是常用地址${savedAddr}？`);
+    speak(`定位到${gpsAddr}，还是去常用地址${savedAddr}？`);
   } else {
-    speak(`定位到${gpsAddr}，是这里吗？`);
+    speak(`定位到${gpsAddr}，门牌号对吗？`);
   }
 }
+
+
 
 function useGPSAddr(addr, el) {
   S.address = addr;
