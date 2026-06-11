@@ -2204,9 +2204,11 @@ let currentTripId = null;
 
 // 从 localStorage 恢复登录状态
 window.addEventListener('DOMContentLoaded', () => {
-  const saved = localStorage.getItem('driver');
+  const saved = localStorage.getItem('driver') || localStorage.getItem('au_driver');
   if (saved) {
     currentDriver = JSON.parse(saved);
+    // 同步两个key
+    localStorage.setItem('driver', JSON.stringify(currentDriver));
     enterApp();
   }
 });

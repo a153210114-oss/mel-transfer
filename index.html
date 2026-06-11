@@ -479,6 +479,7 @@ async function submitPhone(role){
       if(drivers.length>0){
         const d=drivers[0];
         setLocal('au_driver',d);
+        localStorage.setItem('driver', JSON.stringify(d)); // driver-app.html兼容
         localStorage.setItem('au_role','driver');
         const g=guessGender(d.full_name);
         setAgentByUserGender(g||'male');
@@ -504,6 +505,7 @@ async function submitPhone(role){
       if(!passenger.ref)passenger.ref=genRef();
       setLocal('au_passenger',passenger);
       localStorage.setItem('au_role','passenger');
+      // passenger-recruit.html兼容
       const g=guessGender(passenger.name);
       setAgentByUserGender(g||'male');
       document.getElementById('exit-btn').style.display='block';

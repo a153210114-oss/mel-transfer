@@ -895,16 +895,42 @@ async function chooseAgent(gender){
 window.onload=function(){
   window.speechSynthesis.getVoices();
   speechSynthesis.onvoiceschanged=()=>{window.speechSynthesis.getVoices();};
-  const savedGender=localStorage.getItem('au_agent');
+
+  // 读取已存身份（从index.html登录）
+  const saved=getPassenger();
+  const savedGender=localStorage.getItem('au_agent')||'female';
+
   if(savedGender&&AGENTS[savedGender]){
     currentAgent=AGENTS[savedGender];
     document.getElementById('agent-avatar').textContent=currentAgent.emoji;
     document.getElementById('agent-name').textContent=currentAgent.name+' · 在线';
   }
-  setTimeout(()=>{
-    document.getElementById('splash-agent').style.display='none';
-    document.getElementById('agent-choice').style.display='flex';
-  },2400);
+
+  // 已有手机号，直接跳过入场和管家选择
+  if(saved.phone){
+    document.getElementById('splash').style.display='none';
+    document.getElementById('agent-choice').style.display='none';
+    // 读取URL参数（接机/送机）
+    const urlType=new URLSearchParams(window.location.search).get('type');
+    if(urlType){
+      S.direction=urlType;
+    }
+    setTimeout(async()=>{
+      const namePrefix=saved.name?saved.name+'主人':'主人';
+      const greet=urlType==='to_airport'?
+        `${namePrefix}，送机服务 ✈️ 几号几点出发，从哪里出发？`:
+        urlType==='from_airport'?
+        `${namePrefix}，接机服务 🛬 几号落地，去哪里？`:
+        `${namePrefix}，欢迎回来 ${currentAgent?.emoji||'👩‍✈️'} 需要什么服务？`;
+      await agentSay(greet, 600);
+    }, 400);
+  } else {
+    // 新用户，正常入场动画
+    setTimeout(()=>{
+      document.getElementById('splash-agent').style.display='none';
+      document.getElementById('agent-choice').style.display='flex';
+    },2400);
+  }
 };
 
 // ── 烟花彩带 ──
