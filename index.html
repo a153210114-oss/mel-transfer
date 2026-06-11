@@ -208,6 +208,7 @@ body{
 <!-- 顶部栏 -->
 <div class="top-bar">
   <div class="top-logo">澳洲出行 AI 管家</div>
+  <div id="voice-indicator" style="display:none;font-size:11px;color:rgba(255,59,48,0.9);animation:mp 0.8s ease-in-out infinite;">🔴 录音中</div>
   <button class="top-exit" id="exit-btn" onclick="exitToHome()">⇄ 切换身份</button>
 </div>
 
@@ -328,9 +329,9 @@ function toggleMic(){
   if(isRecording){recognition?.stop();return;}
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   recognition=new SR();recognition.lang='zh-CN';recognition.continuous=false;recognition.interimResults=false;
-  recognition.onstart=()=>{isRecording=true;document.getElementById('mic-btn').classList.add('recording');document.getElementById('mic-btn').textContent='⏹';};
+  recognition.onstart=()=>{isRecording=true;document.getElementById('mic-btn').classList.add('recording');document.getElementById('mic-btn').textContent='⏹';const vi=document.getElementById('voice-indicator');if(vi)vi.style.display='block';};
   recognition.onresult=(e)=>{document.getElementById('chat-input').value=e.results[0][0].transcript;sendMessage();};
-  recognition.onend=()=>{isRecording=false;document.getElementById('mic-btn').classList.remove('recording');document.getElementById('mic-btn').textContent='🎤';};
+  recognition.onend=()=>{isRecording=false;document.getElementById('mic-btn').classList.remove('recording');document.getElementById('mic-btn').textContent='🎤';const vi=document.getElementById('voice-indicator');if(vi)vi.style.display='none';};
   recognition.onerror=recognition.onend;
   recognition.start();
 }

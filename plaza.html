@@ -792,6 +792,61 @@ async function likeMessage(id, el) {
   } catch(e) {}
 }
 
+
+// ── 全局语音 ──
+let globalRec = null, globalRecActive = false;
+
+function toggleGlobalVoice() {
+  if (globalRecActive) { globalRec?.stop(); return; }
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    alert('请使用Safari或Chrome'); return;
+  }
+  navigator.mediaDevices?.getUserMedia({audio:true}).catch(()=>{});
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  globalRec = new SR();
+  globalRec.lang = 'zh-CN'; globalRec.continuous = false; globalRec.interimResults = false;
+
+  globalRec.onstart = () => {
+    globalRecActive = true;
+    const btn = document.getElementById('global-agent-btn');
+    btn.textContent = '🔴';
+    btn.style.background = 'rgba(255,59,48,0.2)';
+    btn.style.borderColor = 'rgba(255,59,48,0.4)';
+    document.getElementById('global-voice-dot').style.display = 'block';
+  };
+  globalRec.onresult = (e) => {
+    const text = e.results[0][0].transcript;
+    handlePlazaVoice(text);
+  };
+  globalRec.onend = () => {
+    globalRecActive = false;
+    const btn = document.getElementById('global-agent-btn');
+    btn.textContent = '👩‍✈️';
+    btn.style.background = 'rgba(39,174,96,0.15)';
+    btn.style.borderColor = 'rgba(39,174,96,0.4)';
+    document.getElementById('global-voice-dot').style.display = 'none';
+  };
+  globalRec.onerror = globalRec.onend;
+  globalRec.start();
+}
+
+function handlePlazaVoice(text) {
+  if (/包车|租车/.test(text)) {
+    toggleSection('charter');
+  } else if (/拼团|组团/.test(text)) {
+    toggleSection('group');
+  } else if (/发布|我要包车/.test(text)) {
+    openCharterDemandModal();
+  } else if (/发起拼团/.test(text)) {
+    openGroupModal();
+  } else if (/返回|回去|首页/.test(text)) {
+    window.location.href = 'index.html';
+  } else {
+    alert('您说：' + text + '
+可以说：包车、拼团、发布需求、返回');
+  }
+}
+
 </script>
 
 <!-- 聊天广场展开区 -->
@@ -819,6 +874,17 @@ async function likeMessage(id, el) {
     <button onclick="postMessage()" style="width:100%;padding:9px;background:linear-gradient(135deg,#ff6b6b,#ee5a24);color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">发送</button>
   </div>
 
+</div>
+
+
+<!-- 全局管家语音按钮 -->
+<div id="global-agent-wrap" style="position:fixed;right:16px;bottom:24px;z-index:200;">
+  <button id="global-agent-btn" onclick="toggleGlobalVoice()"
+    style="width:50px;height:50px;border-radius:50%;border:2px solid rgba(39,174,96,0.4);cursor:pointer;
+    background:rgba(39,174,96,0.15);backdrop-filter:blur(10px);
+    font-size:24px;box-shadow:0 4px 16px rgba(39,174,96,0.3);
+    display:flex;align-items:center;justify-content:center;transition:all 0.2s;">👩‍✈️</button>
+  <div id="global-voice-dot" style="position:absolute;top:-4px;right:-4px;width:12px;height:12px;border-radius:50%;background:#ff3b30;border:2px solid white;display:none;"></div>
 </div>
 
 </body>
