@@ -393,7 +393,8 @@ function stopTTS() {
 }
 
 async function speak(text) {
-  const clean = text.replace(/<[^>]*>/g,'').replace(/\*\*([^*]+)\*\*/g,'$1').replace(/\s+/g,' ').trim();
+  const clean = text.replace(/<[^>]*>/g,'').replace(/\*\*([^*]+)\*\*/g,'$1').replace(/\s+/g,' ')
+    .replace(/A\$([\d.]+)/g,'澳元$1').replace(/\$([\d.]+)/g,'澳元$1').trim();
   if(!clean) return;
   stopTTS();
   if(recognition){ try{ recognition.stop(); }catch(e){} }
@@ -593,7 +594,8 @@ async function sendVoiceMessage(text){
 }
 
 async function speakAndResume(text, onDone) {
-  const clean = text.replace(/<[^>]*>/g,'').replace(/\s+/g,' ').trim();
+  const clean = text.replace(/<[^>]*>/g,'').replace(/\s+/g,' ')
+    .replace(/A\$([\d.]+)/g,'澳元$1').replace(/\$([\d.]+)/g,'澳元$1').trim();
   if(!clean){ onDone && onDone(); return; }
   stopTTS();
   // 播放TTS时暂停麦克风，防止回音
