@@ -394,7 +394,8 @@ function stopTTS() {
 
 async function speak(text) {
   const clean = text.replace(/<[^>]*>/g,'').replace(/\*\*([^*]+)\*\*/g,'$1').replace(/\s+/g,' ')
-    .replace(/A\$([\d.]+)/g,'澳元$1').replace(/\$([\d.]+)/g,'澳元$1').trim();
+    .replace(/AUD\s*([\d.]+)/g,'澳元$1').replace(/A\$([\d.]+)/g,'澳元$1').replace(/\$([\d.]+)/g,'澳元$1')
+    .replace(/美元/g,'澳元').trim();
   if(!clean) return;
   stopTTS();
   if(recognition){ try{ recognition.stop(); }catch(e){} }
@@ -595,7 +596,8 @@ async function sendVoiceMessage(text){
 
 async function speakAndResume(text, onDone) {
   const clean = text.replace(/<[^>]*>/g,'').replace(/\s+/g,' ')
-    .replace(/A\$([\d.]+)/g,'澳元$1').replace(/\$([\d.]+)/g,'澳元$1').trim();
+    .replace(/AUD\s*([\d.]+)/g,'澳元$1').replace(/A\$([\d.]+)/g,'澳元$1').replace(/\$([\d.]+)/g,'澳元$1')
+    .replace(/美元/g,'澳元').trim();
   if(!clean){ onDone && onDone(); return; }
   stopTTS();
   // 播放TTS时暂停麦克风，防止回音
@@ -1082,8 +1084,8 @@ function showVehicleCards(){
       <div class="v-icon">${v.icon}</div>
       <div class="v-name">${v.name}</div>
       <div class="v-cap">${v.cap}</div>
-      <div class="v-price">A$$${v.price}</div>
-      <div style="font-size:9px;color:rgba(255,255,255,0.35);margin-top:1px;">参考价</div>
+      <div class="v-price">AUD ${v.price}</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.55);margin-top:2px;">参考价</div>
     </div>`).join('');
 
   const ll=document.createElement('div');ll.className='vehicle-group-label gold';ll.textContent='✨ 豪华型';
@@ -1093,8 +1095,8 @@ function showVehicleCards(){
       <div class="v-icon">${v.icon}</div>
       <div class="v-name">${v.name}</div>
       <div class="v-cap">${v.cap}</div>
-      <div class="v-price">A$$${v.price}</div>
-      <div style="font-size:9px;color:rgba(200,160,32,0.45);margin-top:1px;">参考价</div>
+      <div class="v-price">AUD ${v.price}</div>
+      <div style="font-size:11px;color:rgba(200,160,32,0.65);margin-top:2px;">参考价</div>
     </div>`).join('');
 
   wrap.appendChild(cl);wrap.appendChild(cg);wrap.appendChild(ll);wrap.appendChild(lg);
@@ -1118,8 +1120,8 @@ async function selectVehicle(type,price,el){
         S.price=price+surcharge;
         // 更新确认卡费用显示
         const feeEl=document.querySelector('.confirm-value[data-fee]');
-        if(feeEl) feeEl.innerHTML='A$'+S.price+'<span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);margin-left:5px;">参考价，与司机线下确认</span>';
-        await agentSay(`您的地址距机场约${S.distance_km}km，超出${S.distance_km-25}km，参考附加费A$$${surcharge}，参考合计A$$${S.price}，最终与司机线下确认`,400);
+        if(feeEl) feeEl.textContent='AUD '+S.price;
+        await agentSay(`您的地址距机场约${S.distance_km}km，超出${S.distance_km-25}km，参考附加费AUD ${surcharge}，参考合计AUD ${S.price}，最终与司机线下确认`,400);
       }
     }
   }
@@ -1147,11 +1149,15 @@ async function showConfirmCard(){
     <div class="confirm-row"><span class="confirm-label">车型</span><span class="confirm-value">${vInfo?.icon} ${vInfo?.name}</span></div>
     ${isCharter?`
     <div class="confirm-row"><span class="confirm-label">时长</span><span class="confirm-value">${S.charter_hours}小时${S.charter_km>0?' ('+S.charter_km+'km)':''}</span></div>
-    <div class="confirm-row"><span class="confirm-label">预收款</span><span class="confirm-value" style="color:rgba(245,166,35,0.9);">A$$${preCollect}<br><span style="font-size:11px;opacity:0.6;">完成后按A$$${total}结算退差价</span></span></div>
+    <div class="confirm-row"><span class="confirm-label">预收款</span><span class="confirm-value" style="color:rgba(245,166,35,0.9);">AUD ${preCollect}<br><span style="font-size:11px;opacity:0.6;">完成后按AUD ${total}结算退差价</span></span></div>
     `:''}
-    ${isAcc?`<div class="confirm-row"><span class="confirm-label">等候费</span><span class="confirm-value">A$$${waitFee}（${S.wait_hours}小时）</span></div>`:''}
+    ${isAcc?`<div class="confirm-row"><span class="confirm-label">等候费</span><span class="confirm-value">AUD ${waitFee}（${S.wait_hours}小时）</span></div>`:''}
     ${S.distance_km?`<div class="confirm-row"><span class="confirm-label">距离</span><span class="confirm-value">${S.distance_km}km${S.surcharge>0?' (超出'+(S.distance_km-25)+'km，附加$'+S.surcharge+')':' (25km内)'}</span></div>`:''}
-    <div class="confirm-row"><span class="confirm-label">费用</span><span class="confirm-value" style="color:rgba(0,212,255,0.9);font-size:18px;font-weight:900;" data-fee>A$$${total}<span style="font-size:11px;font-weight:400;color:rgba(255,255,255,0.35);margin-left:5px;">参考价，与司机线下确认</span></span></div>
+    <div class="confirm-row"><span class="confirm-label">费用</span><span class="confirm-value" style="color:rgba(0,212,255,0.9);font-size:18px;font-weight:900;" data-fee>AUD ${total}</span></div>
+    <div style="background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.25);border-radius:10px;padding:10px 14px;margin:6px 0 4px;text-align:center;">
+      <div style="font-size:13px;color:rgba(245,166,35,0.9);font-weight:700;">⚠️ 以上为市场参考价</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.55);margin-top:4px;">实际费用请与司机确认后再付款</div>
+    </div>
     <div style="margin-top:10px;background:rgba(39,174,96,0.08);border:1px solid rgba(39,174,96,0.2);border-radius:10px;padding:10px 12px;">
       <div style="font-size:12px;color:rgba(255,255,255,0.6);line-height:1.7;">
         💰 付款方式由您与司机直接协商<br>
