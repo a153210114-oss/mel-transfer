@@ -447,10 +447,10 @@ function showRoleChoice(){
 
 async function selectRole(role){
   currentRole=role;
-  const roleText=role==='passenger'?'出行':'开车赚钱';
+  const roleText=role==='passenger'?'我要出行':'我要开车赚钱';
   addMsg(roleText,true);
   await delay(300);
-  await agentSay('请输入您的手机号，方便我找到您的记录 📱',500);
+  await agentSay('请输入手机号 📱',400);
   showPhoneInput(role);
 }
 
@@ -593,9 +593,17 @@ function gotoDriver(){
   window.location.href='driver-app.html';
 }
 
+function openUserProfile(){
+  document.getElementById('profile-overlay')?.classList.add('show');
+  openProfile && openProfile();
+}
+
 async function startDriverAI(){
   addMsg('让你来帮我',true);
-  await agentSay('好的！有什么需要我处理的？查订单、切换状态、还是发布包车？',400);
+  const d = getDriver();
+  await agentSay(`${d.full_name||'师傅'}，有什么需要处理？<br>比如：查订单、切换状态、发布包车`,400);
+  // 切换为司机助理模式
+  currentRole = 'driver';
 }
 
 // ── 退出/切换身份 ──
@@ -605,6 +613,26 @@ function exitToHome(){
 }
 
 // ── AI对话（乘客下单流程）──
+
+function buildDriverPrompt(){
+  const d = getDriver();
+  return `你是澳洲出行AI管家，现在服务的是司机${d.full_name||'师傅'}。
+
+可以帮司机：
+1. 查询订单状态
+2. 切换工作状态（上线候单/下线）
+3. 跳转工作台
+4. 发布包车信息
+5. 查询收入和积分
+
+当司机想去工作台时，回复末尾加：[GOTO: driver]
+当司机想查订单时，回复末尾加：[GOTO: driver]
+当司机想发布包车时，回复末尾加：[GOTO: driver]
+当司机需要旅游广场时，回复末尾加：[GOTO: plaza]
+
+回复简短直接，不超过2句话。`;
+}
+
 function buildPrompt(){
   const saved=getPassenger();
   const addrs=getSavedAddresses();
@@ -642,13 +670,14 @@ async function sendMessage(){
   addMsg(msg,true);
   aiHistory.push({role:'user',content:msg});
 
-  // 提取信息
-  extractInfo(msg);
+  // 提取信息（仅乘客模式）
+  if(currentRole==='passenger') extractInfo(msg);
 
   const typing=addTyping();
   try{
+    const prompt = currentRole==='driver' ? buildDriverPrompt() : buildPrompt();
     const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({system:buildPrompt(),messages:aiHistory})});
+      body:JSON.stringify({system:prompt,messages:aiHistory})});
     const data=await res.json();
     const reply=data.content?.[0]?.text||'请再说一遍';
     window._lastAIReply=reply; // debug
