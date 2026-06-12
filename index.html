@@ -456,9 +456,10 @@ async function processTTSQueue() {
   const {text, onDone} = ttsQueue.shift();
   try {
     const voice = window._ttsVoice || 'FunAudioLLM/CosyVoice2-0.5B:diana';
+    const dialect = localStorage.getItem('dialect_noticed') === 'cantonese' ? 'cantonese' : undefined;
     const res = await fetch('/api/tts', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({text, voice})
+      body: JSON.stringify({text, voice, ...(dialect && {dialect})})
     });
     if(res.ok){
       const data = await res.json();
@@ -535,7 +536,7 @@ function startListeningLoop(){
   if(!voiceMode) return;
   const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
   recognition = new SR();
-  recognition.lang = 'zh-CN';
+  recognition.lang = window._recognitionLang || 'zh-CN';
   recognition.continuous = false; // iOS Safari continuous模式不稳定，用false+自动重启
   recognition.interimResults = true;
 
@@ -632,6 +633,12 @@ const HOMOPHONES = [
   {wrong:/鸡场|机厂|及场/g, right:'机场'},
   // 墨尔本 谐音
   {wrong:/墨尔笨|默尔本|莫尔本/g, right:'墨尔本'},
+  // 粤语常见误识别
+  {wrong:/王先生(?=.*[嘅㗎咁系唔]|$)/g, right:'冇问题'},  // 冇问题→王先生
+  {wrong:/系嘎|系架|系呀/g, right:'系嘅'},
+  {wrong:/无问题|冇问提/g, right:'冇问题'},
+  {wrong:/落鸡|落基/g, right:'落机'},
+  {wrong:/几时候/g, right:'几时'},
 ];
 
 // 方言关键词检测
@@ -677,6 +684,7 @@ async function sendVoiceMessage(text){
   if(dialect && !localStorage.getItem('dialect_noticed')){
     localStorage.setItem('dialect_noticed', dialect);
     if(dialect==='cantonese'){
+      window._recognitionLang = 'zh-HK'; // 切换到粤语声学模型
       setTimeout(()=>agentSay('我听到你用广东话，你可以继续用广东话或普通话跟我说，都OK嘅😊'),500);
     } else {
       setTimeout(()=>agentSay('你也可以用习惯的语言跟我说话，普通话、广东话都可以'),500);
@@ -896,7 +904,7 @@ window.onload=async function(){
     const g=guessGender(savedPassenger.name);
     setAgentByUserGender(g||'male');
     document.getElementById('exit-btn').style.display='block';
-    await agentSay(`${savedPassenger.name||''}主人，欢迎回来 ${agentEmoji}<br>需要我帮您下单，还是您亲自操作？`,700);
+    const _t1=localStorage.getItem('au_gender')==='female'?'小姐':'先生';await agentSay(`${savedPassenger.name||''}${savedPassenger.name?_t1:''}，欢迎回来 ${agentEmoji}<br>需要我帮您下单，还是您亲自操作？`,700);
     showPassengerModeChoice();
   } else if(savedRole==='driver'&&savedDriver.id){
     // 老司机直接进
@@ -907,7 +915,7 @@ window.onload=async function(){
     showDriverModeChoice();
   } else {
     // 新用户
-    await agentSay('您好， 👩‍✈️<br>今天想<strong>出行</strong>，还是<strong>开车赚钱</strong>？',800);
+    await agentSay('您好 👩‍✈️<br>今天想<strong>出行</strong>，还是<strong>开车赚钱</strong>？',800);
     showRoleChoice();
   }
 };
@@ -995,7 +1003,7 @@ async function submitPhone(role){
       const g=guessGender(passenger.name);
       setAgentByUserGender(g||'male');
       document.getElementById('exit-btn').style.display='block';
-      const greeting=passenger.name?`${passenger.name}主人，欢迎回来 ${agentEmoji}`:
+      const _t3=localStorage.getItem('au_gender')==='female'?'小姐':'先生';const greeting=passenger.name?`${passenger.name}${_t3}，欢迎回来 ${agentEmoji}`:
         `好的，我记住您的号码了 ${agentEmoji}`;
       await agentSay(greeting+'<br>需要我帮您下单，还是您亲自操作？',500);
       showPassengerModeChoice();
@@ -1612,7 +1620,7 @@ async function submitBooking(){
     document.getElementById('suc-id').textContent='TRP-'+trip.id.slice(-8).toUpperCase();
     document.getElementById('success-modal').classList.add('show');
     setTimeout(()=>showConfetti(points),1800);
-    await agentSay(`${S.name}主人，预约成功！司机会尽快确认联系您 🎉`,300);
+    const _t=localStorage.getItem('au_gender')==='female'?'小姐':'先生';await agentSay(`${S.name}${_t}，预约成功！司机会尽快确认联系您 🎉`,300);
   }catch(e){bookingSubmitted=false;alert('提交遇到问题\n'+e.message);}
 }
 
