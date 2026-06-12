@@ -2295,22 +2295,28 @@ async function doLogin() {
       return;
     }
     // 手机号不存在，创建游客账号
-    const [newDriver] = await supa('drivers', {
-      method: 'POST',
-      body: {
-        tenant_id: TENANT_ID,
-        phone: phone,
-        full_name: '新司机',
-        is_active: false,
-        status: 'offline'
+    try{
+      const res = await fetch(SUPA_URL+'/rest/v1/drivers', {
+        method:'POST',
+        headers:{
+          'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,
+          'Content-Type':'application/json','Prefer':'return=representation'
+        },
+        body:JSON.stringify({tenant_id:TENANT_ID,phone,full_name:'新司机',is_active:false,status:'offline'})
+      });
+      if(!res.ok) throw new Error('创建失败');
+      const arr = await res.json();
+      const newDriver = Array.isArray(arr)?arr[0]:arr;
+      if(newDriver){
+        currentDriver = newDriver;
+        isGuestMode = true;
+        localStorage.setItem('driver', JSON.stringify(currentDriver));
+        enterApp(true);
+      } else {
+        errEl.textContent = '注册失败，请联系客服';
+        errEl.style.display = 'block';
       }
-    }).catch(() => [null]);
-    if (newDriver) {
-      currentDriver = newDriver;
-      isGuestMode = true;
-      localStorage.setItem('driver', JSON.stringify(currentDriver));
-      enterApp(true);
-    } else {
+    }catch(err){
       errEl.textContent = '网络错误，请重试';
       errEl.style.display = 'block';
     }
