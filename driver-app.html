@@ -3041,14 +3041,15 @@ function goBack(pageId) {
 }
 
 function setStatus(val) {
-  // 高亮选中卡片
+  // 重置所有状态按钮
   ['depot','ontrip','offline'].forEach(s => {
     const el = document.getElementById('status-'+s);
     if (!el) return;
-    el.style.opacity = '1';
+    el.style.opacity = s==='ontrip'?'0.5':'1';
     el.style.borderColor = 'var(--border)';
     el.style.background = 'var(--surface2)';
-    el.querySelector('div:nth-child(2)').style.color = 'var(--text2)';
+    const label = el.querySelector('div:first-child');
+    if(label) label.style.color = 'var(--text2)';
   });
 
   const activeMap = {
@@ -3059,12 +3060,14 @@ function setStatus(val) {
   const key = activeMap[val] || 'offline';
   const activeEl = document.getElementById('status-'+key);
   if (activeEl) {
-    const colors = {depot:'var(--accent)', ontrip:'var(--gold)', offline:'var(--text3)'};
+    const colors = {depot:'var(--accent)', ontrip:'var(--gold)', offline:'rgba(255,255,255,0.4)'};
     const bgs = {depot:'rgba(0,212,255,0.1)', ontrip:'rgba(245,166,35,0.1)', offline:'rgba(255,255,255,0.05)'};
-    const borders = {depot:'rgba(0,212,255,0.4)', ontrip:'rgba(245,166,35,0.4)', offline:'rgba(255,255,255,0.15)'};
+    const borders = {depot:'rgba(0,212,255,0.4)', ontrip:'rgba(245,166,35,0.4)', offline:'rgba(255,255,255,0.2)'};
     activeEl.style.borderColor = borders[key];
     activeEl.style.background = bgs[key];
-    activeEl.querySelector('div:nth-child(2)').style.color = colors[key];
+    activeEl.style.opacity = '1';
+    const label = activeEl.querySelector('div:first-child');
+    if(label) label.style.color = colors[key];
   }
 
   // 驿站候单显示队列位置
