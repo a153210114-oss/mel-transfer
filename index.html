@@ -671,6 +671,28 @@ function detectDialect(text){
 }
 
 async function sendVoiceMessage(text){
+  // 重新下单拦截（区别于修改）
+  if(/再.*订|重新.*订|新.*订单|下.*次|再来.*次|另.*一单|再.*预约/i.test(text)){
+    addMsg(text, true);
+    document.getElementById('chat-input').value='';
+    // 完整重置S对象
+    S.direction=null;S.address=null;S.date=null;S.time=null;
+    S.vehicle=null;S.price=null;S.base_price=0;S.surcharge=0;
+    S.distance_km=0;S.trip_type='standard';S.wait_hours=0;
+    bookingSubmitted=false;
+    await agentSay('好的，重新来一单！这次去哪里，几点出发？',300);
+    return;
+  }
+
+  // 查订单快捷拦截
+  if(/查.*订单|我的订单|订单.*查|看.*订单|订单号|预约记录/i.test(text)){
+    addMsg(text, true);
+    document.getElementById('chat-input').value='';
+    await agentSay('好的，帮您打开个人中心查看订单',300);
+    setTimeout(()=>openProfile(),800);
+    return;
+  }
+
   // 换车型快捷拦截：不走AI直接弹车型卡
   if(/换.*车|改.*车|重新.*选车|换个车|车型|换车型/i.test(text) && S.address && S.direction){
     addMsg(text, true);
@@ -1201,6 +1223,12 @@ A：创始合伙人永久3倍积分加成，平台越大积分越值钱，就像
 
 【禁止】贬损任何同行平台，只讲自己的优势和特色。
 
+【订单已提交后的状态】
+用户预约成功后，不要再问车型/地址/时间等信息。
+用户问订单：告知"可以在个人中心查看订单详情"，同时触发[ACTION: open_profile]
+用户问司机几时来：告知"司机确认后会联系您，请保持手机畅通"
+用户问修改订单：告知"可以联系客服修改，微信：DIVE-DING" 
+
 【旅游广场推广场景——用户提到出游/拼车/景点时自然引导】
 场景1·拼团省钱：
 "一个人包车太贵？来旅游广场找人拼。发个帖子说你要去哪、哪天、几个人，有人感兴趣来报名，凑够人数一起出发，费用平摊，比自己包车便宜一半。"
@@ -1244,6 +1272,24 @@ A：创始合伙人永久3倍积分加成，平台越大积分越值钱，就像
 3. 禁止报价格，禁止问人数（选车时自己选）
 4. 意图+时间+地址都有了，立即触发，不再确认
 5. 缺什么只问那一个，不要同时问多个
+
+【已收集信息保护原则——最重要】
+- 用户已告知的信息（日期/时间/地址/人数）永久保留，绝不主动清空
+- 用户只说"改车型"→只改车型，日期时间地址全部保留
+- 用户只说"改时间"→只问新时间，其他保留
+- 用户只说"改地址"→只问新地址，其他保留
+- 已确认的信息不重复问，不重复确认
+- 预约提交后：不再问任何行程信息，只回答售后问题
+
+【重新下单 vs 修改当前单——严格区分】
+重新下单信号（清空所有信息从头开始）：
+- "再订一单/重新订/新的预约/下次/再来一次/另外一单"
+- 触发：[ACTION: new_booking]
+
+修改当前单信号（只改指定字段）：
+- "改车型/换车/改时间/改地址/改日期"
+- 只改用户指定的那一项，其余全部保留
+- 不触发新的信息收集流程
 
 【触发标记】
 送机（有出发时间+出发地）→ [ACTION: show_vehicles to_airport]
@@ -1403,7 +1449,7 @@ function extractInfo(msg){
   }
 
   const timeMatch=msg.match(/(\d{1,2})[点:：时](\d{0,2})/);
-  if(timeMatch)S.time=`${timeMatch[1].padStart(2,'0')}:${(timeMatch[2]||'00').padStart(2,'0')}`;
+  if(timeMatch && (!S.time||isModify))S.time=`${timeMatch[1].padStart(2,'0')}:${(timeMatch[2]||'00').padStart(2,'0')}`;
 
   const addrs=getSavedAddresses();
   if(/回家|回我家|老地址|从家|家里/i.test(msg)&&addrs.length>0)S.address=addrs[0];
@@ -1452,6 +1498,14 @@ async function handleAction(action,param){
   } else if(action==='gps_locate'){
     // AI引导GPS定位目的地
     await gpsConfirmAddress('destination');
+  } else if(action==='new_booking'){
+    S.direction=null;S.address=null;S.date=null;S.time=null;
+    S.vehicle=null;S.price=null;S.base_price=0;S.surcharge=0;
+    S.distance_km=0;S.trip_type='standard';S.wait_hours=0;
+    bookingSubmitted=false;
+    await agentSay('好的，重新来一单！这次去哪里，几点出发？',300);
+  } else if(action==='open_profile'){
+    openProfile();
   } else if(action==='goto'){
     const map={plaza:'plaza.html',driver:'driver-app.html'};
     if(map[param])setTimeout(()=>window.location.href=map[param],800);
