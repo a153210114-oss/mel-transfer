@@ -671,6 +671,15 @@ function detectDialect(text){
 }
 
 async function sendVoiceMessage(text){
+  // 换车型快捷拦截：不走AI直接弹车型卡
+  if(/换.*车|改.*车|重新.*选车|换个车|车型|换车型/i.test(text) && S.address && S.direction){
+    addMsg(text, true);
+    document.getElementById('chat-input').value='';
+    await agentSay('好，重新选个车型吧',200);
+    setTimeout(()=>showVehicleCards(),600);
+    return;
+  }
+
   // 谐音纠错
   const corrected = correctHomophones(text);
   const displayText = corrected !== text ?
@@ -1485,8 +1494,10 @@ async function selectVehicle(type,price,el){
   } else {
     // 如果已有距离数据（换车型时），直接用已有surcharge重算
     if(S.distance_km && S.distance_km > 25){
-      S.surcharge = S.distance_km - 25;
+      S.surcharge = Math.round(S.distance_km - 25);
       S.price = price + S.surcharge;
+    } else if(S.distance_km){
+      S.surcharge=0; S.price=price;
     } else {
       S.surcharge=0; S.price=price;
     }
@@ -1550,7 +1561,13 @@ async function showConfirmCard(){
 }
 
 function selPay(el,val){document.querySelectorAll('.pay-opt').forEach(o=>o.classList.remove('selected'));el.classList.add('selected');S.payment=val;}
-function restartBooking(){S.direction=null;S.address=null;S.date=null;S.time=null;S.vehicle=null;S.price=null;S.trip_type='standard';S.wait_hours=0;agentSay('告诉我想修改什么？',300);}
+function restartBooking(){
+  // 只重置车型和价格，保留已收集的日期/时间/地址/距离
+  S.vehicle=null; S.price=null; S.base_price=0;
+  agentSay('想换什么车型？',300);
+  // 直接重新显示车型卡，不走AI对话
+  setTimeout(()=>showVehicleCards(), 800);
+}
 
 async function showContactStep(){
   const saved=getPassenger();
