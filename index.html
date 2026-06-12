@@ -538,7 +538,7 @@ function startListeningLoop(){
   const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
   recognition = new SR();
   recognition.lang = 'zh-CN';
-  recognition.continuous = true;
+  recognition.continuous = false; // iOS Safari continuous模式不稳定，用false+自动重启
   recognition.interimResults = true;
 
   recognition.onstart = () => {
@@ -575,23 +575,35 @@ function startListeningLoop(){
     if(current){
       pendingVoiceText = current;
       clearVoicePauseTimer();
-      voicePauseTimer = setTimeout(() => {
-        const text = pendingVoiceText.trim();
-        pendingVoiceText = '';
-        clearVoicePauseTimer();
-        if(text){
-          document.getElementById('chat-input').value = '';
-          updateVoiceStatus('💭 思考中...');
-          sendVoiceMessage(text);
-        }
-      }, 1500);
+      // continuous=false: isFinal时才启动定时器
+      if(finalText){
+        voicePauseTimer = setTimeout(() => {
+          const text = pendingVoiceText.trim();
+          pendingVoiceText = '';
+          clearVoicePauseTimer();
+          if(text){
+            document.getElementById('chat-input').value = '';
+            updateVoiceStatus('💭 思考中...');
+            sendVoiceMessage(text);
+          }
+        }, 800); // isFinal后0.8秒发送，给用户补充说话的余地
+      }
     }
   };
 
   recognition.onend = () => {
     isRecording = false;
-    if(voiceMode && !isSpeaking && !voicePauseTimer){
-      setTimeout(startListeningLoop, 300);
+    // continuous=false: recognition结束后，如果有pending文字等定时器，否则重启监听
+    if(voiceMode && !isSpeaking){
+      if(!voicePauseTimer && !pendingVoiceText){
+        setTimeout(startListeningLoop, 200);
+      } else if(!voicePauseTimer && pendingVoiceText){
+        // 有文字但定时器没了，立即发送
+        const text = pendingVoiceText.trim();
+        pendingVoiceText = '';
+        if(text){ updateVoiceStatus('💭 思考中...'); sendVoiceMessage(text); }
+      }
+      // 有定时器：等定时器触发，触发后由sendVoiceMessage结尾重启
     }
   };
 
@@ -1726,7 +1738,6 @@ async function gpsConfirmAddress() {
   // 先尝试GPS定位
   if (navigator.geolocation && !isDropoff) {
     // 送机场景才GPS（用户在家出发）
-    await agentSay('正在获取您的位置...', 300);
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         try {
@@ -1849,11 +1860,7 @@ async function showAddressConfirm(gpsAddr, savedAddrs, label) {
   chatArea.appendChild(div);
   scrollBottom();
 
-  if (diffAddr) {
-    speak(`定位到${gpsAddr}，还是去常用地址${savedAddr}？`);
-  } else {
-    speak(`定位到${gpsAddr}，门牌号对吗？`);
-  }
+  // 不重复语音，避免与前一条TTS叠加
 }
 
 
