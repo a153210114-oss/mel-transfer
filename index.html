@@ -1482,15 +1482,20 @@ async function selectVehicle(type,price,el){
     S.hourly_rate=price;S.price=S.hourly_rate*S.charter_hours;
     showConfirmCard();
   } else {
-    // 先显示基础价，同时后台计算距离
-    S.surcharge=0;S.price=price;
-    showConfirmCard(); // 先显示
-    if(S.address && window.google){
+    // 如果已有距离数据（换车型时），直接用已有surcharge重算
+    if(S.distance_km && S.distance_km > 25){
+      S.surcharge = S.distance_km - 25;
+      S.price = price + S.surcharge;
+    } else {
+      S.surcharge=0; S.price=price;
+    }
+    showConfirmCard();
+    // 如果没有距离数据，后台算
+    if(!S.distance_km && S.address && window.google){
       const surcharge=await calcDistanceSurcharge(S.address,S.direction);
       if(surcharge>0){
         S.surcharge=surcharge;
         S.price=price+surcharge;
-        // 更新确认卡费用显示
         const feeEl=document.querySelector('.confirm-value[data-fee]');
         if(feeEl) feeEl.textContent='AUD '+S.price;
         await agentSay(`您的地址距机场约${S.distance_km}km，超出${S.distance_km-25}km，参考附加费AUD ${surcharge}，参考合计AUD ${S.price}，最终与司机线下确认`,400);
@@ -1581,10 +1586,15 @@ async function submitFromForm(){
 
 async function submitBooking(){
   if(bookingSubmitted)return;
+  // 从对话历史补提取缺失的日期时间
+  if(!S.date||!S.time){
+    const allText=aiHistory.map(m=>m.content).join(' ');
+    extractInfo(allText);
+  }
   // 验证必填信息
-  if(!S.date){alert('请告诉管家出行日期');return;}
-  if(!S.time){alert('请告诉管家出发时间');return;}
-  if(!S.address){alert('请告诉管家出发地址');return;}
+  if(!S.date){await agentSay('请问您哪天出发？');return;}
+  if(!S.time){await agentSay('请问几点需要司机到门口？');return;}
+  if(!S.address){await agentSay('请问从哪里出发？');return;}
   if(!S.vehicle){alert('请选择车型');return;}
   bookingSubmitted=true;
   const isCharter=S.trip_type==='charter';
