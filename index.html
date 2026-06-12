@@ -442,10 +442,39 @@ function buildPersonalGreeting(){
 
 // ── 语音 ──
 // ── TTS via SiliconFlow ──
-let ttsAudio = null; // 当前播放的Audio对象
+let ttsAudio = null;
+let ttsQueue = [];
+let ttsPlaying = false;
 
 function stopTTS() {
+  ttsQueue = []; // 清空队列
+  ttsPlaying = false;
   if(ttsAudio){ ttsAudio.pause(); ttsAudio.src=''; ttsAudio=null; }
+}
+
+async function processTTSQueue() {
+  if(ttsPlaying || ttsQueue.length === 0) return;
+  ttsPlaying = true;
+  const {text, onDone} = ttsQueue.shift();
+  try {
+    const voice = window._ttsVoice || 'FunAudioLLM/CosyVoice2-0.5B:diana';
+    const res = await fetch('/api/tts', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({text, voice})
+    });
+    if(res.ok){
+      const data = await res.json();
+      if(data.audio){
+        const audio = new Audio('data:audio/mp3;base64,' + data.audio);
+        ttsAudio = audio;
+        audio.onended = () => { ttsAudio=null; ttsPlaying=false; onDone&&onDone(); processTTSQueue(); };
+        audio.onerror = () => { ttsAudio=null; ttsPlaying=false; onDone&&onDone(); processTTSQueue(); };
+        audio.play().catch(()=>{ ttsPlaying=false; onDone&&onDone(); processTTSQueue(); });
+        return;
+      }
+    }
+  } catch(e){ console.warn('TTS:', e.message); }
+  ttsPlaying=false; onDone&&onDone(); processTTSQueue();
 }
 
 async function speak(text) {
@@ -453,20 +482,9 @@ async function speak(text) {
     .replace(/AUD\s*([\d.]+)/g,'澳元$1').replace(/A\$([\d.]+)/g,'澳元$1').replace(/\$([\d.]+)/g,'澳元$1')
     .replace(/美元/g,'澳元').trim();
   if(!clean) return;
-  stopTTS();
   if(recognition){ try{ recognition.stop(); }catch(e){} }
-  try {
-    const res = await fetch('/api/tts', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ text: clean, voice: window._ttsVoice||'FunAudioLLM/CosyVoice2-0.5B:diana' })
-    });
-    if(!res.ok) return;
-    const data = await res.json();
-    if(!data.audio) return;
-    const audio = new Audio('data:audio/mp3;base64,' + data.audio);
-    ttsAudio = audio;
-    audio.play().catch(()=>{});
-  } catch(e) { console.warn('TTS error:', e.message); }
+  ttsQueue.push({text: clean, onDone: null});
+  processTTSQueue();
 }
 
 // ── 语音输入 ──
@@ -744,26 +762,10 @@ async function speakAndResume(text, onDone) {
     .replace(/美元/g,'澳元').trim();
   if(!clean){ onDone && onDone(); return; }
   stopTTS();
-  // 播放TTS时暂停麦克风，防止回音
   if(recognition){ try{ recognition.stop(); }catch(e){} }
-  try {
-    const res = await fetch('/api/tts', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ text: clean, voice: window._ttsVoice||'FunAudioLLM/CosyVoice2-0.5B:diana' })
-    });
-    if(!res.ok){ onDone && onDone(); return; }
-    const data = await res.json();
-    if(!data.audio){ onDone && onDone(); return; }
-    const audio = new Audio('data:audio/mp3;base64,' + data.audio);
-    ttsAudio = audio;
-    audio.onended = () => { ttsAudio=null; onDone && onDone(); };
-    audio.onerror = () => { ttsAudio=null; onDone && onDone(); };
-    // 延迟300ms让麦克风真正关闭再播放
-    setTimeout(() => { audio.play().catch(() => { onDone && onDone(); }); }, 300);
-  } catch(e) {
-    console.warn('TTS error:', e.message);
-    onDone && onDone();
-  }
+  // 清空队列，只播这一条，播完执行onDone
+  ttsQueue = [{text: clean, onDone}];
+  processTTSQueue();
 }
 
 // ── 身份和数据 ──
