@@ -1077,8 +1077,31 @@ window.onload=async function(){
     const g=guessGender(savedPassenger.name);
     setAgentByUserGender(g||'male');
     document.getElementById('exit-btn').style.display='block';
-    const _t1=localStorage.getItem('au_gender')==='female'?'小姐':'先生';await agentSay(`${savedPassenger.name||''}${savedPassenger.name?_t1:''}，欢迎回来 ${agentEmoji}<br>需要我帮您下单，还是您亲自操作？`,700);
-    showPassengerModeChoice();
+    const _t1=localStorage.getItem('au_gender')==='female'?'小姐':'先生';
+    // 检查是否有进行中的订单
+    let activeTrip = null;
+    try{
+      const recentTrips = await supaGet(`trips?passenger_phone=eq.${savedPassenger.phone}&tenant_id=eq.${TENANT_ID}&status=in.(pending,confirmed)&order=created_at.desc&limit=1`);
+      if(recentTrips && recentTrips.length) activeTrip = recentTrips[0];
+    }catch(e){}
+
+    if(activeTrip){
+      // 有进行中订单：恢复S对象并弹出确认卡
+      const t = activeTrip;
+      if(t.scheduled_at){ const dt=new Date(t.scheduled_at); S.date=dt.toISOString().split('T')[0]; S.time=`${dt.getUTCHours().toString().padStart(2,'0')}:${dt.getUTCMinutes().toString().padStart(2,'0')}`; }
+      if(t.pickup_address) S.address=t.pickup_address;
+      if(t.direction) S.direction=t.direction;
+      if(t.vehicle_type){ S.vehicle=t.vehicle_type; S.base_price=t.base_price||t.total_price; }
+      if(t.total_price) S.price=t.total_price;
+      if(t.surcharge) S.surcharge=t.surcharge;
+      if(t.distance_km) S.distance_km=t.distance_km;
+      if(t.trip_type) S.trip_type=t.trip_type;
+      await agentSay(`${savedPassenger.name||''}${savedPassenger.name?_t1:''}，欢迎回来 ${agentEmoji} 您有一个${t.status==='confirmed'?'已确认':'待确认'}的预约，帮您调出来看看`,600);
+      showResumeOrderCard(t);
+    } else {
+      await agentSay(`${savedPassenger.name||''}${savedPassenger.name?_t1:''}，欢迎回来 ${agentEmoji}<br>需要我帮您下单，还是您亲自操作？`,700);
+      showPassengerModeChoice();
+    }
   } else if(savedRole==='driver'&&savedDriver.id){
     // 老司机直接进
     currentRole='driver';
@@ -1935,6 +1958,56 @@ async function calcDistanceSurcharge(address, direction) {
 }
 
 
+// ── 订单恢复卡片 ──
+function showResumeOrderCard(t){
+  const div = document.createElement('div');
+  div.className = 'confirm-card';
+  div.style.border = '1.5px solid rgba(0,200,150,0.35)';
+  const dt = t.scheduled_at ? new Date(t.scheduled_at) : null;
+  const dtStr = dt ? `${dt.getUTCMonth()+1}月${dt.getUTCDate()}日 ${dt.getUTCHours().toString().padStart(2,'0')}:${dt.getUTCMinutes().toString().padStart(2,'0')}` : '—';
+  const vMap={"comfort_5":"舒适 5座","comfort_8":"舒适 8座","comfort_12":"舒适 12座","comfort_15":"舒适 15座","luxury_alpha":"阿尔法 6/7座","luxury_benz_8":"奔驰 8座","luxury_benz_12":"奔驰 12座","luxury_benz_15":"奔驰 15座"};
+  const statusLabel = t.status==='confirmed'?'✅ 司机已确认':'⏳ 待司机确认';
+  const statusColor = t.status==='confirmed'?'rgba(0,200,150,0.9)':'rgba(255,165,0,0.9)';
+  div.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div style="font-size:14px;font-weight:900;color:white;">📋 您的预约</div>
+      <span style="font-size:12px;font-weight:700;color:${statusColor};">${statusLabel}</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
+      <div class="confirm-row"><span class="confirm-label">日期</span><span class="confirm-value">${dtStr}</span></div>
+      <div class="confirm-row"><span class="confirm-label">出发地</span><span class="confirm-value" style="font-size:12px;">${(t.pickup_address||'—').slice(0,35)}</span></div>
+      <div class="confirm-row"><span class="confirm-label">车型</span><span class="confirm-value">${vMap[t.vehicle_type]||t.vehicle_type||'—'}</span></div>
+      <div class="confirm-row"><span class="confirm-label">费用</span><span class="confirm-value" style="color:rgba(0,212,255,0.9);font-weight:900;">AUD ${t.total_price} <span style="font-size:11px;color:rgba(255,255,255,0.3);">参考</span></span></div>
+    </div>
+    ${t.status==='confirmed'?`
+    <div id="driver-contact-${t.id}" style="background:rgba(0,200,150,0.08);border:1px solid rgba(0,200,150,0.2);border-radius:10px;padding:12px;margin-bottom:12px;text-align:center;">
+      <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:4px;">司机联系方式</div>
+      <div style="font-size:13px;color:white;font-weight:700;" id="driver-name-${t.id}">加载中...</div>
+      <a id="driver-phone-${t.id}" href="#" style="font-size:16px;font-weight:900;color:rgba(0,200,150,0.9);display:block;margin-top:6px;">📞 —</a>
+    </div>`:''}
+    <div style="display:flex;gap:8px;">
+      <button onclick="this.closest('.confirm-card').remove();showPassengerModeChoice();"
+        style="flex:1;padding:11px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:rgba(255,255,255,0.5);font-size:13px;cursor:pointer;font-family:inherit;">重新下单</button>
+      <button onclick="this.closest('.confirm-card').remove();"
+        style="flex:1;padding:11px;background:rgba(0,150,199,0.2);border:1px solid rgba(0,150,199,0.3);border-radius:10px;color:white;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">好的，知道了</button>
+    </div>`;
+  chatArea.appendChild(div);
+  scrollBottom();
+
+  // 如果已确认，拉取司机联系方式
+  if(t.status==='confirmed' && t.driver_id){
+    supaGet(`drivers?id=eq.${t.driver_id}&tenant_id=eq.${TENANT_ID}&select=full_name,phone`).then(drivers=>{
+      if(drivers && drivers.length){
+        const d = drivers[0];
+        const nameEl = document.getElementById('driver-name-'+t.id);
+        const phoneEl = document.getElementById('driver-phone-'+t.id);
+        if(nameEl) nameEl.textContent = d.full_name||'司机';
+        if(phoneEl){ phoneEl.textContent='📞 '+d.phone; phoneEl.href='tel:'+d.phone; }
+      }
+    }).catch(()=>{});
+  }
+}
+
 // ── 个人中心 ──
 async function openProfile(){
   const panel = document.getElementById('profile-panel');
@@ -2021,10 +2094,37 @@ function copyRefLink(){
   });
 }
 
-function showTripDetail(id, status, addr, time, price, vehicle, rawStatus){
+async function showTripDetail(id, status, addr, time, price, vehicle, rawStatus){
   const existing = document.getElementById('trip-detail-modal');
   if(existing) existing.remove();
+
+  const vMap={"comfort_5":"舒适 5座","comfort_8":"舒适 8座","comfort_12":"舒适 12座","comfort_15":"舒适 15座","luxury_alpha":"阿尔法 6/7座","luxury_benz_8":"奔驰 8座","luxury_benz_12":"奔驰 12座","luxury_benz_15":"奔驰 15座"};
+  const statusMap={pending:'⏳ 待确认',confirmed:'✅ 已确认',completed:'🏁 已完成',cancelled:'❌ 已取消'};
   const canCancel = rawStatus==='pending';
+  const isCompleted = rawStatus==='completed';
+  const isConfirmed = rawStatus==='confirmed';
+
+  // 从DB拉完整订单数据
+  let trip = null;
+  let driverName='', driverPhone='';
+  try{
+    const trips = await supaGet(`trips?id=eq.${id}&tenant_id=eq.${TENANT_ID}`);
+    if(trips&&trips.length) trip = trips[0];
+    if(trip&&trip.driver_id&&(isConfirmed||isCompleted)){
+      const drivers = await supaGet(`drivers?id=eq.${trip.driver_id}&tenant_id=eq.${TENANT_ID}&select=full_name,phone`);
+      if(drivers&&drivers.length){ driverName=drivers[0].full_name||'司机'; driverPhone=drivers[0].phone||''; }
+    }
+  }catch(e){}
+
+  // 用DB数据覆盖传参
+  if(trip){
+    const dt = trip.scheduled_at?new Date(trip.scheduled_at):null;
+    if(dt) time=`${dt.getUTCMonth()+1}月${dt.getUTCDate()}日 ${dt.getUTCHours().toString().padStart(2,'0')}:${dt.getUTCMinutes().toString().padStart(2,'0')}`;
+    if(trip.pickup_address) addr=trip.pickup_address;
+    if(trip.total_price) price=trip.total_price;
+    if(trip.vehicle_type) vehicle=vMap[trip.vehicle_type]||trip.vehicle_type;
+  }
+
   const overlay = document.createElement('div');
   overlay.id = 'trip-detail-modal';
   overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:3000;display:flex;align-items:flex-end;justify-content:center;';
@@ -2032,13 +2132,23 @@ function showTripDetail(id, status, addr, time, price, vehicle, rawStatus){
     <div style="background:#0d1f3c;border-radius:24px 24px 0 0;padding:24px 20px 44px;width:100%;max-width:480px;border-top:1px solid rgba(255,255,255,0.1);">
       <div style="width:40px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:0 auto 20px;"></div>
       <div style="font-size:16px;font-weight:900;color:white;margin-bottom:16px;">📋 订单详情</div>
-      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;">
-        <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.4);font-size:13px;">状态</span><span style="color:white;font-size:13px;font-weight:700;">${status}</span></div>
-        <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.4);font-size:13px;">地址</span><span style="color:white;font-size:13px;text-align:right;max-width:60%;">${addr}</span></div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;">
+        <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.4);font-size:13px;">状态</span><span style="font-size:13px;font-weight:700;">${statusMap[rawStatus]||status}</span></div>
         <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.4);font-size:13px;">时间</span><span style="color:white;font-size:13px;">${time}</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;"><span style="color:rgba(255,255,255,0.4);font-size:13px;">地址</span><span style="color:white;font-size:12px;text-align:right;max-width:65%;">${addr}</span></div>
         <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.4);font-size:13px;">车型</span><span style="color:white;font-size:13px;">${vehicle}</span></div>
-        <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.4);font-size:13px;">费用</span><span style="color:rgba(0,212,255,0.9);font-size:15px;font-weight:900;">AUD ${price} <span style="font-size:11px;color:rgba(255,255,255,0.3);">参考</span></span></div>
+        <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.4);font-size:13px;">费用</span><span style="color:rgba(0,212,255,0.9);font-size:15px;font-weight:900;">AUD ${price}<span style="font-size:11px;color:rgba(255,255,255,0.3);margin-left:4px;">参考</span></span></div>
       </div>
+      ${(isConfirmed||isCompleted)&&driverPhone?`
+      <div style="background:rgba(0,200,150,0.08);border:1px solid rgba(0,200,150,0.2);border-radius:10px;padding:12px;margin-bottom:14px;text-align:center;">
+        <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:4px;">司机联系方式</div>
+        <div style="font-size:14px;font-weight:700;color:white;margin-bottom:6px;">${driverName}</div>
+        <a href="tel:${driverPhone}" style="font-size:18px;font-weight:900;color:rgba(0,200,150,0.9);text-decoration:none;">📞 ${driverPhone}</a>
+      </div>`:''}
+      ${isCompleted?`
+      <div style="margin-bottom:14px;">
+        <button onclick="showRatingPanel('${id}')" style="width:100%;padding:12px;background:rgba(255,200,0,0.1);border:1px solid rgba(255,200,0,0.3);border-radius:12px;color:rgba(255,200,0,0.9);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">⭐ 评价此次行程</button>
+      </div>`:''}
       <div style="display:flex;gap:10px;">
         ${canCancel?`<button onclick="cancelTripById(this)" data-id="${id}" style="flex:1;padding:12px;background:rgba(255,59,48,0.1);border:1px solid rgba(255,59,48,0.3);border-radius:12px;color:rgba(255,100,90,0.8);font-size:13px;cursor:pointer;font-family:inherit;">取消订单</button>`:''}
         <button onclick="document.getElementById('trip-detail-modal').remove()" style="flex:1;padding:12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:rgba(255,255,255,0.6);font-size:13px;cursor:pointer;font-family:inherit;">关闭</button>
@@ -2046,6 +2156,48 @@ function showTripDetail(id, status, addr, time, price, vehicle, rawStatus){
     </div>`;
   overlay.onclick=(e)=>{ if(e.target===overlay) overlay.remove(); };
   document.body.appendChild(overlay);
+}
+
+function showRatingPanel(tripId){
+  document.getElementById('trip-detail-modal')?.remove();
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:3000;display:flex;align-items:flex-end;justify-content:center;';
+  let stars=5;
+  overlay.innerHTML=`
+    <div style="background:#0d1f3c;border-radius:24px 24px 0 0;padding:24px 20px 44px;width:100%;max-width:480px;">
+      <div style="width:40px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:0 auto 20px;"></div>
+      <div style="font-size:16px;font-weight:900;color:white;margin-bottom:16px;">⭐ 评价行程</div>
+      <div style="display:flex;justify-content:center;gap:12px;margin-bottom:16px;" id="star-row">
+        ${[1,2,3,4,5].map(i=>`<span onclick="selectStar(${i})" data-star="${i}" style="font-size:32px;cursor:pointer;opacity:${i<=5?1:0.3};">⭐</span>`).join('')}
+      </div>
+      <textarea id="rating-comment" placeholder="说说您的体验（选填）" style="width:100%;padding:12px;background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.12);border-radius:10px;color:white;font-size:14px;font-family:inherit;outline:none;resize:none;height:80px;box-sizing:border-box;margin-bottom:14px;"></textarea>
+      <button onclick="submitRating('${tripId}',this)" style="width:100%;padding:14px;background:linear-gradient(135deg,#f5a623,#e8950f);color:white;border:none;border-radius:12px;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit;">提交评价</button>
+    </div>`;
+  overlay.onclick=(e)=>{ if(e.target===overlay) overlay.remove(); };
+  document.body.appendChild(overlay);
+}
+
+function selectStar(n){
+  document.querySelectorAll('#star-row span').forEach(s=>{
+    s.style.opacity = parseInt(s.dataset.star)<=n?1:0.3;
+  });
+  window._selectedStars=n;
+}
+
+async function submitRating(tripId, btn){
+  const stars = window._selectedStars||5;
+  const comment = document.getElementById('rating-comment')?.value.trim()||'';
+  btn.textContent='提交中...'; btn.disabled=true;
+  try{
+    await fetch(SUPA_URL+'/rest/v1/trips?id=eq.'+tripId,{
+      method:'PATCH',
+      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({rating:stars,review_text:comment})
+    });
+    btn.closest('div[style*="fixed"]')?.remove();
+    speak('感谢您的评价！积分已到账');
+    openProfile();
+  }catch(e){ btn.textContent='提交评价'; btn.disabled=false; alert('提交失败，请重试'); }
 }
 
 function cancelTripById(btn){

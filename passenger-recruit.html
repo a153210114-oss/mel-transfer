@@ -300,44 +300,12 @@ body{
   border-radius:20px;padding:8px 18px;font-size:13px;
   z-index:500;display:none;white-space:nowrap;
 }
-
-/* ── 底部导航 ── */
-.bottom-nav{
-  display:flex;
-  background:#0d1f3c;
-  border-top:1px solid rgba(255,255,255,0.08);
-  flex-shrink:0;
-}
-.nav-item{
-  flex:1;display:flex;flex-direction:column;align-items:center;
-  padding:8px 4px 10px;gap:3px;cursor:pointer;
-  font-size:10px;color:rgba(255,255,255,0.4);
-  border:none;background:none;font-family:inherit;
-}
-.nav-item.active{color:#00d4ff;}
-.nav-icon{font-size:20px;line-height:1;}
-.nav-badge-dot{
-  position:relative;display:inline-block;
-}
-.nav-badge-dot::after{
-  content:'';position:absolute;top:-2px;right:-4px;
-  width:7px;height:7px;border-radius:50%;
-  background:#ff4d6d;border:1.5px solid #0d1f3c;
-  display:none;
-}
-.nav-badge-dot.has-badge::after{display:block;}
 </style>
 </head>
 <body>
 
 <!-- 入场动画 -->
 <div id="splash">
-  <div style="position:absolute;top:16px;left:16px;z-index:10;">
-    <button onclick="window.location.href='index.html'"
-      style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.2);
-      color:rgba(255,255,255,0.8);border-radius:10px;padding:7px 14px;
-      font-size:13px;cursor:pointer;font-family:inherit;">← 返回</button>
-  </div>
   <div style="position:absolute;width:300px;height:300px;background:radial-gradient(circle,rgba(0,150,199,0.3),transparent);border-radius:50%;animation:haloExpand 2s ease-out 0.5s forwards;opacity:0;"></div>
   <div id="splash-agent">
     <div style="position:absolute;top:-50px;right:-70px;animation:signWave 0.3s ease-in-out infinite alternate;">
@@ -389,12 +357,6 @@ body{
   </div>
   <!-- 选择管家 -->
   <div id="agent-choice" style="display:none;position:absolute;inset:0;background:linear-gradient(135deg,#1a3a5c,#0d2540);flex-direction:column;align-items:center;justify-content:center;padding:30px;">
-  <div style="position:absolute;top:16px;left:16px;">
-    <button onclick="window.location.href='index.html'"
-      style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);
-      color:rgba(255,255,255,0.7);border-radius:10px;padding:7px 14px;
-      font-size:13px;cursor:pointer;font-family:inherit;">← 返回</button>
-  </div>
     <div style="font-size:22px;font-weight:900;color:white;margin-bottom:8px;">选择你的专属管家</div>
     <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:36px;">全程陪伴，随时为你服务</div>
     <div style="display:flex;gap:20px;width:100%;max-width:320px;">
@@ -438,19 +400,6 @@ body{
   <button class="mic-btn" id="mic-btn" onclick="toggleMic()">🎤</button>
   <input class="chat-input" id="chat-input" placeholder="输入或按麦克风说话..." onkeydown="if(event.key==='Enter')sendMessage()">
   <button class="send-btn" onclick="sendMessage()">➤</button>
-</div>
-
-<!-- 底部导航 -->
-<div class="bottom-nav">
-  <button class="nav-item active" onclick="switchTab('orders')">
-    <span class="nav-icon">📋</span>订单
-  </button>
-  <button class="nav-item" onclick="switchTab('messages')">
-    <span class="nav-icon nav-badge-dot" id="msg-badge">📨</span>消息
-  </button>
-  <button class="nav-item" onclick="openProfile()">
-    <span class="nav-icon">👤</span>我的
-  </button>
 </div>
 
 <!-- 个人中心侧边栏 -->
@@ -532,9 +481,13 @@ body{
     <div style="text-align:center;font-size:52px;margin-bottom:10px;">✅</div>
     <div style="text-align:center;font-size:22px;font-weight:900;color:var(--text);margin-bottom:6px;">预约已提交！</div>
     <div style="text-align:center;font-size:13px;color:var(--text2);margin-bottom:20px;">订单号：<span id="suc-id" style="font-weight:700;color:var(--text);"></span></div>
-    <div style="background:#f0f9ff;border-radius:14px;padding:16px;margin-bottom:14px;text-align:center;">
-      <div style="font-size:14px;color:var(--text2);line-height:1.8;">
-        💬 司机确认后会通过平台消息联系您<br>请与司机确认费用并完成付款
+    <div style="background:#f0f7ff;border-radius:14px;padding:16px;margin-bottom:14px;">
+      <div style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:10px;">💰 付款方式</div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.9;">
+        💚 微信转账：<strong style="color:var(--text);">DIVE-DING</strong><br>
+        💳 到车付款<br>
+        🏦 银行转账请联系客服<br>
+        📞 <strong style="color:var(--text);">0449 251 218</strong>
       </div>
     </div>
     <button onclick="addToHome()" style="width:100%;padding:13px;background:var(--bg);border:none;border-radius:14px;font-size:14px;font-weight:700;color:var(--text2);cursor:pointer;margin-bottom:10px;">📱 添加到手机桌面，下次一秒打开</button>
@@ -547,30 +500,7 @@ const SUPA_URL='https://gxocvpmgfjvmmkkbswgo.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b2N2cG1nZmp2bW1ra2Jzd2dvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyNDc4NzAsImV4cCI6MjA5NTgyMzg3MH0.ExUNuOP8YyHQmItY6cdl1Euj7nOXqQq-rQT5-7aNerE';
 const TENANT_ID='00000000-0000-0000-0000-000000000001';
 
-const S={direction:null,address:null,date:null,time:null,vehicle:null,price:null,base_price:0,surcharge:0,distance_km:0,name:null,phone:null,wechat:null,trip_type:'standard',wait_hours:0};
-const BASE_KM=25, SURCHARGE_PER_KM=1;
-const AIRPORT_COORDS={lat:-37.6690,lng:144.8410};
-
-async function calcDistanceSurcharge(address,direction){
-  if(!window.google||!address)return 0;
-  try{
-    const service=new google.maps.DistanceMatrixService();
-    const airportLatLng=new google.maps.LatLng(AIRPORT_COORDS.lat,AIRPORT_COORDS.lng);
-    return new Promise((resolve)=>{
-      service.getDistanceMatrix({
-        origins:direction==='to_airport'?[address]:[airportLatLng],
-        destinations:direction==='to_airport'?[airportLatLng]:[address],
-        travelMode:google.maps.TravelMode.DRIVING,
-      },(response,status)=>{
-        if(status!=='OK'){resolve(0);return;}
-        const km=response.rows[0].elements[0].distance.value/1000;
-        S.distance_km=Math.round(km);
-        const surcharge=km>BASE_KM?Math.round((km-BASE_KM)*SURCHARGE_PER_KM):0;
-        resolve(surcharge);
-      });
-    });
-  }catch(e){return 0;}
-}
+const S={direction:null,address:null,date:null,time:null,vehicle:null,price:null,name:null,phone:null,wechat:null,payment:'wechat',trip_type:'standard',wait_hours:0};
 const VEHICLES=[
   {type:'sedan',icon:'🚗',name:'Sedan 轿车',cap:'1-3人',price:70},
   {type:'mpv',icon:'🚐',name:'MPV 商务车',cap:'4-6人',price:90},
@@ -600,32 +530,30 @@ async function agentSay(html,ms=800){
   const t=addTyping();await delay(ms);t.remove();addMsg(html);speak(html);
 }
 
-// ── 语音输出（SiliconFlow TTS）──
+// ── 语音输出 ──
 let currentAgent=null;
-let ttsAudio=null;
-
-function stopTTS(){
-  if(ttsAudio){ ttsAudio.pause(); ttsAudio.src=''; ttsAudio=null; }
-}
-
-async function speak(text){
-  const clean=text.replace(/<[^>]*>/g,'').replace(/\*\*([^*]+)\*\*/g,'$1')
-    .replace(/\s+/g,' ')
-    .replace(/AUD\s*([\d.]+)/g,'澳元$1').replace(/A\$([\d.]+)/g,'澳元$1').replace(/\$([\d.]+)/g,'澳元$1')
-    .replace(/美元/g,'澳元').trim();
+function speak(text){
+  if(!window.speechSynthesis)return;
+  window.speechSynthesis.cancel();
+  const clean=text
+    .replace(/<[^>]*>/g,'')
+    .replace(/\*\*([^*]+)\*\*/g,'$1')
+    .replace(/[^\u0000-\u007F\u4E00-\u9FFF\u3000-\u303F\uFF00-\uFFEF\s]/g,'')
+    .replace(/[·•→←\-：:\[\]【】\/]/g,' ')
+    .replace(/\s+/g,' ').trim();
   if(!clean)return;
-  stopTTS();
-  try{
-    const voice=window._ttsVoice||(localStorage.getItem('au_gender')==='female'?'FunAudioLLM/CosyVoice2-0.5B:charles':'FunAudioLLM/CosyVoice2-0.5B:diana');
-    const res=await fetch('/api/tts',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({text:clean,voice})});
-    if(!res.ok)return;
-    const data=await res.json();
-    if(!data.audio)return;
-    const audio=new Audio('data:audio/mp3;base64,'+data.audio);
-    ttsAudio=audio;
-    audio.play().catch(()=>{});
-  }catch(e){console.warn('TTS:',e.message);}
+  const u=new SpeechSynthesisUtterance(clean);
+  u.lang='zh-CN';u.rate=currentAgent?.rate||1.0;u.pitch=currentAgent?.pitch||1.0;
+  const voices=window.speechSynthesis.getVoices();
+  const zh=voices.filter(v=>v.lang.startsWith('zh'));
+  if(zh.length>0){
+    const g=localStorage.getItem('au_agent')||'male';
+    const cnVoices=voices.filter(v=>v.lang==='zh-CN');
+    const pool=cnVoices.length>0?cnVoices:zh;
+    const v=g==='female'?(pool.find(v=>/female|女|Ting/i.test(v.name))||pool[pool.length-1]):pool[0];
+    if(v)u.voice=v;
+  }
+  window.speechSynthesis.speak(u);
 }
 
 // ── 语音输入 ──
@@ -698,16 +626,6 @@ document.addEventListener('touchstart',resetIdle);
 document.addEventListener('keydown',resetIdle);
 
 // ── 退出对话 ──
-function switchTab(tab){
-  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
-  event.currentTarget.classList.add('active');
-  if(tab==='orders'){
-    openProfile(); // 个人中心里已有历史订单
-  } else if(tab==='messages'){
-    speak('消息功能即将上线，司机确认订单后会在这里通知您');
-  }
-}
-
 function exitChat(){
   window.speechSynthesis.cancel();
   window.location.href='index.html';
@@ -730,7 +648,7 @@ function buildSystemPrompt(){
 【三种订单类型】
 1. 接机（from_airport）：乘客从机场出来，司机接到目的地
 2. 送机（to_airport）：司机从出发地送乘客去机场
-3. 陪同接机（accompanied）：用户需要司机陪同去机场接客人，再一起回家
+3. 陪同接机（accompanied）：主人需要司机陪同去机场接客人，再一起回家
 
 【时间确认规则】
 送机：若乘客说的是起飞时间，必须问"需要司机几点到您门口？建议起飞前2小时"。记录司机到达时间。
@@ -739,11 +657,11 @@ function buildSystemPrompt(){
 
 价格（墨尔本机场25km内）：Sedan $70（1-3人）、MPV $90（4-6人）、大型MPV $120（7-9人）、Van $160（10人+）
 陪同接机额外等候费：$20/小时
-支付：线下与司机确认后付款
+支付：微信、到车付款、银行转账
 
 收集到所有信息后说"好的信息齐了！帮你看看车型"`;
 
-  if(saved.name){const _t=localStorage.getItem('au_gender')==='female'?'小姐':'先生';prompt+='\n\n当前用户：'+saved.name+'。称呼"'+saved.name+_t+'"，体现尊重。';}
+  if(saved.name)prompt+='\n\n当前用户：'+saved.name+'。称呼时用"'+saved.name+'主人"，体现尊重。';
   if(addrs.length>0)prompt+='\n用户常用地址：'+addrs[0]+'。若用户说"回家""老地址"，直接用此地址，无需再问。';
 
   prompt+=`\n\n【重要】收集到地址后，必须在回复末尾加JSON标记：
@@ -796,24 +714,13 @@ async function showVehicleChoice(){
       <div class="v-name">${v.name}</div>
       <div class="v-cap">${v.cap}</div>
       <div class="v-price">$${v.price}</div>
-      <div style="font-size:9px;color:rgba(255,255,255,0.35);margin-top:1px;">参考价</div>
     </div>`).join('');
   chatArea.appendChild(div);scrollBottom();
 }
 
-async function selectVehicle(type,price,el){
+function selectVehicle(type,price,el){
   document.querySelectorAll('.vehicle-card').forEach(c=>c.classList.remove('selected'));
-  el.classList.add('selected');
-  S.vehicle=type; S.base_price=price; S.price=price; S.surcharge=0;
-  // 计算距离附加费
-  if(S.address && S.direction){
-    const surcharge=await calcDistanceSurcharge(S.address,S.direction);
-    if(surcharge>0){
-      S.surcharge=surcharge;
-      S.price=price+surcharge;
-      await agentSay(`您的地址距机场约${S.distance_km}km，超出${S.distance_km-25}km，参考附加费AUD ${surcharge}，参考合计AUD ${S.price}，最终与司机线下确认`,400);
-    }
-  }
+  el.classList.add('selected');S.vehicle=type;S.price=price;
   setTimeout(()=>showConfirm(),400);
 }
 
@@ -836,12 +743,7 @@ async function showConfirm(){
     <div class="confirm-row"><span class="confirm-label">${addrLabel}</span><span class="confirm-value">${S.address}</span></div>
     <div class="confirm-row"><span class="confirm-label">车型</span><span class="confirm-value">${vInfo?.icon} ${vInfo?.name}</span></div>
     ${isAcc?`<div class="confirm-row"><span class="confirm-label">等候费</span><span class="confirm-value">$${waitFee}（${S.wait_hours}小时）</span></div>`:''}
-    \${S.distance_km?`<div class="confirm-row"><span class="confirm-label">距离</span><span class="confirm-value">\${S.distance_km}km\${S.surcharge>0?' (超出'+(\${S.distance_km}-25)+'km，附加AUD '+S.surcharge+')':' (25km内)'}</span></div>`:''}
-    <div class="confirm-row"><span class="confirm-label">费用</span><span class="confirm-value" style="color:var(--accent);font-size:18px;font-weight:900;">AUD \${total}</span></div>
-    <div style="background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.25);border-radius:10px;padding:10px 14px;margin:6px 0 4px;text-align:center;">
-      <div style="font-size:13px;color:rgba(245,166,35,0.9);font-weight:700;">⚠️ 以上为市场参考价</div>
-      <div style="font-size:12px;color:rgba(255,255,255,0.55);margin-top:4px;">实际费用请与司机确认后再付款</div>
-    </div>
+    <div class="confirm-row"><span class="confirm-label">费用</span><span class="confirm-value" style="color:var(--accent);font-size:18px;font-weight:900;">$${total}</span></div>
     <div class="confirm-btns">
       <button class="confirm-btn secondary" onclick="restartBooking()">✏️ 修改</button>
       <button class="confirm-btn primary" onclick="showContactForm()">✅ 确认下单</button>
@@ -859,12 +761,14 @@ async function showContactForm(){
     <div class="form-field"><label class="form-label">你的称呼</label><input class="form-input" id="f-name" placeholder="姓名或昵称" value="${saved.name||''}"></div>
     <div class="form-field"><label class="form-label">澳洲手机号</label><input class="form-input" id="f-phone" type="tel" placeholder="04XX XXX XXX" value="${saved.phone||''}"></div>
     <div class="form-field"><label class="form-label">微信号（选填）</label><input class="form-input" id="f-wechat" placeholder="微信ID" value="${saved.wechat||''}"></div>
-    <div class="form-field">
-      <div style="background:rgba(0,212,255,0.06);border:1px solid rgba(0,212,255,0.2);border-radius:10px;padding:12px 14px;font-size:13px;color:rgba(255,255,255,0.7);text-align:center;">
-        💬 预约确认后，请与司机确认费用并完成付款
+    <div class="form-field"><label class="form-label">付款方式</label>
+      <div class="pay-options">
+        <div class="pay-opt selected" onclick="selPay(this,'wechat')">💚 微信</div>
+        <div class="pay-opt" onclick="selPay(this,'cash')">💳 到车付</div>
+        <div class="pay-opt" onclick="selPay(this,'bank_transfer')">🏦 转账</div>
       </div>
     </div>
-    <button class="submit-btn" onclick="submitBooking()">🚀 确认预约 · 参考AUD ${S.price+(S.trip_type==='accompanied'?S.wait_hours*20:0)}</button>`;
+    <button class="submit-btn" onclick="submitBooking()">🚀 确认预约 · $${S.price+(S.trip_type==='accompanied'?S.wait_hours*20:0)}</button>`;
   chatArea.appendChild(div);scrollBottom();
 }
 
@@ -897,9 +801,9 @@ async function submitBooking(){
       pickup_address:isAcc||S.direction==='to_airport'?S.address:'墨尔本国际机场',
       dropoff_address:isAcc||S.direction==='from_airport'?S.address:'墨尔本国际机场',
       vehicle_type:S.vehicle,scheduled_at:`${S.date}T${S.time}:00`,
-      total_price:finalPrice,base_price:S.base_price,distance_km:S.distance_km||null,surcharge:S.surcharge||null,payment_method:'offline',
-      payment_status:'pending',
-      prepaid_amount:null,
+      total_price:finalPrice,payment_method:S.payment,
+      payment_status:S.payment==='bank_transfer'?'pending':'prepaid',
+      prepaid_amount:S.payment!=='bank_transfer'?finalPrice:null,
       status:'pending',is_urgent:isUrgent,
       trip_type:S.trip_type,wait_hours:S.wait_hours
     });
@@ -911,7 +815,7 @@ async function submitBooking(){
     // 延迟2秒后烟花出现
     setTimeout(()=>showConfetti(points), 2000);
     // 触发下单成功通知
-    await agentSay(`太好了，${name}${localStorage.getItem("au_gender")==="female"?"小姐":"先生"}！预约已提交，司机会尽快确认并联系您 🎉`,300);
+    await agentSay(`太好了，${name}主人！预约已提交，司机会尽快确认并联系您 🎉`,300);
   }catch(e){
     bookingSubmitted2=false;
     alert('提交遇到问题，请截图联系客服\n'+e.message);
@@ -987,7 +891,7 @@ async function chooseAgent(gender){
   await delay(600);
   resetIdle();
   const saved=getPassenger();
-  const namePrefix=saved.name?saved.name+(localStorage.getItem("au_gender")==="female"?"小姐":"先生"):'先生';
+  const namePrefix=saved.name?saved.name+'主人':'主人';
   await agentSay(`${namePrefix}，您的出行管家来喽！接机、送机、或者陪您去机场接客人，请问今天需要安排哪种服务？`);
 }
 
@@ -1015,7 +919,7 @@ window.onload=function(){
       S.direction=urlType;
     }
     setTimeout(async()=>{
-      const namePrefix=saved.name?saved.name+(localStorage.getItem("au_gender")==="female"?"小姐":"先生"):'先生';
+      const namePrefix=saved.name?saved.name+'主人':'主人';
       const greet=urlType==='to_airport'?
         `${namePrefix}，送机服务 ✈️ 几号几点出发，从哪里出发？`:
         urlType==='from_airport'?
@@ -1024,26 +928,11 @@ window.onload=function(){
       await agentSay(greet, 600);
     }, 400);
   } else {
-    // 新用户：读取URL参数，跳过splash直接进对话
-    const urlType=new URLSearchParams(window.location.search).get('type');
-    if(urlType){
-      // 从index带参数跳来，直接跳过splash
-      S.direction=urlType;
-      document.getElementById('splash').style.display='none';
-      document.getElementById('agent-choice').style.display='none';
-      setTimeout(async()=>{
-        const greet=urlType==='to_airport'?
-          `您好 ${currentAgent?.emoji||'👩‍✈️'} 送机服务，几号几点出发，从哪里出发？`:
-          `您好 ${currentAgent?.emoji||'👩‍✈️'} 接机服务，几号落地，去哪里？`;
-        await agentSay(greet,600);
-      },400);
-    } else {
-      // 正常入场动画
-      setTimeout(()=>{
-        document.getElementById('splash-agent').style.display='none';
-        document.getElementById('agent-choice').style.display='flex';
-      },2400);
-    }
+    // 新用户，正常入场动画
+    setTimeout(()=>{
+      document.getElementById('splash-agent').style.display='none';
+      document.getElementById('agent-choice').style.display='flex';
+    },2400);
   }
 };
 
