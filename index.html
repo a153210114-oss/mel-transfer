@@ -1982,12 +1982,17 @@ function showTripDetail(id, status, addr, time, price, vehicle, rawStatus){
         <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.4);font-size:13px;">费用</span><span style="color:rgba(0,212,255,0.9);font-size:15px;font-weight:900;">AUD ${price} <span style="font-size:11px;color:rgba(255,255,255,0.3);">参考</span></span></div>
       </div>
       <div style="display:flex;gap:10px;">
-        ${canCancel?'<button onclick="cancelTrip(''+id+'')" style="flex:1;padding:12px;background:rgba(255,59,48,0.1);border:1px solid rgba(255,59,48,0.3);border-radius:12px;color:rgba(255,100,90,0.8);font-size:13px;cursor:pointer;font-family:inherit;">取消订单</button>':''}
+        ${canCancel?'<button onclick="cancelTripById(this)" data-id="'+id+'" style="flex:1;padding:12px;background:rgba(255,59,48,0.1);border:1px solid rgba(255,59,48,0.3);border-radius:12px;color:rgba(255,100,90,0.8);font-size:13px;cursor:pointer;font-family:inherit;">取消订单</button>':''}
         <button onclick="document.getElementById('trip-detail-modal').remove()" style="flex:1;padding:12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:rgba(255,255,255,0.6);font-size:13px;cursor:pointer;font-family:inherit;">关闭</button>
       </div>
     </div>`;
   overlay.onclick=(e)=>{ if(e.target===overlay) overlay.remove(); };
   document.body.appendChild(overlay);
+}
+
+function cancelTripById(btn){
+  const id = btn.getAttribute('data-id');
+  cancelTrip(id);
 }
 
 async function cancelTrip(tripId){
