@@ -2302,7 +2302,7 @@ async function doLogin() {
           'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,
           'Content-Type':'application/json','Prefer':'return=representation'
         },
-        body:JSON.stringify({tenant_id:TENANT_ID,phone,full_name:'新司机',is_active:false,status:'offline'})
+        body:JSON.stringify({tenant_id:TENANT_ID,phone,full_name:'新司机',is_active:false,status:'offline',license_number:'待填写',license_expiry:'2099-01-01'})
       });
       if(!res.ok) throw new Error('创建失败');
       const arr = await res.json();
