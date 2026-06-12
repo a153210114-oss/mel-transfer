@@ -1891,7 +1891,7 @@ async function submitBooking(){
       distance_km:S.distance_km||null,
       surcharge:S.surcharge||null
     });
-    try{await supaInsert('contacts',{tenant_id:TENANT_ID,full_name:S.name,phone:S.phone,wechat_id:S.wechat||null,source:'AI管家',status:'customer'});}catch(e){}
+    try{await supaInsert('contacts',{tenant_id:TENANT_ID,full_name:S.name,phone:S.phone,wechat_id:S.wechat||null,source:'其他',status:'customer'});}catch(e){}
     document.getElementById('suc-id').textContent='TRP-'+trip.id.slice(-8).toUpperCase();
     document.getElementById('success-modal').classList.add('show');
     setTimeout(()=>showConfetti(points),1800);
