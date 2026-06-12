@@ -193,6 +193,30 @@ body{
 
 /* 烟花 */
 #confetti-overlay{display:none;position:fixed;inset:0;z-index:9998;pointer-events:all;flex-direction:column;align-items:center;justify-content:center;}
+
+/* 个人中心侧滑面板 */
+#profile-panel{
+  position:fixed;inset:0;z-index:2000;display:flex;
+  transform:translateX(100%);transition:transform 0.3s ease;
+}
+#profile-panel.open{transform:translateX(0);}
+#profile-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.5);}
+#profile-sheet{
+  position:relative;margin-left:auto;width:92%;max-width:400px;height:100%;
+  background:linear-gradient(180deg,#0d1f3c,#091629);
+  overflow-y:auto;z-index:1;
+  padding:0 0 40px;
+}
+.profile-section{padding:20px 18px 0;}
+.profile-section-title{font-size:11px;color:rgba(255,255,255,0.35);font-weight:700;letter-spacing:1px;margin-bottom:12px;}
+.trip-card-mini{
+  background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);
+  border-radius:14px;padding:14px;margin-bottom:10px;cursor:pointer;
+}
+.trip-status{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;}
+.trip-status.pending{background:rgba(255,165,0,0.2);color:rgba(255,165,0,0.9);}
+.trip-status.confirmed{background:rgba(0,200,150,0.2);color:rgba(0,200,150,0.9);}
+.trip-status.completed{background:rgba(100,100,100,0.2);color:rgba(255,255,255,0.4);}
 </style>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAHGLzz7_TpG2MLnqT1kCROeNIzRr-EQac&libraries=places&language=zh-CN&loading=async" async defer></script>
 </head>
@@ -209,7 +233,8 @@ body{
 <div class="top-bar">
   <div class="top-logo">澳洲出行 AI 管家</div>
   <div id="voice-indicator" style="display:none;font-size:11px;color:rgba(255,59,48,0.9);animation:mp 0.8s ease-in-out infinite;">🔴 录音中</div>
-  <button class="top-exit" id="exit-btn" onclick="exitToHome()">⇄ 切换身份</button>
+  <button onclick="openProfile()" style="background:none;border:none;color:rgba(255,255,255,0.6);font-size:20px;cursor:pointer;padding:4px 8px;">👤</button>
+  <button class="top-exit" id="exit-btn" onclick="exitToHome()">⇄ 切换</button>
 </div>
 
 <!-- 对话区 -->
@@ -235,6 +260,68 @@ body{
       </div>
     </div>
     <button onclick="closeSuccess()" style="width:100%;padding:14px;background:rgba(0,150,199,0.3);border:1.5px solid rgba(0,150,199,0.4);border-radius:14px;color:white;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">好的！</button>
+  </div>
+</div>
+
+<!-- 个人中心侧滑面板 -->
+<div id="profile-panel">
+  <div id="profile-overlay" onclick="closeProfile()"></div>
+  <div id="profile-sheet">
+    <!-- 顶部 -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 18px 0;">
+      <div style="font-size:16px;font-weight:900;color:white;">👤 个人中心</div>
+      <button onclick="closeProfile()" style="background:rgba(255,255,255,0.1);border:none;color:rgba(255,255,255,0.6);border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer;font-family:inherit;">关闭</button>
+    </div>
+
+    <!-- 用户信息 -->
+    <div class="profile-section" id="profile-user-info" style="margin-top:16px;">
+      <div style="background:rgba(0,150,199,0.1);border:1px solid rgba(0,150,199,0.2);border-radius:16px;padding:16px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="width:48px;height:48px;background:rgba(0,150,199,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;">👤</div>
+          <div>
+            <div id="profile-name" style="font-size:16px;font-weight:800;color:white;">—</div>
+            <div id="profile-phone" style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:2px;">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 积分 -->
+    <div class="profile-section" style="margin-top:16px;">
+      <div style="background:rgba(200,160,32,0.08);border:1px solid rgba(200,160,32,0.2);border-radius:16px;padding:16px;display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-size:11px;color:rgba(200,160,32,0.7);margin-bottom:4px;">💎 我的积分</div>
+          <div id="profile-points" style="font-size:24px;font-weight:900;color:#c8a020;">—</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:11px;color:rgba(255,255,255,0.35);">预计季度分红</div>
+          <div id="profile-dividend" style="font-size:14px;font-weight:700;color:rgba(255,255,255,0.6);">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 我的订单 -->
+    <div class="profile-section" style="margin-top:20px;">
+      <div class="profile-section-title">📋 我的订单</div>
+      <div id="profile-trips">
+        <div style="text-align:center;padding:20px;color:rgba(255,255,255,0.3);font-size:13px;">加载中...</div>
+      </div>
+    </div>
+
+    <!-- 推荐链接 -->
+    <div class="profile-section" style="margin-top:20px;">
+      <div class="profile-section-title">🔗 推荐好友</div>
+      <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:14px;">
+        <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:10px;">推荐好友加入，双方各得积分</div>
+        <div id="profile-ref-link" style="font-size:11px;color:rgba(0,212,255,0.7);background:rgba(0,212,255,0.05);border-radius:8px;padding:8px;word-break:break-all;margin-bottom:10px;">—</div>
+        <button onclick="copyRefLink()" style="width:100%;padding:10px;background:rgba(0,150,199,0.2);border:1px solid rgba(0,150,199,0.3);border-radius:10px;color:white;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">📋 复制推荐链接</button>
+      </div>
+    </div>
+
+    <!-- 退出 -->
+    <div class="profile-section" style="margin-top:20px;">
+      <button onclick="logoutUser()" style="width:100%;padding:12px;background:rgba(255,59,48,0.1);border:1px solid rgba(255,59,48,0.2);border-radius:12px;color:rgba(255,100,90,0.8);font-size:13px;cursor:pointer;font-family:inherit;">退出登录</button>
+    </div>
   </div>
 </div>
 
@@ -1784,6 +1871,79 @@ async function calcDistanceSurcharge(address, direction) {
   } catch(e) { return 0; }
 }
 
+
+// ── 个人中心 ──
+async function openProfile(){
+  const panel = document.getElementById('profile-panel');
+  panel.classList.add('open');
+  const p = getPassenger();
+  // 填充用户信息
+  document.getElementById('profile-name').textContent = p.name||'未登录';
+  document.getElementById('profile-phone').textContent = p.phone||'—';
+  // 推荐链接
+  if(!p.ref) p.ref = genRef();
+  const refLink = `${location.origin}?ref=${p.ref}`;
+  document.getElementById('profile-ref-link').textContent = refLink;
+  // 加载订单
+  loadProfileTrips(p.phone);
+}
+
+function closeProfile(){
+  document.getElementById('profile-panel').classList.remove('open');
+}
+
+async function loadProfileTrips(phone){
+  const el = document.getElementById('profile-trips');
+  if(!phone){ el.innerHTML='<div style="text-align:center;padding:20px;color:rgba(255,255,255,0.3);font-size:13px;">请先登录</div>'; return; }
+  try{
+    const trips = await supaGet(`trips?passenger_phone=eq.${phone}&tenant_id=eq.${TENANT_ID}&order=created_at.desc&limit=10`);
+    if(!trips||trips.length===0){
+      el.innerHTML='<div style="text-align:center;padding:20px;color:rgba(255,255,255,0.3);font-size:13px;">暂无订单</div>';
+      return;
+    }
+    const statusMap={pending:'待确认',confirmed:'已确认',completed:'已完成',cancelled:'已取消'};
+    const statusClass={pending:'pending',confirmed:'confirmed',completed:'completed',cancelled:'completed'};
+    el.innerHTML = trips.map(t=>{
+      const dt = t.scheduled_at ? new Date(t.scheduled_at) : null;
+      const dtStr = dt ? `${dt.getMonth()+1}月${dt.getDate()}日 ${dt.getHours().toString().padStart(2,'0')}:${dt.getMinutes().toString().padStart(2,'0')}` : '—';
+      const addr = t.pickup_address||'—';
+      return `<div class="trip-card-mini">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <span class="trip-status ${statusClass[t.status]||'pending'}">${statusMap[t.status]||t.status}</span>
+          <span style="font-size:13px;font-weight:800;color:rgba(0,212,255,0.9);">AUD ${t.total_price}</span>
+        </div>
+        <div style="font-size:13px;color:white;margin-bottom:4px;">📍 ${addr.slice(0,35)}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.4);">⏰ ${dtStr} · ${t.vehicle_type||'—'}</div>
+      </div>`;
+    }).join('');
+  }catch(e){
+    el.innerHTML='<div style="text-align:center;padding:20px;color:rgba(255,100,90,0.6);font-size:13px;">加载失败，请重试</div>';
+  }
+}
+
+function copyRefLink(){
+  const p = getPassenger();
+  if(!p.ref) p.ref = genRef();
+  const link = `${location.origin}?ref=${p.ref}`;
+  navigator.clipboard.writeText(link).then(()=>{
+    speak('推荐链接已复制，发给朋友吧');
+  }).catch(()=>{
+    document.getElementById('profile-ref-link').select?.();
+    alert('链接：'+link);
+  });
+}
+
+function logoutUser(){
+  if(!confirm('确定退出登录？')) return;
+  localStorage.removeItem('au_passenger');
+  localStorage.removeItem('au_role');
+  localStorage.removeItem('au_addresses');
+  localStorage.removeItem('au_profile');
+  localStorage.removeItem('au_gender');
+  localStorage.removeItem('dialect_noticed');
+  closeProfile();
+  location.reload();
+}
 
 // ── 时间修改卡 ──
 function showEditTimeCard(){
