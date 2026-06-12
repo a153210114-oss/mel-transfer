@@ -342,8 +342,8 @@ function saveProfile(updates){
 }
 
 // AI提取用户信息并存入画像
-async // ── 用户画像自动化升级系统 ──
-function extractProfileFromChat(userMsg, botReply){
+// ── 用户画像自动化升级系统 ──
+async function extractProfileFromChat(userMsg, botReply){
   const p = getProfile();
   const now = new Date().toISOString();
   const combined = userMsg + ' ' + (botReply||'');
