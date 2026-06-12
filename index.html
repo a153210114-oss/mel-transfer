@@ -353,10 +353,18 @@ let currentGender = null; // 'male' | 'female'
 let agentEmoji = '👩‍✈️'; // 默认小本
 let agentName = '小本';
 window._ttsVoice = 'FunAudioLLM/CosyVoice2-0.5B:diana';
-// 恢复已存性别
+// 恢复已存性别（含currentGender同步）
 (function(){
   const g = localStorage.getItem('au_gender');
-  if(g === 'female'){ agentEmoji='🧑‍✈️'; agentName='小墨'; window._ttsVoice='FunAudioLLM/CosyVoice2-0.5B:charles'; }
+  if(g === 'female'){
+    currentGender='female';
+    agentEmoji='🧑‍✈️'; agentName='小墨';
+    window._ttsVoice='FunAudioLLM/CosyVoice2-0.5B:charles';
+  } else if(g === 'male'){
+    currentGender='male';
+    agentEmoji='👩‍✈️'; agentName='小本';
+    window._ttsVoice='FunAudioLLM/CosyVoice2-0.5B:diana';
+  }
 })();
 let aiHistory = [];
 let isRecording = false;
@@ -1315,6 +1323,18 @@ A：创始合伙人永久3倍积分加成，平台越大积分越值钱，就像
 
 【禁止】贬损任何同行平台，只讲自己的优势和特色。
 
+【取消政策——用户问取消时详细解释】
+乘客取消政策：
+- 出发前24小时以上：免费取消
+- 出发前12-24小时：收取基础价20%
+- 出发前12小时内：收取基础价50%
+- 司机已出发后：收取全额费用
+费用由乘客与司机线下协商结算，平台不介入收款。
+
+司机取消政策：
+- 接单后取消：第1次警告，第2次扣20积分，第3次暂停接单资格
+- 取消后订单退回待接状态，重新推给其他司机
+
 【订单已提交后的状态】
 用户预约成功后，不要再问车型/地址/时间等信息。
 用户问订单：告知"可以在个人中心查看订单详情"，同时触发[ACTION: open_profile]
@@ -1996,9 +2016,60 @@ function cancelTripById(btn){
 }
 
 async function cancelTrip(tripId){
-  if(!confirm('确定取消这个订单？')) return;
+  // 先查出订单的scheduled_at计算取消费用
+  let trip = null;
   try{
-    await supaGet(`trips?id=eq.${tripId}`); // 先验证存在
+    const res = await supaGet(`trips?id=eq.${tripId}&tenant_id=eq.${TENANT_ID}`);
+    if(res && res.length) trip = res[0];
+  }catch(e){}
+
+  // 计算距出发时间
+  let hoursLeft = 999;
+  let feeNote = '免费取消';
+  let feeRate = 0;
+  if(trip && trip.scheduled_at){
+    const dept = new Date(trip.scheduled_at);
+    hoursLeft = (dept - new Date()) / 3600000;
+    if(hoursLeft > 24){ feeNote = '免费取消（出发前24小时以上）'; feeRate=0; }
+    else if(hoursLeft > 12){ feeNote = `收取基础价20%（约AUD ${Math.round((trip.base_price||trip.total_price)*0.2)}）`; feeRate=0.2; }
+    else if(hoursLeft > 0){ feeNote = `收取基础价50%（约AUD ${Math.round((trip.base_price||trip.total_price)*0.5)}）`; feeRate=0.5; }
+    else { feeNote = '司机已出发，将收取全额费用'; feeRate=1; }
+  }
+
+  // 政策弹窗
+  const overlay = document.createElement('div');
+  overlay.id = 'cancel-policy-modal';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:4000;display:flex;align-items:flex-end;justify-content:center;';
+  overlay.innerHTML=`
+    <div style="background:#0d1f3c;border-radius:24px 24px 0 0;padding:24px 20px 44px;width:100%;max-width:480px;border-top:1px solid rgba(255,255,255,0.1);">
+      <div style="width:40px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:0 auto 20px;"></div>
+      <div style="font-size:16px;font-weight:900;color:white;margin-bottom:4px;">⚠️ 取消订单政策</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:16px;">请确认以下取消费用</div>
+      <div style="background:rgba(255,255,255,0.05);border-radius:12px;padding:14px;margin-bottom:16px;">
+        <div style="font-size:13px;color:rgba(255,255,255,0.6);line-height:1.9;">
+          📅 出发前24小时以上：<strong style="color:rgba(0,200,150,0.9);">免费</strong><br>
+          🕐 出发前12-24小时：<strong style="color:rgba(255,165,0,0.9);">收基础价20%</strong><br>
+          ⏰ 出发前12小时内：<strong style="color:rgba(255,100,50,0.9);">收基础价50%</strong><br>
+          🚗 司机已出发：<strong style="color:rgba(255,59,48,0.9);">收全额费用</strong>
+        </div>
+      </div>
+      <div style="background:rgba(${feeRate>0?'255,100,50':'0,200,150'},0.1);border:1px solid rgba(${feeRate>0?'255,100,50':'0,200,150'},0.3);border-radius:10px;padding:12px;margin-bottom:20px;text-align:center;">
+        <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:4px;">您的取消费用</div>
+        <div style="font-size:15px;font-weight:800;color:${feeRate>0?'rgba(255,130,80,0.9)':'rgba(0,200,150,0.9)'};">${feeNote}</div>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button onclick="document.getElementById('cancel-policy-modal').remove()"
+          style="flex:1;padding:13px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:rgba(255,255,255,0.6);font-size:14px;cursor:pointer;font-family:inherit;">返回</button>
+        <button onclick="confirmCancelTrip('${tripId}')"
+          style="flex:1;padding:13px;background:rgba(255,59,48,0.2);border:1px solid rgba(255,59,48,0.4);border-radius:12px;color:rgba(255,100,90,0.9);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">确认取消</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+async function confirmCancelTrip(tripId){
+  document.getElementById('cancel-policy-modal')?.remove();
+  try{
     await fetch(SUPA_URL+'/rest/v1/trips?id=eq.'+tripId, {
       method:'PATCH',
       headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
