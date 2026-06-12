@@ -684,12 +684,12 @@ async function sendVoiceMessage(text){
     return;
   }
 
-  // 查订单/打开订单快捷拦截
-  if(/查.*订单|我的订单|订单.*查|看.*订单|订单号|预约记录|打开.*订单|订单.*打开|订单.*更改|更改.*订单|修改.*订单|订单.*修改/i.test(text)){
+  // 查订单/打开订单快捷拦截（AI也会输出ACTION，双重保障）
+  if(/打开.*订单|订单.*打开|查.*订单|看.*订单/i.test(text)){
     addMsg(text, true);
     document.getElementById('chat-input').value='';
-    openProfile(); // 立即打开，不等AI说完
-    await agentSay('好，个人中心打开了，订单在里面，点击可以查看详情',300);
+    openProfile();
+    await agentSay('好，个人中心打开了',200);
     return;
   }
 
@@ -1291,13 +1291,20 @@ A：创始合伙人永久3倍积分加成，平台越大积分越值钱，就像
 - 只改用户指定的那一项，其余全部保留
 - 不触发新的信息收集流程
 
-【触发标记】
+【触发标记——理解用户意图后在回复末尾加对应标记，前端自动执行】
 送机（有出发时间+出发地）→ [ACTION: show_vehicles to_airport]
 接机（有上车时间+目的地）→ [ACTION: show_vehicles from_airport]
 陪同接机 → [ACTION: show_vehicles accompanied]
 包车（有目的地或时长）→ [ACTION: show_vehicles charter]
-旅游广场 → [ACTION: goto plaza]
+旅游广场/拼团/出游 → [ACTION: goto plaza]
 司机工作台 → [ACTION: goto driver]
+查订单/看订单/我的订单 → [ACTION: open_orders]
+修改车型/换车 → [ACTION: edit_vehicle]
+修改时间/改时间 → [ACTION: edit_time]
+修改地址/改地址 → [ACTION: edit_address]
+重新下单/再订一单 → [ACTION: new_booking]
+查积分/我的积分/分红 → [ACTION: open_profile]
+个人中心/我的资料 → [ACTION: open_profile]
 
 【时间规则】
 送机：问"几点要司机到门口"
@@ -1503,9 +1510,17 @@ async function handleAction(action,param){
     S.vehicle=null;S.price=null;S.base_price=0;S.surcharge=0;
     S.distance_km=0;S.trip_type='standard';S.wait_hours=0;
     bookingSubmitted=false;
-    await agentSay('好的，重新来一单！这次去哪里，几点出发？',300);
-  } else if(action==='open_profile'){
+  } else if(action==='open_orders'||action==='open_profile'){
     openProfile();
+  } else if(action==='edit_vehicle'){
+    const allH=aiHistory.map(m=>m.content).join(' ');extractInfo(allH);
+    S.vehicle=null;S.price=null;S.base_price=0;
+    showVehicleCards();
+  } else if(action==='edit_time'){
+    // 弹时间修改卡
+    showEditTimeCard();
+  } else if(action==='edit_address'){
+    await gpsConfirmAddress();
   } else if(action==='goto'){
     const map={plaza:'plaza.html',driver:'driver-app.html'};
     if(map[param])setTimeout(()=>window.location.href=map[param],800);
@@ -1769,6 +1784,36 @@ async function calcDistanceSurcharge(address, direction) {
   } catch(e) { return 0; }
 }
 
+
+// ── 时间修改卡 ──
+function showEditTimeCard(){
+  const div=document.createElement('div');
+  div.className='confirm-card';
+  div.innerHTML=`
+    <div style="font-size:13px;color:rgba(255,255,255,0.7);margin-bottom:10px;">修改出发时间</div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <input id="edit-date" type="date" value="${S.date||''}"
+        style="flex:1;background:rgba(255,255,255,0.07);border:1.5px solid rgba(0,150,199,0.4);
+        border-radius:10px;padding:10px;color:white;font-size:14px;font-family:inherit;outline:none;">
+      <input id="edit-time" type="time" value="${S.time||''}"
+        style="flex:1;background:rgba(255,255,255,0.07);border:1.5px solid rgba(0,150,199,0.4);
+        border-radius:10px;padding:10px;color:white;font-size:14px;font-family:inherit;outline:none;">
+    </div>
+    <button onclick="confirmEditTime()"
+      style="width:100%;margin-top:10px;padding:12px;background:rgba(0,150,199,0.3);
+      border:1.5px solid rgba(0,150,199,0.4);border-radius:10px;color:white;
+      font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">确认</button>`;
+  chatArea.appendChild(div);scrollBottom();
+}
+
+function confirmEditTime(){
+  const d=document.getElementById('edit-date')?.value;
+  const t=document.getElementById('edit-time')?.value;
+  if(d)S.date=d;
+  if(t)S.time=t;
+  document.querySelector('.confirm-card:last-child')?.remove();
+  agentSay(`好，已更新为${S.date} ${S.time}，需要换车型吗？`,300);
+}
 
 // ── 粘贴地址快捷提示卡 ──
 function showPasteAddressHint(){
