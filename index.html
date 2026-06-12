@@ -684,12 +684,12 @@ async function sendVoiceMessage(text){
     return;
   }
 
-  // 查订单快捷拦截
-  if(/查.*订单|我的订单|订单.*查|看.*订单|订单号|预约记录/i.test(text)){
+  // 查订单/打开订单快捷拦截
+  if(/查.*订单|我的订单|订单.*查|看.*订单|订单号|预约记录|打开.*订单|订单.*打开|订单.*更改|更改.*订单|修改.*订单|订单.*修改/i.test(text)){
     addMsg(text, true);
     document.getElementById('chat-input').value='';
-    await agentSay('好的，帮您打开个人中心查看订单',300);
-    setTimeout(()=>openProfile(),800);
+    openProfile(); // 立即打开，不等AI说完
+    await agentSay('好，个人中心打开了，订单在里面，点击可以查看详情',300);
     return;
   }
 
