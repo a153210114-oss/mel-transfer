@@ -537,7 +537,7 @@ function startListeningLoop(){
   const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
   recognition = new SR();
   recognition.lang = window._recognitionLang || 'zh-CN';
-  recognition.continuous = false; // iOS Safari continuous模式不稳定，用false+自动重启
+  recognition.continuous = true;
   recognition.interimResults = true;
 
   recognition.onstart = () => {
@@ -548,10 +548,7 @@ function startListeningLoop(){
 
   recognition.onspeechstart = () => {
     isUserSpeaking = true;
-    if(isSpeaking){
-      stopTTS();
-      isSpeaking = false;
-    }
+    if(isSpeaking){ stopTTS(); isSpeaking=false; }
     clearVoicePauseTimer();
     updateVoiceStatus('🗣️ 说话中...');
   };
@@ -564,45 +561,49 @@ function startListeningLoop(){
   recognition.onresult = (e) => {
     let finalText = '';
     let interim = '';
-    for(let i = 0; i < e.results.length; i++){
+    for(let i = e.resultIndex; i < e.results.length; i++){
       if(e.results[i].isFinal) finalText += e.results[i][0].transcript;
       else interim += e.results[i][0].transcript;
     }
+    // 实时显示interim文字
     const current = (finalText + interim).trim();
     if(current) document.getElementById('chat-input').value = current;
 
-    if(current){
-      pendingVoiceText = current;
+    if(finalText.trim()){
+      // 有final结果：累加到pending，重置2秒定时器
+      pendingVoiceText += finalText;
       clearVoicePauseTimer();
-      // continuous=false: isFinal时才启动定时器
-      if(finalText){
-        voicePauseTimer = setTimeout(() => {
-          const text = pendingVoiceText.trim();
-          pendingVoiceText = '';
-          clearVoicePauseTimer();
-          if(text){
-            document.getElementById('chat-input').value = '';
-            updateVoiceStatus('💭 思考中...');
-            sendVoiceMessage(text);
-          }
-        }, 800); // isFinal后0.8秒发送，给用户补充说话的余地
-      }
+      voicePauseTimer = setTimeout(() => {
+        const text = pendingVoiceText.trim();
+        pendingVoiceText = '';
+        clearVoicePauseTimer();
+        if(text){
+          document.getElementById('chat-input').value = '';
+          updateVoiceStatus('💭 思考中...');
+          sendVoiceMessage(text);
+        }
+      }, 2000);
+    } else if(interim.trim()){
+      // 只有interim：重置定时器等待final
+      clearVoicePauseTimer();
+      voicePauseTimer = setTimeout(() => {
+        // 超时还没有final，用interim强制发送
+        const text = (pendingVoiceText + interim).trim();
+        pendingVoiceText = '';
+        clearVoicePauseTimer();
+        if(text){
+          document.getElementById('chat-input').value = '';
+          updateVoiceStatus('💭 思考中...');
+          sendVoiceMessage(text);
+        }
+      }, 3000);
     }
   };
 
   recognition.onend = () => {
     isRecording = false;
-    // continuous=false: recognition结束后，如果有pending文字等定时器，否则重启监听
-    if(voiceMode && !isSpeaking){
-      if(!voicePauseTimer && !pendingVoiceText){
-        setTimeout(startListeningLoop, 200);
-      } else if(!voicePauseTimer && pendingVoiceText){
-        // 有文字但定时器没了，立即发送
-        const text = pendingVoiceText.trim();
-        pendingVoiceText = '';
-        if(text){ updateVoiceStatus('💭 思考中...'); sendVoiceMessage(text); }
-      }
-      // 有定时器：等定时器触发，触发后由sendVoiceMessage结尾重启
+    if(voiceMode && !isSpeaking && !voicePauseTimer){
+      setTimeout(startListeningLoop, 200);
     }
   };
 
