@@ -1414,6 +1414,15 @@ A：创始合伙人永久3倍积分加成，平台越大积分越值钱，就像
 
 【禁止】贬损任何同行平台，只讲自己的优势和特色。
 
+【接送机计价规则——用户问价格时解释】
+基础价：按车型（参考价，与司机线下确认）
+距离附加：超出25km每公里+AUD 1
+时段附加（在基础价上）：
+- 正常时段（5-9月08:00-18:00，其余月份07:00-19:00）：不加价
+- 正常时段外2小时以内：+10%
+- 正常时段外超过2小时（深夜）：+20%
+接机等候费：前30分钟免费，超出每30分钟AUD 20
+
 【取消政策——用户问取消时详细解释】
 乘客取消政策：
 - 出发前24小时以上：免费取消
@@ -1510,8 +1519,20 @@ A：创始合伙人永久3倍积分加成，平台越大积分越值钱，就像
 个人中心/我的资料 → [ACTION: open_profile]
 
 【时间规则】
-送机：问"几点要司机到门口"
+送机：问"几点要司机到门口"，不主动问航班号/航班时间（除非用户主动问建议）
 接机：问"几点出关上车"（不说"落地时间"）
+
+【送机流程——严格按此顺序，信息齐了立即触发】
+1. 确认日期（几号）
+2. 确认出发时间（司机几点到门口）
+3. 地址由GPS自动定位，AI说"帮您定位一下"后触发定位，不要让用户说地址
+4. 以上3项齐全 → 立即 [ACTION: show_vehicles to_airport]
+5. 用户选车 → 生成确认卡 → 用户点确认 → 完成
+
+【禁止】
+- 送机时问航班号、航班时间、起飞时间
+- 让用户口头描述地址（直接GPS定位）
+- 信息齐全后还继续问其他问题
 
 【地址困难处理】
 当用户说不清地址、地址说错、地址是中文描述时：
@@ -1699,8 +1720,11 @@ async function handleAction(action,param){
   if(action==='show_vehicles'){
     if(param==='charter')S.trip_type='charter';
     else if(param)S.direction=param;
-    // 如果地址未填，先GPS定位+收集地址
+    // 送机：地址未填时自动触发GPS，不让用户口头说地址
     if(!S.address&&S.trip_type!=='charter'){
+      if(S.direction==='to_airport'){
+        await agentSay('帮您定位一下出发地址',300);
+      }
       await gpsConfirmAddress();
     } else {
       showVehicleCards();
@@ -1767,26 +1791,37 @@ async function selectVehicle(type,price,el){
     S.hourly_rate=price;S.price=S.hourly_rate*S.charter_hours;
     showConfirmCard();
   } else {
-    // 如果已有距离数据（换车型时），直接用已有surcharge重算
+    // 距离附加费
+    let distSurcharge = 0;
     if(S.distance_km && S.distance_km > 25){
-      S.surcharge = Math.round(S.distance_km - 25);
-      S.price = price + S.surcharge;
-    } else if(S.distance_km){
-      S.surcharge=0; S.price=price;
-    } else {
-      S.surcharge=0; S.price=price;
+      distSurcharge = Math.round(S.distance_km - 25);
     }
+
+    // 时段附加费
+    const timeResult = calcTimeSurcharge(price, S.date, S.time);
+    const timeSurcharge = timeResult.surcharge;
+
+    S.surcharge = distSurcharge;
+    S.time_surcharge = timeSurcharge;
+    S.time_surcharge_label = timeResult.label;
+    S.price = price + distSurcharge + timeSurcharge;
+
     showConfirmCard();
-    // 如果没有距离数据，后台算
+
+    // 没有距离数据时后台算
     if(!S.distance_km && S.address && window.google){
       const surcharge=await calcDistanceSurcharge(S.address,S.direction);
       if(surcharge>0){
         S.surcharge=surcharge;
-        S.price=price+surcharge;
+        S.price=price+surcharge+timeSurcharge;
         const feeEl=document.querySelector('.confirm-value[data-fee]');
         if(feeEl) feeEl.textContent='AUD '+S.price;
-        await agentSay(`您的地址距机场约${S.distance_km}km，超出${S.distance_km-25}km，参考附加费AUD ${surcharge}，参考合计AUD ${S.price}，最终与司机线下确认`,400);
+        await agentSay(`您的地址距机场约${S.distance_km}km，超出${S.distance_km-25}km，参考附加费AUD ${surcharge}${timeSurcharge>0?'，'+timeResult.label:''}，参考合计AUD ${S.price}，最终与司机线下确认`,400);
+      } else if(timeSurcharge>0){
+        await agentSay(timeResult.label+`，参考合计AUD ${S.price}`,400);
       }
+    } else if(timeSurcharge>0){
+      await agentSay(timeResult.label+`，参考合计AUD ${S.price}`,400);
     }
   }
 }
@@ -1822,7 +1857,8 @@ async function showConfirmCard(){
     <div class="confirm-row"><span class="confirm-label">预收款</span><span class="confirm-value" style="color:rgba(245,166,35,0.9);">AUD ${preCollect}<br><span style="font-size:11px;opacity:0.6;">完成后按AUD ${total}结算退差价</span></span></div>
     `:''}
     ${isAcc?`<div class="confirm-row"><span class="confirm-label">等候费</span><span class="confirm-value">AUD ${waitFee}（${S.wait_hours}小时）</span></div>`:''}
-    ${S.distance_km?`<div class="confirm-row"><span class="confirm-label">距离</span><span class="confirm-value">${S.distance_km}km${S.surcharge>0?' (超出'+(S.distance_km-25)+'km，附加$'+S.surcharge+')':' (25km内)'}</span></div>`:''}
+    ${S.distance_km?`<div class="confirm-row"><span class="confirm-label">距离</span><span class="confirm-value">${S.distance_km}km${S.surcharge>0?' (超出'+(S.distance_km-25)+'km，附加AUD '+S.surcharge+')':' (25km内)'}</span></div>`:''}
+    \${S.time_surcharge>0?`<div class="confirm-row"><span class="confirm-label">时段</span><span class="confirm-value" style="color:rgba(255,165,0,0.9);">\${S.time_surcharge_label}</span></div>`:''}
     <div class="confirm-row"><span class="confirm-label">费用</span><span class="confirm-value" style="color:rgba(0,212,255,0.9);font-size:18px;font-weight:900;" data-fee>AUD ${total}</span></div>
     <div style="background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.25);border-radius:10px;padding:10px 14px;margin:6px 0 4px;text-align:center;">
       <div style="font-size:13px;color:rgba(245,166,35,0.9);font-weight:700;">⚠️ 以上为市场参考价</div>
@@ -2008,6 +2044,42 @@ const AIRPORT_COORDS = {
 };
 const BASE_KM = 25;
 const SURCHARGE_PER_KM = 1;
+
+// ── 时段附加费计算 ──
+function calcTimeSurcharge(basePrice, dateStr, timeStr){
+  if(!dateStr||!timeStr) return {surcharge:0, label:'', rate:1};
+  const date = new Date(dateStr+'T'+timeStr+':00');
+  const month = date.getMonth()+1;
+  const hour = date.getHours();
+  const minute = date.getMinutes();
+  const totalMins = hour*60+minute;
+
+  // 正常时段：冬季5-9月 08:00-18:00，其余 07:00-19:00
+  let normalStart = (month>=5&&month<=9) ? 8*60 : 7*60;
+  let normalEnd   = (month>=5&&month<=9) ? 18*60 : 19*60;
+
+  if(totalMins>=normalStart && totalMins<normalEnd){
+    return {surcharge:0, label:'', rate:1};
+  }
+
+  // 偏出正常时段的分钟数
+  const minsOutside = totalMins<normalStart ? normalStart-totalMins : totalMins-normalEnd;
+
+  if(minsOutside<=120){
+    const extra = Math.round(basePrice*0.1);
+    return {surcharge:extra, label:`非高峰时段附加（+10%）AUD ${extra}`, rate:1.1};
+  } else {
+    const extra = Math.round(basePrice*0.2);
+    return {surcharge:extra, label:`深夜时段附加（+20%）AUD ${extra}`, rate:1.2};
+  }
+}
+
+// 接机等候费
+function calcWaitFee(waitMins){
+  if(waitMins<=30) return 0;
+  return Math.ceil((waitMins-30)/30)*20;
+}
+
 
 async function calcDistanceSurcharge(address, direction) {
   if (!window.google || !address) return 0;
