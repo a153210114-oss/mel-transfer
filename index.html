@@ -1848,6 +1848,12 @@ async function handleAction(action,param){
     if(param==='charter')S.trip_type='charter';
     else if(param)S.direction=param;
 
+    // 如果去程已提交且现在是回程→直接弹回程确认卡（不选车）
+    if(bookingSubmitted && param==='from_airport' && S.vehicle){
+      await showReturnTripFromHistory();
+      return;
+    }
+
     if(!S.address&&S.trip_type!=='charter'){
       if(S.direction==='from_airport'){
         // 接机：优先用已保存的家庭地址
@@ -2196,7 +2202,11 @@ async function submitBooking(){
       }
     }catch(e){}
     setTimeout(()=>showConfetti(points),1800);
-    const _t=localStorage.getItem('au_gender')==='female'?'小姐':'先生';await agentSay(`${S.name}${_t}，预约成功！司机会尽快确认联系您 🎉`,300);
+    const _t=localStorage.getItem('au_gender')==='female'?'小姐':'先生';
+    const successMsg = returnTrip ?
+      `${S.name}${_t}，去程预约成功！现在给你安排回程 🎉` :
+      `${S.name}${_t}，预约成功！司机会尽快确认联系您 🎉`;
+    await agentSay(successMsg, 300);
   }catch(e){bookingSubmitted=false;alert('提交遇到问题\n'+e.message);}
 }
 
@@ -2294,6 +2304,68 @@ async function calcDistanceSurcharge(address, direction) {
   } catch(e) { return 0; }
 }
 
+
+// ── 从历史自动弹回程确认卡 ──
+async function showReturnTripFromHistory(){
+  // 从aiHistory里提取回程日期时间
+  const fullText = aiHistory.map(m=>m.content).join(' ');
+  const dateRe = /(\d{1,2})[月](\d{1,2})[号日]?/g;
+  const timeRe = /(早上|上午|下午|晚上|凌晨)?(\d{1,2})[点:：时](\d{0,2})?/g;
+  const dates=[...fullText.matchAll(dateRe)];
+  const times=[...fullText.matchAll(timeRe)];
+
+  // 找不同于去程日期的日期
+  const yr=new Date().getFullYear();
+  const mkDate=(m)=>`${yr}-${String(parseInt(m[1])).padStart(2,'0')}-${String(parseInt(m[2])).padStart(2,'0')}`;
+  const mkTime=(m)=>{
+    let h=parseInt(m[2]);
+    const min=m[3]?String(m[3]).padStart(2,'0'):'00';
+    if(/下午|晚上/.test(m[1]||'')&&h<12)h+=12;
+    return `${String(h).padStart(2,'0')}:${min}`;
+  };
+
+  let retDate=null, retTime=null;
+  for(const d of dates){
+    const dt=mkDate(d);
+    if(dt!==S.date){ retDate=dt; break; }
+  }
+  for(const t of times){
+    const tm=mkTime(t);
+    if(tm!==S.time){ retTime=tm; break; }
+  }
+
+  if(!retDate||!retTime){
+    // 找不到就让用户说
+    await agentSay('请告诉我回程的日期和时间', 300);
+    return;
+  }
+
+  // 计算回程时段附加
+  const retTimeResult = calcTimeSurcharge(S.base_price, retDate, retTime);
+  const retTotal = S.base_price + (S.surcharge||0) + retTimeResult.surcharge;
+
+  // 获取最近的trip id作为group_id
+  const p=getPassenger();
+  let groupId='';
+  try{
+    const trips=await supaGet(`trips?passenger_phone=eq.${p.phone}&tenant_id=eq.${TENANT_ID}&order=created_at.desc&limit=1`);
+    if(trips&&trips.length) groupId=trips[0].id;
+  }catch(e){}
+
+  showReturnTripCard({
+    direction:'from_airport',
+    date:retDate, time:retTime,
+    address:S.address,
+    vehicle:S.vehicle,
+    base_price:S.base_price,
+    surcharge:S.surcharge,
+    distance_km:S.distance_km,
+    total:retTotal,
+    time_label:retTimeResult.label,
+    group_id:groupId,
+    name:p.name, phone:p.phone, wechat:p.wechat||''
+  });
+}
 
 // ── 第二单确认卡 ──
 function showReturnTripCard(rt){
