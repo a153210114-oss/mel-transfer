@@ -446,6 +446,7 @@ const S={direction:null,address:null,date:null,time:null,vehicle:null,price:null
   name:null,phone:null,wechat:null,payment:'wechat',
   trip_type:'standard',wait_hours:0,charter_hours:4,charter_km:0,hourly_rate:0};
 let pendingTrips=[]; // 多单队列
+let returnTrip=null; // 往返回程信息
 
 const COMFORT_VEHICLES=[
   {type:'comfort_5',icon:'🚗',name:'舒适 5座',cap:'1-4人',price:70,seats:5},
@@ -1675,11 +1676,11 @@ function extractInfo(msg){
         const firstIsDep = date1<=date2 ? hasDeparture : hasArrival;
         S.direction = date1<=date2 ? (hasDeparture?'to_airport':'from_airport') : (hasArrival?'from_airport':'to_airport');
         S.date=date1; S.time=time1;
-        // 第二个存队列
-        pendingTrips.push({
+        // 第二个存为往返回程
+        returnTrip = {
           direction: date1<=date2 ? (hasArrival?'from_airport':'to_airport') : (hasDeparture?'to_airport':'from_airport'),
           date:date2, time:time2
-        });
+        };
       }
     }
   }
@@ -1930,6 +1931,12 @@ async function showConfirmCard(){
     ${S.distance_km?`<div class="confirm-row"><span class="confirm-label">距离</span><span class="confirm-value">${S.distance_km}km${S.surcharge>0?' (超出'+(S.distance_km-25)+'km，附加AUD '+S.surcharge+')':' (25km内)'}</span></div>`:''}
     ${S.time_surcharge>0?`<div class="confirm-row"><span class="confirm-label">时段</span><span class="confirm-value" style="color:rgba(255,165,0,0.9);">${S.time_surcharge_label}</span></div>`:''}
     <div class="confirm-row"><span class="confirm-label">费用</span><span class="confirm-value" style="color:rgba(0,212,255,0.9);font-size:18px;font-weight:900;" data-fee>AUD ${total}</span></div>
+    ${returnTrip?`
+    <div style="background:rgba(0,150,199,0.08);border:1px solid rgba(0,150,199,0.25);border-radius:10px;padding:12px 14px;margin:6px 0 4px;">
+      <div style="font-size:12px;color:rgba(0,212,255,0.7);font-weight:700;margin-bottom:6px;">🔄 往返回程（自动创建）</div>
+      <div style="font-size:13px;color:white;">${returnTrip.direction==='from_airport'?'接机':'送机'} · ${returnTrip.date} ${returnTrip.time}</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:4px;">系统自动生成独立订单，同等车型</div>
+    </div>`:''}
     <div style="background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.25);border-radius:10px;padding:10px 14px;margin:6px 0 4px;text-align:center;">
       <div style="font-size:13px;color:rgba(245,166,35,0.9);font-weight:700;">⚠️ 以上为市场参考价</div>
       <div style="font-size:12px;color:rgba(255,255,255,0.55);margin-top:4px;">实际费用请与司机确认后再付款</div>
@@ -2045,17 +2052,38 @@ async function submitBooking(){
     document.getElementById('suc-id').textContent='TRP-'+trip.id.slice(-8).toUpperCase();
     document.getElementById('success-modal').classList.add('show');
     showBottomNav();
-    // 检查是否有待处理的下一单
-    if(pendingTrips.length>0){
-      const next = pendingTrips.shift();
-      setTimeout(async()=>{
-        const label = next.direction==='to_airport'?'送机':'接机';
-        await agentSay(`✅ 第一单预约成功！还有一个${label}（${next.date} ${next.time}），帮您继续预约？`,800);
-        // 恢复下一单信息
-        S.direction=next.direction; S.date=next.date; S.time=next.time;
-        S.address=null; S.vehicle=null; S.price=null;
-        S.base_price=0; S.surcharge=0; S.distance_km=0;
-      }, 2000);
+    // 往返：自动创建回程单
+    if(returnTrip){
+      try{
+        const groupId = trip.id; // 用去程ID作为group_id
+        // 回程时间附加费
+        const retTimeResult = calcTimeSurcharge(S.base_price, returnTrip.date, returnTrip.time);
+        const retTotal = S.base_price + (S.surcharge||0) + retTimeResult.surcharge;
+        const retScheduled = `${returnTrip.date}T${returnTrip.time}:00`;
+        // 回程地址：去程反向
+        const retPickup = returnTrip.direction==='from_airport' ? null : S.address;
+        const retDropoff = returnTrip.direction==='from_airport' ? S.address : null;
+        await supaInsert('trips',{
+          tenant_id:TENANT_ID,
+          passenger_name:S.name, passenger_phone:S.phone, passenger_wechat:S.wechat||null,
+          direction:returnTrip.direction,
+          pickup_address:retPickup||'墨尔本机场',
+          dropoff_address:retDropoff||'墨尔本机场',
+          scheduled_at:retScheduled,
+          total_price:retTotal, base_price:S.base_price,
+          distance_km:S.distance_km||null, surcharge:S.surcharge||null,
+          payment_method:'offline', payment_status:'pending', prepaid_amount:null,
+          status:'pending', trip_type:S.trip_type,
+          vehicle_type:S.vehicle, passenger_count:1,
+          group_id:groupId, is_return:true
+        });
+        // 推送回程到n8n
+        fetch('https://primary-production-68f8.up.railway.app/webhook/new-trip-dispatch',{
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({trip_id:groupId+'_return', direction:returnTrip.direction, scheduled_at:retScheduled, total_price:retTotal, passenger_name:S.name, passenger_phone:S.phone})
+        });
+        returnTrip=null;
+      }catch(e){ console.warn('回程创建失败:',e.message); }
     }
     // 触发n8n FW_03派单工作流
     try{
