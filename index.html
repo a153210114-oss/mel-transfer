@@ -821,6 +821,27 @@ const DIALECT_SIGNALS = {
   hokkien: /哪里去|安怎|遮|欲去叨|叨位/,
 };
 
+function detectRoundTrip(text){
+  if(returnTrip || S.direction) return;
+  const hasDep = /送机|打飞的|赶飞机|去机场送/i.test(text);
+  const hasArr = /接机|落地|出关|接.*机场/i.test(text);
+  if(!hasDep || !hasArr) return;
+  const dateRe = /(\d{1,2})[月](\d{1,2})[号日]?/g;
+  const timeRe = /(早上|上午|下午|晚上|凌晨)?(\d{1,2})[点:：时]/g;
+  const dates=[...text.matchAll(dateRe)];
+  const times=[...text.matchAll(timeRe)];
+  if(dates.length<2 || times.length<2) return;
+  const yr=new Date().getFullYear();
+  const mkDate=(m)=>`${yr}-${String(parseInt(m[1])).padStart(2,'0')}-${String(parseInt(m[2])).padStart(2,'0')}`;
+  const mkTime=(m)=>{let h=parseInt(m[2]);if(/下午|晚上/.test(m[1]||'')&&h<12)h+=12;return `${String(h).padStart(2,'0')}:00`;};
+  const d1=mkDate(dates[0]),t1=mkTime(times[0]);
+  const d2=mkDate(dates[1]),t2=mkTime(times[1]);
+  S.direction = d1<=d2 ? 'to_airport' : 'from_airport';
+  S.date=d1; S.time=t1;
+  returnTrip={direction:d1<=d2?'from_airport':'to_airport', date:d2, time:t2};
+  console.log('往返检测:', S.direction, S.date, S.time, '回程:', returnTrip);
+}
+
 function correctHomophones(text){
   let corrected = text;
   for(const h of HOMOPHONES){
@@ -866,6 +887,8 @@ async function sendVoiceMessage(text){
     return;
   }
 
+  // 往返检测（统一由detectRoundTrip处理）
+  detectRoundTrip(text);
   // 换车型快捷拦截：不走AI直接弹车型卡
   if(/换.*车|改.*车|重新.*选车|换个车|车型|换车型/i.test(text) && S.address && S.direction){
     addMsg(text, true);
@@ -1645,7 +1668,10 @@ async function sendMessage(){
   if(msg && msg.trim()) aiHistory.push({role:'user',content:msg.trim()});
 
   // 提取信息（仅乘客模式）
-  if(currentRole==='passenger') extractInfo(msg);
+  if(currentRole==='passenger'){
+    detectRoundTrip(msg);
+    extractInfo(msg);
+  }
 
   const typing=addTyping();
   try{
@@ -1856,6 +1882,11 @@ async function handleAction(action,param){
 }
 
 function showVehicleCards(){
+  // 补提取日期时间（防止丢失）
+  if(!S.date||!S.time){
+    const allText = aiHistory.map(m=>m.content).join(' ');
+    extractInfo(allText);
+  }
   const wrap=document.createElement('div');
   wrap.className='vehicle-section';
 
@@ -2269,7 +2300,7 @@ function showReturnTripCard(rt){
       ⚠️ 市场参考价，与司机线下确认
     </div>
     <div style="display:flex;gap:8px;">
-      <button onclick="submitReturnTrip(${JSON.stringify(rt).replace(/"/g,'&quot;')})"
+      <button id="return-trip-confirm-btn"
         style="flex:2;padding:13px;background:linear-gradient(135deg,#0096c7,#0077a0);color:white;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">
         ✅ 确认第二单
       </button>
@@ -2280,10 +2311,17 @@ function showReturnTripCard(rt){
     </div>`;
   chatArea.appendChild(div);
   scrollBottom();
+  // 用事件绑定避免JSON在HTML属性里的问题
+  setTimeout(()=>{
+    const btn = document.getElementById('return-trip-confirm-btn');
+    if(btn) btn.onclick = ()=>submitReturnTrip(rt);
+  }, 100);
   speak(`第二单${dirText}，${(()=>{const d=new Date(rt.date+'T00:00:00');return (d.getMonth()+1)+'月'+d.getDate()+'日';})()} ${rt.time}，参考AUD ${rt.total}，确认吗？`);
 }
 
 async function submitReturnTrip(rt){
+  // rt是JSON字符串时先parse
+  if(typeof rt==='string') rt=JSON.parse(rt);
   document.querySelector('.confirm-card:last-of-type')?.remove();
   try{
     const retScheduled = `${rt.date}T${rt.time}:00`;
