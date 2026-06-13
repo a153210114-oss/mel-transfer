@@ -822,7 +822,7 @@ const DIALECT_SIGNALS = {
 };
 
 function detectRoundTrip(text){
-  if(returnTrip || S.direction) return;
+  if(returnTrip) return; // 已有回程就不重复检测
   const hasDep = /送机|打飞的|赶飞机|去机场送/i.test(text);
   const hasArr = /接机|落地|出关|接.*机场/i.test(text);
   if(!hasDep || !hasArr) return;
@@ -836,10 +836,16 @@ function detectRoundTrip(text){
   const mkTime=(m)=>{let h=parseInt(m[2]);if(/下午|晚上/.test(m[1]||'')&&h<12)h+=12;return `${String(h).padStart(2,'0')}:00`;};
   const d1=mkDate(dates[0]),t1=mkTime(times[0]);
   const d2=mkDate(dates[1]),t2=mkTime(times[1]);
-  S.direction = d1<=d2 ? 'to_airport' : 'from_airport';
-  S.date=d1; S.time=t1;
-  returnTrip={direction:d1<=d2?'from_airport':'to_airport', date:d2, time:t2};
-  console.log('往返检测:', S.direction, S.date, S.time, '回程:', returnTrip);
+  if(d1===d2) return; // 同一天不算往返
+  // 去程是日期较早的
+  const firstDir = d1<d2 ? 'to_airport' : 'from_airport';
+  const retDir   = d1<d2 ? 'from_airport' : 'to_airport';
+  if(!S.direction){ S.direction=firstDir; S.date=d1; S.time=t1; }
+  // 回程：找与S.date不同的那个日期
+  const retDate = S.date===d1 ? d2 : d1;
+  const retTime = S.date===d1 ? t2 : t1;
+  returnTrip={direction:retDir, date:retDate, time:retTime};
+  console.log('往返检测OK:', '去程', S.direction, S.date, S.time, '回程', returnTrip);
 }
 
 function correctHomophones(text){
@@ -943,6 +949,9 @@ async function sendVoiceMessage(text){
 
     // 从AI回复里补提取时间/地址/方向
     extractInfo(reply);
+    // 从整段对话里检测往返
+    const fullConv = aiHistory.map(m=>m.content).join(' ');
+    detectRoundTrip(fullConv);
 
     // 检测AI回复里是否有往返信息：同时包含送机和接机的日期
     if(!returnTrip && reply.includes('[ACTION: show_vehicles')){
