@@ -1885,7 +1885,7 @@ async function showConfirmCard(){
     `:''}
     ${isAcc?`<div class="confirm-row"><span class="confirm-label">等候费</span><span class="confirm-value">AUD ${waitFee}（${S.wait_hours}小时）</span></div>`:''}
     ${S.distance_km?`<div class="confirm-row"><span class="confirm-label">距离</span><span class="confirm-value">${S.distance_km}km${S.surcharge>0?' (超出'+(S.distance_km-25)+'km，附加AUD '+S.surcharge+')':' (25km内)'}</span></div>`:''}
-    \${S.time_surcharge>0?`<div class="confirm-row"><span class="confirm-label">时段</span><span class="confirm-value" style="color:rgba(255,165,0,0.9);">\${S.time_surcharge_label}</span></div>`:''}
+    ${S.time_surcharge>0?`<div class="confirm-row"><span class="confirm-label">时段</span><span class="confirm-value" style="color:rgba(255,165,0,0.9);">${S.time_surcharge_label}</span></div>`:''}
     <div class="confirm-row"><span class="confirm-label">费用</span><span class="confirm-value" style="color:rgba(0,212,255,0.9);font-size:18px;font-weight:900;" data-fee>AUD ${total}</span></div>
     <div style="background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.25);border-radius:10px;padding:10px 14px;margin:6px 0 4px;text-align:center;">
       <div style="font-size:13px;color:rgba(245,166,35,0.9);font-weight:700;">⚠️ 以上为市场参考价</div>
