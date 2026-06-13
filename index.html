@@ -1057,6 +1057,9 @@ async function supaInsert(table,data){
 
 // ── 启动 ──
 window.onload=async function(){
+  // 落地读取推荐码
+  const urlRef = new URLSearchParams(window.location.search).get('ref');
+  if(urlRef) sessionStorage.setItem('incoming_ref', urlRef);
   window.speechSynthesis.getVoices();
   speechSynthesis.onvoiceschanged=()=>{window.speechSynthesis.getVoices();};
 
@@ -1892,8 +1895,28 @@ async function submitBooking(){
       surcharge:S.surcharge||null
     });
     try{await supaInsert('contacts',{tenant_id:TENANT_ID,full_name:S.name,phone:S.phone,wechat_id:S.wechat||null,source:'其他',status:'customer'});}catch(e){}
+    // 推荐码绑定
+    const incomingRef = sessionStorage.getItem('incoming_ref');
+    if(incomingRef){
+      try{
+        await supaInsert('referrals',{tenant_id:TENANT_ID,referrer_code:incomingRef,referee_phone:S.phone,referee_name:S.name,trip_id:trip.id,points_awarded:20,status:'confirmed'});
+        sessionStorage.removeItem('incoming_ref');
+      }catch(e){}
+    }
     document.getElementById('suc-id').textContent='TRP-'+trip.id.slice(-8).toUpperCase();
     document.getElementById('success-modal').classList.add('show');
+    // 下单积分+5
+    try{
+      const contacts=await supaGet(`contacts?phone=eq.${S.phone}&tenant_id=eq.${TENANT_ID}&select=id,voucher_balance`);
+      if(contacts&&contacts.length){
+        const newPts=(contacts[0].voucher_balance||0)+5;
+        await fetch(SUPA_URL+'/rest/v1/contacts?id=eq.'+contacts[0].id,{
+          method:'PATCH',
+          headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'},
+          body:JSON.stringify({voucher_balance:newPts})
+        });
+      }
+    }catch(e){}
     setTimeout(()=>showConfetti(points),1800);
     const _t=localStorage.getItem('au_gender')==='female'?'小姐':'先生';await agentSay(`${S.name}${_t}，预约成功！司机会尽快确认联系您 🎉`,300);
   }catch(e){bookingSubmitted=false;alert('提交遇到问题\n'+e.message);}
@@ -2016,6 +2039,18 @@ async function openProfile(){
   // 填充用户信息
   document.getElementById('profile-name').textContent = p.name||'未登录';
   document.getElementById('profile-phone').textContent = p.phone||'—';
+  // 读取积分
+  if(p.phone){
+    supaGet(`contacts?phone=eq.${p.phone}&tenant_id=eq.${TENANT_ID}&select=voucher_balance,registration_rank`).then(rows=>{
+      if(rows&&rows.length){
+        const pts = rows[0].voucher_balance||0;
+        document.getElementById('profile-points').textContent = pts;
+        // 预估分红：简单按积分比例估算（假设每100积分≈A$1）
+        const est = (pts/100).toFixed(2);
+        document.getElementById('profile-dividend').textContent = `~A$${est}`;
+      }
+    }).catch(()=>{});
+  }
   // 推荐链接
   if(!p.ref) p.ref = genRef();
   const refLink = `${location.origin}?ref=${p.ref}`;
@@ -2195,7 +2230,24 @@ async function submitRating(tripId, btn){
       body:JSON.stringify({rating:stars,review_text:comment})
     });
     btn.closest('div[style*="fixed"]')?.remove();
-    speak('感谢您的评价！积分已到账');
+    // 评价积分入账（文字评价+2分，有评论+2分）
+    try{
+      const p=getPassenger();
+      if(p.phone){
+        const pts = comment?4:2;
+        // 更新contacts的voucher_balance（积分字段）
+        const contacts=await supaGet(`contacts?phone=eq.${p.phone}&tenant_id=eq.${TENANT_ID}&select=id,voucher_balance`);
+        if(contacts&&contacts.length){
+          const newPts=(contacts[0].voucher_balance||0)+pts;
+          await fetch(SUPA_URL+'/rest/v1/contacts?id=eq.'+contacts[0].id,{
+            method:'PATCH',
+            headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'},
+            body:JSON.stringify({voucher_balance:newPts})
+          });
+        }
+      }
+    }catch(e){}
+    speak(`感谢您的评价！积分已到账`);
     openProfile();
   }catch(e){ btn.textContent='提交评价'; btn.disabled=false; alert('提交失败，请重试'); }
 }
