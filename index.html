@@ -32,7 +32,7 @@ body{
   flex:1;overflow-y:auto;
   padding:12px 14px;
   display:flex;flex-direction:column;gap:12px;
-  padding-bottom:85px;
+  padding-bottom:140px;
 }
 .msg{display:flex;gap:10px;align-items:flex-end;}
 .msg.user{flex-direction:row-reverse;}
@@ -153,13 +153,18 @@ body{
 
 /* 底部输入 */
 .input-bar{
-  position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+  position:fixed;bottom:60px;left:50%;transform:translateX(-50%);
   width:100%;max-width:480px;
   background:rgba(8,12,25,0.97);
   backdrop-filter:blur(20px);
   border-top:1px solid rgba(255,255,255,0.07);
-  padding:10px 14px 24px;
+  padding:10px 14px 10px;
   display:flex;gap:10px;align-items:center;
+  transition:bottom 0.2s;
+}
+.input-bar.no-nav{
+  bottom:0;
+  padding-bottom:24px;
 }
 .chat-input{
   flex:1;background:rgba(255,255,255,0.07);
@@ -192,7 +197,7 @@ body{
 .modal-handle{width:40px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:0 auto 20px;}
 
 /* 底部导航 */
-.bottom-nav{display:flex;background:#0a1628;border-top:1px solid rgba(255,255,255,0.08);flex-shrink:0;position:relative;z-index:100;}
+.bottom-nav{display:flex;background:#0a1628;border-top:1px solid rgba(255,255,255,0.08);position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;z-index:101;}
 .nav-tab{flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 4px 12px;gap:3px;cursor:pointer;font-size:10px;color:rgba(255,255,255,0.35);border:none;background:none;font-family:inherit;transition:color 0.2s;}
 .nav-tab.active{color:#00d4ff;}
 .nav-tab-icon{font-size:20px;line-height:1;}
@@ -251,7 +256,7 @@ body{
 <div class="chat-area" id="chat-area"></div>
 
 <!-- 底部输入 -->
-<div class="input-bar">
+<div class="input-bar no-nav" id="main-input-bar">
   <button class="mic-btn" id="mic-btn" onclick="toggleMic()">🎤</button>
   <input class="chat-input" id="chat-input" placeholder="说话或输入..." onkeydown="if(event.key==='Enter')sendMessage()">
   <button class="send-btn" onclick="sendMessage()">➤</button>
@@ -2031,6 +2036,12 @@ async function calcDistanceSurcharge(address, direction) {
 // ── 底部导航 ──
 function showBottomNav(){
   document.getElementById('main-bottom-nav').style.display='flex';
+  document.querySelector('.input-bar')?.classList.remove('no-nav');
+}
+
+function hideBottomNav(){
+  document.getElementById('main-bottom-nav').style.display='none';
+  document.querySelector('.input-bar')?.classList.add('no-nav');
 }
 
 function switchMainTab(tab){
