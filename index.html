@@ -1587,7 +1587,7 @@ function extractInfo(msg){
     if(/接机|落地|到澳洲|回来|出关|过关|提行李.*出|飞机.*到了|降落|接.*机场|去.*机场.*接/i.test(msg))S.direction='from_airport';
     if(/陪.*去.*接|帮我去接|全程陪|陪同/i.test(msg))S.trip_type='accompanied';
   }
-  if(/包车|租车|办事|出游|按小时|几小时|包个车|租个车|大洋路|菲利普|大洋/i.test(msg))S.trip_type='charter';
+  if(!S.direction && /包车|租车|按小时|几小时|包个车|租个车/i.test(msg))S.trip_type='charter';
 
   const today=new Date();
   const yr=today.getFullYear();
@@ -1765,6 +1765,12 @@ async function selectVehicle(type,price,el){
 }
 
 async function showConfirmCard(){
+  // 如果有接送机方向，强制重置为standard（防止误判charter）
+  if(S.direction && S.trip_type==='charter'){
+    S.trip_type='standard';
+    S.hourly_rate=0;
+    S.price=S.base_price+(S.surcharge||0);
+  }
   await delay(300);
   const isAcc=S.trip_type==='accompanied';
   const isCharter=S.trip_type==='charter';
