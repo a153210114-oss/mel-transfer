@@ -1905,6 +1905,24 @@ async function submitBooking(){
     }
     document.getElementById('suc-id').textContent='TRP-'+trip.id.slice(-8).toUpperCase();
     document.getElementById('success-modal').classList.add('show');
+    // 触发n8n FW_03派单工作流
+    try{
+      fetch('https://primary-production-68f8.up.railway.app/webhook/new-trip-dispatch',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          trip_id: trip.id,
+          tenant_id: TENANT_ID,
+          direction: S.direction,
+          address: S.address,
+          scheduled_at: `${S.date}T${S.time}:00`,
+          vehicle_type: S.vehicle,
+          total_price: S.price,
+          passenger_name: S.name,
+          passenger_phone: S.phone
+        })
+      });
+    }catch(e){}
     // 下单积分+5
     try{
       const contacts=await supaGet(`contacts?phone=eq.${S.phone}&tenant_id=eq.${TENANT_ID}&select=id,voucher_balance`);
