@@ -384,7 +384,7 @@ body{
         <div style="font-size:20px;width:28px;text-align:center;">🧑‍✈️</div>
         <div style="flex:1;">
           <div style="font-size:14px;font-weight:600;color:white;">切换为司机身份</div>
-          <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:2px;">进入司机工作台</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:2px;">用注册手机号登录司机工作台</div>
         </div>
         <div style="color:rgba(255,255,255,0.3);font-size:16px;">›</div>
       </div>
@@ -1212,7 +1212,7 @@ window.onload=async function(){
     showDriverModeChoice();
   } else {
     // 新用户
-    await agentSay('您好 👩‍✈️<br>今天想<strong>出行</strong>，还是<strong>开车赚钱</strong>？',800);
+    await agentSay('您好 👩‍✈️<br>预约<strong>接机、送机</strong>？还是<strong>接送一起预约</strong>？',800);
     showRoleChoice();
   }
 };
@@ -1227,9 +1227,9 @@ function showRoleChoice(){
       <div class="card-text"><h4>我要出行</h4><p>接机、送机、包车出游</p></div>
       <div class="card-arrow">›</div>
     </div>
-    <div class="choice-card gold" onclick="selectRole('driver')">
-      <div class="card-icon">🚗</div>
-      <div class="card-text"><h4>我要开车赚钱</h4><p>接单、发布包车、拼团</p></div>
+    <div class="choice-card gold" onclick="selectRoundTrip()">
+      <div class="card-icon">🔄</div>
+      <div class="card-text"><h4>预约往返接送</h4><p>一次预约，去程回程全搞定</p></div>
       <div class="card-arrow">›</div>
     </div>`;
   chatArea.appendChild(div);scrollBottom();
@@ -1237,7 +1237,7 @@ function showRoleChoice(){
 
 async function selectRole(role){
   currentRole=role;
-  const roleText=role==='passenger'?'我要出行':'我要开车赚钱';
+  const roleText=role==='passenger'?'我要出行':'预约往返接送';
   addMsg(roleText,true);
   await delay(300);
   await agentSay('请输入手机号 📱',400);
@@ -1312,6 +1312,13 @@ async function submitPhone(role){
 }
 
 // ── 乘客模式选择 ──
+function selectRoundTrip(){
+  currentRole='passenger';
+  document.getElementById('exit-btn').style.display='block';
+  showBottomNav();
+  agentSay('好的！告诉我去程和回程的日期时间，一起帮您预约～',400);
+}
+
 function showPassengerModeChoice(){
   const div=document.createElement('div');
   div.className='choice-cards';
@@ -1331,7 +1338,7 @@ function showPassengerModeChoice(){
 
 async function startPassengerAI(){
   addMsg('帮我下单',true);
-  await agentSay('好的！接机、送机还是包车出游？',400);
+  await agentSay('好的！说出日期和时间，往返一起帮您预约～',400);
 }
 
 function showServiceCards(){
