@@ -445,6 +445,7 @@ let bookingSubmitted = false;
 const S={direction:null,address:null,date:null,time:null,vehicle:null,price:null,base_price:0,surcharge:0,distance_km:0,
   name:null,phone:null,wechat:null,payment:'wechat',
   trip_type:'standard',wait_hours:0,charter_hours:4,charter_km:0,hourly_rate:0};
+let pendingTrips=[]; // 多单队列
 
 const COMFORT_VEHICLES=[
   {type:'comfort_5',icon:'🚗',name:'舒适 5座',cap:'1-4人',price:70,seats:5},
@@ -1523,6 +1524,14 @@ A：创始合伙人永久3倍积分加成，平台越大积分越值钱，就像
 接机：问"几点出关上车"（不说"落地时间"）
 接机目的地：自动读取用户已保存的家庭地址，说"是送您回XX地址吗？欢迎回家"让用户确认，不要让用户说地址
 
+【多单识别——一句话包含多个行程时】
+用户说多个行程（如"15号送机，1号接机"）：
+1. 先处理第一个行程（按时间先后顺序）
+2. 第一个完成后说"还有一个[接机/送机]，要继续预约吗？"
+3. 用户确认后处理第二个
+回复格式：先说第一个行程的标记，如：
+"好的，先帮您预约送机 [ACTION: show_vehicles to_airport]，接机稍后继续。"
+
 【送机流程——严格按此顺序，信息齐了立即触发】
 1. 确认日期（几号）
 2. 确认出发时间（司机几点到门口）
@@ -1640,6 +1649,40 @@ async function sendMessage(){
 }
 
 function extractInfo(msg){
+  // 多单检测：一句话里同时有送机和接机
+  if(!S.direction && pendingTrips.length===0){
+    const hasDeparture = /送机|打飞的|赶飞机|去机场送/i.test(msg);
+    const hasArrival = /接机|落地|出关|接.*机场/i.test(msg);
+    if(hasDeparture && hasArrival){
+      // 提取两个日期时间
+      const dateMatches = [...msg.matchAll(/(\d{1,2})[月号\/](\d{1,2})[号日]?/g)];
+      const timeMatches = [...msg.matchAll(/(早上|上午|下午|晚上)?(\d{1,2})[点:：时]/g)];
+      if(dateMatches.length>=2 && timeMatches.length>=2){
+        // 判断哪个先、哪个后
+        const d1=dateMatches[0], d2=dateMatches[1];
+        const t1=timeMatches[0], t2=timeMatches[1];
+        const m1=parseInt(d1[1]),day1=parseInt(d1[2]);
+        const m2=parseInt(d2[1]),day2=parseInt(d2[2]);
+        const now=new Date();
+        const yr=now.getFullYear();
+        const date1=`${yr}-${String(m1||now.getMonth()+1).padStart(2,'0')}-${String(day1).padStart(2,'0')}`;
+        const date2=`${yr}-${String(m2||now.getMonth()+1).padStart(2,'0')}-${String(day2).padStart(2,'0')}`;
+        let h1=parseInt(t1[2]); if(/下午|晚上/.test(t1[1]||'')&&h1<12)h1+=12;
+        let h2=parseInt(t2[2]); if(/下午|晚上/.test(t2[1]||'')&&h2<12)h2+=12;
+        const time1=`${String(h1).padStart(2,'0')}:00`;
+        const time2=`${String(h2).padStart(2,'0')}:00`;
+        // 先处理日期更早的
+        const firstIsDep = date1<=date2 ? hasDeparture : hasArrival;
+        S.direction = date1<=date2 ? (hasDeparture?'to_airport':'from_airport') : (hasArrival?'from_airport':'to_airport');
+        S.date=date1; S.time=time1;
+        // 第二个存队列
+        pendingTrips.push({
+          direction: date1<=date2 ? (hasArrival?'from_airport':'to_airport') : (hasDeparture?'to_airport':'from_airport'),
+          date:date2, time:time2
+        });
+      }
+    }
+  }
   if(S.trip_type!=='charter'){
     // 华人词库扩展
     if(/送机|去机场.*送|送.*机场|打飞的|赶飞机|坐飞机.*去|去坐飞机/i.test(msg))S.direction='to_airport';
@@ -2002,6 +2045,18 @@ async function submitBooking(){
     document.getElementById('suc-id').textContent='TRP-'+trip.id.slice(-8).toUpperCase();
     document.getElementById('success-modal').classList.add('show');
     showBottomNav();
+    // 检查是否有待处理的下一单
+    if(pendingTrips.length>0){
+      const next = pendingTrips.shift();
+      setTimeout(async()=>{
+        const label = next.direction==='to_airport'?'送机':'接机';
+        await agentSay(`✅ 第一单预约成功！还有一个${label}（${next.date} ${next.time}），帮您继续预约？`,800);
+        // 恢复下一单信息
+        S.direction=next.direction; S.date=next.date; S.time=next.time;
+        S.address=null; S.vehicle=null; S.price=null;
+        S.base_price=0; S.surcharge=0; S.distance_km=0;
+      }, 2000);
+    }
     // 触发n8n FW_03派单工作流
     try{
       fetch('https://primary-production-68f8.up.railway.app/webhook/new-trip-dispatch',{
