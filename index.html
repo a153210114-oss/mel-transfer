@@ -1521,6 +1521,7 @@ A：创始合伙人永久3倍积分加成，平台越大积分越值钱，就像
 【时间规则】
 送机：问"几点要司机到门口"，不主动问航班号/航班时间（除非用户主动问建议）
 接机：问"几点出关上车"（不说"落地时间"）
+接机目的地：自动读取用户已保存的家庭地址，说"是送您回XX地址吗？欢迎回家"让用户确认，不要让用户说地址
 
 【送机流程——严格按此顺序，信息齐了立即触发】
 1. 确认日期（几号）
@@ -1529,9 +1530,19 @@ A：创始合伙人永久3倍积分加成，平台越大积分越值钱，就像
 4. 以上3项齐全 → 立即 [ACTION: show_vehicles to_airport]
 5. 用户选车 → 生成确认卡 → 用户点确认 → 完成
 
+【接机流程——严格按此顺序】
+1. 确认日期（几号落地）
+2. 确认上车时间（几点出关上车）
+3. 目的地：优先用用户已保存的家庭地址，直接问"是回家吗？欢迎回家～" 或 "是到[地址]吗？"
+   - 用户确认 → 直接用保存地址
+   - 用户说不是 → 问新地址或GPS定位
+   - 没有保存地址 → GPS定位或让用户说地址
+4. 以上3项齐全 → 立即 [ACTION: show_vehicles from_airport]
+5. 用户选车 → 生成确认卡 → 用户点确认 → 完成
+
 【禁止】
 - 送机时问航班号、航班时间、起飞时间
-- 让用户口头描述地址（直接GPS定位）
+- 让用户口头描述地址（优先GPS/已保存地址）
 - 信息齐全后还继续问其他问题
 
 【地址困难处理】
@@ -1720,8 +1731,24 @@ async function handleAction(action,param){
   if(action==='show_vehicles'){
     if(param==='charter')S.trip_type='charter';
     else if(param)S.direction=param;
-    // 送机：地址未填时自动触发GPS，不让用户口头说地址
+
     if(!S.address&&S.trip_type!=='charter'){
+      if(S.direction==='from_airport'){
+        // 接机：优先用已保存的家庭地址
+        const addrs = getSavedAddresses();
+        const profile = getProfile();
+        const homeAddr = profile.home_address || addrs[0];
+        if(homeAddr){
+          S.address = homeAddr;
+          const title = localStorage.getItem('au_gender')==='female'?'小姐':'先生';
+          const name = getPassenger().name||'';
+          await agentSay(`是送您回 ${homeAddr} 吗？欢迎回家 🏠`,400);
+          // 显示确认卡让用户选择
+          showHomeAddressConfirm(homeAddr);
+          return;
+        }
+      }
+      // 送机或没有历史地址：GPS定位
       if(S.direction==='to_airport'){
         await agentSay('帮您定位一下出发地址',300);
       }
@@ -2564,6 +2591,28 @@ function confirmEditTime(){
   if(t)S.time=t;
   document.querySelector('.confirm-card:last-child')?.remove();
   agentSay(`好，已更新为${S.date} ${S.time}，需要换车型吗？`,300);
+}
+
+// ── 接机家庭地址确认卡 ──
+function showHomeAddressConfirm(homeAddr){
+  const div=document.createElement('div');
+  div.className='confirm-card';
+  div.style.border='1.5px solid rgba(0,200,150,0.3)';
+  div.innerHTML=`
+    <div style="font-size:13px;color:rgba(255,255,255,0.6);margin-bottom:10px;">🏠 目的地确认</div>
+    <div onclick="useGPSAddr('${homeAddr.replace(/'/g,"\'")}',null)"
+      style="background:rgba(0,200,150,0.08);border:1.5px solid rgba(0,200,150,0.3);border-radius:12px;padding:12px 14px;margin-bottom:8px;cursor:pointer;">
+      <div style="font-size:10px;color:rgba(0,200,150,0.7);margin-bottom:3px;">🏠 我的家 — 点击确认</div>
+      <div style="font-size:13px;color:white;font-weight:600;">${homeAddr}</div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="gpsConfirmAddress('destination');this.closest('.confirm-card').remove();"
+        style="flex:1;padding:9px;background:rgba(0,150,199,0.15);border:1px solid rgba(0,150,199,0.3);border-radius:10px;color:rgba(0,212,255,0.8);font-size:12px;cursor:pointer;font-family:inherit;">
+        📍 换个地址
+      </button>
+    </div>`;
+  chatArea.appendChild(div);
+  scrollBottom();
 }
 
 // ── 粘贴地址快捷提示卡 ──
