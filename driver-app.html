@@ -1447,7 +1447,7 @@ function handleGlobalVoiceCommand(text) {
       <div style="font-size:13px;color:var(--text2);margin-bottom:6px;">注册手机号</div>
       <input id="login-phone" type="tel"
         style="width:100%;padding:13px 14px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-size:15px;font-family:inherit;outline:none;margin-bottom:14px;"
-        placeholder="+61 4XX XXX XXX">
+        id="reg-phone" placeholder="+61 4XX XXX XXX">
       <button onclick="doLogin()"
         style="width:100%;padding:15px;background:var(--accent);border:none;border-radius:12px;color:var(--bg);font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;">
         进入工作台 →
@@ -1809,7 +1809,7 @@ function handleGlobalVoiceCommand(text) {
       <div class="form-section-title">👤 基本信息</div>
       <div class="field">
         <label class="field-label">姓名（中文）</label>
-        <input class="field-input" type="text" placeholder="请输入真实姓名">
+        <input class="field-input" type="text" id="reg-name" placeholder="请输入真实姓名">
       </div>
       <div class="field-row">
         <div class="field">
@@ -1818,16 +1818,16 @@ function handleGlobalVoiceCommand(text) {
         </div>
         <div class="field">
           <label class="field-label">微信号</label>
-          <input class="field-input" type="text" placeholder="微信ID">
+          <input class="field-input" type="text" id="reg-wechat" placeholder="微信ID">
         </div>
       </div>
       <div class="field">
         <label class="field-label">邮箱</label>
-        <input class="field-input" type="email" placeholder="email@example.com">
+        <input class="field-input" type="email" id="reg-email" placeholder="email@example.com">
       </div>
       <div class="field">
         <label class="field-label">ABN（澳洲商业号码）</label>
-        <input class="field-input" type="text" placeholder="XX XXX XXX XXX">
+        <input class="field-input" type="text" id="reg-abn" placeholder="XX XXX XXX XXX">
       </div>
     </div>
 
@@ -1837,11 +1837,11 @@ function handleGlobalVoiceCommand(text) {
       <div class="field-row">
         <div class="field">
           <label class="field-label">驾照号码</label>
-          <input class="field-input" type="text" placeholder="驾照号">
+          <input class="field-input" type="text" id="reg-license" placeholder="驾照号">
         </div>
         <div class="field">
           <label class="field-label">有效期至</label>
-          <input class="field-input" type="date">
+          <input class="field-input" id="reg-expiry" type="date">
         </div>
       </div>
       <div class="upload-box">
@@ -1854,22 +1854,22 @@ function handleGlobalVoiceCommand(text) {
     <div class="form-section">
       <div class="form-section-title">🚗 车辆类型</div>
       <div class="vehicle-types">
-        <div class="vtype-card selected" onclick="selectVtype(this)">
+        <div class="vtype-card selected" data-type="sedan" onclick="selectVtype(this)">
           <div class="vtype-icon">🚗</div>
           <div class="vtype-name">Sedan</div>
           <div class="vtype-cap">最多3人 · 6件</div>
         </div>
-        <div class="vtype-card" onclick="selectVtype(this)">
+        <div class="vtype-card" data-type="mpv" onclick="selectVtype(this)">
           <div class="vtype-icon">🚐</div>
           <div class="vtype-name">MPV</div>
           <div class="vtype-cap">最多6人 · 12件</div>
         </div>
-        <div class="vtype-card" onclick="selectVtype(this)">
+        <div class="vtype-card" data-type="large_mpv" onclick="selectVtype(this)">
           <div class="vtype-icon">🚌</div>
           <div class="vtype-name">大型MPV</div>
           <div class="vtype-cap">最多9人 · 18件</div>
         </div>
-        <div class="vtype-card" onclick="selectVtype(this)">
+        <div class="vtype-card" data-type="van" onclick="selectVtype(this)">
           <div class="vtype-icon">🚎</div>
           <div class="vtype-name">Van</div>
           <div class="vtype-cap">最多12人 · 24件</div>
@@ -1879,11 +1879,11 @@ function handleGlobalVoiceCommand(text) {
       <div class="field-row">
         <div class="field">
           <label class="field-label">品牌</label>
-          <input class="field-input" type="text" placeholder="如 Toyota">
+          <input class="field-input" type="text" id="reg-brand" placeholder="如 Toyota">
         </div>
         <div class="field">
           <label class="field-label">型号</label>
-          <input class="field-input" type="text" placeholder="如 HiAce">
+          <input class="field-input" type="text" id="reg-model" placeholder="如 HiAce">
         </div>
       </div>
       <div class="field-row">
@@ -1926,11 +1926,11 @@ function handleGlobalVoiceCommand(text) {
       <div class="field-row">
         <div class="field">
           <label class="field-label">BSB</label>
-          <input class="field-input" type="text" placeholder="XXX-XXX">
+          <input class="field-input" type="text" id="reg-bsb" placeholder="XXX-XXX">
         </div>
         <div class="field">
           <label class="field-label">Account No.</label>
-          <input class="field-input" type="text" placeholder="账号">
+          <input class="field-input" type="text" id="reg-account" placeholder="账号">
         </div>
       </div>
     </div>
@@ -1940,7 +1940,7 @@ function handleGlobalVoiceCommand(text) {
       <div class="form-section-title">🎁 推荐码（选填）</div>
       <div class="field">
         <label class="field-label">如有推荐人，请填写推荐码</label>
-        <input class="field-input" type="text" placeholder="推荐码">
+        <input class="field-input" type="text" id="reg-ref" placeholder="推荐码">
       </div>
     </div>
 
@@ -3249,8 +3249,82 @@ function wechatPassenger() {
   }
 }
 
-function submitReg() {
-  alert('✅ 注册申请已提交！\n我们会在24小时内通过微信联系您完成审核。');
+async function submitReg() {
+  const name = document.getElementById('reg-name')?.value.trim();
+  const phone = document.getElementById('reg-phone')?.value.trim();
+  const wechat = document.getElementById('reg-wechat')?.value.trim()||'';
+  const email = document.getElementById('reg-email')?.value.trim()||'';
+  const abn = document.getElementById('reg-abn')?.value.trim()||'';
+  const license = document.getElementById('reg-license')?.value.trim()||'待填写';
+  const expiry = document.getElementById('reg-expiry')?.value||'2099-01-01';
+  const bsb = document.getElementById('reg-bsb')?.value.trim()||'';
+  const account = document.getElementById('reg-account')?.value.trim()||'';
+  const brand = document.getElementById('reg-brand')?.value.trim()||'';
+  const model = document.getElementById('reg-model')?.value.trim()||'';
+  const plate = document.getElementById('reg-plate')?.value.trim()||'';
+  const color = document.getElementById('reg-color')?.value.trim()||'';
+  const seats = parseInt(document.getElementById('reg-seats')?.value)||0;
+  const vtype = document.querySelector('.vtype-card.selected')?.dataset.type||'sedan';
+  const refCode = document.getElementById('reg-ref')?.value.trim()||'';
+
+  if(!name){alert('请填写姓名');return;}
+  if(!phone){alert('请填写手机号');return;}
+
+  const btn = document.querySelector('.action-btn.btn-primary');
+  btn.textContent='提交中...'; btn.disabled=true;
+
+  try{
+    // 更新或创建司机记录
+    let driverId = currentDriver?.id;
+    const driverData = {
+      tenant_id:TENANT_ID, full_name:name, phone,
+      wechat_id:wechat||null, email:email||null, abn:abn||null,
+      license_number:license, license_expiry:expiry,
+      bank_bsb:bsb||null, bank_account:account||null,
+      is_active:false, status:'offline'
+    };
+
+    if(driverId){
+      // 更新已有记录
+      await fetch(SUPA_URL+'/rest/v1/drivers?id=eq.'+driverId,{
+        method:'PATCH',
+        headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
+        body:JSON.stringify(driverData)
+      });
+    } else {
+      // 新建
+      const res = await fetch(SUPA_URL+'/rest/v1/drivers',{
+        method:'POST',
+        headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
+        body:JSON.stringify(driverData)
+      });
+      const arr = await res.json();
+      driverId = arr[0]?.id;
+      currentDriver = arr[0];
+      localStorage.setItem('driver', JSON.stringify(currentDriver));
+    }
+
+    // 写入车辆信息
+    if(driverId && (plate||brand||model)){
+      await fetch(SUPA_URL+'/rest/v1/vehicles',{
+        method:'POST',
+        headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
+        body:JSON.stringify({
+          tenant_id:TENANT_ID, driver_id:driverId,
+          vehicle_type:vtype, brand:brand||null, model:model||null,
+          plate_number:plate||null, color:color||null,
+          seats:seats||null, is_primary:true
+        })
+      });
+    }
+
+    btn.textContent='📤 提交注册申请'; btn.disabled=false;
+    alert('✅ 注册申请已提交！\n我们会在24小时内通过微信联系您完成审核。');
+    switchPage('home');
+  }catch(e){
+    btn.textContent='📤 提交注册申请'; btn.disabled=false;
+    alert('提交失败：'+e.message+'\n请联系客服 DIVE-DING');
+  }
 }
 </script>
 
