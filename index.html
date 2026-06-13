@@ -1676,7 +1676,7 @@ A：创始合伙人永久3倍积分加成，平台越大积分越值钱，就像
   return p;
 }
 
-async function sendMessage(){
+async function sendMessage(){ stopTTS();
   const input=document.getElementById('chat-input');
   const msg=input.value.trim();if(!msg)return;
   input.value='';
@@ -1938,7 +1938,7 @@ function showVehicleCards(){
   chatArea.appendChild(wrap);scrollBottom();
 }
 
-async function selectVehicle(type,price,el){
+async function selectVehicle(type,price,el){ stopTTS();
   document.querySelectorAll('.vehicle-card').forEach(c=>c.classList.remove('selected'));
   el.classList.add('selected');S.vehicle=type;S.base_price=price;
   if(S.trip_type==='charter'){
@@ -2038,7 +2038,7 @@ async function showConfirmCard(){
 }
 
 function selPay(el,val){document.querySelectorAll('.pay-opt').forEach(o=>o.classList.remove('selected'));el.classList.add('selected');S.payment=val;}
-function restartBooking(){
+function restartBooking(){ stopTTS();
   // 从历史对话补提取日期时间（确保不丢失）
   const allHist = aiHistory.map(m=>m.content).join(' ');
   extractInfo(allHist);
@@ -2048,7 +2048,7 @@ function restartBooking(){
   setTimeout(()=>showVehicleCards(), 800);
 }
 
-async function showContactStep(){
+async function showContactStep(){ stopTTS();
   const saved=getPassenger();
   if(saved.name&&saved.phone){S.name=saved.name;S.phone=saved.phone;S.wechat=saved.wechat||'';await submitBooking();return;}
 
@@ -2081,7 +2081,7 @@ async function submitFromForm(){
   await submitBooking();
 }
 
-async function submitBooking(){
+async function submitBooking(){ stopTTS();
   if(bookingSubmitted)return;
   // 从对话历史补提取缺失的日期时间
   if(!S.date||!S.time){
@@ -2135,41 +2135,31 @@ async function submitBooking(){
     document.getElementById('suc-id').textContent='TRP-'+trip.id.slice(-8).toUpperCase();
     document.getElementById('success-modal').classList.add('show');
     showBottomNav();
-    // 往返：第一单完成后弹第二单确认卡
+    // 去程成功后自动弹回程确认卡
     if(returnTrip){
       const rt = returnTrip;
       returnTrip = null;
       setTimeout(async()=>{
-        // 用第一单信息填充第二单S对象
-        const prevAddress = S.address;
-        const prevVehicle = S.vehicle;
-        const prevBasePrice = S.base_price;
-        const prevSurcharge = S.surcharge;
-        const prevDistKm = S.distance_km;
-        const groupId = trip.id;
-
-        // 时段附加费
-        const retTimeResult = calcTimeSurcharge(prevBasePrice, rt.date, rt.time);
-        const retTotal = prevBasePrice + (prevSurcharge||0) + retTimeResult.surcharge;
-
-        await agentSay('第一单预约成功 🎉 帮您弹出第二个行程确认', 500);
+        const retTimeResult = calcTimeSurcharge(S.base_price, rt.date, rt.time);
+        const retTotal = S.base_price + (S.surcharge||0) + retTimeResult.surcharge;
+        const p=getPassenger();
+        let groupId=trip.id;
         showReturnTripCard({
-          direction: rt.direction,
-          date: rt.date,
-          time: rt.time,
-          address: prevAddress,
-          vehicle: prevVehicle,
-          base_price: prevBasePrice,
-          surcharge: prevSurcharge,
-          distance_km: prevDistKm,
-          total: retTotal,
-          time_label: retTimeResult.label,
-          group_id: groupId,
-          name: S.name,
-          phone: S.phone,
-          wechat: S.wechat
+          direction:rt.direction,
+          date:rt.date, time:rt.time,
+          address:S.address,
+          vehicle:S.vehicle,
+          base_price:S.base_price,
+          surcharge:S.surcharge,
+          distance_km:S.distance_km,
+          total:retTotal,
+          time_label:retTimeResult.label,
+          group_id:groupId,
+          name:S.name, phone:S.phone, wechat:S.wechat||''
         });
-      }, 2000);
+      }, 1500);
+    } else {
+      returnTrip = null;
     }
     // 触发n8n FW_03派单工作流
     try{
@@ -2203,10 +2193,11 @@ async function submitBooking(){
     }catch(e){}
     setTimeout(()=>showConfetti(points),1800);
     const _t=localStorage.getItem('au_gender')==='female'?'小姐':'先生';
-    const successMsg = returnTrip ?
-      `${S.name}${_t}，去程预约成功！现在给你安排回程 🎉` :
-      `${S.name}${_t}，预约成功！司机会尽快确认联系您 🎉`;
-    await agentSay(successMsg, 300);
+    if(returnTrip){
+      await agentSay(`${S.name}${_t}，去程预约成功 🎉 马上帮您安排回程——`, 300);
+    } else {
+      await agentSay(`${S.name}${_t}，预约成功！司机会尽快确认联系您 🎉`, 300);
+    }
   }catch(e){bookingSubmitted=false;alert('提交遇到问题\n'+e.message);}
 }
 
@@ -2407,7 +2398,7 @@ function showReturnTripCard(rt){
   speak(`第二单${dirText}，${(()=>{const d=new Date(rt.date+'T00:00:00');return (d.getMonth()+1)+'月'+d.getDate()+'日';})()} ${rt.time}，参考AUD ${rt.total}，确认吗？`);
 }
 
-async function submitReturnTrip(rt){
+async function submitReturnTrip(rt){ stopTTS();
   // rt是JSON字符串时先parse
   if(typeof rt==='string') rt=JSON.parse(rt);
   document.querySelector('.confirm-card:last-of-type')?.remove();
@@ -2553,7 +2544,7 @@ function showResumeOrderCard(t){
 }
 
 // ── 个人中心 ──
-async function openProfile(){
+async function openProfile(){ stopTTS();
   const panel = document.getElementById('profile-panel');
   panel.classList.add('open');
   const p = getPassenger();
