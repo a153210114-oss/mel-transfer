@@ -918,8 +918,38 @@ async function sendVoiceMessage(text){
     if(aiHistory.length>20) aiHistory=aiHistory.slice(-20);
     typing.remove();
 
-    // 从AI回复里补提取时间/地址/方向（AI可能复述了用户说的信息）
+    // 从AI回复里补提取时间/地址/方向
     extractInfo(reply);
+
+    // 检测AI回复里是否有往返信息：同时包含送机和接机的日期
+    if(!returnTrip && reply.includes('[ACTION: show_vehicles')){
+      const fullText = aiHistory.map(m=>m.content).join(' ');
+      const hasDep = /送机|打飞的|赶飞机/i.test(fullText);
+      const hasArr = /接机|落地|出关/i.test(fullText);
+      if(hasDep && hasArr){
+        // 从对话历史提取两个日期时间
+        const dateRe = /(\d{1,2})月(\d{1,2})[号日]/g;
+        const timeRe = /(早上|上午|下午|晚上|凌晨)?(\d{1,2})[点:：时]/g;
+        const dates=[...fullText.matchAll(dateRe)];
+        const times=[...fullText.matchAll(timeRe)];
+        if(dates.length>=2 && times.length>=2){
+          const yr=new Date().getFullYear();
+          const mkDate=(m)=>`${yr}-${String(parseInt(m[1])).padStart(2,'0')}-${String(parseInt(m[2])).padStart(2,'0')}`;
+          const mkTime=(m)=>{ let h=parseInt(m[2]); if(/下午|晚上/.test(m[1]||'')&&h<12)h+=12; return `${String(h).padStart(2,'0')}:00`; };
+          const d1=mkDate(dates[0]),t1=mkTime(times[0]);
+          const d2=mkDate(dates[1]),t2=mkTime(times[1]);
+          // 当前S是去程，另一个是回程
+          if(d1!==d2){
+            const retDir = S.direction==='to_airport'?'from_airport':'to_airport';
+            // 找哪个日期不是去程日期
+            const retDate = S.date===d1?d2:d1;
+            const retTime = S.date===d1?t2:t1;
+            returnTrip={direction:retDir, date:retDate, time:retTime};
+            console.log('往返回程已设置:', returnTrip);
+          }
+        }
+      }
+    }
     // 检测AI是否在引导地址输入→显示粘贴快捷卡
     if(/复制.*地址|粘贴.*地址|地址.*输入框|把地址|copy.*address/i.test(reply)){
       showPasteAddressHint();
@@ -1525,13 +1555,13 @@ A：创始合伙人永久3倍积分加成，平台越大积分越值钱，就像
 接机：问"几点出关上车"（不说"落地时间"）
 接机目的地：自动读取用户已保存的家庭地址，说"是送您回XX地址吗？欢迎回家"让用户确认，不要让用户说地址
 
-【多单识别——一句话包含多个行程时】
-用户说多个行程（如"15号送机，1号接机"）：
-1. 先处理第一个行程（按时间先后顺序）
-2. 第一个完成后说"还有一个[接机/送机]，要继续预约吗？"
-3. 用户确认后处理第二个
-回复格式：先说第一个行程的标记，如：
-"好的，先帮您预约送机 [ACTION: show_vehicles to_airport]，接机稍后继续。"
+【往返预约——最高优先级规则】
+用户一句话同时说送机和接机时，这是往返预约，系统自动处理回程。
+禁止说"分别预约""稍后继续"，有日期时间就立即触发ACTION，不问地址。
+回复示例："好的，往返都帮您安排 [ACTION: show_vehicles to_airport]"
+
+
+
 
 【送机流程——严格按此顺序，信息齐了立即触发】
 1. 确认日期（几号）
