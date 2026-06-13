@@ -1589,6 +1589,14 @@ A：创始合伙人永久3倍积分加成，平台越大积分越值钱，就像
 查积分/我的积分/分红 → [ACTION: open_profile]
 个人中心/我的资料 → [ACTION: open_profile]
 
+【机场识别】
+墨尔本有两个机场，AI需要主动识别或询问：
+- 墨尔本国际机场（MEL/Tullamarine）：默认，大多数航班
+- 阿瓦隆机场（Avalon Airport/AVV）：捷星Jetstar等廉价航空
+
+用户没说明时：问"请问是墨尔本国际机场还是阿瓦隆机场？"
+用户说"捷星/Jetstar"时自动识别为阿瓦隆
+
 【时间规则】
 送机：问"几点要司机到门口"，不主动问航班号/航班时间（除非用户主动问建议）
 接机：问"几点出关上车"（不说"落地时间"）
@@ -1756,6 +1764,11 @@ function extractInfo(msg){
       }
     }
   }
+  // 机场识别
+  if(/阿瓦隆|avalon airport|avv/i.test(msg)) selectedAirport='avalon';
+  else if(/捷星|jetstar|tiger.*air/i.test(msg)) selectedAirport='avalon';
+  else if(/墨尔本.*机场|国际机场|tullamarine|mel/i.test(msg)) selectedAirport='melbourne';
+
   if(S.trip_type!=='charter'){
     // 华人词库扩展
     if(/送机|去机场.*送|送.*机场|打飞的|赶飞机|坐飞机.*去|去坐飞机/i.test(msg))S.direction='to_airport';
@@ -2002,6 +2015,7 @@ async function showConfirmCard(){
   div.innerHTML=`
     <div style="font-size:14px;font-weight:900;color:white;margin-bottom:12px;">📋 行程确认</div>
     <div class="confirm-row"><span class="confirm-label">类型</span><span class="confirm-value">${dirText}</span></div>
+    <div class="confirm-row"><span class="confirm-label">机场</span><span class="confirm-value">${AIRPORT_COORDS[selectedAirport]?.name||'墨尔本国际机场'}</span></div>
     <div class="confirm-row"><span class="confirm-label">日期</span><span class="confirm-value">${S.date?(()=>{const d=new Date(S.date+'T00:00:00');return d.getMonth()+1+'月'+d.getDate()+'日';})():'未填'}</span></div>
     <div class="confirm-row"><span class="confirm-label">${timeLabel}</span><span class="confirm-value">${S.time||'未填'}</span></div>
     <div class="confirm-row"><span class="confirm-label">${addrLabel}</span><span class="confirm-value">${S.address||'未填'}</span></div>
@@ -2230,9 +2244,10 @@ function closeConfetti(){document.getElementById('confetti-overlay').style.displ
 
 // ── 距离计算 ──
 const AIRPORT_COORDS = {
-  melbourne: {lat:-37.6690,lng:144.8410},
-  avalon: {lat:-38.0394,lng:144.4690}
+  melbourne: {lat:-37.6690,lng:144.8410,name:'墨尔本国际机场'},
+  avalon: {lat:-38.0394,lng:144.4690,name:'Avalon Airport (AVV)'},
 };
+let selectedAirport = 'melbourne';
 const BASE_KM = 25;
 const SURCHARGE_PER_KM = 1;
 
@@ -2276,7 +2291,7 @@ async function calcDistanceSurcharge(address, direction) {
   if (!window.google || !address) return 0;
   try {
     const service = new google.maps.DistanceMatrixService();
-    const airport = AIRPORT_COORDS.melbourne;
+    const airport = AIRPORT_COORDS[selectedAirport] || AIRPORT_COORDS.melbourne;
     const airportLatLng = new google.maps.LatLng(airport.lat, airport.lng);
 
     return new Promise((resolve) => {
