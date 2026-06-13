@@ -362,6 +362,15 @@ body{
     <div class="profile-section" style="margin-top:20px;">
       <div style="font-size:11px;color:rgba(255,255,255,0.35);font-weight:700;letter-spacing:1px;margin-bottom:12px;">设置</div>
 
+      <div onclick="showAddressBookEditor()" style="display:flex;align-items:center;gap:12px;padding:14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:12px;margin-bottom:8px;cursor:pointer;">
+        <div style="font-size:20px;width:28px;text-align:center;">📍</div>
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:600;color:white;">我的地址簿</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:2px;">管理常用地址</div>
+        </div>
+        <div style="color:rgba(255,255,255,0.3);font-size:16px;">›</div>
+      </div>
+
       <div onclick="addToHome()" style="display:flex;align-items:center;gap:12px;padding:14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:12px;margin-bottom:8px;cursor:pointer;">
         <div style="font-size:20px;width:28px;text-align:center;">📱</div>
         <div style="flex:1;">
@@ -822,30 +831,48 @@ const DIALECT_SIGNALS = {
 };
 
 function detectRoundTrip(text){
-  if(returnTrip) return; // 已有回程就不重复检测
+  if(returnTrip) return;
   const hasDep = /送机|打飞的|赶飞机|去机场送/i.test(text);
   const hasArr = /接机|落地|出关|接.*机场/i.test(text);
   if(!hasDep || !hasArr) return;
   const dateRe = /(\d{1,2})[月](\d{1,2})[号日]?/g;
-  const timeRe = /(早上|上午|下午|晚上|凌晨)?(\d{1,2})[点:：时]/g;
+  const timeRe = /(早上|上午|下午|晚上|凌晨)?(\d{1,2})[点:：时](\d{0,2})?/g;
   const dates=[...text.matchAll(dateRe)];
   const times=[...text.matchAll(timeRe)];
   if(dates.length<2 || times.length<2) return;
   const yr=new Date().getFullYear();
   const mkDate=(m)=>`${yr}-${String(parseInt(m[1])).padStart(2,'0')}-${String(parseInt(m[2])).padStart(2,'0')}`;
-  const mkTime=(m)=>{let h=parseInt(m[2]);if(/下午|晚上/.test(m[1]||'')&&h<12)h+=12;return `${String(h).padStart(2,'0')}:00`;};
+  const mkTime=(m)=>{
+    let h=parseInt(m[2]);
+    const min=m[3]?String(parseInt(m[3])||0).padStart(2,'0'):'00';
+    if(/下午|晚上/.test(m[1]||'')&&h<12)h+=12;
+    return `${String(h).padStart(2,'0')}:${min}`;
+  };
   const d1=mkDate(dates[0]),t1=mkTime(times[0]);
   const d2=mkDate(dates[1]),t2=mkTime(times[1]);
-  if(d1===d2) return; // 同一天不算往返
-  // 去程是日期较早的
+  if(d1===d2) return;
+
+  // 识别每段的机场
+  const seg1 = text.slice(0, text.length/2);
+  const seg2 = text.slice(text.length/2);
+  const getAirport = (seg) => {
+    if(/阿瓦隆|avalon airport|avv|捷星|jetstar/i.test(seg)) return 'avalon';
+    return 'melbourne';
+  };
+
   const firstDir = d1<d2 ? 'to_airport' : 'from_airport';
   const retDir   = d1<d2 ? 'from_airport' : 'to_airport';
-  if(!S.direction){ S.direction=firstDir; S.date=d1; S.time=t1; }
-  // 回程：找与S.date不同的那个日期
+  const firstAirport = d1<d2 ? getAirport(seg1) : getAirport(seg2);
+  const retAirport   = d1<d2 ? getAirport(seg2) : getAirport(seg1);
+
+  if(!S.direction){
+    S.direction=firstDir; S.date=d1; S.time=t1;
+    selectedAirport=firstAirport;
+  }
   const retDate = S.date===d1 ? d2 : d1;
   const retTime = S.date===d1 ? t2 : t1;
-  returnTrip={direction:retDir, date:retDate, time:retTime};
-  console.log('往返检测OK:', '去程', S.direction, S.date, S.time, '回程', returnTrip);
+  returnTrip={direction:retDir, date:retDate, time:retTime, airport:retAirport};
+  console.log('往返检测OK:', S.direction, S.date, S.time, selectedAirport, '回程:', returnTrip);
 }
 
 function correctHomophones(text){
@@ -2149,28 +2176,32 @@ async function submitBooking(){ stopTTS();
     document.getElementById('suc-id').textContent='TRP-'+trip.id.slice(-8).toUpperCase();
     document.getElementById('success-modal').classList.add('show');
     showBottomNav();
-    // 去程成功后自动弹回程确认卡
+    // 去程成功后进入回程完整流程（独立地址、车型）
     if(returnTrip){
       const rt = returnTrip;
+      const groupId = trip.id;
+      const passengerName = S.name;
+      const passengerPhone = S.phone;
+      const passengerWechat = S.wechat||'';
       returnTrip = null;
+
       setTimeout(async()=>{
-        const retTimeResult = calcTimeSurcharge(S.base_price, rt.date, rt.time);
-        const retTotal = S.base_price + (S.surcharge||0) + retTimeResult.surcharge;
-        const p=getPassenger();
-        let groupId=trip.id;
-        showReturnTripCard({
-          direction:rt.direction,
-          date:rt.date, time:rt.time,
-          address:S.address,
-          vehicle:S.vehicle,
-          base_price:S.base_price,
-          surcharge:S.surcharge,
-          distance_km:S.distance_km,
-          total:retTotal,
-          time_label:retTimeResult.label,
-          group_id:groupId,
-          name:S.name, phone:S.phone, wechat:S.wechat||''
-        });
+        // 重置S对象，带入回程信息
+        S.direction=rt.direction;
+        S.date=rt.date; S.time=rt.time;
+        S.address=null; S.vehicle=null; S.price=null;
+        S.base_price=0; S.surcharge=0; S.distance_km=0;
+        S.trip_type='standard'; S.vehicle=null;
+        S.name=passengerName; S.phone=passengerPhone; S.wechat=passengerWechat;
+        S.group_id=groupId; // 关联去程
+        selectedAirport = rt.airport||'melbourne';
+        bookingSubmitted=false;
+
+        const airportName = AIRPORT_COORDS[selectedAirport]?.name||'机场';
+        const dirLabel = rt.direction==='from_airport'?'接机':'送机';
+        await agentSay(`去程预约成功 🎉 现在帮您安排回程——${rt.date.slice(5).replace('-','月')}日 ${rt.time} ${dirLabel}，从${airportName}出发`,600);
+        // 弹出地址簿选择回程目的地
+        showAddressBookForPick(rt.direction);
       }, 1500);
     } else {
       returnTrip = null;
@@ -2445,6 +2476,127 @@ async function submitReturnTrip(rt){ stopTTS();
   }catch(e){
     await agentSay('第二单提交失败，请重试或联系客服', 300);
   }
+}
+
+// ── 地址簿系统 ──
+function getAddressBook(){
+  try{ return JSON.parse(localStorage.getItem('au_addressbook')||'[]'); }
+  catch(e){ return []; }
+}
+
+function saveAddressBook(book){
+  localStorage.setItem('au_addressbook', JSON.stringify(book));
+}
+
+function addToAddressBook(address, label=''){
+  if(!address||address.length<5) return;
+  const book = getAddressBook();
+  const existing = book.find(a=>a.address===address);
+  if(existing){ existing.used=(existing.used||0)+1; }
+  else{ book.push({id:Date.now(), label:label||address.split(',')[0], address, used:1}); }
+  // 最多保存10个，按使用频率排序
+  book.sort((a,b)=>(b.used||0)-(a.used||0));
+  if(book.length>10) book.pop();
+  saveAddressBook(book);
+}
+
+// 弹出地址簿选择（回程目的地）
+function showAddressBookForPick(direction){
+  const book = getAddressBook();
+  const profile = getProfile();
+  const homeAddr = profile.home_address;
+
+  // 合并：地址簿+家庭地址
+  const allAddrs = [...book];
+  if(homeAddr && !allAddrs.find(a=>a.address===homeAddr)){
+    allAddrs.unshift({id:'home', label:'我家', address:homeAddr, used:99});
+  }
+
+  const label = direction==='from_airport'?'回程目的地':'出发地';
+  const div = document.createElement('div');
+  div.className = 'confirm-card';
+  div.style.border = '1.5px solid rgba(0,150,199,0.3)';
+
+  const addrItems = allAddrs.slice(0,6).map((a,i)=>`
+    <div onclick="selectFromAddressBook('${a.address.replace(/'/g,"\'")}', this)"
+      style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;background:rgba(255,255,255,0.04);margin-bottom:6px;border:1px solid rgba(255,255,255,0.08);">
+      <span style="font-size:18px;min-width:28px;text-align:center;">${a.id==='home'?'🏠':'📍'}</span>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:700;color:white;">${a.label}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:1px;">${a.address.slice(0,40)}</div>
+      </div>
+    </div>`).join('');
+
+  div.innerHTML = `
+    <div style="font-size:14px;font-weight:800;color:white;margin-bottom:12px;">📍 选择${label}</div>
+    ${addrItems}
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <button onclick="gpsConfirmAddress();this.closest('.confirm-card').remove();"
+        style="flex:1;padding:10px;background:rgba(0,200,150,0.15);border:1px solid rgba(0,200,150,0.3);border-radius:10px;color:rgba(0,200,150,0.9);font-size:13px;cursor:pointer;font-family:inherit;">
+        📍 定位当前位置
+      </button>
+      <button onclick="showManualAddressInput();this.closest('.confirm-card').remove();"
+        style="flex:1;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:rgba(255,255,255,0.5);font-size:13px;cursor:pointer;font-family:inherit;">
+        ✏️ 输入新地址
+      </button>
+    </div>`;
+
+  chatArea.appendChild(div);
+  scrollBottom();
+}
+
+function selectFromAddressBook(address, el){
+  stopTTS();
+  // 高亮选中
+  el.closest('.confirm-card').querySelectorAll('div[onclick]').forEach(d=>d.style.background='rgba(255,255,255,0.04)');
+  el.style.background='rgba(0,150,199,0.15)';
+  el.style.borderColor='rgba(0,150,199,0.4)';
+  setTimeout(()=>{
+    useGPSAddr(address, null);
+    el.closest('.confirm-card')?.remove();
+  }, 300);
+}
+
+// 地址簿管理页面（在个人中心里）
+function showAddressBookEditor(){
+  const book = getAddressBook();
+  const overlay = document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:3000;display:flex;align-items:flex-end;justify-content:center;';
+  const items = book.map((a,i)=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:12px;background:rgba(255,255,255,0.04);border-radius:10px;margin-bottom:8px;">
+      <span style="font-size:16px;">📍</span>
+      <div style="flex:1;">
+        <input value="${a.label}" onchange="updateAddressLabel(${i},this.value)"
+          style="background:none;border:none;color:white;font-size:13px;font-weight:700;font-family:inherit;outline:none;width:100%;">
+        <div style="font-size:11px;color:rgba(255,255,255,0.4);">${a.address.slice(0,45)}</div>
+      </div>
+      <button onclick="deleteAddress(${i})" style="background:rgba(255,59,48,0.15);border:1px solid rgba(255,59,48,0.3);border-radius:8px;padding:6px 10px;color:rgba(255,100,90,0.8);font-size:12px;cursor:pointer;font-family:inherit;">删除</button>
+    </div>`).join('');
+
+  overlay.innerHTML=`
+    <div style="background:#0d1f3c;border-radius:24px 24px 0 0;padding:24px 20px 44px;width:100%;max-width:480px;max-height:80vh;overflow-y:auto;">
+      <div style="width:40px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:0 auto 20px;"></div>
+      <div style="font-size:16px;font-weight:900;color:white;margin-bottom:16px;">📍 我的地址簿</div>
+      ${items||'<div style="text-align:center;color:rgba(255,255,255,0.3);padding:20px;">暂无保存地址</div>'}
+      <button onclick="this.closest('div[style*=fixed]').remove()"
+        style="width:100%;padding:12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:rgba(255,255,255,0.6);font-size:13px;cursor:pointer;font-family:inherit;margin-top:8px;">关闭</button>
+    </div>`;
+  overlay.onclick=(e)=>{ if(e.target===overlay) overlay.remove(); };
+  document.body.appendChild(overlay);
+}
+
+function updateAddressLabel(idx, label){
+  const book = getAddressBook();
+  if(book[idx]) book[idx].label=label;
+  saveAddressBook(book);
+}
+
+function deleteAddress(idx){
+  const book = getAddressBook();
+  book.splice(idx,1);
+  saveAddressBook(book);
+  document.querySelector('div[style*=fixed]')?.remove();
+  showAddressBookEditor();
 }
 
 // ── 底部导航 ──
@@ -3120,8 +3272,9 @@ async function showAddressConfirm(gpsAddr, savedAddrs, label) {
 
 function useGPSAddr(addr, el) {
   S.address = addr;
+  S.address = addr;
   saveAddress(addr);
-  // 移除地址确认卡
+  addToAddressBook(addr); // 自动存地址簿
   document.querySelectorAll('.confirm-card').forEach(c => {
     if (c.querySelector('[onclick*="useGPSAddr"]')) c.remove();
   });
