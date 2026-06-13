@@ -191,6 +191,15 @@ body{
 .modal-sheet{background:#0d1f3c;border-radius:28px 28px 0 0;padding:28px 22px 44px;width:100%;max-width:480px;border-top:1px solid rgba(255,255,255,0.1);}
 .modal-handle{width:40px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:0 auto 20px;}
 
+/* 底部导航 */
+.bottom-nav{display:flex;background:#0a1628;border-top:1px solid rgba(255,255,255,0.08);flex-shrink:0;position:relative;z-index:100;}
+.nav-tab{flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 4px 12px;gap:3px;cursor:pointer;font-size:10px;color:rgba(255,255,255,0.35);border:none;background:none;font-family:inherit;transition:color 0.2s;}
+.nav-tab.active{color:#00d4ff;}
+.nav-tab-icon{font-size:20px;line-height:1;}
+.nav-badge{position:relative;display:inline-block;}
+.nav-badge::after{content:'';position:absolute;top:-2px;right:-4px;width:7px;height:7px;border-radius:50%;background:#ff4d6d;border:1.5px solid #0a1628;display:none;}
+.nav-badge.has-msg::after{display:block;}
+
 /* 烟花 */
 #confetti-overlay{display:none;position:fixed;inset:0;z-index:9998;pointer-events:all;flex-direction:column;align-items:center;justify-content:center;}
 
@@ -246,6 +255,25 @@ body{
   <button class="mic-btn" id="mic-btn" onclick="toggleMic()">🎤</button>
   <input class="chat-input" id="chat-input" placeholder="说话或输入..." onkeydown="if(event.key==='Enter')sendMessage()">
   <button class="send-btn" onclick="sendMessage()">➤</button>
+</div>
+
+<!-- 底部导航 -->
+<div class="bottom-nav" id="main-bottom-nav" style="display:none;">
+  <button class="nav-tab active" id="nav-chat" onclick="switchMainTab('chat')">
+    <span class="nav-tab-icon">💬</span>对话
+  </button>
+  <button class="nav-tab" id="nav-orders" onclick="switchMainTab('orders')">
+    <span class="nav-tab-icon">📋</span>订单
+  </button>
+  <button class="nav-tab" id="nav-messages" onclick="switchMainTab('messages')">
+    <span class="nav-tab-icon nav-badge" id="msg-badge-main">📨</span>消息
+  </button>
+  <button class="nav-tab" id="nav-plaza" onclick="window.location.href='plaza.html'">
+    <span class="nav-tab-icon">🏕️</span>广场
+  </button>
+  <button class="nav-tab" id="nav-profile" onclick="switchMainTab('profile')">
+    <span class="nav-tab-icon">👤</span>我的
+  </button>
 </div>
 
 <!-- 成功弹窗 -->
@@ -1081,6 +1109,7 @@ window.onload=async function(){
     setAgentByUserGender(g||'male');
     document.getElementById('exit-btn').style.display='block';
     const _t1=localStorage.getItem('au_gender')==='female'?'小姐':'先生';
+    showBottomNav(); // 显示底部导航
     // 检查是否有进行中的订单
     let activeTrip = null;
     try{
@@ -1260,23 +1289,16 @@ function showServiceCards(){
 }
 
 function gotoPassenger(type){
-  // 把AI收集的信息带过去，passenger-recruit自动填入
-  const params = new URLSearchParams();
-  params.set('type', type);
-  if(S.date) params.set('date', S.date);
-  if(S.time) params.set('time', S.time);
-  if(S.address) params.set('address', encodeURIComponent(S.address));
-  if(S.vehicle) params.set('vehicle', S.vehicle);
-  if(S.price) params.set('price', S.price);
-  if(S.base_price) params.set('base_price', S.base_price);
-  if(S.surcharge) params.set('surcharge', S.surcharge);
-  if(S.distance_km) params.set('distance_km', S.distance_km);
-  if(S.trip_type) params.set('trip_type', S.trip_type);
-  if(S.charter_hours) params.set('charter_hours', S.charter_hours);
-  if(S.wait_hours) params.set('wait_hours', S.wait_hours);
-  const ref = sessionStorage.getItem('incoming_ref');
-  if(ref) params.set('ref', ref);
-  window.location.href = 'passenger-recruit.html?' + params.toString();
+  // 统一在index.html下单，不跳转到passenger-recruit
+  if(type==='to_airport'||type==='from_airport'||type==='accompanied'){
+    S.direction=type==='accompanied'?S.direction:type;
+    if(type==='accompanied') S.trip_type='accompanied';
+  }
+  if(!S.address&&S.trip_type!=='charter'){
+    gpsConfirmAddress();
+  } else {
+    showVehicleCards();
+  }
 }
 
 // ── 司机模式选择 ──
@@ -1911,6 +1933,7 @@ async function submitBooking(){
     }
     document.getElementById('suc-id').textContent='TRP-'+trip.id.slice(-8).toUpperCase();
     document.getElementById('success-modal').classList.add('show');
+    showBottomNav();
     // 触发n8n FW_03派单工作流
     try{
       fetch('https://primary-production-68f8.up.railway.app/webhook/new-trip-dispatch',{
@@ -2004,6 +2027,61 @@ async function calcDistanceSurcharge(address, direction) {
   } catch(e) { return 0; }
 }
 
+
+// ── 底部导航 ──
+function showBottomNav(){
+  document.getElementById('main-bottom-nav').style.display='flex';
+}
+
+function switchMainTab(tab){
+  document.querySelectorAll('.nav-tab').forEach(el=>el.classList.remove('active'));
+  document.getElementById('nav-'+tab)?.classList.add('active');
+  if(tab==='chat'){
+    // 回到对话，不做其他操作
+  } else if(tab==='orders'){
+    openProfile();
+  } else if(tab==='messages'){
+    showMainMessages();
+  } else if(tab==='profile'){
+    openProfile();
+  }
+}
+
+async function showMainMessages(){
+  const p = getPassenger();
+  if(!p.phone){ speak('请先登录查看消息'); return; }
+  try{
+    const trips = await supaGet(`trips?passenger_phone=eq.${p.phone}&tenant_id=eq.${TENANT_ID}&status=eq.confirmed&order=created_at.desc&limit=5`);
+    if(!trips||trips.length===0){
+      addMsg('📭 暂无新消息，司机确认订单后会在这里通知您');
+      return;
+    }
+    for(const t of trips){
+      const dt=t.scheduled_at?new Date(t.scheduled_at):null;
+      const dtStr=dt?`${dt.getUTCMonth()+1}月${dt.getUTCDate()}日 ${dt.getUTCHours().toString().padStart(2,'0')}:${dt.getUTCMinutes().toString().padStart(2,'0')}`:'—';
+      let driverName='司机',driverPhone='';
+      if(t.driver_id){
+        try{
+          const drivers=await supaGet(`drivers?id=eq.${t.driver_id}&tenant_id=eq.${TENANT_ID}&select=full_name,phone`);
+          if(drivers&&drivers.length){driverName=drivers[0].full_name||'司机';driverPhone=drivers[0].phone||'';}
+        }catch(e){}
+      }
+      const div=document.createElement('div');
+      div.className='confirm-card';
+      div.style.border='1.5px solid rgba(0,200,150,0.3)';
+      div.innerHTML=`
+        <div style="font-size:13px;font-weight:800;color:rgba(0,200,150,0.9);margin-bottom:10px;">✅ 司机已确认您的预约</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.6);margin-bottom:4px;">📅 ${dtStr} · 📍 ${(t.pickup_address||'').slice(0,30)}</div>
+        ${driverPhone?`<div style="background:rgba(0,200,150,0.08);border-radius:10px;padding:12px;margin-top:10px;text-align:center;">
+          <div style="font-size:13px;color:white;font-weight:700;margin-bottom:6px;">${driverName}</div>
+          <a href="tel:${driverPhone}" style="display:block;font-size:18px;font-weight:900;color:rgba(0,200,150,0.9);text-decoration:none;">📞 ${driverPhone}</a>
+        </div>`:''}`;
+      chatArea.appendChild(div);
+    }
+    scrollBottom();
+    speak('司机已确认您的预约，联系电话已显示');
+  }catch(e){ addMsg('消息加载失败，请稍后再试'); }
+}
 
 // ── 订单恢复卡片 ──
 function showResumeOrderCard(t){
