@@ -2420,20 +2420,23 @@ function enterApp(guestMode=false) {
     if(float && !currentDriver.is_founder) float.style.display = 'block';
   }
 
-  loadHome();
   switchPage('home');
-  if (!guestMode) startAutoRefresh();
+  setTimeout(()=>{
+    loadHome();
+    if (!guestMode) startAutoRefresh();
+  }, 100);
 }
 
 function showGuestBanner() {
   const banner = document.createElement('div');
   banner.id = 'guest-banner';
   banner.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:linear-gradient(135deg,#c8920a,#e8b830);color:#0a0e14;padding:10px 16px;z-index:500;display:flex;align-items:center;gap:10px;font-size:13px;font-weight:700;';
-  banner.innerHTML = `
-    <span style="font-size:16px;">👀</span>
-    <span style="flex:1;">游客模式 · 完善资料后可接单</span>
-    <button onclick="switchPage('register')" style="background:rgba(0,0,0,0.15);border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:800;cursor:pointer;color:#0a0e14;">立即完善 →</button>
-  `;
+  const btn = document.createElement('button');
+  btn.textContent = '立即完善 →';
+  btn.style.cssText = 'background:rgba(0,0,0,0.15);border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:800;cursor:pointer;color:#0a0e14;';
+  btn.addEventListener('click', ()=>switchPage('register'));
+  banner.innerHTML = '<span style="font-size:16px;">👀</span><span style="flex:1;">游客模式 · 完善资料后可接单</span>';
+  banner.appendChild(btn);
   document.body.prepend(banner);
 }
 
@@ -2706,6 +2709,7 @@ async function loadHome() {
 
     // 只渲染当前进行中的任务
     const container = document.getElementById('pending-trips');
+    if(!container) return; // 页面未显示时退出
     let html = '';
 
     if (currentTrips.length > 0) {
