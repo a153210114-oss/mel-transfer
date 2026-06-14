@@ -1433,7 +1433,7 @@ function handleGlobalVoiceCommand(text) {
 <!-- ═══════════════════════════════════
      登录页
 ═══════════════════════════════════ -->
-<div class="page active" id="page-login">
+<div class="page active" id="page-login" style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
   <div style="min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:40px 24px;background:var(--bg);">
     <div style="position:absolute;top:16px;left:16px;">
       <button onclick="window.location.href='index.html'" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.6);border-radius:10px;padding:7px 14px;font-size:13px;cursor:pointer;font-family:inherit;">← 返回</button>
@@ -1983,8 +1983,9 @@ function handleGlobalVoiceCommand(text) {
     <div style="flex:1;">
       <div style="font-size:18px;font-weight:700;" id="profile-name">加载中...</div>
       <div style="font-size:12px;color:var(--text2);margin-top:3px;" id="profile-phone"></div>
-      <div style="margin-top:6px;">
-        <span style="background:rgba(0,200,150,0.15);color:var(--green);font-size:10px;font-weight:600;padding:3px 10px;border-radius:12px;border:1px solid rgba(0,200,150,0.3);">✓ 创始合伙人</span>
+      <div style="margin-top:8px;display:flex;gap:8px;align-items:center;">
+        <span id="profile-badge" style="background:rgba(0,200,150,0.15);color:var(--green);font-size:10px;font-weight:600;padding:3px 10px;border-radius:12px;border:1px solid rgba(0,200,150,0.3);">✓ 已认证</span>
+        <button onclick="switchPage('register')" style="background:rgba(0,150,199,0.15);border:1px solid rgba(0,150,199,0.3);border-radius:8px;padding:3px 10px;font-size:11px;color:rgba(0,212,255,0.8);cursor:pointer;font-family:inherit;">✏️ 编辑资料</button>
       </div>
     </div>
   </div>
@@ -2231,14 +2232,50 @@ let currentDriver = null;
 let currentTripId = null;
 
 // 从 localStorage 恢复登录状态
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
+  // 1. 优先检查从乘客端过来的信息
+  const fromPassenger = localStorage.getItem('driver_from_passenger');
+  if(fromPassenger){
+    localStorage.removeItem('driver_from_passenger');
+    const pInfo = JSON.parse(fromPassenger);
+    // 查drivers表有没有这个手机号
+    try{
+      const drivers = await supa(`drivers?phone=eq.${encodeURIComponent(pInfo.phone)}&tenant_id=eq.${TENANT_ID}`);
+      if(drivers && drivers.length){
+        currentDriver = drivers[0];
+        isGuestMode = !currentDriver.is_active;
+        localStorage.setItem('driver', JSON.stringify(currentDriver));
+        enterApp(isGuestMode);
+        return;
+      } else {
+        // 没有司机记录，自动创建并引导填写资料
+        const res = await fetch(SUPA_URL+'/rest/v1/drivers',{
+          method:'POST',
+          headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
+          body:JSON.stringify({tenant_id:TENANT_ID, phone:pInfo.phone, full_name:pInfo.name||'新司机', wechat_id:pInfo.wechat||null, is_active:false, status:'offline', license_number:'待填写', license_expiry:'2099-01-01'})
+        });
+        const arr = await res.json();
+        currentDriver = arr[0];
+        isGuestMode = true;
+        localStorage.setItem('driver', JSON.stringify(currentDriver));
+        enterApp(true);
+        return;
+      }
+    }catch(e){ console.warn('司机查询失败:', e); }
+  }
+
+  // 2. 检查本地已存司机
   const saved = localStorage.getItem('driver') || localStorage.getItem('au_driver');
   if (saved) {
     currentDriver = JSON.parse(saved);
-    // 同步两个key
     localStorage.setItem('driver', JSON.stringify(currentDriver));
-    enterApp();
+    isGuestMode = !currentDriver.is_active;
+    enterApp(isGuestMode);
+    return;
   }
+
+  // 3. 没有任何信息，回乘客端
+  window.location.href = 'index.html';
 });
 
 async function supa(path, opts={}) {
@@ -3376,6 +3413,7 @@ async function submitReg() {
     }
 
     btn.textContent='📤 提交注册申请'; btn.disabled=false;
+    speakDriver('老板，注册资料已提交！我们会在24小时内审核，审核通过后就可以接单了');
     alert('✅ 注册申请已提交！\n我们会在24小时内通过微信联系您完成审核。');
     switchPage('home');
   }catch(e){

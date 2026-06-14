@@ -389,11 +389,11 @@ body{
         <div style="color:rgba(255,255,255,0.3);font-size:16px;">›</div>
       </div>
 
-      <div onclick="window.location.href='driver-app.html'" style="display:flex;align-items:center;gap:12px;padding:14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:12px;margin-bottom:8px;cursor:pointer;">
+      <div onclick="switchToDriver()" style="display:flex;align-items:center;gap:12px;padding:14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:12px;margin-bottom:8px;cursor:pointer;">
         <div style="font-size:20px;width:28px;text-align:center;">🧑‍✈️</div>
         <div style="flex:1;">
           <div style="font-size:14px;font-weight:600;color:white;">切换为司机身份</div>
-          <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:2px;">用注册手机号登录司机工作台</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:2px;">进入司机工作台</div>
         </div>
         <div style="color:rgba(255,255,255,0.3);font-size:16px;">›</div>
       </div>
@@ -2938,6 +2938,21 @@ async function confirmCancelTrip(tripId){
     loadProfileTrips(p.phone);
     speak('订单已取消');
   }catch(e){ alert('取消失败，请联系客服'); }
+}
+
+function switchToDriver(){
+  const p = getPassenger();
+  if(!p.phone){
+    speak('请先登录再切换司机身份');
+    return;
+  }
+  // 把乘客信息存入localStorage给driver-app读取
+  localStorage.setItem('driver_from_passenger', JSON.stringify({
+    phone: p.phone,
+    name: p.name||'',
+    wechat: p.wechat||''
+  }));
+  window.location.href = 'driver-app.html';
 }
 
 function addToHome(){
