@@ -324,14 +324,14 @@ body{
     <div class="profile-section" style="margin-top:16px;">
       <div style="background:rgba(200,160,32,0.08);border:1px solid rgba(200,160,32,0.2);border-radius:16px;padding:16px;display:flex;justify-content:space-between;align-items:center;">
         <div>
-          <div style="font-size:11px;color:rgba(200,160,32,0.7);margin-bottom:4px;">💎 我的积分</div>
-          <div id="profile-points" style="font-size:24px;font-weight:900;color:#c8a020;">—</div>
-          <div style="font-size:10px;color:rgba(200,160,32,0.4);margin-top:2px;">可折现 · 永不清零</div>
+          <div id="profile-level" style="font-size:12px;color:rgba(200,160,32,0.8);margin-bottom:4px;font-weight:700;">✈️ 旅行者</div>
+          <div id="profile-points" style="font-size:28px;font-weight:900;color:#c8a020;">—</div>
+          <div id="profile-cash" style="font-size:11px;color:rgba(200,160,32,0.5);margin-top:2px;">折现价值 —</div>
         </div>
         <div style="text-align:right;">
-          <div style="font-size:11px;color:rgba(255,255,255,0.35);">预计季度分红</div>
-          <div id="profile-dividend" style="font-size:14px;font-weight:700;color:rgba(255,255,255,0.6);">—</div>
-          <div style="font-size:10px;color:rgba(255,255,255,0.25);margin-top:2px;">净利润80%分红</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.35);">升级进度</div>
+          <div id="profile-dividend" style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.5);margin-top:4px;">—</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.25);margin-top:4px;">100积分=A$1</div>
         </div>
       </div>
     </div>
@@ -455,6 +455,50 @@ const S={direction:null,address:null,date:null,time:null,vehicle:null,price:null
   name:null,phone:null,wechat:null,payment:'wechat',
   trip_type:'standard',wait_hours:0,charter_hours:4,charter_km:0,hourly_rate:0};
 let pendingTrips=[]; // 多单队列
+
+// ── 积分体系 ──
+const POINTS_RULES = {
+  register:       10,
+  first_booking:  20,
+  booking:         5,
+  trip_complete:  10,
+  review_star:     2,
+  review_text:     5,
+  share:           5,
+  referral_join:  20,
+  referral_trip:  30,
+  round_trip:     15,
+};
+
+const LEVELS = [
+  {name:'旅行者', icon:'✈️', min:0,    max:499,  multiplier:1.0, perks:'基础积分'},
+  {name:'常旅客', icon:'🌟', min:500,  max:1999, multiplier:1.2, perks:'积分×1.2'},
+  {name:'钻石会员',icon:'💎',min:2000, max:4999, multiplier:1.5, perks:'积分×1.5 + 优先派单'},
+  {name:'创始合伙人',icon:'👑',min:5000,max:Infinity,multiplier:3.0,perks:'积分×3 + 季度分红'},
+];
+
+function getLevel(points){
+  return LEVELS.find(l=>points>=l.min && points<=l.max) || LEVELS[0];
+}
+
+async function awardPoints(phone, action, customPts){
+  try{
+    const pts = customPts || POINTS_RULES[action] || 0;
+    if(!pts || !phone) return 0;
+    const contacts = await supaGet(`contacts?phone=eq.${phone}&tenant_id=eq.${TENANT_ID}&select=id,voucher_balance`);
+    if(!contacts||!contacts.length) return 0;
+    const current = contacts[0].voucher_balance||0;
+    const level = getLevel(current);
+    const finalPts = Math.round(pts * level.multiplier);
+    const newTotal = current + finalPts;
+    await fetch(SUPA_URL+'/rest/v1/contacts?id=eq.'+contacts[0].id,{
+      method:'PATCH',
+      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({voucher_balance:newTotal})
+    });
+    return finalPts;
+  }catch(e){ console.warn('积分入账失败:', e.message); return 0; }
+}
 let returnTrip=null; // 往返回程信息
 
 const COMFORT_VEHICLES=[
@@ -1435,6 +1479,12 @@ A：创始合伙人永久3倍积分加成，平台越大积分越值钱，就像
 - 正常时段外超过2小时（深夜）：+20%
 接机等候费：前30分钟免费，超出每30分钟AUD 20
 
+【积分引导话术——在合适时机自然引导，不要生硬推销】
+下单成功后（第一次）："顺便说一下，分享给朋友可以再得20积分，朋友完成第一单您还得30积分哦～"
+评价完成后："评价让司机和平台越来越好，积分也越来越多，继续探索获得积分的方式吧～"
+用户问积分用途："积分可以折现（100积分=A$1），也可以累积升级——达到500分成为🌟常旅客，积分加成1.2倍；2000分💎钻石会员加成1.5倍；5000分👑创始合伙人加成3倍还能参与季度分红"
+用户问怎么获得积分："注册+10，每次下单+5，完成行程+10，评价+2到5，推荐好友注册+20，好友完成首单+30"
+
 【取消政策——用户问取消时详细解释】
 乘客取消政策：
 - 出发前24小时以上：免费取消
@@ -2115,18 +2165,13 @@ async function submitBooking(){ stopTTS();
         })
       });
     }catch(e){}
-    // 下单积分+5
-    try{
-      const contacts=await supaGet(`contacts?phone=eq.${S.phone}&tenant_id=eq.${TENANT_ID}&select=id,voucher_balance`);
-      if(contacts&&contacts.length){
-        const newPts=(contacts[0].voucher_balance||0)+5;
-        await fetch(SUPA_URL+'/rest/v1/contacts?id=eq.'+contacts[0].id,{
-          method:'PATCH',
-          headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'},
-          body:JSON.stringify({voucher_balance:newPts})
-        });
-      }
-    }catch(e){}
+    // 下单积分（含等级加成）
+    const isFirstBooking = !(await supaGet(`trips?passenger_phone=eq.${S.phone}&tenant_id=eq.${TENANT_ID}&limit=2`).then(r=>r?.length>1).catch(()=>false));
+    const bookingPts = await awardPoints(S.phone, isFirstBooking?'first_booking':'booking');
+    if(bookingPts>0){
+      const lvl = getLevel(bookingPts);
+      setTimeout(()=>agentSay(`🎉 +${bookingPts}积分到账${lvl.multiplier>1?' ('+lvl.name+'加成)':''}！`,600), 2000);
+    }
     setTimeout(()=>showConfetti(points),1800);
     const _t=localStorage.getItem('au_gender')==='female'?'小姐':'先生';
     await agentSay(`${S.name}${_t}，预约成功！司机会尽快确认联系您 🎉`, 300);
@@ -2605,15 +2650,30 @@ async function openProfile(){ stopTTS();
   // 填充用户信息
   document.getElementById('profile-name').textContent = p.name||'未登录';
   document.getElementById('profile-phone').textContent = p.phone||'—';
-  // 读取积分
+  // 读取积分+等级
   if(p.phone){
     supaGet(`contacts?phone=eq.${p.phone}&tenant_id=eq.${TENANT_ID}&select=voucher_balance,registration_rank`).then(rows=>{
       if(rows&&rows.length){
         const pts = rows[0].voucher_balance||0;
+        const level = getLevel(pts);
         document.getElementById('profile-points').textContent = pts;
-        // 预估分红：简单按积分比例估算（假设每100积分≈A$1）
-        const est = (pts/100).toFixed(2);
-        document.getElementById('profile-dividend').textContent = `~A$${est}`;
+        // 等级显示
+        const lvlEl = document.getElementById('profile-level');
+        if(lvlEl) lvlEl.textContent = `${level.icon} ${level.name}`;
+        // 下一等级进度
+        const nextLevel = LEVELS.find(l=>l.min>pts);
+        const divEl = document.getElementById('profile-dividend');
+        if(divEl){
+          if(nextLevel){
+            const pct = Math.round((pts-level.min)/(nextLevel.min-level.min)*100);
+            divEl.textContent = `距${nextLevel.icon}${nextLevel.name} 还差${nextLevel.min-pts}分`;
+          } else {
+            divEl.textContent = `顶级会员 · 折现价值A$${(pts/100).toFixed(0)}`;
+          }
+        }
+        // 折现价值
+        const cashEl = document.getElementById('profile-cash');
+        if(cashEl) cashEl.textContent = `A$${(pts/100).toFixed(2)}`;
       }
     }).catch(()=>{});
   }
@@ -2796,24 +2856,14 @@ async function submitRating(tripId, btn){
       body:JSON.stringify({rating:stars,review_text:comment})
     });
     btn.closest('div[style*="fixed"]')?.remove();
-    // 评价积分入账（文字评价+2分，有评论+2分）
-    try{
-      const p=getPassenger();
-      if(p.phone){
-        const pts = comment?4:2;
-        // 更新contacts的voucher_balance（积分字段）
-        const contacts=await supaGet(`contacts?phone=eq.${p.phone}&tenant_id=eq.${TENANT_ID}&select=id,voucher_balance`);
-        if(contacts&&contacts.length){
-          const newPts=(contacts[0].voucher_balance||0)+pts;
-          await fetch(SUPA_URL+'/rest/v1/contacts?id=eq.'+contacts[0].id,{
-            method:'PATCH',
-            headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'},
-            body:JSON.stringify({voucher_balance:newPts})
-          });
-        }
-      }
-    }catch(e){}
-    speak(`感谢您的评价！积分已到账`);
+    // 评价积分（含等级加成）
+    const p=getPassenger();
+    if(p.phone){
+      const reviewPts = await awardPoints(p.phone, comment?'review_text':'review_star');
+      speak(`感谢您的评价！+${reviewPts}积分到账`);
+    } else {
+      speak('感谢您的评价！');
+    }
     openProfile();
   }catch(e){ btn.textContent='提交评价'; btn.disabled=false; alert('提交失败，请重试'); }
 }

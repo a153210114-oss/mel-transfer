@@ -2005,6 +2005,7 @@ function handleGlobalVoiceCommand(text) {
       <div class="stat-label">服务评分</div>
     </div>
     <div class="stat-box">
+      <div id="driver-level" style="font-size:11px;color:#a855f7;margin-bottom:2px;">🚗 新手司机</div>
       <div class="stat-num" style="color:#a855f7;" id="profile-points">0</div>
       <div class="stat-label">当前积分</div>
     </div>
@@ -2254,6 +2255,47 @@ async function supa(path, opts={}) {
   return res.json();
 }
 
+// ── 司机积分系统 ──
+const DRIVER_POINTS = {
+  register:    50,
+  accept_trip:  5,
+  complete_trip:20,
+  five_star:   10,
+  text_review: 15,
+  refer_driver:50,
+  online_7days:30,
+  zero_cancel: 20,
+};
+
+const DRIVER_LEVELS = [
+  {name:'新手司机',  icon:'🚗', min:0,    max:499,  multiplier:1.0},
+  {name:'熟练司机',  icon:'⭐', min:500,  max:1999, multiplier:1.2},
+  {name:'金牌司机',  icon:'🏆', min:2000, max:4999, multiplier:1.5},
+  {name:'创始合伙人',icon:'👑', min:5000, max:Infinity, multiplier:3.0},
+];
+
+function getDriverLevel(points){
+  return DRIVER_LEVELS.find(l=>points>=l.min&&points<=l.max)||DRIVER_LEVELS[0];
+}
+
+async function awardDriverPoints(driverId, action, customPts){
+  if(!driverId) return 0;
+  try{
+    const drivers = await supa(`drivers?id=eq.${driverId}&tenant_id=eq.${TENANT_ID}&select=id,points`);
+    if(!drivers||!drivers.length) return 0;
+    const current = drivers[0].points||0;
+    const level = getDriverLevel(current);
+    const base = customPts || DRIVER_POINTS[action] || 0;
+    const final = Math.round(base * level.multiplier);
+    await fetch(SUPA_URL+'/rest/v1/drivers?id=eq.'+driverId,{
+      method:'PATCH',
+      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({points: current+final})
+    });
+    return final;
+  }catch(e){ console.warn('司机积分失败:', e.message); return 0; }
+}
+
 // ── 登录 ──
 // 全局 AudioContext（登录时初始化）
 let audioCtx = null;
@@ -2281,8 +2323,9 @@ async function doLogin() {
     if (drivers && drivers.length > 0) {
       currentDriver = drivers[0];
       isGuestMode = false;
+      isGuestMode = false;
       localStorage.setItem('driver', JSON.stringify(currentDriver));
-      enterApp();
+      if(!currentDriver.points || currentDriver.points===0) awardDriverPoints(currentDriver.id, 'register');
       return;
     }
     // 再查未审核司机（游客模式）
@@ -2477,6 +2520,12 @@ async function loadProfile() {
     // 基本信息
     document.getElementById('profile-name').textContent = currentDriver.full_name;
     document.getElementById('profile-phone').textContent = currentDriver.phone;
+  // 积分和等级
+  const dPts = currentDriver.points||0;
+  const dLvl = getDriverLevel(dPts);
+  const dLvlEl = document.getElementById('driver-level');
+  document.getElementById('profile-points').textContent = dPts;
+  if(dLvlEl) dLvlEl.textContent = `${dLvl.icon} ${dLvl.name}`;
     document.getElementById('profile-bsb').textContent = currentDriver.bank_bsb || '未填写';
     document.getElementById('profile-account').textContent = currentDriver.bank_account || '未填写';
     document.getElementById('profile-wechat').textContent = currentDriver.wechat_id || '未填写';
@@ -3121,6 +3170,9 @@ async function acceptTrip() {
         driver_id: currentDriver.id
       });
       await updateDriverStatus('on_trip');
+      // 接单积分
+      const pts = await awardDriverPoints(currentDriver.id, 'accept_trip');
+      if(pts>0) speakDriver(`老板，接单成功！+${pts}积分`);
     }
   } catch(e) {
     console.error('状态更新失败', e);
@@ -3187,8 +3239,13 @@ async function completeTrip() {
       completed_at: new Date().toISOString()
     });
     await updateDriverStatus('available');
+    // 完单积分
+    const pts = await awardDriverPoints(currentDriver.id, 'complete_trip');
+    if(pts>0) speakDriver(`老板，行程完成！+${pts}积分到账`);
+  } else {
+    speakDriver('行程完成！');
   }
-  alert('🎉 行程完成！收入将在每周结算日打入您的账户。');
+  alert('🎉 行程完成！积分已到账，收入将在每周结算日结算。');
   loadHome();
   goBack('page-home');
 }
