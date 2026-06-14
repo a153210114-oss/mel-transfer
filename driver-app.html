@@ -2232,50 +2232,13 @@ let currentDriver = null;
 let currentTripId = null;
 
 // 从 localStorage 恢复登录状态
-window.addEventListener('DOMContentLoaded', async () => {
-  // 1. 优先检查从乘客端过来的信息
-  const fromPassenger = localStorage.getItem('driver_from_passenger');
-  if(fromPassenger){
-    localStorage.removeItem('driver_from_passenger');
-    const pInfo = JSON.parse(fromPassenger);
-    // 查drivers表有没有这个手机号
-    try{
-      const drivers = await supa(`drivers?phone=eq.${encodeURIComponent(pInfo.phone)}&tenant_id=eq.${TENANT_ID}`);
-      if(drivers && drivers.length){
-        currentDriver = drivers[0];
-        isGuestMode = !currentDriver.is_active;
-        localStorage.setItem('driver', JSON.stringify(currentDriver));
-        enterApp(isGuestMode);
-        return;
-      } else {
-        // 没有司机记录，自动创建并引导填写资料
-        const res = await fetch(SUPA_URL+'/rest/v1/drivers',{
-          method:'POST',
-          headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
-          body:JSON.stringify({tenant_id:TENANT_ID, phone:pInfo.phone, full_name:pInfo.name||'新司机', wechat_id:pInfo.wechat||null, is_active:false, status:'offline', license_number:'待填写', license_expiry:'2099-01-01'})
-        });
-        const arr = await res.json();
-        currentDriver = arr[0];
-        isGuestMode = true;
-        localStorage.setItem('driver', JSON.stringify(currentDriver));
-        enterApp(true);
-        return;
-      }
-    }catch(e){ console.warn('司机查询失败:', e); }
-  }
-
-  // 2. 检查本地已存司机
+window.addEventListener('DOMContentLoaded', () => {
   const saved = localStorage.getItem('driver') || localStorage.getItem('au_driver');
   if (saved) {
     currentDriver = JSON.parse(saved);
     localStorage.setItem('driver', JSON.stringify(currentDriver));
-    isGuestMode = !currentDriver.is_active;
-    enterApp(isGuestMode);
-    return;
+    enterApp();
   }
-
-  // 3. 没有任何信息，回乘客端
-  window.location.href = 'index.html';
 });
 
 async function supa(path, opts={}) {
