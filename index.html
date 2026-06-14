@@ -1166,27 +1166,14 @@ window.onload=async function(){
     showDriverModeChoice();
   } else {
     // 新用户
-    await agentSay('您好 👩‍✈️<br>预约<strong>接机、送机</strong>？还是<strong>接送一起预约</strong>？',800);
+    await agentSay('您好 👩‍✈️<br>预约<strong>接机、送机</strong>？还是<strong>包车</strong>？',800);
     showRoleChoice();
   }
 };
 
-// ── 角色选择 ──
+// ── 角色选择 ── 直接进入乘客模式
 function showRoleChoice(){
-  const div=document.createElement('div');
-  div.className='choice-cards';
-  div.innerHTML=`
-    <div class="choice-card blue" onclick="selectRole('passenger')">
-      <div class="card-icon">✈️</div>
-      <div class="card-text"><h4>我要出行</h4><p>接机、送机、包车出游</p></div>
-      <div class="card-arrow">›</div>
-    </div>
-    <div class="choice-card gold" onclick="selectRoundTrip()">
-      <div class="card-icon">🔄</div>
-      <div class="card-text"><h4>预约往返接送</h4><p>一次预约，去程回程全搞定</p></div>
-      <div class="card-arrow">›</div>
-    </div>`;
-  chatArea.appendChild(div);scrollBottom();
+  selectRole('passenger');
 }
 
 async function selectRole(role){
