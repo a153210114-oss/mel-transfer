@@ -1844,10 +1844,10 @@ function handleGlobalVoiceCommand(text) {
           <input class="field-input" id="reg-expiry" type="date">
         </div>
       </div>
-      <div class="upload-box">
-        <div class="upload-icon">📷</div>
-        <div class="upload-text">上传驾照照片</div>
-      </div>
+      <div class="upload-box" onclick="document.getElementById('license-photo-input').click()">
+        <input type="file" id="license-photo-input" accept="image/*" capture="environment" style="display:none" onchange="previewPhoto(this,'license-preview')">
+        <div class="upload-icon" id="license-preview">📷</div>
+        <div class="upload-text">上传驾照照片（点击拍照或选择）</div>
     </div>
 
     <!-- 车辆信息 -->
@@ -1906,10 +1906,10 @@ function handleGlobalVoiceCommand(text) {
           <input class="field-input" id="reg-brand-model" type="text" placeholder="如 Toyota HiAce">
         </div>
       </div>
-      <div class="upload-box">
-        <div class="upload-icon">🚗</div>
-        <div class="upload-text">上传车辆照片</div>
-      </div>
+      <div class="upload-box" onclick="document.getElementById('vehicle-photo-input').click()">
+        <input type="file" id="vehicle-photo-input" accept="image/*" capture="environment" style="display:none" onchange="previewPhoto(this,'vehicle-preview')">
+        <div class="upload-icon" id="vehicle-preview">🚗</div>
+        <div class="upload-text">上传车辆照片（点击拍照或选择）</div>
     </div>
 
     <!-- 收款信息 -->
@@ -2233,6 +2233,10 @@ let currentTripId = null;
 
 // 从 localStorage 恢复登录状态
 window.addEventListener('DOMContentLoaded', () => {
+  // 读取推荐码
+  const urlRef = new URLSearchParams(window.location.search).get('ref');
+  if(urlRef) sessionStorage.setItem('driver_incoming_ref', urlRef);
+
   const saved = localStorage.getItem('driver') || localStorage.getItem('au_driver');
   if (saved) {
     currentDriver = JSON.parse(saved);
@@ -2253,6 +2257,40 @@ async function supa(path, opts={}) {
   });
   if (!res.ok) { const e=await res.json(); throw new Error(e.message||'API错误'); }
   return res.json();
+}
+
+// ── 照片上传 ──
+function previewPhoto(input, previewId){
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (e)=>{
+    const el = document.getElementById(previewId);
+    if(el){
+      el.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">`;
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+async function uploadPhoto(file, path){
+  if(!file) return null;
+  try{
+    const ext = file.name.split('.').pop()||'jpg';
+    const fileName = `${path}_${Date.now()}.${ext}`;
+    const res = await fetch(`${SUPA_URL}/storage/v1/object/driver-docs/${fileName}`,{
+      method:'POST',
+      headers:{
+        'apikey':SUPA_KEY,
+        'Authorization':'Bearer '+SUPA_KEY,
+        'Content-Type':file.type||'image/jpeg',
+        'x-upsert':'true'
+      },
+      body:file
+    });
+    if(!res.ok) return null;
+    return `${SUPA_URL}/storage/v1/object/public/driver-docs/${fileName}`;
+  }catch(e){ console.warn('照片上传失败:', e.message); return null; }
 }
 
 // ── 司机积分系统 ──
@@ -3336,13 +3374,21 @@ async function submitReg() {
   const color = document.getElementById('reg-color')?.value.trim()||'';
   const seats = parseInt(document.getElementById('reg-seats')?.value)||0;
   const vtype = document.querySelector('.vtype-card.selected')?.dataset.type||'sedan';
-  const refCode = document.getElementById('reg-ref')?.value.trim()||'';
+  const refCode = document.getElementById('reg-ref')?.value.trim()||sessionStorage.getItem('driver_incoming_ref')||'';
 
   if(!name){alert('请填写姓名');return;}
   if(!phone){ speak('请先登录'); return; }
 
   const btn = document.querySelector('.action-btn.btn-primary');
-  btn.textContent='提交中...'; btn.disabled=true;
+  btn.textContent='上传照片中...'; btn.disabled=true;
+
+  // 上传照片
+  const licenseFile = document.getElementById('license-photo-input')?.files[0];
+  const vehicleFile = document.getElementById('vehicle-photo-input')?.files[0];
+  const licenseUrl = licenseFile ? await uploadPhoto(licenseFile, `license_${phone}`) : null;
+  const vehicleUrl = vehicleFile ? await uploadPhoto(vehicleFile, `vehicle_${phone}`) : null;
+
+  btn.textContent='提交中...';
 
   try{
     // 更新或创建司机记录
@@ -3351,6 +3397,7 @@ async function submitReg() {
       tenant_id:TENANT_ID, full_name:name, phone,
       wechat_id:wechat||null, email:email||null, abn:abn||null,
       license_number:license, license_expiry:expiry,
+      avatar_url:licenseUrl||null,
       bank_bsb:bsb||null, bank_account:account||null,
       is_active:false, status:'offline'
     };
