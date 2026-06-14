@@ -1445,13 +1445,13 @@ function handleGlobalVoiceCommand(text) {
     </div>
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;">
       <div style="font-size:13px;color:var(--text2);margin-bottom:6px;">注册手机号</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:6px;">注册手机号</div>
       <input id="login-phone" type="tel"
         style="width:100%;padding:13px 14px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-size:15px;font-family:inherit;outline:none;margin-bottom:14px;"
-        style="width:100%;padding:13px 14px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-size:15px;font-family:inherit;outline:none;margin-bottom:14px;"
-        id="login-phone" placeholder="+61 4XX XXX XXX">
+        placeholder="+61 4XX XXX XXX">
+      <button onclick="doLogin()"
         style="width:100%;padding:15px;background:var(--accent);border:none;border-radius:12px;color:var(--bg);font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;">
         进入工作台 →
-      </button>
       <div id="login-error" style="color:#ff4d6d;font-size:12px;text-align:center;margin-top:10px;display:none;">
         手机号未找到，请确认注册信息
       </div>
