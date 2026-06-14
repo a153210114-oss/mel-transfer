@@ -2997,6 +2997,13 @@ function switchPage(name) {
   if (name === 'profile') loadProfile();
   if (name === 'home') loadHome();
   if (name === 'assistant') greetAssistant();
+  if (name === 'register' && currentDriver?.phone){
+    // 自动填入手机号和姓名
+    const phoneEl = document.getElementById('reg-phone');
+    const nameEl = document.getElementById('reg-name');
+    if(phoneEl && !phoneEl.value) phoneEl.value = currentDriver.phone;
+    if(nameEl && !nameEl.value && currentDriver.full_name && currentDriver.full_name!=='新司机') nameEl.value = currentDriver.full_name;
+  }
 }
 
 function goToDetail(tripId) {
