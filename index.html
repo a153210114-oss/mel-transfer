@@ -389,7 +389,7 @@ body{
         <div style="color:rgba(255,255,255,0.3);font-size:16px;">›</div>
       </div>
 
-      <div onclick="swindow.location.href='driver-app.html'" style="display:flex;align-items:center;gap:12px;padding:14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:12px;margin-bottom:8px;cursor:pointer;">
+      <div onclick="switchToDriver()" style="display:flex;align-items:center;gap:12px;padding:14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:12px;margin-bottom:8px;cursor:pointer;">
         <div style="font-size:20px;width:28px;text-align:center;">🧑‍✈️</div>
         <div style="flex:1;">
           <div style="font-size:14px;font-weight:600;color:white;">切换为司机身份</div>
@@ -874,6 +874,57 @@ const DIALECT_SIGNALS = {
   hokkien: /哪里去|安怎|遮|欲去叨|叨位/,
 };
 
+// ── 相对日期解析 ──
+function parseRelativeDate(text){
+  const today = new Date();
+  const wd = ['日','一','二','三','四','五','六'];
+
+  // 今天/明天/后天
+  if(/今天|今日/.test(text)) return today.toISOString().split('T')[0];
+  if(/明天|明日/.test(text)){
+    const d=new Date(today); d.setDate(d.getDate()+1);
+    return d.toISOString().split('T')[0];
+  }
+  if(/后天/.test(text)){
+    const d=new Date(today); d.setDate(d.getDate()+2);
+    return d.toISOString().split('T')[0];
+  }
+
+  // 下周X / 这周X
+  const weekMatch = text.match(/(下周|这周|本周|下下周)(一|二|三|四|五|六|日|天)/);
+  if(weekMatch){
+    const isNext = weekMatch[1]==='下周'||weekMatch[1]==='下下周';
+    const isNextNext = weekMatch[1]==='下下周';
+    const targetDay = wd.indexOf(weekMatch[2]==='天'?'日':weekMatch[2]);
+    const d = new Date(today);
+    const curDay = d.getDay();
+    let diff = targetDay - curDay;
+    if(isNext) diff += 7;
+    if(isNextNext) diff += 14;
+    if(diff<=0 && !isNext) diff += 7;
+    d.setDate(d.getDate()+diff);
+    return d.toISOString().split('T')[0];
+  }
+
+  // X号（当月或下月）
+  const dayMatch = text.match(/(\d{1,2})[号日]/);
+  if(dayMatch){
+    const day = parseInt(dayMatch[1]);
+    const d = new Date(today.getFullYear(), today.getMonth(), day);
+    if(d < today) d.setMonth(d.getMonth()+1);
+    return d.toISOString().split('T')[0];
+  }
+
+  // X月X号
+  const fullMatch = text.match(/(\d{1,2})月(\d{1,2})[号日]/);
+  if(fullMatch){
+    const d = new Date(today.getFullYear(), parseInt(fullMatch[1])-1, parseInt(fullMatch[2]));
+    return d.toISOString().split('T')[0];
+  }
+
+  return null;
+}
+
 function detectRoundTrip(text){
   // 简化版：不做自动检测，由AI引导用户逐单预约
 }
@@ -1195,10 +1246,10 @@ window.onload=async function(){
       if(t.surcharge) S.surcharge=t.surcharge;
       if(t.distance_km) S.distance_km=t.distance_km;
       if(t.trip_type) S.trip_type=t.trip_type;
-      await agentSay(`${savedPassenger.name||''}${savedPassenger.name?_t1:''}，欢迎回来 ${agentEmoji} 您有一个${t.status==='confirmed'?'已确认':'待确认'}的预约，帮您调出来看看`,600);
+      await agentSay(`${agentName}来啦${savedPassenger.name?'，'+savedPassenger.name+_t1:''}！您有一个${t.status==='confirmed'?'已确认':'待确认'}的预约，帮您调出来 👇`,600);
       showResumeOrderCard(t);
     } else {
-      await agentSay(`${savedPassenger.name||''}${savedPassenger.name?_t1:''}，欢迎回来 ${agentEmoji}<br>需要我帮您下单，还是您亲自操作？`,700);
+      await agentSay(`${agentName}来啦${savedPassenger.name?'，'+savedPassenger.name+_t1:''}！要预约什么服务？`,700);
       showPassengerModeChoice();
     }
   } else if(savedRole==='driver'&&savedDriver.id){
@@ -1206,11 +1257,11 @@ window.onload=async function(){
     currentRole='driver';
     setAgentByUserGender(savedDriver.gender||'male');
     document.getElementById('exit-btn').style.display='block';
-    await agentSay(`${savedDriver.full_name||'师傅'}，您好 ${agentEmoji}<br>要打开工作台，还是让我来帮您？`,700);
+    await agentSay(`${agentEmoji} 来啦${savedDriver.full_name?'，'+savedDriver.full_name:''}！`,700);
     showDriverModeChoice();
   } else {
     // 新用户
-    await agentSay('您好 👩‍✈️<br>预约<strong>接机、送机</strong>？还是<strong>包车</strong>？',800);
+    await agentSay(`${agentEmoji} 出行管家${agentName}来啦，要预约什么服务？`,800);
     showRoleChoice();
   }
 };
@@ -1285,7 +1336,7 @@ async function submitPhone(role){
       const g=guessGender(passenger.name);
       setAgentByUserGender(g||'male');
       document.getElementById('exit-btn').style.display='block';
-      const _t3=localStorage.getItem('au_gender')==='female'?'小姐':'先生';const greeting=passenger.name?`${passenger.name}${_t3}，欢迎回来 ${agentEmoji}`:
+      const _t3=localStorage.getItem('au_gender')==='female'?'小姐':'先生';const greeting=passenger.name?`${agentName}来啦，${passenger.name}${_t3}！`:
         `好的，我记住您的号码了 ${agentEmoji}`;
       await agentSay(greeting+'<br>需要我帮您下单，还是您亲自操作？',500);
       showPassengerModeChoice();
@@ -1601,27 +1652,38 @@ A：创始合伙人永久3倍积分加成，平台越大积分越值钱，就像
 
 
 
-【送机流程——严格按此顺序，信息齐了立即触发】
-1. 确认日期（几号）
-2. 确认出发时间（司机几点到门口）
-3. 地址由GPS自动定位，AI说"帮您定位一下"后触发定位，不要让用户说地址
-4. 以上3项齐全 → 立即 [ACTION: show_vehicles to_airport]
-5. 用户选车 → 生成确认卡 → 用户点确认 → 完成
+【一句话下单——最高优先级】
+用户说"下周五下午四点送我去机场"→ 日期时间类型齐全 → 立即 [ACTION: show_vehicles to_airport] 不再问任何问题
+用户说"24号上午从机场接我回家"→ 时间不明确 → 只问"几点出关？" → 回答后立即触发
+用户说"下周五送机，7月1号接机"→ 往返 → 先处理送机，完成后引导接机
 
-【接机流程——严格按此顺序】
-1. 确认日期（几号落地）
-2. 确认上车时间（几点出关上车）
-3. 目的地：优先用用户已保存的家庭地址，直接问"是回家吗？欢迎回家～" 或 "是到[地址]吗？"
-   - 用户确认 → 直接用保存地址
-   - 用户说不是 → 问新地址或GPS定位
-   - 没有保存地址 → GPS定位或让用户说地址
-4. 以上3项齐全 → 立即 [ACTION: show_vehicles from_airport]
-5. 用户选车 → 生成确认卡 → 用户点确认 → 完成
+【核心原则——缺什么只问什么】
+- 日期+时间+方向齐全 → 直接触发，零追问
+- 缺日期 → 只问日期
+- 缺时间 → 只问时间
+- 地址永远不问，GPS自动定位
+- 接机目的地：直接用已保存家庭地址确认
+
+【接机目的地】
+有保存地址 → "是回[地址]吗？" → 确认直接用
+没有保存地址 → GPS定位
+
+【车型推荐——新用户或用户主动问】
+用户说"帮我推荐/不知道选什么/选哪个好"：
+→ 问："几个人出行？有多少件行李？"
+→ 根据回答推荐：
+  1-2人少行李 → 舒适5座（最经济）
+  3-4人或多行李 → 舒适8座（最常选）
+  5-7人 → 舒适12座
+  带婴儿/老人/需要空间 → 豪华型
+→ 直接说："推荐舒适8座，AUD 90参考价，够宽敞，要选这个吗？"
+→ 用户确认 → 自动选中该车型 [ACTION: select_vehicle comfort_8]
 
 【禁止】
-- 送机时问航班号、航班时间、起飞时间
-- 让用户口头描述地址（优先GPS/已保存地址）
-- 信息齐全后还继续问其他问题
+- 问航班号/起飞时间
+- 让用户说地址
+- 信息齐全后继续追问
+- 重复确认用户已说的信息
 
 【地址困难处理】
 当用户说不清地址、地址说错、地址是中文描述时：
@@ -1892,6 +1954,12 @@ async function handleAction(action,param){
     bookingSubmitted=false;
   } else if(action==='open_orders'||action==='open_profile'){
     openProfile();
+  } else if(action==='select_vehicle'){
+    // AI直接推荐车型，自动选中
+    const vPrices={"comfort_5":70,"comfort_8":90,"comfort_12":120,"comfort_15":160,"luxury_alpha":113,"luxury_benz_8":113,"luxury_benz_12":150,"luxury_benz_15":200};
+    const price = vPrices[param]||70;
+    const card = document.querySelector(`.vehicle-card[data-type="${param}"]`);
+    if(card) selectVehicle(param, price, card);
   } else if(action==='edit_vehicle'){
     const allH=aiHistory.map(m=>m.content).join(' ');extractInfo(allH);
     S.vehicle=null;S.price=null;S.base_price=0;
@@ -1907,11 +1975,21 @@ async function handleAction(action,param){
   }
 }
 
-function showVehicleCards(){
+async function showVehicleCards(){
   // 补提取日期时间（防止丢失）
   if(!S.date||!S.time){
     const allText = aiHistory.map(m=>m.content).join(' ');
     extractInfo(allText);
+  }
+  // 检查历史车型（常旅客）
+  const p = getPassenger();
+  if(p.phone && !S.vehicle){
+    try{
+      const recent = await supaGet(`trips?passenger_phone=eq.${p.phone}&tenant_id=eq.${TENANT_ID}&status=eq.completed&order=created_at.desc&limit=1`);
+      if(recent && recent.length && recent[0].vehicle_type){
+        S._lastVehicle = recent[0].vehicle_type;
+      }
+    }catch(e){}
   }
   const wrap=document.createElement('div');
   wrap.className='vehicle-section';
@@ -1940,6 +2018,20 @@ function showVehicleCards(){
 
   wrap.appendChild(cl);wrap.appendChild(cg);wrap.appendChild(ll);wrap.appendChild(lg);
   chatArea.appendChild(wrap);scrollBottom();
+  stopTTS();
+  // 常旅客：自动高亮上次车型
+  if(S._lastVehicle){
+    setTimeout(()=>{
+      const lastCard = document.querySelector(`.vehicle-card[data-type="${S._lastVehicle}"]`);
+      if(lastCard){
+        lastCard.style.border = '2px solid rgba(0,212,255,0.6)';
+        const vNames={"comfort_5":"舒适5座","comfort_8":"舒适8座","comfort_12":"舒适12座","comfort_15":"舒适15座","luxury_alpha":"阿尔法6/7座","luxury_benz_8":"奔驰8座","luxury_benz_12":"奔驰12座","luxury_benz_15":"奔驰15座"};
+        agentSay(`上次您选的是${vNames[S._lastVehicle]||S._lastVehicle}，这次一样吗？`,400);
+      }
+    }, 300);
+  } else {
+    setTimeout(()=>agentSay('不知道选哪个？告诉我几个人、几件行李，我来推荐 😊',600), 300);
+  }
 }
 
 async function selectVehicle(type,price,el){ stopTTS();
