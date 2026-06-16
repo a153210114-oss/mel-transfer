@@ -1242,7 +1242,7 @@ window.onload=async function(){
       showResumeOrderCard(t);
     } else {
       await agentSay(`${agentName}来啦${savedPassenger.name?'，'+savedPassenger.name+_t1:''}！要预约什么服务？`,700);
-      showPassengerModeChoice();
+      // 直接进AI对话
     }
   } else if(savedRole==='driver'&&savedDriver.id){
     // 老司机直接进
@@ -1330,7 +1330,7 @@ async function submitPhone(role){
       const _t3=localStorage.getItem('au_gender')==='female'?'小姐':'先生';const greeting=passenger.name?`${agentName}来啦，${passenger.name}${_t3}！`:
         `好的，我记住您的号码了 ${agentEmoji}`;
       await agentSay(greeting+'<br>需要我帮您下单，还是您亲自操作？',500);
-      showPassengerModeChoice();
+      // 直接进AI对话
     }
   }catch(e){
     typing.remove();
@@ -1346,49 +1346,9 @@ function selectRoundTrip(){
   agentSay('好的！告诉我去程和回程的日期时间，一起帮您预约～',400);
 }
 
-function showPassengerModeChoice(){
-  const div=document.createElement('div');
-  div.className='choice-cards';
-  div.innerHTML=`
-    <div class="choice-card blue" onclick="startPassengerAI()">
-      <div class="card-icon">${agentEmoji}</div>
-      <div class="card-text"><h4>帮我下单</h4><p>告诉我行程，我来安排</p></div>
-      <div class="card-arrow">›</div>
-    </div>
-    <div class="choice-card green" onclick="showServiceCards()">
-      <div class="card-icon">📱</div>
-      <div class="card-text"><h4>我自己来</h4><p>选择服务自助操作</p></div>
-      <div class="card-arrow">›</div>
-    </div>`;
-  chatArea.appendChild(div);scrollBottom();
-}
-
 async function startPassengerAI(){
   addMsg('帮我下单',true);
   await agentSay('好的！说出日期和时间，往返一起帮您预约～',400);
-}
-
-function showServiceCards(){
-  addMsg('我自己来',true);
-  const div=document.createElement('div');
-  div.className='choice-cards';
-  div.innerHTML=`
-    <div class="choice-card blue" onclick="gotoPassenger('to_airport')">
-      <div class="card-icon">✈️</div>
-      <div class="card-text"><h4>送机</h4><p>送您去机场</p></div>
-      <div class="card-arrow">›</div>
-    </div>
-    <div class="choice-card blue" onclick="gotoPassenger('from_airport')">
-      <div class="card-icon">🛬</div>
-      <div class="card-text"><h4>接机</h4><p>落地有车等</p></div>
-      <div class="card-arrow">›</div>
-    </div>
-    <div class="choice-card green" onclick="window.location.href='plaza.html'">
-      <div class="card-icon">🌿</div>
-      <div class="card-text"><h4>旅游广场</h4><p>包车·组团出游</p></div>
-      <div class="card-arrow">›</div>
-    </div>`;
-  chatArea.appendChild(div);scrollBottom();
 }
 
 // ── 司机模式选择 ──
@@ -1467,9 +1427,15 @@ function buildPrompt(){
 语气：像朋友聊天，口语化，每次只说1句话
 
 【一句话下单——最高优先级】
-用户说"下周五下午四点送我去机场" → 日期时间方向齐全 → 立即 [ACTION: show_vehicles to_airport]
-用户说"24号上午从机场接我回家" → 缺时间 → 只问"几点出关？" → 立即触发
-原则：缺什么只问什么，地址永远不问（GPS自动），信息齐全立即触发
+用户说"下周五下午四点送我去机场" → 立即 [ACTION: show_vehicles to_airport]
+用户说"9月8号上午10点从家出发去机场" → 立即 [ACTION: show_vehicles to_airport]
+用户说"24号上午从机场接我回家" → 缺具体时间 → 只问"几点出关？"
+用户说"明天接机" → 缺时间 → 只问"几点出关上车？"
+原则：
+- 有日期+时间+方向 → 立即触发，零追问
+- 缺什么只问那一项
+- 地址绝对不问（GPS自动）
+- "从家出发/从家里"="出发地已知"，不需要问地址
 
 【机场识别】
 墨尔本国际机场(MEL)：默认
