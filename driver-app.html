@@ -418,7 +418,6 @@
     font-family: 'DM Mono', monospace;
   }
 
-
 @keyframes slideDown {
   from { transform: translateX(-50%) translateY(-100%); opacity:0; }
   to   { transform: translateX(-50%) translateY(0); opacity:1; }
@@ -531,7 +530,6 @@
   font-family:inherit;font-size:13px;cursor:pointer;margin-top:8px;
 }
 
-
 .section-label {
   font-size: 12px;
   font-weight: 800;
@@ -560,7 +558,6 @@
   0%,100% { opacity: 1; }
   50% { opacity: 0.6; }
 }
-
 
 .urgent-card {
   border: 2px solid #ff3b30 !important;
@@ -598,9 +595,8 @@ let assistantRecognition = null;
 function buildAssistantPrompt() {
   const d = currentDriver || {};
   const today = new Date().toLocaleDateString('zh-CN');
-  return `你是澳洲机场接送平台的司机助理"澳墨助理"，服务对象是司机${d.full_name||''}。
-
-你的身份：能干、高效、主动的助理，不废话，直接执行或回答。
+  return `你是澳洲出行平台的司机助理，服务对象是司机${d.full_name||''}老板。
+称呼司机为"老板"，简洁直接，不废话。
 
 你能做的事：
 1. 查询订单：今日订单数、待处理订单、历史订单
@@ -726,20 +722,7 @@ function addAssistantTyping() {
 
 function speakAssistant(text) {
   if (!window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
-  const clean = text
-    .replace(/<[^>]*>/g, '')
-    .replace(/[\u{1F000}-\u{1FFFF}]/gu, '')
-    .replace(/[\u2600-\u27BF]/g, '')
-    .replace(/[\u{2700}-\u{27BF}]/gu, '')
-    .replace(/\*\*/g, '')
-    .replace(/[#*•·→←：:\/\-\[\]【】]/g, ' ')
-    .replace(/\d+\./g, '')
-    .replace(/\s+/g, ' ').trim();
-  if (!clean) return;
-  const u = new SpeechSynthesisUtterance(clean);
-  u.lang = 'zh-CN'; u.rate = 1.05; u.pitch = 0.9;
-  window.speechSynthesis.speak(u);
+  // TTS已迁移到SiliconFlow
 }
 
 function toggleAssistantMic() {
@@ -780,7 +763,6 @@ function greetAssistant() {
     : `${d?.full_name||''}师傅，今天状态不错！有什么需要我帮你处理的？`;
   setTimeout(() => addAssistantMsg(greeting), 500);
 }
-
 
 // ── 司机端烟花彩带 ──
 let driverConfettiInterval = null;
@@ -835,7 +817,6 @@ function stopDriverConfetti() {
   if (driverConfettiInterval) { clearInterval(driverConfettiInterval); driverConfettiInterval = null; }
 }
 
-
 // ── 通知 & 未完成事项检测 ──
 function checkPendingItems() {
   if (!currentDriver) return;
@@ -872,7 +853,6 @@ function markNotificationsRead() {
   const dot = document.getElementById('notify-dot');
   if (dot) dot.style.display = 'none';
 }
-
 
 // ── 包车发布 ──
 let charterDates = [];
@@ -1005,7 +985,6 @@ async function supaPost(table, data) {
   return res.json();
 }
 
-
 async function loadMessagePage() {
   const notifyList = document.getElementById('message-notify-list');
   if (!notifyList || !currentDriver) return;
@@ -1102,7 +1081,6 @@ async function loadPublishPage() {
   } catch(e) {}
 }
 
-
 // 定期检查新包车需求，语音通知
 let lastCheckedDemand = null;
 async function checkNewCharterDemands() {
@@ -1135,7 +1113,6 @@ function speakDriver(text) {
 
 // 每2分钟检查一次
 setInterval(checkNewCharterDemands, 120000);
-
 
 async function loadAndShowPendingTrips_deprecated() {
   const listEl = document.getElementById('pending-trips');
@@ -1193,7 +1170,6 @@ async function loadAndShowPendingTrips_deprecated() {
     listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--red);">加载失败</div>';
   }
 }
-
 
 async function goToPendingTrips() {
   try {
@@ -1259,7 +1235,6 @@ function showTripSelectSheet(trips, title='📋 订单列表') {
   document.body.appendChild(sheet);
 }
 
-
 async function rejectTrip() {
   if (!currentTripId) return;
   if (!confirm('确认拒绝这个订单？')) return;
@@ -1274,7 +1249,6 @@ async function rejectTrip() {
     speakDriver('订单已拒绝');
   } catch(e) { alert('操作失败'); }
 }
-
 
 function showCancelPolicy(tripId) {
   document.getElementById('trip-select-sheet')?.remove();
@@ -1326,7 +1300,6 @@ async function confirmCancelTrip(tripId) {
     alert('操作失败：' + e.message);
   }
 }
-
 
 // ── 全局语音 ──
 let globalRecognition = null;
@@ -1428,7 +1401,6 @@ function handleGlobalVoiceCommand(text) {
 </script>
 </head>
 <body>
-
 
 <!-- ═══════════════════════════════════
      登录页
@@ -1565,8 +1537,6 @@ function handleGlobalVoiceCommand(text) {
     </div>
   </div>
 
-
-
 </div>
 
 <!-- ═══════════════════════════════════
@@ -1678,8 +1648,6 @@ function handleGlobalVoiceCommand(text) {
     <button onclick="assistantSend()" style="width:38px;height:38px;background:var(--accent);border:none;border-radius:50%;color:white;font-size:16px;cursor:pointer;">➤</button>
   </div>
 </div>
-
-
 
 <!-- 发布页 -->
 <div class="page" id="page-publish">
@@ -1910,6 +1878,54 @@ function handleGlobalVoiceCommand(text) {
         <input type="file" id="vehicle-photo-input" accept="image/*" capture="environment" style="display:none" onchange="previewPhoto(this,'vehicle-preview')">
         <div class="upload-icon" id="vehicle-preview">🚗</div>
         <div class="upload-text">上传车辆照片（点击拍照或选择）</div>
+    </div>
+
+    <!-- 接单报价 -->
+    <div class="form-section">
+      <div class="form-section-title">💰 接单报价（25km起步价）</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:12px;">只填您的车能接的车型，留空表示不接此类</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:13px;color:var(--text);width:120px;">🚗 舒适5座</span>
+          <span style="color:var(--text2);font-size:12px;">AUD</span>
+          <input class="field-input" id="price-comfort_5" type="number" placeholder="如 70" min="0" style="width:80px;padding:8px 10px;">
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:13px;color:var(--text);width:120px;">🚐 舒适8座</span>
+          <span style="color:var(--text2);font-size:12px;">AUD</span>
+          <input class="field-input" id="price-comfort_8" type="number" placeholder="如 90" min="0" style="width:80px;padding:8px 10px;">
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:13px;color:var(--text);width:120px;">🚌 舒适12座</span>
+          <span style="color:var(--text2);font-size:12px;">AUD</span>
+          <input class="field-input" id="price-comfort_12" type="number" placeholder="如 120" min="0" style="width:80px;padding:8px 10px;">
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:13px;color:var(--text);width:120px;">🚎 舒适15座</span>
+          <span style="color:var(--text2);font-size:12px;">AUD</span>
+          <input class="field-input" id="price-comfort_15" type="number" placeholder="如 160" min="0" style="width:80px;padding:8px 10px;">
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:13px;color:var(--text);width:120px;">✨ 阿尔法6/7座</span>
+          <span style="color:var(--text2);font-size:12px;">AUD</span>
+          <input class="field-input" id="price-luxury_alpha" type="number" placeholder="如 113" min="0" style="width:80px;padding:8px 10px;">
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:13px;color:var(--text);width:120px;">⭐ 奔驰8座</span>
+          <span style="color:var(--text2);font-size:12px;">AUD</span>
+          <input class="field-input" id="price-luxury_benz_8" type="number" placeholder="如 113" min="0" style="width:80px;padding:8px 10px;">
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:13px;color:var(--text);width:120px;">💎 奔驰12座</span>
+          <span style="color:var(--text2);font-size:12px;">AUD</span>
+          <input class="field-input" id="price-luxury_benz_12" type="number" placeholder="如 150" min="0" style="width:80px;padding:8px 10px;">
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:13px;color:var(--text);width:120px;">👑 奔驰15座</span>
+          <span style="color:var(--text2);font-size:12px;">AUD</span>
+          <input class="field-input" id="price-luxury_benz_15" type="number" placeholder="如 200" min="0" style="width:80px;padding:8px 10px;">
+        </div>
+      </div>
     </div>
 
     <!-- 收款信息 -->
@@ -2366,7 +2382,6 @@ async function doLogin() {
       if(!currentDriver.points || currentDriver.points===0) awardDriverPoints(currentDriver.id, 'register');
       return;
     }
-    // 再查未审核司机（游客模式）
     const pending = await supa(`drivers?phone=eq.${encodeURIComponent(phone)}&tenant_id=eq.${TENANT_ID}`);
     if (pending && pending.length > 0) {
       currentDriver = pending[0];
@@ -2410,8 +2425,6 @@ async function doLogin() {
 function enterApp(guestMode=false) {
   initCityAgent();
   document.getElementById('driver-name').textContent = currentDriver.full_name || '新司机';
-
-  // 游客模式横幅
   if (guestMode) {
     showGuestBanner();
   } else {
@@ -2800,7 +2813,6 @@ function renderTripCard(t, isCurrent=false) {
   </div>`;
 }
 
-
 // ── 出发提醒系统 ──
 const activeReminders = {}; // tripId -> intervalId
 
@@ -2873,13 +2885,6 @@ async function updateTripStatus(tripId, newStatus, extraFields={}) {
   });
 }
 
-
-
-
-
-
-
-
 // ── 推广海报生成（截取promo页面）──
 async function generatePoster() {
   const btn = event?.target?.closest('button');
@@ -2942,8 +2947,6 @@ async function generatePosterFallback() {
   ctx.font = 'bold 20px sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.65)';
   ctx.fillText('📲 扫码进入 · 截图转发给朋友', 375, 440);
 
-
-
   // 左QR框
   ctx.fillStyle='#fff'; ctx.beginPath(); ctx.roundRect(65,465,270,270,14); ctx.fill();
   ctx.font='bold 18px sans-serif'; ctx.fillStyle='#22a08c';
@@ -3004,7 +3007,6 @@ function showPosterPreview(dataUrl) {
   modal.onclick = e => { if(e.target===modal) modal.remove(); };
   document.body.appendChild(modal);
 }
-
 
 function showFounderModal(){
   const m = document.getElementById('founder-modal');
@@ -3202,7 +3204,6 @@ function selectVtype(el) {
   el.classList.add('selected');
 }
 
-
 function handleAcceptBtn() {
   if (isGuestMode) {
     alert('请先完善资料并等待审核后才能接单');
@@ -3376,6 +3377,13 @@ async function submitReg() {
   const vtype = document.querySelector('.vtype-card.selected')?.dataset.type||'sedan';
   const refCode = document.getElementById('reg-ref')?.value.trim()||sessionStorage.getItem('driver_incoming_ref')||'';
 
+  // 收集报价
+  const pricing = {};
+  ['comfort_5','comfort_8','comfort_12','comfort_15','luxury_alpha','luxury_benz_8','luxury_benz_12','luxury_benz_15'].forEach(type=>{
+    const val = parseInt(document.getElementById('price-'+type)?.value);
+    if(val>0) pricing[type] = val;
+  });
+
   if(!name){alert('请填写姓名');return;}
   if(!phone){ speak('请先登录'); return; }
 
@@ -3398,16 +3406,21 @@ async function submitReg() {
       wechat_id:wechat||null, email:email||null, abn:abn||null,
       license_number:license, license_expiry:expiry,
       avatar_url:licenseUrl||null,
+      pricing:Object.keys(pricing).length?pricing:null,
       bank_bsb:bsb||null, bank_account:account||null,
       is_active:false, status:'offline'
     };
 
     if(driverId){
-      // 更新已有记录
+      // 只更新非空字段，不覆盖已有数据
+      const updateData = {};
+      Object.entries(driverData).forEach(([k,v])=>{
+        if(v!==null && v!=='' && v!=='待填写' && v!=='2099-01-01') updateData[k]=v;
+      });
       await fetch(SUPA_URL+'/rest/v1/drivers?id=eq.'+driverId,{
         method:'PATCH',
         headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
-        body:JSON.stringify(driverData)
+        body:JSON.stringify(updateData)
       });
     } else {
       // 新建
@@ -3459,7 +3472,6 @@ async function submitReg() {
     <button onclick="closeDriverConfetti()" style="background:var(--accent);color:var(--bg);border:none;border-radius:12px;padding:12px 28px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;width:100%;">收到！继续加油 💪</button>
   </div>
 </div>
-
 
 <!-- 包车发布弹窗 -->
 <div id="charter-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:999;align-items:flex-end;justify-content:center;">
@@ -3516,7 +3528,6 @@ async function submitReg() {
     <button onclick="closeCharterModal()" style="width:100%;padding:12px;background:none;border:none;font-size:13px;color:var(--text3);cursor:pointer;margin-top:6px;">取消</button>
   </div>
 </div>
-
 
 <!-- 全局语音按钮 -->
 <div id="global-mic-wrap" style="position:fixed;right:16px;bottom:75px;z-index:200;">
