@@ -454,7 +454,6 @@ let bookingSubmitted = false;
 const S={direction:null,address:null,date:null,time:null,vehicle:null,price:null,base_price:0,surcharge:0,distance_km:0,
   name:null,phone:null,wechat:null,payment:'wechat',
   trip_type:'standard',wait_hours:0,charter_hours:4,charter_km:0,hourly_rate:0};
-let pendingTrips=[]; // 多单队列
 
 // ── 积分体系 ──
 const POINTS_RULES = {
@@ -532,8 +531,6 @@ function addTyping(){
 }
 function delay(ms){return new Promise(r=>setTimeout(r,ms));}
 async function agentSay(html,ms=700){const t=addTyping();await delay(ms);t.remove();addMsg(html);speak(html);}
-
-
 
 function fixMessageRoles(messages) {
   // 确保以user开头，且user/assistant交替
@@ -925,10 +922,6 @@ function parseRelativeDate(text){
   return null;
 }
 
-function detectRoundTrip(text){
-  // 简化版：不做自动检测，由AI引导用户逐单预约
-}
-
 function correctHomophones(text){
   let corrected = text;
   for(const h of HOMOPHONES){
@@ -1030,7 +1023,6 @@ async function sendVoiceMessage(text){
 
     // 从AI回复里补提取时间/地址/方向
     extractInfo(reply);
-    // 往返由AI引导，无需自动检测
     // 检测AI是否在引导地址输入→显示粘贴快捷卡
     if(/复制.*地址|粘贴.*地址|地址.*输入框|把地址|copy.*address/i.test(reply)){
       showPasteAddressHint();
@@ -1332,7 +1324,6 @@ async function submitPhone(role){
       if(!passenger.ref)passenger.ref=genRef();
       setLocal('au_passenger',passenger);
       localStorage.setItem('au_role','passenger');
-      // passenger-recruit.html兼容
       const g=guessGender(passenger.name);
       setAgentByUserGender(g||'male');
       document.getElementById('exit-btn').style.display='block';
@@ -1400,19 +1391,6 @@ function showServiceCards(){
   chatArea.appendChild(div);scrollBottom();
 }
 
-function gotoPassenger(type){
-  // 统一在index.html下单，不跳转到passenger-recruit
-  if(type==='to_airport'||type==='from_airport'||type==='accompanied'){
-    S.direction=type==='accompanied'?S.direction:type;
-    if(type==='accompanied') S.trip_type='accompanied';
-  }
-  if(!S.address&&S.trip_type!=='charter'){
-    gpsConfirmAddress();
-  } else {
-    showVehicleCards();
-  }
-}
-
 // ── 司机模式选择 ──
 function showDriverModeChoice(){
   const div=document.createElement('div');
@@ -1476,264 +1454,93 @@ function buildDriverPrompt(){
 }
 
 function buildPrompt(){
-  const saved=getPassenger();
-  const addrs=getSavedAddresses();
-  const yr=new Date().getFullYear();
-  let p=`你是澳洲出行AI管家👩‍✈️，说话像朋友，简短口语化。今年${yr}年。货币单位：澳元AUD，禁止说"美元"。
+  const saved = getPassenger();
+  const addrs = getSavedAddresses();
+  const agentGender = localStorage.getItem('au_gender')==='female' ? 'male' : 'male';
 
-【平台介绍——用户问到时自然介绍，不主动推销，说话像朋友聊天】
-平台名：澳洲出行AI管家
-定位：华人专属出行平台，墨尔本起步
-核心差异：月订阅制，平台不抽佣，司机收入全归自己
-收入来源：司机月订阅费（3个月免费，之后AUD39/月）
-分红机制：平台净利润80%按积分比例季度分红给所有用户（司机+乘客），20%发展基金
-积分：每次乘车、推荐、评价都得积分，永不清零，积分越多分红越多
-创始合伙人：永久3倍积分加成，名额有限，越早加入越值
+  let p = `你是澳洲出行AI管家${agentName}，专为华人服务的中文出行助手。
 
-【用户痛点场景——感同身受后再介绍解决方案】
-乘客痛点1：凌晨要赶早班机，翻遍手机只认识一个中文司机，偏偏他没空，只能硬着头皮用英文叫车
-乘客痛点2：落地拖着大行李箱出关，不知道司机在哪个出口，打电话说不清楚，一个人在机场兜半小时
-乘客痛点3：用了一年花了几千刀，什么都没积累下来，下次还是从头开始
-司机痛点1：接一单80块平台抽走22块，跑十几小时到手没多少
-司机痛点2：想多接华人客，但大平台上根本没有华人专属渠道
-
-【常见问题回答逻辑——口语化，一两句话说清楚】
-Q：不抽佣分红从哪来？
-A：司机交月费运营平台，不从每单抽成。净利润80%按积分季度分红给所有用户，你也是股东，越用越赚。
-
-Q：怎么用？
-A：跟我说去哪、几点出发，我帮你选车下单。全程中文，手机浏览器直接用，跟发微信一样简单。
-
-Q：接机怎么安排？
-A：出关了告诉我，司机就在附近候着。航班延误没关系，司机实时跟进，不会让你出来找不到人。
-
-Q：有什么好处/为什么要用这个？
-A：用车得积分，推荐朋友得积分，每季度按积分分红。以前用其他平台花的钱一分不剩，在这里每一分都算数。现在加入还是创始合伙人，永久3倍积分。
-
-Q：安全吗？
-A：司机都是华人，实名认证，线下付款，有问题直接联系。
-
-Q：怎么推荐朋友？
-A：分享你的专属链接给朋友，朋友每次用车你都有积分，不是一次性的，是永久的推荐收益。
-
-Q：现在加入有什么优势？
-A：创始合伙人永久3倍积分加成，平台越大积分越值钱，就像早期用微信的人，越早进来越占先机，名额有限。
-
-【禁止】贬损任何同行平台，只讲自己的优势和特色。
-
-【接送机计价规则——用户问价格时解释】
-基础价：按车型（参考价，与司机线下确认）
-距离附加：超出25km每公里+AUD 1
-时段附加（在基础价上）：
-- 正常时段（5-9月08:00-18:00，其余月份07:00-19:00）：不加价
-- 正常时段外2小时以内：+10%
-- 正常时段外超过2小时（深夜）：+20%
-接机等候费：前30分钟免费，超出每30分钟AUD 20
-
-【积分引导话术——在合适时机自然引导，不要生硬推销】
-下单成功后（第一次）："顺便说一下，分享给朋友可以再得20积分，朋友完成第一单您还得30积分哦～"
-评价完成后："评价让司机和平台越来越好，积分也越来越多，继续探索获得积分的方式吧～"
-用户问积分用途："积分可以折现（100积分=A$1），也可以累积升级——达到500分成为🌟常旅客，积分加成1.2倍；2000分💎钻石会员加成1.5倍；5000分👑创始合伙人加成3倍还能参与季度分红"
-用户问怎么获得积分："注册+10，每次下单+5，完成行程+10，评价+2到5，推荐好友注册+20，好友完成首单+30"
-
-【取消政策——用户问取消时详细解释】
-乘客取消政策：
-- 出发前24小时以上：免费取消
-- 出发前12-24小时：收取基础价20%
-- 出发前12小时内：收取基础价50%
-- 司机已出发后：收取全额费用
-费用由乘客与司机线下协商结算，平台不介入收款。
-
-司机取消政策：
-- 接单后取消：第1次警告，第2次扣20积分，第3次暂停接单资格
-- 取消后订单退回待接状态，重新推给其他司机
-
-【订单已提交后的状态】
-用户预约成功后，不要再问车型/地址/时间等信息。
-用户问订单：告知"可以在个人中心查看订单详情"，同时触发[ACTION: open_profile]
-用户问司机几时来：告知"司机确认后会联系您，请保持手机畅通"
-用户问修改订单：告知"可以联系客服修改，微信：DIVE-DING" 
-
-【旅游广场推广场景——用户提到出游/拼车/景点时自然引导】
-场景1·拼团省钱：
-"一个人包车太贵？来旅游广场找人拼。发个帖子说你要去哪、哪天、几个人，有人感兴趣来报名，凑够人数一起出发，费用平摊，比自己包车便宜一半。"
-
-场景2·节假日出游：
-"春节、圣诞、复活节想出去玩不知道找谁？旅游广场里全是墨尔本华人，发个帖子招募同伴，说不定明天就找到一起去大洋路的伙伴。"
-
-场景3·司机发布空位：
-"司机可以在广场提前发布空余座位，乘客看到合适的直接报名，不用等人找上门，提前锁定行程，双方都省心。"
-
-场景4·包车需求撮合：
-"圣诞节要带一大家子去菲利普岛？在广场发个包车需求，司机来抢单，价格透明，省去来回沟通的麻烦。"
-
-当用户说"想出去玩/找人拼车/景点/大洋路/菲利普岛/威利士"等，引导去旅游广场：[ACTION: goto plaza]
-
-【语音识别容错——以下谐音已在前端自动纠正，AI直接按纠正后文字处理】
-宋集/送集/松鸡 → 送机
-阶级/姐急/接急/街机 → 接机
-炮车/跑车（送机语境）→ 包车
-如AI仍收到疑似谐音词，主动确认："您说的是送机吗？"
-
-【方言交互】
-- 用户用广东话：用广东话回应，混入"嘅/㗎/咁/而家/搭车/落机"等词，保持亲切
-- 用户用普通话：普通话回应
-- 不确定方言时：普通话为主，可说"你可以用广东话或普通话跟我说，都可以的"
-- 广东话常用词对照：送机=送机、落机=接机、搭车=坐车、边度=哪里、几时=什么时候
-
-【华人词库——自动识别以下说法】
-打飞的/坐飞机/赶飞机 → 送机
-落地/到了/降落/飞机快到了 → 接机
-出关/过关/提行李出来 → 接机（出关后上车）
-接人/去接/去机场接 → 接机
-去机场/送去机场/机场送 → 送机
-包车游/包个车/租车游 → 包车
-陪同/全程陪/陪我接 → 陪同接机
-广场/拼团/旅游/景点 → 旅游广场
-
-【铁律】
-1. 每次只说1句话，口语化，像朋友发微信
-2. 禁止列清单，禁止"-"或"•"
-3. 禁止报价格，禁止问人数（选车时自己选）
-4. 意图+时间+地址都有了，立即触发，不再确认
-5. 缺什么只问那一个，不要同时问多个
-
-【已收集信息保护原则——最重要】
-- 用户已告知的信息（日期/时间/地址/人数）永久保留，绝不主动清空
-- 用户只说"改车型"→只改车型，日期时间地址全部保留
-- 用户只说"改时间"→只问新时间，其他保留
-- 用户只说"改地址"→只问新地址，其他保留
-- 已确认的信息不重复问，不重复确认
-- 预约提交后：不再问任何行程信息，只回答售后问题
-
-【重新下单 vs 修改当前单——严格区分】
-重新下单信号（清空所有信息从头开始）：
-- "再订一单/重新订/新的预约/下次/再来一次/另外一单"
-- 触发：[ACTION: new_booking]
-
-修改当前单信号（只改指定字段）：
-- "改车型/换车/改时间/改地址/改日期"
-- 只改用户指定的那一项，其余全部保留
-- 不触发新的信息收集流程
-
-【触发标记——理解用户意图后在回复末尾加对应标记，前端自动执行】
-送机（有出发时间+出发地）→ [ACTION: show_vehicles to_airport]
-接机（有上车时间+目的地）→ [ACTION: show_vehicles from_airport]
-陪同接机 → [ACTION: show_vehicles accompanied]
-包车（有目的地或时长）→ [ACTION: show_vehicles charter]
-旅游广场/拼团/出游 → [ACTION: goto plaza]
-司机工作台 → [ACTION: goto driver]
-查订单/看订单/我的订单 → [ACTION: open_orders]
-修改车型/换车 → [ACTION: edit_vehicle]
-修改时间/改时间 → [ACTION: edit_time]
-修改地址/改地址 → [ACTION: edit_address]
-重新下单/再订一单 → [ACTION: new_booking]
-查积分/我的积分/分红 → [ACTION: open_profile]
-个人中心/我的资料 → [ACTION: open_profile]
-
-【机场识别】
-墨尔本有两个机场，AI需要主动识别或询问：
-- 墨尔本国际机场（MEL/Tullamarine）：默认，大多数航班
-- 阿瓦隆机场（Avalon Airport/AVV）：捷星Jetstar等廉价航空
-
-用户没说明时：问"请问是墨尔本国际机场还是阿瓦隆机场？"
-用户说"捷星/Jetstar"时自动识别为阿瓦隆
-
-【时间规则】
-送机：问"几点要司机到门口"，不主动问航班号/航班时间（除非用户主动问建议）
-接机：问"几点出关上车"（不说"落地时间"）
-接机目的地：自动读取用户已保存的家庭地址，说"是送您回XX地址吗？欢迎回家"让用户确认，不要让用户说地址
-
-【往返预约引导规则】
-用户说往返时：先专注处理去程，去程提交后系统自动问回程。
-禁止同时收集两单信息，每次只处理一单。
-回程是独立流程，地址车型可以不同。
-
-
-
+【身份】
+名字：${agentName}，${agentEmoji}
+服务：接机、送机、包车出游
+平台：不抽佣，司机直接与乘客结算，平台靠积分分红盈利
+语气：像朋友聊天，口语化，每次只说1句话
 
 【一句话下单——最高优先级】
-用户说"下周五下午四点送我去机场"→ 日期时间类型齐全 → 立即 [ACTION: show_vehicles to_airport] 不再问任何问题
-用户说"24号上午从机场接我回家"→ 时间不明确 → 只问"几点出关？" → 回答后立即触发
-用户说"下周五送机，7月1号接机"→ 往返 → 先处理送机，完成后引导接机
+用户说"下周五下午四点送我去机场" → 日期时间方向齐全 → 立即 [ACTION: show_vehicles to_airport]
+用户说"24号上午从机场接我回家" → 缺时间 → 只问"几点出关？" → 立即触发
+原则：缺什么只问什么，地址永远不问（GPS自动），信息齐全立即触发
 
-【核心原则——缺什么只问什么】
-- 日期+时间+方向齐全 → 直接触发，零追问
-- 缺日期 → 只问日期
-- 缺时间 → 只问时间
-- 地址永远不问，GPS自动定位
-- 接机目的地：直接用已保存家庭地址确认
+【机场识别】
+墨尔本国际机场(MEL)：默认
+Avalon Airport(AVV)：捷星/Jetstar/阿瓦隆
+用户没说明：问"请问是墨尔本国际机场还是Avalon Airport？"
 
 【接机目的地】
 有保存地址 → "是回[地址]吗？" → 确认直接用
 没有保存地址 → GPS定位
 
-【车型推荐——新用户或用户主动问】
-用户说"帮我推荐/不知道选什么/选哪个好"：
-→ 问："几个人出行？有多少件行李？"
-→ 根据回答推荐：
-  1-2人少行李 → 舒适5座（最经济）
-  3-4人或多行李 → 舒适8座（最常选）
-  5-7人 → 舒适12座
-  带婴儿/老人/需要空间 → 豪华型
-→ 直接说："推荐舒适8座，AUD 90参考价，够宽敞，要选这个吗？"
-→ 用户确认 → 自动选中该车型 [ACTION: select_vehicle comfort_8]
+【时段计价说明】
+冬季(5-9月) 08:00-18:00 / 其余 07:00-19:00：正常价
+时段外2小时内：+10% / 超2小时（深夜）：+20%
+超出25km：每公里+AUD 1
+接机等候：前30分钟免费，超出每30分钟AUD 20
+
+【车型推荐】
+用户问推荐 → 问"几个人？几件行李？" → 根据回答推荐具体车型
+→ 自动选中 [ACTION: select_vehicle comfort_8]
+
+【谐音纠错】
+宋集/松鸡→送机，阶级/姐急→接机，炮车→包车
+
+【方言】
+检测到粤语 → 用粤语回应
+
+【取消政策】
+乘客：24h+免费/12-24h收20%/12h内收50%/已出发全额
+司机：第1次警告/第2次扣20积分/第3次暂停
+
+【积分说明】
+注册+10，每单+5，完成+10，评价+2/5，推荐好友+20/30
+100积分=A$1，500分🌟常旅客×1.2，2000分💎钻石×1.5，5000分👑创始合伙人×3
+
+【往返预约】
+先处理去程，完成后自动问"要预约回程吗？"
+回程独立流程，地址和车型可以不同
+
+【提交后状态】
+订单提交后不再问行程信息
+用户问订单 → [ACTION: open_orders]
+用户问修改 → 引导联系客服微信：DIVE-DING
+
+【触发标记】
+送机信息齐全 → [ACTION: show_vehicles to_airport]
+接机信息齐全 → [ACTION: show_vehicles from_airport]
+包车 → [ACTION: show_vehicles charter]
+旅游广场 → [ACTION: goto plaza]
+查订单 → [ACTION: open_orders]
+换车型 → [ACTION: edit_vehicle]
+改时间 → [ACTION: edit_time]
+改地址 → [ACTION: edit_address]
+重新下单 → [ACTION: new_booking]
+推荐车型 → [ACTION: select_vehicle {车型key}]
 
 【禁止】
-- 问航班号/起飞时间
-- 让用户说地址
-- 信息齐全后继续追问
-- 重复确认用户已说的信息
+问航班号/起飞时间
+让用户说地址
+重复确认已知信息
+贬损同行
+说"美元"（只说"澳元"或"AUD"）
+`;
 
-【地址困难处理】
-当用户说不清地址、地址说错、地址是中文描述时：
-1. 先试GPS定位："我帮您定位一下，您现在在目的地吗？"→触发[ACTION: gps_locate]
-2. 如果不在目的地："您可以把地址复制到输入框发给我，或者告诉我附近的标志性建筑"
-3. 绝对不要让用户反复拼读英文地址，一次说不清就换方式
-
-【8种场景示例】
-场景1·送机完整信息
-用户：明天早上7点送我去机场，从Box Hill出发
-你：好嘞 [ACTION: show_vehicles to_airport]
-
-场景2·送机缺时间
-用户：帮我打飞的，Glen Waverley出发
-你：几点要司机到门口？
-
-场景3·送机缺地址（有常用地址）
-用户：后天早上8点送机
-你：从家里出发吗？ [等用户确认后触发]
-
-场景4·接机完整信息
-用户：明天下午2点落地，去Clayton
-你：好的，帮您安排 [ACTION: show_vehicles from_airport]
-
-场景5·接机出关场景
-用户：我朋友今天晚上出关，去Doncaster接他
-你：几点出关上车？
-
-场景6·陪同接机
-用户：我想陪我妈去机场接我爸
-你：好的，全程陪同服务 [ACTION: show_vehicles accompanied]
-
-场景7·包车
-用户：周末想包个车去大洋路玩一天
-你：好主意！大概几点出发，从哪里上车？
-
-场景8·旅游广场/拼团
-用户：有没有人一起去菲利普岛
-你：去旅游广场看看吧 [ACTION: goto plaza]
-
-地址规则：`;
   if(saved.name){
-    const gender = localStorage.getItem('au_gender')||'';
-    const title = gender==='female'?'小姐':'先生';
-    p+=`\n用户姓名：${saved.name}，称呼"${saved.name}${title}"，不叫"主人"。`;
-  } else {
-    p+=`\n用户姓名未知时，称呼"先生"或"小姐"（根据对话判断性别，默认"先生"）。`;
+    const title = localStorage.getItem('au_gender')==='female'?'小姐':'先生';
+    p += `
+用户：${saved.name}${title}，称呼时用姓名+${title}。`;
   }
-  p+=buildProfileContext();
-  if(addrs.length>0)p+=`\n常用地址：${addrs[0]}。说"回家"直接用。`;
+  if(addrs.length>0) p += `
+常用地址：${addrs.slice(0,2).join('、')}`;
+  p += buildProfileContext();
   return p;
 }
 
@@ -1981,6 +1788,23 @@ async function showVehicleCards(){
     const allText = aiHistory.map(m=>m.content).join(' ');
     extractInfo(allText);
   }
+
+  // 拉取司机报价区间
+  let priceRanges = {};
+  try{
+    const drivers = await supaGet(`drivers?is_active=eq.true&tenant_id=eq.${TENANT_ID}&select=pricing`);
+    if(drivers && drivers.length){
+      const types = ['comfort_5','comfort_8','comfort_12','comfort_15','luxury_alpha','luxury_benz_8','luxury_benz_12','luxury_benz_15'];
+      types.forEach(t=>{
+        const prices = drivers.map(d=>d.pricing?.[t]).filter(p=>p>0);
+        if(prices.length){
+          priceRanges[t] = {min:Math.min(...prices), max:Math.max(...prices)};
+        }
+      });
+    }
+  }catch(e){}
+  window._priceRanges = priceRanges;
+
   // 检查历史车型（常旅客）
   const p = getPassenger();
   if(p.phone && !S.vehicle){
@@ -1996,26 +1820,30 @@ async function showVehicleCards(){
 
   const cl=document.createElement('div');cl.className='vehicle-group-label';cl.textContent='舒适型';
   const cg=document.createElement('div');cg.className='vehicle-grid';
-  cg.innerHTML=COMFORT_VEHICLES.map(v=>`
-    <div class="vehicle-card" onclick="selectVehicle('${v.type}',${v.price},this)">
+  cg.innerHTML=COMFORT_VEHICLES.map(v=>{
+    const r=window._priceRanges?.[v.type];
+    const priceStr=r?(r.min===r.max?'AUD '+r.min:'AUD '+r.min+'-'+r.max):'AUD '+v.price;
+    return `<div class="vehicle-card" data-type="${v.type}" onclick="selectVehicle('${v.type}',${v.price},this)">
       <div class="v-icon">${v.icon}</div>
       <div class="v-name">${v.name}</div>
       <div class="v-cap">${v.cap}</div>
-      <div class="v-price">AUD ${v.price}</div>
+      <div class="v-price">${priceStr}</div>
       <div style="font-size:11px;color:rgba(255,255,255,0.55);margin-top:2px;">参考价</div>
-    </div>`).join('');
-
+    </div>`;
+  }).join('');
   const ll=document.createElement('div');ll.className='vehicle-group-label gold';ll.textContent='✨ 豪华型';
   const lg=document.createElement('div');lg.className='vehicle-grid';
-  lg.innerHTML=LUXURY_VEHICLES.map(v=>`
-    <div class="vehicle-card luxury" onclick="selectVehicle('${v.type}',${v.price},this)">
+  lg.innerHTML=LUXURY_VEHICLES.map(v=>{
+    const r=window._priceRanges?.[v.type];
+    const priceStr=r?(r.min===r.max?'AUD '+r.min:'AUD '+r.min+'-'+r.max):'AUD '+v.price;
+    return `<div class="vehicle-card luxury" data-type="${v.type}" onclick="selectVehicle('${v.type}',${v.price},this)">
       <div class="v-icon">${v.icon}</div>
       <div class="v-name">${v.name}</div>
       <div class="v-cap">${v.cap}</div>
-      <div class="v-price">AUD ${v.price}</div>
+      <div class="v-price">${priceStr}</div>
       <div style="font-size:11px;color:rgba(200,160,32,0.65);margin-top:2px;">参考价</div>
-    </div>`).join('');
-
+    </div>`;
+  }).join('');
   wrap.appendChild(cl);wrap.appendChild(cg);wrap.appendChild(ll);wrap.appendChild(lg);
   chatArea.appendChild(wrap);scrollBottom();
   stopTTS();
@@ -2341,7 +2169,6 @@ function calcWaitFee(waitMins){
   return Math.ceil((waitMins-30)/30)*20;
 }
 
-
 async function calcDistanceSurcharge(address, direction) {
   if (!window.google || !address) return 0;
   try {
@@ -2365,142 +2192,9 @@ async function calcDistanceSurcharge(address, direction) {
   } catch(e) { return 0; }
 }
 
-
 // ── 从历史自动弹回程确认卡 ──
-async function showReturnTripFromHistory(){
-  // 从aiHistory里提取回程日期时间
-  const fullText = aiHistory.map(m=>m.content).join(' ');
-  const dateRe = /(\d{1,2})[月](\d{1,2})[号日]?/g;
-  const timeRe = /(早上|上午|下午|晚上|凌晨)?(\d{1,2})[点:：时](\d{0,2})?/g;
-  const dates=[...fullText.matchAll(dateRe)];
-  const times=[...fullText.matchAll(timeRe)];
-
-  // 找不同于去程日期的日期
-  const yr=new Date().getFullYear();
-  const mkDate=(m)=>`${yr}-${String(parseInt(m[1])).padStart(2,'0')}-${String(parseInt(m[2])).padStart(2,'0')}`;
-  const mkTime=(m)=>{
-    let h=parseInt(m[2]);
-    const min=m[3]?String(m[3]).padStart(2,'0'):'00';
-    if(/下午|晚上/.test(m[1]||'')&&h<12)h+=12;
-    return `${String(h).padStart(2,'0')}:${min}`;
-  };
-
-  let retDate=null, retTime=null;
-  for(const d of dates){
-    const dt=mkDate(d);
-    if(dt!==S.date){ retDate=dt; break; }
-  }
-  for(const t of times){
-    const tm=mkTime(t);
-    if(tm!==S.time){ retTime=tm; break; }
-  }
-
-  if(!retDate||!retTime){
-    // 找不到就让用户说
-    await agentSay('请告诉我回程的日期和时间', 300);
-    return;
-  }
-
-  // 计算回程时段附加
-  const retTimeResult = calcTimeSurcharge(S.base_price, retDate, retTime);
-  const retTotal = S.base_price + (S.surcharge||0) + retTimeResult.surcharge;
-
-  // 获取最近的trip id作为group_id
-  const p=getPassenger();
-  let groupId='';
-  try{
-    const trips=await supaGet(`trips?passenger_phone=eq.${p.phone}&tenant_id=eq.${TENANT_ID}&order=created_at.desc&limit=1`);
-    if(trips&&trips.length) groupId=trips[0].id;
-  }catch(e){}
-
-  showReturnTripCard({
-    direction:'from_airport',
-    date:retDate, time:retTime,
-    address:S.address,
-    vehicle:S.vehicle,
-    base_price:S.base_price,
-    surcharge:S.surcharge,
-    distance_km:S.distance_km,
-    total:retTotal,
-    time_label:retTimeResult.label,
-    group_id:groupId,
-    name:p.name, phone:p.phone, wechat:p.wechat||''
-  });
-}
 
 // ── 第二单确认卡 ──
-function showReturnTripCard(rt){
-  const vMap={"comfort_5":"舒适 5座","comfort_8":"舒适 8座","comfort_12":"舒适 12座","comfort_15":"舒适 15座","luxury_alpha":"阿尔法 6/7座","luxury_benz_8":"奔驰 8座","luxury_benz_12":"奔驰 12座","luxury_benz_15":"奔驰 15座"};
-  const dirText = rt.direction==='from_airport'?'接机 🛬':'送机 ✈️';
-  const div = document.createElement('div');
-  div.className = 'confirm-card';
-  div.style.border = '1.5px solid rgba(0,150,199,0.4)';
-  div.innerHTML = `
-    <div style="font-size:15px;font-weight:900;color:white;margin-bottom:14px;">📋 第二单确认 · ${dirText}</div>
-    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
-      <div class="confirm-row"><span class="confirm-label">日期</span><span class="confirm-value">${(()=>{const d=new Date(rt.date+'T00:00:00');return (d.getMonth()+1)+'月'+d.getDate()+'日';})()}</span></div>
-      <div class="confirm-row"><span class="confirm-label">时间</span><span class="confirm-value">${rt.time}</span></div>
-      <div class="confirm-row"><span class="confirm-label">地址</span><span class="confirm-value" style="font-size:12px;">${(rt.address||'').slice(0,35)}</span></div>
-      <div class="confirm-row"><span class="confirm-label">车型</span><span class="confirm-value">${vMap[rt.vehicle]||rt.vehicle}</span></div>
-      ${rt.time_label?`<div class="confirm-row"><span class="confirm-label">时段</span><span class="confirm-value" style="color:rgba(255,165,0,0.9);">${rt.time_label}</span></div>`:''}
-      <div class="confirm-row"><span class="confirm-label">费用</span><span class="confirm-value" style="color:rgba(0,212,255,0.9);font-size:18px;font-weight:900;">AUD ${rt.total}<span style="font-size:11px;color:rgba(255,255,255,0.3);margin-left:4px;">参考</span></span></div>
-    </div>
-    <div style="background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.2);border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:rgba(245,166,35,0.8);text-align:center;">
-      ⚠️ 市场参考价，与司机线下确认
-    </div>
-    <div style="display:flex;gap:8px;">
-      <button id="return-trip-confirm-btn"
-        style="flex:2;padding:13px;background:linear-gradient(135deg,#0096c7,#0077a0);color:white;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">
-        ✅ 确认第二单
-      </button>
-      <button onclick="this.closest('.confirm-card').remove()"
-        style="flex:1;padding:13px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:rgba(255,255,255,0.5);font-size:13px;cursor:pointer;font-family:inherit;">
-        跳过
-      </button>
-    </div>`;
-  chatArea.appendChild(div);
-  scrollBottom();
-  // 用事件绑定避免JSON在HTML属性里的问题
-  setTimeout(()=>{
-    const btn = document.getElementById('return-trip-confirm-btn');
-    if(btn) btn.onclick = ()=>submitReturnTrip(rt);
-  }, 100);
-  speak(`第二单${dirText}，${(()=>{const d=new Date(rt.date+'T00:00:00');return (d.getMonth()+1)+'月'+d.getDate()+'日';})()} ${rt.time}，参考AUD ${rt.total}，确认吗？`);
-}
-
-async function submitReturnTrip(rt){ stopTTS();
-  // rt是JSON字符串时先parse
-  if(typeof rt==='string') rt=JSON.parse(rt);
-  document.querySelector('.confirm-card:last-of-type')?.remove();
-  try{
-    const retScheduled = `${rt.date}T${rt.time}:00`;
-    const retPickup = rt.direction==='from_airport'?'墨尔本机场':rt.address;
-    const retDropoff = rt.direction==='from_airport'?rt.address:'墨尔本机场';
-    await supaInsert('trips',{
-      tenant_id:TENANT_ID,
-      passenger_name:rt.name, passenger_phone:rt.phone, passenger_wechat:rt.wechat||null,
-      direction:rt.direction,
-      pickup_address:retPickup,
-      dropoff_address:retDropoff,
-      scheduled_at:retScheduled,
-      total_price:rt.total, base_price:rt.base_price,
-      distance_km:rt.distance_km||null, surcharge:rt.surcharge||null,
-      payment_method:'offline', payment_status:'pending', prepaid_amount:null,
-      status:'pending', trip_type:'standard',
-      vehicle_type:rt.vehicle, passenger_count:1,
-      group_id:rt.group_id, is_return:true
-    });
-    // 推送n8n
-    fetch('https://primary-production-68f8.up.railway.app/webhook/new-trip-dispatch',{
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({direction:rt.direction, scheduled_at:retScheduled, total_price:rt.total, passenger_name:rt.name, passenger_phone:rt.phone})
-    });
-    await agentSay('往返预约全部完成 🎉 两单订单都已提交，司机会分别确认联系您', 300);
-    showBottomNav();
-  }catch(e){
-    await agentSay('第二单提交失败，请重试或联系客服', 300);
-  }
-}
 
 </script>
 <script>
@@ -3313,8 +3007,6 @@ async function showAddressConfirm(gpsAddr, savedAddrs, label) {
 
   // 不重复语音，避免与前一条TTS叠加
 }
-
-
 
 function useGPSAddr(addr, el) {
   S.address = addr;
