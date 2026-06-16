@@ -872,6 +872,10 @@ const DIALECT_SIGNALS = {
 };
 
 // ── 相对日期解析 ──
+function detectRoundTrip(text){
+  // 往返由AI引导，无需自动检测
+}
+
 function parseRelativeDate(text){
   const today = new Date();
   const wd = ['日','一','二','三','四','五','六'];
@@ -1329,7 +1333,7 @@ async function submitPhone(role){
       document.getElementById('exit-btn').style.display='block';
       const _t3=localStorage.getItem('au_gender')==='female'?'小姐':'先生';const greeting=passenger.name?`${agentName}来啦，${passenger.name}${_t3}！`:
         `好的，我记住您的号码了 ${agentEmoji}`;
-      await agentSay(greeting+'<br>需要我帮您下单，还是您亲自操作？',500);
+      await agentSay(greeting+'，要预约什么服务？',500);
       // 直接进AI对话
     }
   }catch(e){
@@ -1490,6 +1494,9 @@ Avalon Airport(AVV)：捷星/Jetstar/阿瓦隆
 改地址 → [ACTION: edit_address]
 重新下单 → [ACTION: new_booking]
 推荐车型 → [ACTION: select_vehicle {车型key}]
+
+【分段输入】
+用户可能分两条发送完整信息，结合上下文合并理解后再触发，不要因单条不完整就追问。
 
 【禁止】
 问航班号/起飞时间
@@ -2374,7 +2381,7 @@ function showResumeOrderCard(t){
       <a id="driver-phone-${t.id}" href="#" style="font-size:16px;font-weight:900;color:rgba(0,200,150,0.9);display:block;margin-top:6px;">📞 —</a>
     </div>`:''}
     <div style="display:flex;gap:8px;">
-      <button onclick="this.closest('.confirm-card').remove();showPassengerModeChoice();"
+      <button onclick="this.closest('.confirm-card').remove();"
         style="flex:1;padding:11px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:rgba(255,255,255,0.5);font-size:13px;cursor:pointer;font-family:inherit;">重新下单</button>
       <button onclick="this.closest('.confirm-card').remove();"
         style="flex:1;padding:11px;background:rgba(0,150,199,0.2);border:1px solid rgba(0,150,199,0.3);border-radius:10px;color:white;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">好的，知道了</button>
