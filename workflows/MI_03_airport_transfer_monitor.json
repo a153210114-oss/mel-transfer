@@ -1,0 +1,158 @@
+{
+  "name": "MI_03_控捈有福章目)9,
+  "nodes": [
+    {
+      "id": "trigger-01",
+      "name": "Start Every 30 Minutes",
+      "type": "n.8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesI�val": 30
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "http-01",
+      "name": "Fetch Gumtree Listings",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300],
+      "parameters": {
+        "method": "GET",
+        "url": "https://www.gumtree.com.au/s-services/transport-taxi/melbourne/k/1v19029?q=airport+transfer",
+        "responseFormat": "text",
+        "options": {
+          "redirect": {
+            "redirect": {
+              "followRedirects": true,
+              "maxRedirects": 3
+            }
+          },
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          },
+          "timeout": 15000
+        },
+        "headersUI": {
+          "values": [
+            {
+              "name": "Accept",
+              "value": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
+            },
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+            },
+            {
+              "name": "Accept-Language",
+              "value": "en-AU,en;q=0.9"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "code-01",
+      "name": "Parse Listings",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const html = $('Fetch Gumtree Listings').first().json().data || '';\n\nconst now = new Date().toISOString();\nconst listings = [];\n\n// Extract listing blocks via regex (Gumtree HTML structure)\nconst itemRegex = /data-ad-id=\"(\\w+)\"[^>]*>([\\s\\S]*?)(?=data-ad-id=|\$)/g;\nconst titleRegex = /article-title[^<]*>([^<]+)</i;\nconst priceRegex = /price[^<]*>[^<]*\$([\<]+)</i;\nconst dateRegex = /date[time]?=\"([^'\"]+)\"/i;\nconst linkRegex = /href=\"(https:\\/\\/www\\.gumtree\\.com\\.au\\/s\\-ad\\/[^\"]+)\"/i;\n\nconst blocksRegex = /<li[^>]*class=[\"'][^\"']*listing[\"'][\\s\\S]*?><\\/li>/g;\nlet block;\n\nwhile ((block = blocksRegex.exec(html)) !== null) {\n  const htmlBlock = block[0];\n\n  const titleMatch = htmlBlock.match(titleRegex);\n  const priceMatch = htmlBlock.match(priceRegex);\n  const dateMatch = htmlBlock.match(dateRegex);\n  const linkMatch = htmlBlock.match(linkRegex);\n\n  if (titleMatch) {\n    listings.push({\n      title: titleMatch[1].trim(),\n      price: priceMatch ? `$${priceMatch[1].trim()}` : null,\n      listed_at: dateMatch ? dateMatch[1] : null,\n      url: linkMatch ? linkMatch[1] : null,\n    });\n  }\n}\n\n// Fallback: if no listings parsed, record a status snapshot\nif (listings.length === 0) {\n  listings.push({\n    title: '[Scrape Attempt - No Listings Parsed]',\n    price: null,\n    listed_at: null,\n    url: null,\n  });\n}\n\nreturn listings.map(item => ({\n  json: {\n    factor_type: 'gumtree_airport_transfer',\n    market: 'melbourne',\n    source: 'gumtree',\n    title: item.title,\n    price: item.price,\n    listed_at: item.listed_at,\n    url: item.url,\n    snapshot_time: now,\n    raw_count: listings.length,\n  }\n}));\n"
+      }
+    },
+    {
+      "id": "supabase-01",
+      "name": "Save to Supabase",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [900, 300],
+      "parameters": {
+        "resource": "row",
+        "operation": "create",
+        "tableId": "market_factors",
+        "dataToSend": "defineBelow",
+        "fieldsUI": {
+          "values": [
+            {
+              "fieldId": "factor_type",
+              "fieldValue": "={{ $json.factor_type }}"
+            },
+            {
+              "fieldId": "market",
+              "fieldValue": "={{ $json.market }}"
+            },
+            {
+              "fieldId": "source",
+              "fieldValue": "={{ $json.source }}"
+            },
+            {
+              "fieldId": "title",
+              "fieldValue": "={{ $json.title }}"
+            },
+            {
+              "fieldId": "price",
+              "fieldValue": "={{ $json.price }}"
+            },
+            {
+              "fieldId": "listed_at",
+              "fieldValue": "={{ $json.listed_at }}"
+            },
+            {
+              "fieldId": "url",
+              "fieldValue": "={{ $json.url }}"
+            },
+            {
+              "fieldId": "snapshot_time",
+              "fieldValue": "={{ $json.snapshot_time }}"
+            },
+            {
+              "fieldId": "raw_count",
+              "fieldValue": "={{ $json.raw_count }}"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Start Every 30 Minutes": {
+      "main": [
+        [
+          {"node": "Fetch Gumtree Listings", "type": "main", "index": 0}
+        ]
+      ]
+    },
+    "Fetch Gumtree Listings": {
+      "main": [
+        [
+          {"node": "Parse Listings", "type": "main", "index": 0}
+        ]
+      ]
+    },
+    "Parse Listings": {
+      "main": [
+        [
+          {"node": "Save to Supabase", "type": "main", "index": 0}
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v6",
+    "saveManualExecutions": true,
+    "callerPolicy": "anyWorkflow",
+    "errorWorkflow": ""
+  },
+  "tags": ["airport-transfer", "gumtree", "market-monitor"]
+}
