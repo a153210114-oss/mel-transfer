@@ -3,3138 +3,1390 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>澳洲出行 AI 管家</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<title>出行管家</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;}
-body{
-  font-family:'Noto Sans SC',sans-serif;
-  background:linear-gradient(160deg,#0a0f1e 0%,#0d2040 60%,#0a1628 100%);
-  height:100vh;max-width:480px;margin:0 auto;
-  display:flex;flex-direction:column;overflow:hidden;
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+:root {
+  --bg: #ededed;
+  --surface: #ffffff;
+  --bubble-me: #95ec69;
+  --bubble-ai: #ffffff;
+  --text: #1a1a1a;
+  --text2: #888;
+  --bar: #f7f7f7;
+  --bar-border: #d9d9d9;
+  --accent: #07c160;
+  --header: #ebebeb;
+  --header-border: #d0d0d0;
+  --panel-bg: #f2f2f2;
 }
 
-/* 顶部栏 */
-.top-bar{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:14px 16px;flex-shrink:0;
-}
-.top-logo{font-size:13px;color:rgba(255,255,255,0.4);font-weight:700;}
-.top-exit{
-  background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);
-  color:rgba(255,255,255,0.5);border-radius:8px;
-  padding:5px 12px;font-size:12px;cursor:pointer;font-family:inherit;
-  display:none;
+body {
+  font-family: -apple-system, 'PingFang SC', 'Noto Sans SC', sans-serif;
+  background: var(--bg);
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-width: 480px;
+  margin: 0 auto;
 }
 
-/* 对话区 */
-.chat-area{
-  flex:1;overflow-y:auto;
-  padding:12px 14px;
-  display:flex;flex-direction:column;gap:12px;
-  padding-bottom:140px;
+/* ── 顶部导航 ── */
+.header {
+  background: var(--header);
+  border-bottom: 1px solid var(--header-border);
+  padding: env(safe-area-inset-top) 0 0;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
 }
-.msg{display:flex;gap:10px;align-items:flex-end;}
-.msg.user{flex-direction:row-reverse;}
-.msg-av{
-  width:34px;height:34px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  font-size:18px;flex-shrink:0;
-  background:rgba(0,212,255,0.08);
-  border:1.5px solid rgba(0,212,255,0.15);
+.header-inner {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  gap: 10px;
 }
-.msg.user .msg-av{background:rgba(200,160,32,0.08);border-color:rgba(200,160,32,0.15);}
-.msg-bubble{
-  max-width:80%;
-  background:rgba(255,255,255,0.07);
-  border:1px solid rgba(255,255,255,0.1);
-  border-radius:18px 18px 18px 4px;
-  padding:11px 15px;font-size:14px;
-  color:rgba(255,255,255,0.92);line-height:1.7;
+.header-avatar {
+  width: 36px; height: 36px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #1aad19, #07c160);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
 }
-.msg.user .msg-bubble{
-  background:rgba(0,150,199,0.2);
-  border-color:rgba(0,150,199,0.25);
-  border-radius:18px 18px 4px 18px;
+.header-info { flex: 1; }
+.header-name { font-size: 16px; font-weight: 600; color: var(--text); }
+.header-sub { font-size: 11px; color: var(--text2); margin-top: 1px; }
+.header-more {
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; border-radius: 6px;
+  color: var(--text2); font-size: 20px;
 }
-.typing-bubble{
-  background:rgba(255,255,255,0.07);
-  border:1px solid rgba(255,255,255,0.1);
-  border-radius:18px 18px 18px 4px;
-  padding:13px 16px;display:flex;gap:5px;align-items:center;
-}
-.typing-dot{width:7px;height:7px;background:rgba(0,212,255,0.5);border-radius:50%;animation:tb 1s ease-in-out infinite;}
-.typing-dot:nth-child(2){animation-delay:0.15s;}
-.typing-dot:nth-child(3){animation-delay:0.3s;}
-@keyframes tb{0%,60%,100%{transform:translateY(0);}30%{transform:translateY(-6px);background:rgba(0,212,255,1);}}
+.header-more:active { background: rgba(0,0,0,0.06); }
 
-/* 选择卡片 */
-.choice-cards{display:flex;flex-direction:column;gap:8px;}
-.choice-card{
-  background:rgba(255,255,255,0.06);
-  border:1.5px solid rgba(255,255,255,0.12);
-  border-radius:14px;padding:14px 16px;
-  cursor:pointer;display:flex;align-items:center;gap:12px;
-  transition:all 0.15s;
+/* ── 聊天区域 ── */
+.chat-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 12px 0 8px;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
 }
-.choice-card:active{transform:scale(0.98);}
-.choice-card.blue{border-color:rgba(0,150,199,0.35);background:rgba(0,150,199,0.08);}
-.choice-card.gold{border-color:rgba(200,160,32,0.35);background:rgba(200,160,32,0.08);}
-.choice-card.green{border-color:rgba(39,174,96,0.35);background:rgba(39,174,96,0.08);}
-.card-icon{font-size:24px;flex-shrink:0;}
-.card-text h4{font-size:14px;font-weight:800;color:white;margin-bottom:2px;}
-.card-text p{font-size:12px;color:rgba(255,255,255,0.4);}
-.card-arrow{margin-left:auto;color:rgba(255,255,255,0.3);}
+.chat-scroll::-webkit-scrollbar { display: none; }
 
-/* 手机号输入 */
-.phone-input-card{
-  background:rgba(255,255,255,0.07);
-  border:1.5px solid rgba(255,255,255,0.12);
-  border-radius:18px;padding:18px;
+/* 日期分隔 */
+.date-divider {
+  text-align: center;
+  margin: 8px 0 12px;
 }
-.phone-input-card input{
-  width:100%;background:rgba(255,255,255,0.08);
-  border:1.5px solid rgba(255,255,255,0.15);
-  border-radius:12px;padding:12px 16px;
-  color:white;font-size:16px;font-family:inherit;
-  outline:none;margin-bottom:10px;letter-spacing:1px;
-}
-.phone-input-card input::placeholder{color:rgba(255,255,255,0.3);letter-spacing:0;}
-.phone-submit{
-  width:100%;padding:13px;
-  background:linear-gradient(135deg,#0096c7,#0077a0);
-  color:white;border:none;border-radius:12px;
-  font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;
+.date-divider span {
+  font-size: 11px; color: #b0b0b0;
+  background: rgba(0,0,0,0.06);
+  padding: 3px 10px; border-radius: 12px;
 }
 
-/* 车型卡片 */
-.vehicle-section{margin-top:4px;}
-.vehicle-group-label{font-size:11px;font-weight:800;color:rgba(255,255,255,0.4);letter-spacing:1px;margin-bottom:6px;padding:0 2px;}
-.vehicle-group-label.gold{color:rgba(200,160,32,0.7);}
-.vehicle-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
-.vehicle-card{
-  background:rgba(255,255,255,0.06);
-  border:1.5px solid rgba(255,255,255,0.1);
-  border-radius:14px;padding:14px 12px;
-  cursor:pointer;text-align:center;transition:all 0.15s;
+/* 消息行 */
+.msg-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 3px 12px;
+  animation: fadeUp 0.2s ease;
 }
-.vehicle-card:active{transform:scale(0.97);}
-.vehicle-card.selected{border-color:rgba(0,212,255,0.6);background:rgba(0,212,255,0.12);}
-.vehicle-card.luxury{border-color:rgba(200,160,32,0.2);background:rgba(200,160,32,0.05);}
-.vehicle-card.luxury.selected{border-color:rgba(200,160,32,0.7);background:rgba(200,160,32,0.12);}
-.v-icon{font-size:26px;margin-bottom:5px;}
-.v-name{font-size:12px;font-weight:700;color:white;}
-.v-cap{font-size:10px;color:rgba(255,255,255,0.4);margin:2px 0;}
-.v-price{font-size:16px;font-weight:900;color:rgba(0,212,255,0.9);}
-.vehicle-card.luxury .v-price{color:rgba(200,160,32,0.9);}
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(6px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+.msg-row.me { flex-direction: row-reverse; }
 
-/* 确认卡 */
-.confirm-card{
-  background:rgba(255,255,255,0.07);
-  border:1.5px solid rgba(255,255,255,0.12);
-  border-radius:18px;padding:18px;
+/* 头像 */
+.msg-avatar {
+  width: 38px; height: 38px;
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; flex-shrink: 0;
+  align-self: flex-start;
 }
-.confirm-row{
-  display:flex;align-items:flex-start;gap:10px;
-  padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);font-size:13px;
-}
-.confirm-row:last-of-type{border:none;}
-.confirm-label{color:rgba(255,255,255,0.4);width:64px;flex-shrink:0;}
-.confirm-value{color:rgba(255,255,255,0.9);font-weight:600;flex:1;}
-.confirm-btns{display:flex;gap:8px;margin-top:14px;}
-.confirm-btn{flex:1;padding:13px;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;}
-.confirm-btn.primary{background:linear-gradient(135deg,#0096c7,#0077a0);color:white;}
-.confirm-btn.secondary{background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);border:1px solid rgba(255,255,255,0.1);}
+.msg-row.me .msg-avatar { display: none; }
 
-/* 付款方式 */
-.pay-opts{display:flex;gap:8px;margin-top:8px;}
-.pay-opt{flex:1;padding:9px 4px;background:rgba(255,255,255,0.05);border:1.5px solid rgba(255,255,255,0.1);border-radius:10px;text-align:center;font-size:12px;font-weight:700;color:rgba(255,255,255,0.5);cursor:pointer;}
-.pay-opt.selected{border-color:rgba(0,212,255,0.5);color:rgba(0,212,255,0.9);background:rgba(0,212,255,0.08);}
+/* 气泡 */
+.bubble {
+  max-width: 72%;
+  padding: 9px 12px;
+  border-radius: 4px;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text);
+  word-break: break-word;
+  position: relative;
+}
+.bubble.ai {
+  background: var(--bubble-ai);
+  border-radius: 0 8px 8px 8px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+}
+.bubble.me {
+  background: var(--bubble-me);
+  border-radius: 8px 0 8px 8px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+}
 
-/* 底部输入 */
-.input-bar{
-  position:fixed;bottom:60px;left:50%;transform:translateX(-50%);
-  width:100%;max-width:480px;
-  background:rgba(8,12,25,0.97);
-  backdrop-filter:blur(20px);
-  border-top:1px solid rgba(255,255,255,0.07);
-  padding:10px 14px 10px;
-  display:flex;gap:10px;align-items:center;
-  transition:bottom 0.2s;
+/* 时间戳 */
+.msg-time {
+  font-size: 10px; color: #b0b0b0;
+  align-self: flex-end;
+  flex-shrink: 0; padding-bottom: 2px;
 }
-.input-bar.no-nav{
-  bottom:0;
-  padding-bottom:24px;
-}
-.chat-input{
-  flex:1;background:rgba(255,255,255,0.07);
-  border:1.5px solid rgba(255,255,255,0.1);
-  border-radius:24px;padding:11px 18px;
-  font-size:14px;color:white;font-family:inherit;outline:none;
-}
-.chat-input::placeholder{color:rgba(255,255,255,0.28);}
-.chat-input:focus{border-color:rgba(0,212,255,0.35);}
-.mic-btn{
-  width:44px;height:44px;
-  background:linear-gradient(135deg,#0096c7,#0077a0);
-  border:none;border-radius:50%;font-size:20px;
-  cursor:pointer;color:white;flex-shrink:0;
-  box-shadow:0 4px 14px rgba(0,150,199,0.35);
-}
-.mic-btn.recording{background:linear-gradient(135deg,#ff3b30,#cc2222);animation:mp 0.8s ease-in-out infinite;}
-@keyframes mp{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
-.send-btn{width:44px;height:44px;background:rgba(255,255,255,0.08);border:1.5px solid rgba(255,255,255,0.12);border-radius:50%;font-size:16px;cursor:pointer;color:white;}
 
-/* 入场动画 */
-#splash{position:fixed;inset:0;z-index:9999;background:linear-gradient(160deg,#0a0f1e,#0d2040);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;}
-@keyframes splashBounce{0%{transform:scale(0.3);opacity:0;}60%{transform:scale(1.1);}100%{transform:scale(1);opacity:1;}}
-@keyframes splashFade{from{opacity:1;}to{opacity:0;pointer-events:none;}}
-
-/* 成功弹窗 */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:999;align-items:flex-end;justify-content:center;}
-.modal-overlay.show{display:flex;}
-.modal-sheet{background:#0d1f3c;border-radius:28px 28px 0 0;padding:28px 22px 44px;width:100%;max-width:480px;border-top:1px solid rgba(255,255,255,0.1);}
-.modal-handle{width:40px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:0 auto 20px;}
-
-/* 底部导航 */
-.bottom-nav{display:flex;background:#0a1628;border-top:1px solid rgba(255,255,255,0.08);position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;z-index:101;}
-.nav-tab{flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 4px 12px;gap:3px;cursor:pointer;font-size:10px;color:rgba(255,255,255,0.35);border:none;background:none;font-family:inherit;transition:color 0.2s;}
-.nav-tab.active{color:#00d4ff;}
-.nav-tab-icon{font-size:20px;line-height:1;}
-.nav-badge{position:relative;display:inline-block;}
-.nav-badge::after{content:'';position:absolute;top:-2px;right:-4px;width:7px;height:7px;border-radius:50%;background:#ff4d6d;border:1.5px solid #0a1628;display:none;}
-.nav-badge.has-msg::after{display:block;}
-
-/* 烟花 */
-#confetti-overlay{display:none;position:fixed;inset:0;z-index:9998;pointer-events:all;flex-direction:column;align-items:center;justify-content:center;}
-
-/* 个人中心侧滑面板 */
-#profile-panel{
-  position:fixed;inset:0;z-index:2000;display:flex;
-  transform:translateX(100%);transition:transform 0.3s ease;
+/* 打字指示 */
+.typing-dots { display: flex; gap: 4px; align-items: center; padding: 4px 2px; }
+.typing-dots span {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #ccc;
+  animation: dot 1.2s infinite;
 }
-#profile-panel.open{transform:translateX(0);}
-#profile-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.5);}
-#profile-sheet{
-  position:relative;margin-left:auto;width:92%;max-width:400px;height:100%;
-  background:linear-gradient(180deg,#0d1f3c,#091629);
-  overflow-y:auto;z-index:1;
-  padding:0 0 40px;
+.typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes dot { 0%,80%,100%{transform:scale(0.8);opacity:0.5} 40%{transform:scale(1.1);opacity:1} }
+
+/* 快捷选项气泡 */
+.quick-options {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-top: 10px;
 }
-.profile-section{padding:20px 18px 0;}
-.profile-section-title{font-size:11px;color:rgba(255,255,255,0.35);font-weight:700;letter-spacing:1px;margin-bottom:12px;}
-.trip-card-mini{
-  background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);
-  border-radius:14px;padding:14px;margin-bottom:10px;cursor:pointer;
+.quick-option {
+  background: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 18px;
+  padding: 6px 14px;
+  font-size: 13px; color: #333;
+  cursor: pointer; transition: all 0.15s;
+  white-space: nowrap;
 }
-.trip-status{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;}
-.trip-status.pending{background:rgba(255,165,0,0.2);color:rgba(255,165,0,0.9);}
-.trip-status.confirmed{background:rgba(0,200,150,0.2);color:rgba(0,200,150,0.9);}
-.trip-status.completed{background:rgba(100,100,100,0.2);color:rgba(255,255,255,0.4);}
+.quick-option:active { background: #e0e0e0; }
+
+/* 订单卡片 */
+.order-card {
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #e5e5e5;
+  margin-top: 6px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.order-card-header {
+  background: linear-gradient(135deg, #1aad19, #07c160);
+  padding: 12px 14px;
+  color: white;
+}
+.order-card-title { font-size: 14px; font-weight: 700; }
+.order-card-sub { font-size: 11px; opacity: 0.85; margin-top: 2px; }
+.order-card-body { padding: 12px 14px; }
+.order-row {
+  display: flex; justify-content: space-between;
+  padding: 5px 0;
+  font-size: 13px;
+  border-bottom: 1px solid #f5f5f5;
+}
+.order-row:last-child { border-bottom: none; }
+.order-row .label { color: #888; }
+.order-row .val { font-weight: 600; color: #1a1a1a; }
+.order-price { font-size: 20px; font-weight: 800; color: #07c160; }
+.order-card-actions { display: flex; border-top: 1px solid #f0f0f0; }
+.order-action-btn {
+  flex: 1; padding: 11px;
+  text-align: center; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: background 0.15s;
+  border: none; background: none; font-family: inherit;
+}
+.order-action-btn:active { background: #f5f5f5; }
+.order-action-btn.primary { color: #07c160; }
+.order-action-btn.secondary { color: #888; border-right: 1px solid #f0f0f0; }
+
+/* ── 底部输入栏 ── */
+.input-bar {
+  background: var(--bar);
+  border-top: 1px solid var(--bar-border);
+  padding: 8px 10px;
+  padding-bottom: calc(8px + env(safe-area-inset-bottom));
+  flex-shrink: 0;
+  position: relative;
+  z-index: 20;
+}
+.input-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+/* 三个功能按钮 */
+.bar-btn {
+  width: 36px; height: 36px;
+  border-radius: 50%; border: none;
+  background: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: all 0.15s;
+  color: #555; font-size: 22px;
+  padding: 0;
+}
+.bar-btn:active { transform: scale(0.92); }
+.bar-btn.plus { font-size: 26px; color: #555; }
+
+/* 输入框 */
+.input-wrap {
+  flex: 1;
+  background: #fff;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  display: flex; align-items: flex-end;
+  padding: 5px 10px;
+  min-height: 36px;
+  max-height: 100px;
+}
+.chat-input {
+  flex: 1;
+  border: none; outline: none;
+  background: none;
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--text);
+  resize: none;
+  line-height: 1.5;
+  max-height: 80px;
+  overflow-y: auto;
+}
+.chat-input::placeholder { color: #bbb; }
+
+/* 发送按钮 */
+.send-btn {
+  width: 36px; height: 36px;
+  border-radius: 6px;
+  background: var(--accent);
+  border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: all 0.15s;
+  opacity: 0; pointer-events: none; transform: scale(0.8);
+}
+.send-btn.show { opacity: 1; pointer-events: all; transform: scale(1); }
+.send-btn:active { transform: scale(0.92); }
+.send-icon { width: 18px; height: 18px; fill: white; }
+
+/* ── + 号菜单面板 ── */
+.plus-panel {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  max-width: 480px; margin: 0 auto;
+  background: var(--panel-bg);
+  border-top: 1px solid var(--bar-border);
+  padding: 20px 16px;
+  padding-bottom: calc(20px + env(safe-area-inset-bottom));
+  transform: translateY(100%);
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 30;
+}
+.plus-panel.open { transform: translateY(0); }
+.panel-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px 12px; }
+.panel-item {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  cursor: pointer;
+}
+.panel-icon {
+  width: 56px; height: 56px;
+  border-radius: 14px;
+  background: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  transition: all 0.15s;
+}
+.panel-item:active .panel-icon { transform: scale(0.92); background: #f0f0f0; }
+.panel-label { font-size: 11px; color: #666; text-align: center; }
+
+/* 遮罩 */
+.overlay {
+  position: fixed; inset: 0; z-index: 25;
+  display: none;
+}
+.overlay.show { display: block; }
+
+/* 语音录音状态 */
+.voice-recording {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(0,0,0,0.6);
+  display: none;
+  align-items: center; justify-content: center;
+  flex-direction: column; gap: 16px;
+}
+.voice-recording.show { display: flex; }
+.voice-circle {
+  width: 90px; height: 90px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  border: 3px solid rgba(255,255,255,0.5);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 40px;
+  animation: voicePulse 1s ease-in-out infinite;
+}
+@keyframes voicePulse {
+  0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,0.3)}
+  50%{box-shadow:0 0 0 16px rgba(255,255,255,0)}
+}
+.voice-tip { color: rgba(255,255,255,0.9); font-size: 14px; }
+.voice-cancel {
+  background: rgba(255,255,255,0.2); color: white;
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 20px; padding: 8px 24px;
+  font-size: 14px; cursor: pointer; font-family: inherit;
+}
+
+/* 图片消息 */
+.img-bubble {
+  max-width: 180px; border-radius: 8px;
+  overflow: hidden; cursor: pointer;
+}
+.img-bubble img { width: 100%; display: block; }
+
+/* 手机号登录态 */
+.phone-prompt {
+  background: #fff6e0;
+  border: 1px solid #ffe9a0;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 13px; color: #7a5a00;
+  margin-top: 6px;
+  display: flex; align-items: center; gap: 8px;
+}
+
+/* ── 欢迎卡片（首屏三大服务按钮） ── */
+.welcome-card {
+  background: #fff;
+  border-radius: 16px;
+  margin: 8px 12px 0;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+}
+.welcome-top {
+  background: linear-gradient(135deg, #07c160, #0a9a50);
+  padding: 16px 16px 20px;
+  color: white;
+}
+.welcome-top .w-title { font-size: 15px; font-weight: 700; margin-bottom: 3px; }
+.welcome-top .w-sub { font-size: 12px; opacity: 0.85; }
+.welcome-btns {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  border-top: 1px solid #f0f0f0;
+}
+.welcome-btn {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 16px 8px;
+  cursor: pointer; transition: background 0.15s;
+  border-right: 1px solid #f0f0f0;
+  border: none; background: none; font-family: inherit;
+}
+.welcome-btn:last-child { border-right: none; }
+.welcome-btn:active { background: #f5f5f5; }
+.welcome-btn .wb-icon { font-size: 26px; margin-bottom: 6px; }
+.welcome-btn .wb-label { font-size: 13px; font-weight: 600; color: #222; }
+.welcome-btn .wb-sub { font-size: 11px; color: #999; margin-top: 2px; }
+
+/* ── 对话功能键 ── */
+.chat-mode-btn {
+  width: 36px; height: 36px;
+  border-radius: 50%; border: none;
+  background: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; font-size: 20px; color: #555;
+  transition: all 0.15s; padding: 0;
+}
+.chat-mode-btn:active { transform: scale(0.92); }
+
+/* ── 全屏浮层（我的、旅游广场等） ── */
+.fullscreen-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: #f2f2f2;
+  display: flex; flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+  max-width: 480px; margin: 0 auto;
+}
+.fullscreen-overlay.open { transform: translateX(0); }
+
+.fo-header {
+  background: #ebebeb;
+  border-bottom: 1px solid #d0d0d0;
+  padding: env(safe-area-inset-top) 0 0;
+  flex-shrink: 0;
+}
+.fo-header-inner {
+  display: flex; align-items: center;
+  padding: 12px 14px; gap: 10px;
+}
+.fo-back {
+  font-size: 22px; color: #555; cursor: pointer;
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 6px; border: none; background: none;
+}
+.fo-back:active { background: rgba(0,0,0,0.06); }
+.fo-title { font-size: 17px; font-weight: 600; color: #1a1a1a; flex: 1; }
+
+.fo-body { flex: 1; overflow-y: auto; padding-bottom: 40px; }
+
+/* ── 我的页面 ── */
+.profile-hero {
+  background: linear-gradient(135deg, #07c160, #0a9a50);
+  padding: 20px 20px 28px;
+  display: flex; align-items: center; gap: 14px;
+}
+.profile-avatar {
+  width: 64px; height: 64px; border-radius: 50%;
+  background: rgba(255,255,255,0.25);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 32px; flex-shrink: 0;
+  border: 2px solid rgba(255,255,255,0.4);
+}
+.profile-info { flex: 1; }
+.profile-name { font-size: 19px; font-weight: 700; color: white; }
+.profile-phone { font-size: 13px; color: rgba(255,255,255,0.8); margin-top: 3px; font-family: monospace; }
+.profile-arrow { color: rgba(255,255,255,0.6); font-size: 18px; }
+
+/* 积分等级条 */
+.level-bar-wrap {
+  background: white; padding: 14px 16px;
+  margin: -12px 12px 0; border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  display: flex; align-items: center; gap: 12px;
+}
+.level-badge {
+  font-size: 28px; flex-shrink: 0;
+}
+.level-info { flex: 1; }
+.level-name { font-size: 13px; font-weight: 700; color: #1a1a1a; }
+.level-pts { font-size: 12px; color: #888; margin-top: 2px; }
+.level-track { height: 5px; background: #f0f0f0; border-radius: 3px; margin-top: 7px; overflow: hidden; }
+.level-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, #07c160, #0dd162); transition: width 0.6s; }
+.level-pts-big { font-size: 22px; font-weight: 800; color: #07c160; flex-shrink: 0; }
+
+/* 列表组 */
+.menu-group {
+  background: white; border-radius: 12px;
+  margin: 12px 12px 0; overflow: hidden;
+}
+.menu-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #f5f5f5;
+  cursor: pointer; transition: background 0.15s;
+}
+.menu-item:last-child { border-bottom: none; }
+.menu-item:active { background: #f8f8f8; }
+.menu-item-icon {
+  width: 36px; height: 36px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
+}
+.menu-item-text { flex: 1; }
+.menu-item-label { font-size: 15px; color: #1a1a1a; }
+.menu-item-sub { font-size: 12px; color: #999; margin-top: 1px; }
+.menu-item-right { font-size: 13px; color: #bbb; display: flex; align-items: center; gap: 4px; }
+.menu-item-val { font-size: 13px; color: #888; margin-right: 4px; }
+
+/* ── 钱包页 ── */
+.wallet-hero {
+  background: linear-gradient(135deg, #1a8cf5, #0d6edb);
+  padding: 24px 20px 36px;
+  text-align: center; color: white;
+}
+.wallet-balance-label { font-size: 13px; opacity: 0.85; margin-bottom: 6px; }
+.wallet-balance { font-size: 42px; font-weight: 800; letter-spacing: -1px; }
+.wallet-balance-sub { font-size: 12px; opacity: 0.7; margin-top: 4px; }
+
+.wallet-actions {
+  background: white; border-radius: 12px;
+  margin: -16px 12px 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  display: flex;
+}
+.wallet-action {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; padding: 16px 8px;
+  cursor: pointer; transition: background 0.15s;
+  border: none; background: none; font-family: inherit;
+  border-right: 1px solid #f5f5f5;
+}
+.wallet-action:last-child { border-right: none; }
+.wallet-action:active { background: #f8f8f8; }
+.wallet-action .wa-icon { font-size: 26px; margin-bottom: 6px; }
+.wallet-action .wa-label { font-size: 13px; color: #333; font-weight: 500; }
+
+/* 账单列表 */
+.bill-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 13px 16px; border-bottom: 1px solid #f5f5f5;
+  background: white;
+}
+.bill-item:last-child { border-bottom: none; }
+.bill-icon {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: #f5f5f5;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
+}
+.bill-info { flex: 1; }
+.bill-title { font-size: 14px; color: #1a1a1a; }
+.bill-date { font-size: 12px; color: #bbb; margin-top: 2px; }
+.bill-amount { font-size: 16px; font-weight: 700; }
+.bill-amount.in { color: #07c160; }
+.bill-amount.out { color: #1a1a1a; }
+
+/* 积分政策 */
+.policy-section { padding: 16px 16px 0; }
+.policy-title { font-size: 16px; font-weight: 700; color: #1a1a1a; margin-bottom: 12px; }
+.policy-block {
+  background: white; border-radius: 12px;
+  padding: 14px 16px; margin-bottom: 10px;
+}
+.policy-block-title { font-size: 13px; font-weight: 700; color: #333; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.policy-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 13px; border-bottom: 1px solid #f5f5f5; }
+.policy-row:last-child { border-bottom: none; }
+.policy-row .pk { color: #666; }
+.policy-row .pv { font-weight: 600; color: #07c160; }
+.policy-note { font-size: 12px; color: #999; line-height: 1.7; margin-top: 8px; }
 </style>
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAHGLzz7_TpG2MLnqT1kCROeNIzRr-EQac&libraries=places&language=zh-CN&loading=async" async defer></script>
 </head>
 <body>
 
-<!-- 入场动画 -->
-<div id="splash">
-  <div style="font-size:72px;animation:splashBounce 0.8s ease-out forwards;">👩‍✈️</div>
-  <div style="font-size:20px;font-weight:900;color:white;">澳洲出行 AI 管家</div>
-  <div style="font-size:12px;color:rgba(255,255,255,0.4);">小本为您服务</div>
-</div>
-
-<!-- 顶部栏 -->
-<div class="top-bar">
-  <div class="top-logo">澳洲出行 AI 管家</div>
-  <div id="voice-indicator" style="display:none;font-size:11px;color:rgba(255,59,48,0.9);animation:mp 0.8s ease-in-out infinite;">🔴 录音中</div>
-  <button onclick="shareRefLink()" style="background:none;border:none;color:rgba(255,255,255,0.6);font-size:13px;cursor:pointer;padding:4px 8px;display:flex;align-items:center;gap:4px;"><span style="font-size:16px;">📤</span>分享</button>
-  <button onclick="openProfile()" style="background:none;border:none;color:rgba(255,255,255,0.6);font-size:20px;cursor:pointer;padding:4px 8px;">👤</button>
-  <button class="top-exit" id="exit-btn" onclick="exitToHome()">⇄ 切换</button>
-</div>
-
-<!-- 对话区 -->
-<div class="chat-area" id="chat-area"></div>
-
-<!-- 底部输入 -->
-<div class="input-bar no-nav" id="main-input-bar">
-  <button class="mic-btn" id="mic-btn" onclick="toggleMic()">🎤</button>
-  <input class="chat-input" id="chat-input" placeholder="说话或输入..." onkeydown="if(event.key==='Enter')sendMessage()">
-  <button class="send-btn" onclick="sendMessage()">➤</button>
-</div>
-
-<!-- 底部导航 -->
-<div class="bottom-nav" id="main-bottom-nav" style="display:none;">
-  <button class="nav-tab active" id="nav-chat" onclick="switchMainTab('chat')">
-    <span class="nav-tab-icon">💬</span>对话
-  </button>
-  <button class="nav-tab" id="nav-orders" onclick="switchMainTab('orders')">
-    <span class="nav-tab-icon">📋</span>订单
-  </button>
-  <button class="nav-tab" id="nav-messages" onclick="switchMainTab('messages')">
-    <span class="nav-tab-icon nav-badge" id="msg-badge-main">📨</span>消息
-  </button>
-  <button class="nav-tab" id="nav-plaza" onclick="window.location.href='plaza.html'">
-    <span class="nav-tab-icon">🏕️</span>广场
-  </button>
-  <button class="nav-tab" id="nav-profile" onclick="switchMainTab('profile')">
-    <span class="nav-tab-icon">👤</span>我的
-  </button>
-</div>
-
-<!-- 成功弹窗 -->
-<div class="modal-overlay" id="success-modal">
-  <div class="modal-sheet">
-    <div class="modal-handle"></div>
-    <div style="text-align:center;font-size:50px;margin-bottom:10px;">✅</div>
-    <div style="text-align:center;font-size:20px;font-weight:900;color:white;margin-bottom:6px;">预约已提交！</div>
-    <div style="text-align:center;font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:20px;">订单号：<span id="suc-id" style="color:white;font-weight:700;"></span></div>
-    <div style="background:rgba(0,212,255,0.06);border:1px solid rgba(0,212,255,0.2);border-radius:14px;padding:14px;margin-bottom:14px;text-align:center;">
-      <div style="font-size:13px;color:rgba(255,255,255,0.7);line-height:1.8;">
-        💬 司机确认后会与您联系<br>请与司机确认费用并完成付款
-      </div>
+<!-- 顶部 -->
+<div class="header">
+  <div class="header-inner">
+    <div class="header-avatar">✈️</div>
+    <div class="header-info">
+      <div class="header-name">出行管家小本</div>
+      <div class="header-sub" id="agent-status">澳洲机场接送 · 随时为您服务</div>
     </div>
-    <button onclick="closeSuccess()" style="width:100%;padding:14px;background:rgba(0,150,199,0.3);border:1.5px solid rgba(0,150,199,0.4);border-radius:14px;color:white;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">好的！</button>
+    <div class="header-more" onclick="goToDriver()">⋯</div>
   </div>
 </div>
 
-<!-- 个人中心侧滑面板 -->
-<div id="profile-panel">
-  <div id="profile-overlay" onclick="closeProfile()"></div>
-  <div id="profile-sheet">
-    <!-- 顶部 -->
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 18px 0;">
-      <div style="font-size:16px;font-weight:900;color:white;">👤 个人中心</div>
-      <button onclick="closeProfile()" style="background:rgba(255,255,255,0.1);border:none;color:rgba(255,255,255,0.6);border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer;font-family:inherit;">关闭</button>
+<!-- 聊天区 -->
+<div class="chat-scroll" id="chat-scroll">
+  <div class="date-divider"><span id="today-label"></span></div>
+  <div id="chat-body"></div>
+</div>
+
+<!-- 底部输入栏 -->
+<div class="input-bar">
+  <div class="input-row">
+    <!-- + 号 -->
+    <button class="bar-btn plus" onclick="togglePanel()" id="plus-btn" title="更多">＋</button>
+
+    <!-- 输入框 -->
+    <div class="input-wrap">
+      <textarea class="chat-input" id="chat-input"
+        placeholder="发消息..."
+        rows="1"
+        oninput="onInputChange()"
+        onkeydown="onKeyDown(event)"></textarea>
     </div>
 
-    <!-- 用户信息 -->
-    <div class="profile-section" id="profile-user-info" style="margin-top:16px;">
-      <div style="background:rgba(0,150,199,0.1);border:1px solid rgba(0,150,199,0.2);border-radius:16px;padding:16px;">
-        <div style="display:flex;align-items:center;gap:12px;">
-          <div style="width:48px;height:48px;background:rgba(0,150,199,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;">👤</div>
-          <div>
-            <div id="profile-name" style="font-size:16px;font-weight:800;color:white;">—</div>
-            <div id="profile-phone" style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:2px;">—</div>
-          </div>
-        </div>
+    <!-- 语音 -->
+    <button class="bar-btn" id="voice-btn" onclick="startVoice()" title="语音输入">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="9" y="2" width="6" height="13" rx="3"/>
+        <path d="M5 10a7 7 0 0014 0"/>
+        <line x1="12" y1="20" x2="12" y2="23"/>
+        <line x1="8" y1="23" x2="16" y2="23"/>
+      </svg>
+    </button>
+
+    <!-- 对话功能键（语音通话模式） -->
+    <button class="chat-mode-btn" id="chat-mode-btn" onclick="toggleChatMode()" title="对话模式">💬</button>
+
+    <!-- 发送（有文字时显示） -->
+    <button class="send-btn" id="send-btn" onclick="sendMessage()">
+      <svg class="send-icon" viewBox="0 0 24 24"><path d="M2 12L22 2 14 22 11 13 2 12z"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- + 号面板 -->
+<div class="overlay" id="overlay" onclick="closePanel()"></div>
+<div class="plus-panel" id="plus-panel">
+  <div class="panel-grid">
+    <div class="panel-item" onclick="openBooking()">
+      <div class="panel-icon" style="background:linear-gradient(135deg,#e8f8ee,#d0f5e0);">🚖</div>
+      <div class="panel-label">预约用车</div>
+    </div>
+    <div class="panel-item" onclick="openWallet()">
+      <div class="panel-icon" style="background:linear-gradient(135deg,#e8f0ff,#d0e0ff);">💳</div>
+      <div class="panel-label">支付</div>
+    </div>
+    <div class="panel-item" onclick="openPlaza()">
+      <div class="panel-icon" style="background:linear-gradient(135deg,#fff4e0,#ffe8c0);">🌿</div>
+      <div class="panel-label">旅游广场</div>
+    </div>
+    <div class="panel-item" onclick="triggerPhoto()">
+      <div class="panel-icon">📷</div>
+      <div class="panel-label">拍照</div>
+    </div>
+    <div class="panel-item" onclick="triggerAlbum()">
+      <div class="panel-icon">🖼️</div>
+      <div class="panel-label">相册</div>
+    </div>
+    <div class="panel-item" onclick="sendLocation()">
+      <div class="panel-icon">📍</div>
+      <div class="panel-label">我的位置</div>
+    </div>
+    <div class="panel-item" onclick="openProfile()">
+      <div class="panel-icon" style="background:linear-gradient(135deg,#f0f0f0,#e0e0e0);">👤</div>
+      <div class="panel-label">我的</div>
+    </div>
+    <div class="panel-item" onclick="goToDriver()">
+      <div class="panel-icon">🧑‍✈️</div>
+      <div class="panel-label">司机端</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 我的 浮层 ══ -->
+<div class="fullscreen-overlay" id="profile-overlay">
+  <div class="fo-header">
+    <div class="fo-header-inner">
+      <button class="fo-back" onclick="closeOverlay('profile-overlay')">‹</button>
+      <div class="fo-title">我的</div>
+    </div>
+  </div>
+  <div class="fo-body">
+    <!-- 头像区 -->
+    <div class="profile-hero">
+      <div class="profile-avatar" id="p-avatar">👤</div>
+      <div class="profile-info">
+        <div class="profile-name" id="p-name">点击登录</div>
+        <div class="profile-phone" id="p-phone">预约需先登录</div>
+      </div>
+      <div class="profile-arrow">›</div>
+    </div>
+
+    <!-- 积分等级 -->
+    <div class="level-bar-wrap" style="margin-top:-14px;">
+      <div class="level-badge" id="p-level-icon">🚗</div>
+      <div class="level-info">
+        <div class="level-name" id="p-level-name">新手会员</div>
+        <div class="level-pts" id="p-level-sub">再积 500 分升级银卡</div>
+        <div class="level-track"><div class="level-fill" id="p-level-fill" style="width:5%;"></div></div>
+      </div>
+      <div class="level-pts-big" id="p-points">0<span style="font-size:12px;color:#999;font-weight:400;">分</span></div>
+    </div>
+
+    <!-- 订单 / 钱包 / 积分明细 -->
+    <div class="menu-group" style="margin-top:20px;">
+      <div class="menu-item" onclick="openMyOrders()">
+        <div class="menu-item-icon" style="background:#fff3e0;">📋</div>
+        <div class="menu-item-text"><div class="menu-item-label">我的订单</div></div>
+        <div class="menu-item-right"><span class="menu-item-val" id="p-order-count">-</span>›</div>
+      </div>
+      <div class="menu-item" onclick="openWallet()">
+        <div class="menu-item-icon" style="background:#e3f2ff;">💳</div>
+        <div class="menu-item-text"><div class="menu-item-label">钱包</div><div class="menu-item-sub">余额、充值、账单</div></div>
+        <div class="menu-item-right"><span class="menu-item-val" id="p-balance">$0.00</span>›</div>
+      </div>
+      <div class="menu-item" onclick="openPointsDetail()">
+        <div class="menu-item-icon" style="background:#e8f8ee;">⭐</div>
+        <div class="menu-item-text"><div class="menu-item-label">积分明细</div></div>
+        <div class="menu-item-right">›</div>
       </div>
     </div>
 
-    <!-- 积分 -->
-    <div class="profile-section" style="margin-top:16px;">
-      <div style="background:rgba(200,160,32,0.08);border:1px solid rgba(200,160,32,0.2);border-radius:16px;padding:16px;display:flex;justify-content:space-between;align-items:center;">
-        <div>
-          <div id="profile-level" style="font-size:12px;color:rgba(200,160,32,0.8);margin-bottom:4px;font-weight:700;">✈️ 旅行者</div>
-          <div id="profile-points" style="font-size:28px;font-weight:900;color:#c8a020;">—</div>
-          <div id="profile-cash" style="font-size:11px;color:rgba(200,160,32,0.5);margin-top:2px;">折现价值 —</div>
-        </div>
-        <div style="text-align:right;">
-          <div style="font-size:11px;color:rgba(255,255,255,0.35);">升级进度</div>
-          <div id="profile-dividend" style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.5);margin-top:4px;">—</div>
-          <div style="font-size:10px;color:rgba(255,255,255,0.25);margin-top:4px;">100积分=A$1</div>
-        </div>
+    <!-- 其他 -->
+    <div class="menu-group">
+      <div class="menu-item" onclick="openPointsPolicy()">
+        <div class="menu-item-icon" style="background:#f5f0ff;">📜</div>
+        <div class="menu-item-text"><div class="menu-item-label">积分政策与条款</div></div>
+        <div class="menu-item-right">›</div>
       </div>
-    </div>
-
-    <!-- 我的订单 -->
-    <div class="profile-section" style="margin-top:20px;">
-      <div class="profile-section-title">📋 我的订单</div>
-      <div id="profile-trips">
-        <div style="text-align:center;padding:20px;color:rgba(255,255,255,0.3);font-size:13px;">加载中...</div>
-      </div>
-    </div>
-
-    <!-- 推荐链接 -->
-    <div class="profile-section" style="margin-top:20px;">
-      <div class="profile-section-title">🔗 推荐好友得积分</div>
-      <div style="background:linear-gradient(135deg,rgba(0,150,199,0.1),rgba(0,100,150,0.05));border:1px solid rgba(0,150,199,0.25);border-radius:14px;padding:16px;">
-        <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:6px;">你的专属推荐链接</div>
-        <div id="profile-ref-link" style="font-size:12px;color:rgba(0,212,255,0.8);background:rgba(0,212,255,0.06);border-radius:8px;padding:10px;word-break:break-all;margin-bottom:12px;user-select:all;">—</div>
-        <div style="display:flex;gap:8px;">
-          <button onclick="copyRefLink()" style="flex:1;padding:11px;background:rgba(0,150,199,0.25);border:1px solid rgba(0,150,199,0.4);border-radius:10px;color:white;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">📋 复制</button>
-          <button onclick="shareRefLink()" style="flex:1;padding:11px;background:rgba(0,200,150,0.2);border:1px solid rgba(0,200,150,0.3);border-radius:10px;color:white;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">📤 分享</button>
-        </div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.3);text-align:center;margin-top:10px;">好友注册后双方各得20积分，永久二级收益</div>
-      </div>
-    </div>
-
-    <!-- 功能项 -->
-    <div class="profile-section" style="margin-top:20px;">
-      <div style="font-size:11px;color:rgba(255,255,255,0.35);font-weight:700;letter-spacing:1px;margin-bottom:12px;">设置</div>
-
-      <div onclick="showAddressBookEditor()" style="display:flex;align-items:center;gap:12px;padding:14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:12px;margin-bottom:8px;cursor:pointer;">
-        <div style="font-size:20px;width:28px;text-align:center;">📍</div>
-        <div style="flex:1;">
-          <div style="font-size:14px;font-weight:600;color:white;">我的地址簿</div>
-          <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:2px;">管理常用地址</div>
-        </div>
-        <div style="color:rgba(255,255,255,0.3);font-size:16px;">›</div>
-      </div>
-
-      <div onclick="addToHome()" style="display:flex;align-items:center;gap:12px;padding:14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:12px;margin-bottom:8px;cursor:pointer;">
-        <div style="font-size:20px;width:28px;text-align:center;">📱</div>
-        <div style="flex:1;">
-          <div style="font-size:14px;font-weight:600;color:white;">添加到手机桌面</div>
-          <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:2px;">下次一秒打开</div>
-        </div>
-        <div style="color:rgba(255,255,255,0.3);font-size:16px;">›</div>
-      </div>
-
-      <div onclick="switchAgentGender()" style="display:flex;align-items:center;gap:12px;padding:14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:12px;margin-bottom:8px;cursor:pointer;">
-        <div style="font-size:20px;width:28px;text-align:center;">🔄</div>
-        <div style="flex:1;">
-          <div style="font-size:14px;font-weight:600;color:white;">切换管家</div>
-          <div id="profile-agent-name" style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:2px;">当前：${agentName}</div>
-        </div>
-        <div style="color:rgba(255,255,255,0.3);font-size:16px;">›</div>
-      </div>
-
-      <div onclick="switchToDriver()" style="display:flex;align-items:center;gap:12px;padding:14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:12px;margin-bottom:8px;cursor:pointer;">
-        <div style="font-size:20px;width:28px;text-align:center;">🧑‍✈️</div>
-        <div style="flex:1;">
-          <div style="font-size:14px;font-weight:600;color:white;">切换为司机身份</div>
-          <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:2px;">进入司机工作台</div>
-        </div>
-        <div style="color:rgba(255,255,255,0.3);font-size:16px;">›</div>
-      </div>
-
-      <div onclick="logoutUser()" style="display:flex;align-items:center;gap:12px;padding:14px;background:rgba(255,59,48,0.05);border:1px solid rgba(255,59,48,0.15);border-radius:12px;cursor:pointer;">
-        <div style="font-size:20px;width:28px;text-align:center;">🚪</div>
-        <div style="flex:1;">
-          <div style="font-size:14px;font-weight:600;color:rgba(255,100,90,0.8);">退出账号</div>
-          <div style="font-size:12px;color:rgba(255,255,255,0.3);margin-top:2px;">清除本地信息</div>
-        </div>
-        <div style="color:rgba(255,59,48,0.3);font-size:16px;">›</div>
+      <div class="menu-item" onclick="goToDriver()">
+        <div class="menu-item-icon" style="background:#f0f7ff;">🧑‍✈️</div>
+        <div class="menu-item-text"><div class="menu-item-label">切换司机端</div></div>
+        <div class="menu-item-right">›</div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- 烟花 -->
-<div id="confetti-overlay">
-  <canvas id="confetti-canvas" style="position:absolute;inset:0;width:100%;height:100%;"></canvas>
-  <div style="position:relative;z-index:1;background:#0d1f3c;border-radius:24px;padding:28px 32px;text-align:center;border:1px solid rgba(255,255,255,0.1);max-width:280px;">
-    <div style="font-size:48px;margin-bottom:10px;">🎉</div>
-    <div style="font-size:18px;font-weight:900;color:white;margin-bottom:4px;">恭喜获得</div>
-    <div style="font-size:42px;font-weight:900;color:rgba(0,212,255,0.9);" id="confetti-pts">+5</div>
-    <div style="font-size:14px;color:rgba(255,255,255,0.4);margin-bottom:20px;">积分</div>
-    <button onclick="closeConfetti()" style="background:linear-gradient(135deg,#0096c7,#0077a0);color:white;border:none;border-radius:12px;padding:12px 28px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;width:100%;">太棒了！</button>
+<!-- ══ 钱包 浮层 ══ -->
+<div class="fullscreen-overlay" id="wallet-overlay">
+  <div class="fo-header">
+    <div class="fo-header-inner">
+      <button class="fo-back" onclick="closeOverlay('wallet-overlay')">‹</button>
+      <div class="fo-title">钱包</div>
+    </div>
   </div>
+  <div class="fo-body">
+    <div class="wallet-hero">
+      <div class="wallet-balance-label">钱包余额（AUD）</div>
+      <div class="wallet-balance">$0.00</div>
+      <div class="wallet-balance-sub">可用于抵扣出行费用</div>
+    </div>
+    <div class="wallet-actions">
+      <button class="wallet-action" onclick="alert('充值功能即将开放')">
+        <div class="wa-icon">＋</div>
+        <div class="wa-label">充值</div>
+      </button>
+      <button class="wallet-action" onclick="alert('提现功能即将开放')">
+        <div class="wa-icon">↑</div>
+        <div class="wa-label">提现</div>
+      </button>
+      <button class="wallet-action" onclick="alert('转账功能即将开放')">
+        <div class="wa-icon">⇄</div>
+        <div class="wa-label">转账</div>
+      </button>
+      <button class="wallet-action" onclick="alert('收款功能即将开放')">
+        <div class="wa-icon">↓</div>
+        <div class="wa-label">收款</div>
+      </button>
+    </div>
+
+    <div style="padding:16px 12px 6px;font-size:12px;color:#999;font-weight:600;">账单明细</div>
+    <div class="menu-group" style="margin-top:0;">
+      <div class="bill-item">
+        <div class="bill-icon">✈️</div>
+        <div class="bill-info">
+          <div class="bill-title">机场接送 · 接机</div>
+          <div class="bill-date">消费 · 2025-06-20</div>
+        </div>
+        <div class="bill-amount out">-$85.00</div>
+      </div>
+      <div class="bill-item">
+        <div class="bill-icon">💰</div>
+        <div class="bill-info">
+          <div class="bill-title">钱包充值</div>
+          <div class="bill-date">入账 · 2025-06-18</div>
+        </div>
+        <div class="bill-amount in">+$100.00</div>
+      </div>
+      <div style="text-align:center;padding:20px;font-size:13px;color:#bbb;">暂无更多账单</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 积分政策 浮层 ══ -->
+<div class="fullscreen-overlay" id="policy-overlay">
+  <div class="fo-header">
+    <div class="fo-header-inner">
+      <button class="fo-back" onclick="closeOverlay('policy-overlay')">‹</button>
+      <div class="fo-title">积分政策与条款</div>
+    </div>
+  </div>
+  <div class="fo-body">
+    <div class="policy-section">
+      <div class="policy-block">
+        <div class="policy-block-title">⭐ 如何获得积分</div>
+        <div class="policy-row"><span class="pk">完成一次接送</span><span class="pv">+20分</span></div>
+        <div class="policy-row"><span class="pk">完成一次包车</span><span class="pv">+50分</span></div>
+        <div class="policy-row"><span class="pk">五星好评</span><span class="pv">+10分</span></div>
+        <div class="policy-row"><span class="pk">推荐新用户注册</span><span class="pv">+30分</span></div>
+        <div class="policy-row"><span class="pk">推荐司机加入</span><span class="pv">+100分</span></div>
+        <div class="policy-row"><span class="pk">生日双倍积分</span><span class="pv">×2</span></div>
+      </div>
+
+      <div class="policy-block">
+        <div class="policy-block-title">🏆 会员等级</div>
+        <div class="policy-row"><span class="pk">🚗 普通会员</span><span class="pv">0 – 499分</span></div>
+        <div class="policy-row"><span class="pk">⭐ 银卡会员</span><span class="pv">500 – 1999分</span></div>
+        <div class="policy-row"><span class="pk">🏅 金卡会员</span><span class="pv">2000 – 4999分</span></div>
+        <div class="policy-row"><span class="pk">👑 钻石会员</span><span class="pv">5000分以上</span></div>
+        <div class="policy-note">金卡及以上享受优先调度、专属司机、节假日免排队权益。</div>
+      </div>
+
+      <div class="policy-block">
+        <div class="policy-block-title">💰 积分兑换</div>
+        <div class="policy-row"><span class="pk">100积分 =</span><span class="pv">$1 抵扣</span></div>
+        <div class="policy-row"><span class="pk">最高抵扣比例</span><span class="pv">订单金额30%</span></div>
+        <div class="policy-row"><span class="pk">积分有效期</span><span class="pv">自获得起2年</span></div>
+        <div class="policy-note">积分仅限本人使用，不可转让、不可提现、不可与其他优惠叠加使用。</div>
+      </div>
+
+      <div class="policy-block">
+        <div class="policy-block-title">📋 使用条款</div>
+        <div class="policy-note">
+          1. 积分由澳洲出行平台发放，最终解释权归平台所有。<br><br>
+          2. 恶意刷单、虚假评价等违规行为将导致积分清零及账号封禁。<br><br>
+          3. 平台有权根据运营需要调整积分规则，调整前将提前7天通知用户。<br><br>
+          4. 积分不视为财产，账号注销后积分自动清零，不予补偿。<br><br>
+          5. 如有争议，以平台后台数据为准。
+        </div>
+      </div>
+
+      <div style="height:20px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 隐藏文件输入 -->
+<input type="file" id="photo-input" accept="image/*" capture="environment" style="display:none" onchange="handleImage(this)">
+<input type="file" id="album-input" accept="image/*" style="display:none" onchange="handleImage(this)">
+
+<!-- 语音录音遮罩 -->
+<div class="voice-recording" id="voice-overlay">
+  <div class="voice-circle">🎤</div>
+  <div class="voice-tip">正在聆听，松开取消</div>
+  <button class="voice-cancel" onclick="cancelVoice()">取消</button>
 </div>
 
 <script>
-const SUPA_URL='https://gxocvpmgfjvmmkkbswgo.supabase.co';
-const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b2N2cG1nZmp2bW1ra2Jzd2dvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyNDc4NzAsImV4cCI6MjA5NTgyMzg3MH0.ExUNuOP8YyHQmItY6cdl1Euj7nOXqQq-rQT5-7aNerE';
-const TENANT_ID='00000000-0000-0000-0000-000000000001';
+// ── 配置 ──
+const SUPA_URL = 'https://gxocvpmgfjvmmkkbswgo.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b2N2cG1nZmp2bW1ra2Jzd2dvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyNDc4NzAsImV4cCI6MjA5NTgyMzg3MH0.ExUNuOP8YyHQmItY6cdl1Euj7nOXqQq-rQT5-7aNerE';
+const TENANT_ID = '00000000-0000-0000-0000-000000000001';
 
 // ── 状态 ──
-let currentRole = null; // 'passenger' | 'driver'
-let currentGender = null; // 'male' | 'female'
-let agentEmoji = '👩‍✈️'; // 默认小本
-let agentName = '小本';
-window._ttsVoice = 'FunAudioLLM/CosyVoice2-0.5B:diana';
-// 恢复已存性别（含currentGender同步）
-(function(){
-  const g = localStorage.getItem('au_gender');
-  if(g === 'female'){
-    currentGender='female';
-    agentEmoji='🧑‍✈️'; agentName='小墨';
-    window._ttsVoice='FunAudioLLM/CosyVoice2-0.5B:charles';
-  } else if(g === 'male'){
-    currentGender='male';
-    agentEmoji='👩‍✈️'; agentName='小本';
-    window._ttsVoice='FunAudioLLM/CosyVoice2-0.5B:diana';
-  }
-})();
-let aiHistory = [];
-let isRecording = false;
-let recognition = null;
-let bookingSubmitted = false;
+let chatHistory = [];
+let currentPassenger = null;   // {phone, name, wechat_id}
+let pendingOrder = null;       // 待确认订单数据
+let voiceRecognition = null;
+let panelOpen = false;
 
-const S={direction:null,address:null,date:null,time:null,vehicle:null,price:null,base_price:0,surcharge:0,distance_km:0,
-  name:null,phone:null,wechat:null,payment:'wechat',
-  trip_type:'standard',wait_hours:0,charter_hours:4,charter_km:0,hourly_rate:0};
+// ── 初始化 ──
+window.addEventListener('DOMContentLoaded', () => {
+  // 今日日期
+  document.getElementById('today-label').textContent =
+    new Date().toLocaleDateString('zh-CN', {month:'numeric',day:'numeric',weekday:'short'});
 
-// ── 积分体系 ──
-const POINTS_RULES = {
-  register:       10,
-  first_booking:  20,
-  booking:         5,
-  trip_complete:  10,
-  review_star:     2,
-  review_text:     5,
-  share:           5,
-  referral_join:  20,
-  referral_trip:  30,
-  round_trip:     15,
-};
-
-const LEVELS = [
-  {name:'旅行者', icon:'✈️', min:0,    max:499,  multiplier:1.0, perks:'基础积分'},
-  {name:'常旅客', icon:'🌟', min:500,  max:1999, multiplier:1.2, perks:'积分×1.2'},
-  {name:'钻石会员',icon:'💎',min:2000, max:4999, multiplier:1.5, perks:'积分×1.5 + 优先派单'},
-  {name:'创始合伙人',icon:'👑',min:5000,max:Infinity,multiplier:3.0,perks:'积分×3 + 季度分红'},
-];
-
-function getLevel(points){
-  return LEVELS.find(l=>points>=l.min && points<=l.max) || LEVELS[0];
-}
-
-async function awardPoints(phone, action, customPts){
-  try{
-    const pts = customPts || POINTS_RULES[action] || 0;
-    if(!pts || !phone) return 0;
-    const contacts = await supaGet(`contacts?phone=eq.${phone}&tenant_id=eq.${TENANT_ID}&select=id,voucher_balance`);
-    if(!contacts||!contacts.length) return 0;
-    const current = contacts[0].voucher_balance||0;
-    const level = getLevel(current);
-    const finalPts = Math.round(pts * level.multiplier);
-    const newTotal = current + finalPts;
-    await fetch(SUPA_URL+'/rest/v1/contacts?id=eq.'+contacts[0].id,{
-      method:'PATCH',
-      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'},
-      body:JSON.stringify({voucher_balance:newTotal})
-    });
-    return finalPts;
-  }catch(e){ console.warn('积分入账失败:', e.message); return 0; }
-}
-let returnTrip=null; // 往返回程信息
-
-const COMFORT_VEHICLES=[
-  {type:'comfort_5',icon:'🚗',name:'舒适 5座',cap:'1-4人',price:70,seats:5},
-  {type:'comfort_8',icon:'🚐',name:'舒适 8座',cap:'5-7人',price:90,seats:8},
-  {type:'comfort_12',icon:'🚌',name:'舒适 12座',cap:'8-11人',price:120,seats:12},
-  {type:'comfort_15',icon:'🚎',name:'舒适 15座',cap:'12-14人',price:160,seats:15},
-];
-const LUXURY_VEHICLES=[
-  {type:'luxury_alpha',icon:'✨',name:'阿尔法 6/7座',cap:'1-6人',price:113,seats:7,luxury:true},
-  {type:'luxury_8',icon:'⭐',name:'奔驰 8座',cap:'5-7人',price:113,seats:8,luxury:true},
-  {type:'luxury_12',icon:'💎',name:'奔驰 12座',cap:'8-11人',price:150,seats:12,luxury:true},
-  {type:'luxury_15',icon:'👑',name:'奔驰 15座',cap:'12-14人',price:200,seats:15,luxury:true},
-];
-const VEHICLES=[...COMFORT_VEHICLES,...LUXURY_VEHICLES];
-
-const chatArea=document.getElementById('chat-area');
-function scrollBottom(){setTimeout(()=>{chatArea.scrollTop=chatArea.scrollHeight;},100);}
-
-function addMsg(html,isUser=false){
-  const div=document.createElement('div');
-  div.className='msg'+(isUser?' user':'');
-  const av=isUser?(currentGender==='female'?'👩':'👤'):agentEmoji;
-  div.innerHTML=`<div class="msg-av">${av}</div><div class="msg-bubble">${html}</div>`;
-  chatArea.appendChild(div);scrollBottom();return div;
-}
-function addTyping(){
-  const div=document.createElement('div');div.className='msg';
-  div.innerHTML=`<div class="msg-av">${agentEmoji}</div><div class="typing-bubble"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
-  chatArea.appendChild(div);scrollBottom();return div;
-}
-function delay(ms){return new Promise(r=>setTimeout(r,ms));}
-async function agentSay(html,ms=700){const t=addTyping();await delay(ms);t.remove();addMsg(html);speak(html);}
-
-function fixMessageRoles(messages) {
-  // 确保以user开头，且user/assistant交替
-  const fixed = [];
-  let lastRole = null;
-  for (const m of messages) {
-    if (!m.content?.trim()) continue;
-    if (m.role === lastRole) {
-      // 同role合并内容
-      if (fixed.length > 0) {
-        fixed[fixed.length-1].content += '\n' + m.content;
-      }
-    } else {
-      fixed.push({role: m.role, content: m.content});
-      lastRole = m.role;
-    }
-  }
-  // 必须以user开头
-  while (fixed.length > 0 && fixed[0].role !== 'user') fixed.shift();
-  return fixed;
-}
-
-// ── 用户画像 ──
-function getProfile(){ return JSON.parse(localStorage.getItem('au_profile')||'{}'); }
-function saveProfile(updates){
-  const p = getProfile();
-  Object.assign(p, updates);
-  localStorage.setItem('au_profile', JSON.stringify(p));
-  console.log('画像更新：', updates);
-}
-
-// AI提取用户信息并存入画像
-// ── 用户画像自动化升级系统 ──
-async function extractProfileFromChat(userMsg, botReply){
-  const p = getProfile();
-  const now = new Date().toISOString();
-  const combined = userMsg + ' ' + (botReply||'');
-
-  // ── 1. 地址学习（多次出现自动升级为常用地址）──
-  const addrMatch = userMsg.match(/我住([^，。！？\s,]{5,30})/);
-  if(addrMatch) saveProfile({home_address: addrMatch[1]});
-
-  // ── 2. 行程历史计数（自动识别高频用户）──
-  const tripCount = (p.trip_count||0) + (S.direction ? 1 : 0);
-  if(S.direction) saveProfile({trip_count: tripCount, last_trip_at: now});
-
-  // ── 3. 出发时间规律（统计早/中/晚偏好）──
-  if(S.time){
-    const h = parseInt(S.time.split(':')[0]);
-    const timePref = h < 10 ? 'early_morning' : h < 14 ? 'morning' : h < 19 ? 'afternoon' : 'evening';
-    const timeCount = p.time_counts || {};
-    timeCount[timePref] = (timeCount[timePref]||0) + 1;
-    // 超过3次同一时段→升级为偏好
-    const maxPref = Object.entries(timeCount).sort((a,b)=>b[1]-a[1])[0];
-    saveProfile({time_counts: timeCount, preferred_time: maxPref?.[0]});
+  // 恢复登录态
+  const saved = localStorage.getItem('passenger');
+  if (saved) {
+    try { currentPassenger = JSON.parse(saved); } catch(e) {}
   }
 
-  // ── 4. 车型偏好（选车行为自动记录）──
-  if(S.vehicle) {
-    const vCount = p.vehicle_counts || {};
-    vCount[S.vehicle] = (vCount[S.vehicle]||0) + 1;
-    const maxV = Object.entries(vCount).sort((a,b)=>b[1]-a[1])[0];
-    saveProfile({vehicle_counts: vCount, preferred_vehicle: maxV?.[0]});
-  }
+  // 欢迎语 + 服务卡片
+  setTimeout(() => {
+    addAIMsg('出行管家小本来啦，要预约什么服务？');
+    addWelcomeCard();
+  }, 300);
 
-  // ── 5. 家庭画像（关键词触发，一次性升级）──
-  const numMap={'两':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10};
-  const famMatch = userMsg.match(/我们?([2-9]|[两三四五六七八九十]+)个人/);
-  if(famMatch){ const n=parseInt(famMatch[1])||numMap[famMatch[1]]; if(n) saveProfile({family_size:n}); }
-  if(!p.has_spouse && /老婆|太太|妻子|老公|先生|丈夫/.test(combined)) saveProfile({has_spouse:true});
-  if(!p.has_kids && /小孩|孩子|儿子|女儿|宝宝/.test(combined)) saveProfile({has_kids:true});
-  if(!p.has_elders && /爸妈|父母|老人|爷爷|奶奶/.test(combined)) saveProfile({has_elders:true});
+  // 输入框自适应高度
+  const ta = document.getElementById('chat-input');
+  ta.addEventListener('input', () => {
+    ta.style.height = 'auto';
+    ta.style.height = Math.min(ta.scrollHeight, 80) + 'px';
+  });
+});
 
-  // ── 6. 出行场景偏好（接机/送机/包车比例）──
-  if(S.direction || S.trip_type==='charter'){
-    const sceneCount = p.scene_counts || {};
-    const scene = S.trip_type==='charter' ? 'charter' : S.direction;
-    sceneCount[scene] = (sceneCount[scene]||0) + 1;
-    saveProfile({scene_counts: sceneCount});
-  }
-
-  // ── 7. 航班信息 ──
-  const flightMatch = userMsg.match(/([A-Z]{2}\d{3,4})/i);
-  if(flightMatch) saveProfile({last_flight: flightMatch[0].toUpperCase()});
-
-  // ── 8. 高频用户标签自动升级 ──
-  if(tripCount >= 3 && !p.is_frequent) saveProfile({is_frequent: true});
-  if(tripCount >= 10 && !p.is_vip) saveProfile({is_vip: true});
-
-  // ── 9. 习惯推断：早机/提前偏好 ──
-  if(/早点|早一点|提前|宁早勿晚/.test(combined)) saveProfile({prefers_early: true});
-  if(/经常.*机场|常跑机场|每个月|每周/.test(combined)) saveProfile({frequent_airport: true});
+// ── 时间格式 ──
+function nowTime() {
+  return new Date().toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
 }
 
-// 画像注入Prompt（让AI知道用户是谁）
-function buildProfileContext(){
-  const p = getProfile();
-  if(!p || Object.keys(p).length === 0) return '';
-  let ctx = '';
-  if(p.is_vip) ctx += '\n⭐ VIP用户（已完成10+次订单），直接叫"老朋友"。';
-  else if(p.is_frequent) ctx += '\n👤 老用户（已完成3+次订单）。';
-  if(p.preferred_vehicle) ctx += `\n常用车型：${p.preferred_vehicle}，选车时优先展示。`;
-  if(p.preferred_time){
-    const timeLabel = {early_morning:'清晨（6-10点）',morning:'上午（10-14点）',afternoon:'下午（14-19点）',evening:'晚上（19点后）'};
-    ctx += `\n出行习惯：偏好${timeLabel[p.preferred_time]||p.preferred_time}出发。`;
+// ── 滚动到底部 ──
+function scrollBottom(smooth=true) {
+  const s = document.getElementById('chat-scroll');
+  setTimeout(() => s.scrollTo({top: s.scrollHeight, behavior: smooth?'smooth':'instant'}), 80);
+}
+
+// ── 添加AI消息 ──
+function addAIMsg(text, options=[]) {
+  const body = document.getElementById('chat-body');
+  const row = document.createElement('div');
+  row.className = 'msg-row';
+  row.innerHTML = `
+    <div class="msg-avatar">✈️</div>
+    <div style="flex:1;max-width:78%;">
+      <div class="bubble ai">${text.replace(/\n/g,'<br>')}
+        ${options.length ? `<div class="quick-options">${options.map(o=>`<div class="quick-option" onclick="quickReply('${o}')">${o}</div>`).join('')}</div>` : ''}
+      </div>
+      <div class="msg-time">${nowTime()}</div>
+    </div>`;
+  body.appendChild(row);
+  scrollBottom();
+  return row;
+}
+
+// ── 添加用户消息 ──
+function addUserMsg(text) {
+  const body = document.getElementById('chat-body');
+  const row = document.createElement('div');
+  row.className = 'msg-row me';
+  row.innerHTML = `
+    <div>
+      <div class="bubble me">${text.replace(/\n/g,'<br>')}</div>
+      <div class="msg-time" style="text-align:right;">${nowTime()}</div>
+    </div>`;
+  body.appendChild(row);
+  scrollBottom();
+}
+
+// ── 添加图片消息 ──
+function addImgMsg(src, isMe=true) {
+  const body = document.getElementById('chat-body');
+  const row = document.createElement('div');
+  row.className = 'msg-row' + (isMe?' me':'');
+  const inner = isMe
+    ? `<div><div class="bubble me" style="padding:4px;"><div class="img-bubble"><img src="${src}"/></div></div><div class="msg-time" style="text-align:right;">${nowTime()}</div></div>`
+    : `<div class="msg-avatar">✈️</div><div><div class="bubble ai" style="padding:4px;"><div class="img-bubble"><img src="${src}"/></div></div><div class="msg-time">${nowTime()}</div></div>`;
+  row.innerHTML = inner;
+  body.appendChild(row);
+  scrollBottom();
+}
+
+// ── 打字指示 ──
+function showTyping() {
+  const body = document.getElementById('chat-body');
+  const row = document.createElement('div');
+  row.className = 'msg-row'; row.id = 'typing-row';
+  row.innerHTML = `<div class="msg-avatar">✈️</div><div class="bubble ai"><div class="typing-dots"><span></span><span></span><span></span></div></div>`;
+  body.appendChild(row);
+  scrollBottom();
+}
+function hideTyping() {
+  document.getElementById('typing-row')?.remove();
+}
+
+// ── 添加订单卡片 ──
+function addOrderCard(order) {
+  const body = document.getElementById('chat-body');
+  const row = document.createElement('div');
+  row.className = 'msg-row';
+  const dirLabel = order.trip_type==='charter'?'包车':order.direction==='from_airport'?'接机':'送机';
+  row.innerHTML = `
+    <div class="msg-avatar">✈️</div>
+    <div style="max-width:85%;">
+      <div class="order-card">
+        <div class="order-card-header">
+          <div class="order-card-title">🎉 预约成功！</div>
+          <div class="order-card-sub">订单已提交，司机将尽快确认</div>
+        </div>
+        <div class="order-card-body">
+          <div class="order-row"><span class="label">服务</span><span class="val">${dirLabel}</span></div>
+          <div class="order-row"><span class="label">时间</span><span class="val">${order.time_display||'-'}</span></div>
+          <div class="order-row"><span class="label">上车</span><span class="val" style="max-width:60%;text-align:right;font-size:12px;">${order.pickup||'-'}</span></div>
+          <div class="order-row"><span class="label">车型</span><span class="val">${order.vehicle_type||'-'}</span></div>
+          <div class="order-row"><span class="label">参考价</span><span class="order-price">$${order.price||'-'}</span></div>
+        </div>
+        <div class="order-card-actions">
+          <button class="order-action-btn secondary" onclick="addAIMsg('好的，如有变化请随时告知我。')">知道了</button>
+          <button class="order-action-btn primary" onclick="addAIMsg('如需修改或取消，请直接告诉我。')">修改</button>
+        </div>
+      </div>
+      <div class="msg-time">${nowTime()}</div>
+    </div>`;
+  body.appendChild(row);
+  scrollBottom();
+}
+
+// ── 输入框变化 ──
+function onInputChange() {
+  const val = document.getElementById('chat-input').value.trim();
+  const sendBtn = document.getElementById('send-btn');
+  const voiceBtn = document.getElementById('voice-btn');
+  if (val) {
+    sendBtn.classList.add('show');
+    voiceBtn.style.display = 'none';
+  } else {
+    sendBtn.classList.remove('show');
+    voiceBtn.style.display = 'flex';
   }
-  if(p.family_size) ctx += `\n通常${p.family_size}人出行。`;
-  if(p.has_kids) ctx += '\n有小孩同行，注意安全座椅提示。';
-  if(p.has_elders) ctx += '\n有老人同行，建议宽敞车型。';
-  if(p.frequent_airport) ctx += '\n高频机场用户，可直接问日期时间。';
-  if(p.scene_counts){
-    const topScene = Object.entries(p.scene_counts).sort((a,b)=>b[1]-a[1])[0];
-    if(topScene) ctx += `\n最常用服务：${topScene[0]==='to_airport'?'送机':topScene[0]==='from_airport'?'接机':'包车'}。`;
+}
+
+// ── 回车发送 ──
+function onKeyDown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
   }
-  return ctx;
 }
 
-// 构建个性化问候
-function buildPersonalGreeting(){
-  const p = getProfile();
-  const saved = getPassenger();
-  const hints = [];
-  if(p.home_address) hints.push(`住址${p.home_address}`);
-  if(p.family_size) hints.push(`家里${p.family_size}人`);
-  if(p.preferred_vehicle) hints.push(`偏好${p.preferred_vehicle}`);
-  if(p.frequent_airport) hints.push('常跑机场');
-  if(p.has_elders) hints.push('家有老人');
-  return hints.join('，');
-}
+// ── 发送消息 ──
+async function sendMessage(presetText) {
+  const input = document.getElementById('chat-input');
+  const text = presetText || input.value.trim();
+  if (!text) return;
 
-// ── 语音 ──
-// ── TTS via SiliconFlow ──
-let ttsAudio = null;
-let ttsQueue = [];
-let ttsPlaying = false;
+  if (!presetText) {
+    input.value = '';
+    input.style.height = 'auto';
+    onInputChange();
+  }
 
-function stopTTS() {
-  ttsQueue = []; // 清空队列
-  ttsPlaying = false;
-  if(ttsAudio){ ttsAudio.pause(); ttsAudio.src=''; ttsAudio=null; }
-}
+  addUserMsg(text);
+  chatHistory.push({role:'user', content: text});
+  closePanel();
 
-async function processTTSQueue() {
-  if(ttsPlaying || ttsQueue.length === 0) return;
-  ttsPlaying = true;
-  const {text, onDone} = ttsQueue.shift();
+  showTyping();
+  document.getElementById('agent-status').textContent = '正在输入...';
+
   try {
-    const voice = window._ttsVoice || 'FunAudioLLM/CosyVoice2-0.5B:diana';
-    const dialect = localStorage.getItem('dialect_noticed') === 'cantonese' ? 'cantonese' : undefined;
-    const res = await fetch('/api/tts', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({text, voice, ...(dialect && {dialect})})
+    const systemPrompt = buildSystemPrompt();
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': '', 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:1000, system:systemPrompt, messages:chatHistory })
     });
-    if(res.ok){
+
+    let reply, options=[];
+
+    if (!res.ok) {
+      // 本地演示模式（无API）
+      const result = localAI(text);
+      reply = result.text;
+      options = result.options || [];
+    } else {
       const data = await res.json();
-      if(data.audio){
-        const audio = new Audio('data:audio/mp3;base64,' + data.audio);
-        ttsAudio = audio;
-        audio.onended = () => { ttsAudio=null; ttsPlaying=false; onDone&&onDone(); processTTSQueue(); };
-        audio.onerror = () => { ttsAudio=null; ttsPlaying=false; onDone&&onDone(); processTTSQueue(); };
-        audio.play().catch(()=>{ ttsPlaying=false; onDone&&onDone(); processTTSQueue(); });
-        return;
+      const raw = data.content?.[0]?.text || '抱歉，请重试';
+      // 解析 [OPTIONS:xxx,yyy] 标记
+      const optMatch = raw.match(/\[OPTIONS:(.*?)\]/);
+      if (optMatch) {
+        options = optMatch[1].split(',').map(s=>s.trim());
+        reply = raw.replace(/\[OPTIONS:.*?\]/,'').trim();
+      } else {
+        reply = raw;
       }
     }
-  } catch(e){ console.warn('TTS:', e.message); }
-  ttsPlaying=false; onDone&&onDone(); processTTSQueue();
+
+    hideTyping();
+    chatHistory.push({role:'assistant', content: reply});
+    if (chatHistory.length > 30) chatHistory = chatHistory.slice(-30);
+    addAIMsg(reply, options);
+    document.getElementById('agent-status').textContent = '澳洲机场接送 · 随时为您服务';
+
+    // 检查是否需要提交订单
+    if (pendingOrder && /确认|下单|好的|对|是的/.test(text)) {
+      await submitOrder();
+    }
+
+  } catch(e) {
+    hideTyping();
+    const result = localAI(text);
+    addAIMsg(result.text, result.options||[]);
+    document.getElementById('agent-status').textContent = '澳洲机场接送 · 随时为您服务';
+  }
 }
 
-async function speak(text) {
-  const clean = text.replace(/<[^>]*>/g,'').replace(/\*\*([^*]+)\*\*/g,'$1').replace(/\s+/g,' ')
-    .replace(/AUD\s*([\d.]+)/g,'澳元$1').replace(/A\$([\d.]+)/g,'澳元$1').replace(/\$([\d.]+)/g,'澳元$1')
-    .replace(/美元/g,'澳元').trim();
-  if(!clean) return;
-  if(recognition){ try{ recognition.stop(); }catch(e){} }
-  ttsQueue.push({text: clean, onDone: null});
-  processTTSQueue();
+// ── 系统提示 ──
+function buildSystemPrompt() {
+  const passengerInfo = currentPassenger
+    ? `当前乘客：${currentPassenger.name||''}，手机：${currentPassenger.phone}`
+    : '乘客尚未登录';
+  return `你是澳洲出行AI管家小本，服务澳洲华人社区的机场接送预约助理。
+
+${passengerInfo}
+
+你的核心任务是通过自然对话收集预约信息：
+1. 服务类型：接机（from_airport）/ 送机（to_airport）/ 包车（charter）
+2. 日期和时间（航班到达/出发时间）
+3. 航班号（可选）
+4. 上车/送达地址
+5. 人数和行李数
+6. 车型偏好（5座轿车/8座MPV/12座大巴）
+7. 乘客姓名和手机号（如未登录）
+
+收集完整后，用中文报价并确认，格式：
+- 接机：机场→目的地，25km内$XX起
+- 送机：出发地→机场，同上
+- 包车：$XX/小时，最少4小时
+
+风格：简洁自然，像朋友聊天，不要过分客套。
+当你需要给用户提供选项时，用[OPTIONS:选项1,选项2,选项3]标记放在回复末尾。
+当信息收集完整准备提交时，用[READY_TO_BOOK]标记。
+
+当前城市：墨尔本。服务区域：墨尔本全市及周边。`;
+}
+
+// ── 本地AI演示（无API时使用）──
+function localAI(text) {
+  const t = text.toLowerCase();
+
+  if (/接机|接我|接一下|从机场/.test(text)) {
+    return {
+      text: '好的，帮您安排接机 ✈️\n\n请问哪天到达墨尔本？航班号是？',
+      options: ['今天到', '明天到', '后天到']
+    };
+  }
+  if (/送机|送我|去机场/.test(text)) {
+    return {
+      text: '好的，安排送机 🧳\n\n请问哪天的航班？几点要到机场？',
+      options: ['今天出发', '明天出发']
+    };
+  }
+  if (/包车|旅游|大洋路|菲利普岛/.test(text)) {
+    return {
+      text: '包车旅游没问题！🚌\n\n请问您想去哪里？几个人？',
+      options: ['大洋路一日游', '菲利普岛', '雅拉河谷', '自定义']
+    };
+  }
+  if (/今天|明天|后天|\d+月|\d+日/.test(text)) {
+    return {
+      text: '明白了。请问从哪里上车？几个人、几件行李？',
+      options: ['市区/CBD', '南区', '东区', '西区']
+    };
+  }
+  if (/\d+人|[一二三四五六七八]人/.test(text)) {
+    return {
+      text: '好的。请问您偏好哪种车型？\n\n🚗 5座轿车 | 🚐 8座MPV | 🚌 12座大巴',
+      options: ['5座轿车 ~$70', '8座MPV ~$90', '12座大巴 ~$120']
+    };
+  }
+  if (/\$|报价|多少钱|价格/.test(text)) {
+    return {
+      text: '墨尔本机场接送参考价（25km内）：\n\n🚗 轿车 $70起\n🚐 MPV $90起\n🚌 12座 $120起\n\n超出25km按$1.2/km加收，夜间和节假日+10%',
+      options: ['我要预约', '了解更多']
+    };
+  }
+  if (/订单|我的订单|查询/.test(text)) {
+    return {
+      text: '请问您的手机号是？我来帮您查询订单。',
+      options: []
+    };
+  }
+  if (/你好|hi|hello|嗨/.test(text)) {
+    return {
+      text: '你好！我是出行管家小本 😊\n\n需要预约机场接送或包车旅游吗？',
+      options: ['✈️ 接机', '🧳 送机', '🚌 包车']
+    };
+  }
+
+  return {
+    text: '收到！请问您具体需要什么服务？',
+    options: ['✈️ 接机', '🧳 送机', '🚌 包车旅游']
+  };
+}
+
+// ── 快捷回复 ──
+function quickReply(text) {
+  sendMessage(text);
+}
+
+// ── 快速预约 ──
+function quickBook(type) {
+  closePanel();
+  sendMessage(type);
+}
+
+// ── 欢迎卡片 ──
+function addWelcomeCard() {
+  const body = document.getElementById('chat-body');
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'padding:0 12px;animation:fadeUp 0.25s ease;';
+  wrap.innerHTML = `
+    <div class="welcome-card">
+      <div class="welcome-top">
+        <div class="w-title">🛫 澳洲机场接送</div>
+        <div class="w-sub">墨尔本全市 · 24小时服务 · 华人司机</div>
+      </div>
+      <div class="welcome-btns">
+        <button class="welcome-btn" onclick="quickBook('接机')">
+          <div class="wb-icon">✈️</div>
+          <div class="wb-label">接机</div>
+          <div class="wb-sub">从机场接您</div>
+        </button>
+        <button class="welcome-btn" onclick="quickBook('送机')">
+          <div class="wb-icon">🧳</div>
+          <div class="wb-label">送机</div>
+          <div class="wb-sub">送您去机场</div>
+        </button>
+        <button class="welcome-btn" onclick="quickBook('包车旅游')">
+          <div class="wb-icon">🚌</div>
+          <div class="wb-label">包车</div>
+          <div class="wb-sub">旅游定制</div>
+        </button>
+      </div>
+    </div>`;
+  body.appendChild(wrap);
+  scrollBottom();
+}
+
+// ── 对话模式切换 ──
+let chatModeActive = false;
+function toggleChatMode() {
+  chatModeActive = !chatModeActive;
+  const btn = document.getElementById('chat-mode-btn');
+  if (chatModeActive) {
+    btn.textContent = '🟢';
+    btn.title = '退出对话模式';
+    addAIMsg('已进入语音对话模式，点击麦克风即可连续对话 🎤');
+  } else {
+    btn.textContent = '💬';
+    btn.title = '对话模式';
+  }
+}
+
+// ── 浮层控制 ──
+function openOverlay(id) {
+  closePanel();
+  document.getElementById(id).classList.add('open');
+}
+function closeOverlay(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// ── 我的 ──
+function openProfile() {
+  openOverlay('profile-overlay');
+  loadProfileData();
+}
+
+function loadProfileData() {
+  if (currentPassenger) {
+    document.getElementById('p-name').textContent = currentPassenger.name || '用户';
+    document.getElementById('p-phone').textContent = currentPassenger.phone || '';
+    document.getElementById('p-avatar').textContent = '😊';
+    // 积分示例
+    const pts = currentPassenger.points || 0;
+    document.getElementById('p-points').innerHTML = pts + '<span style="font-size:12px;color:#999;font-weight:400;">分</span>';
+    const levels = [{name:'🚗 新手会员',icon:'🚗',next:500},{name:'⭐ 银卡会员',icon:'⭐',next:2000},{name:'🏅 金卡会员',icon:'🏅',next:5000},{name:'👑 钻石会员',icon:'👑',next:99999}];
+    const lvl = pts<500?levels[0]:pts<2000?levels[1]:pts<5000?levels[2]:levels[3];
+    document.getElementById('p-level-icon').textContent = lvl.icon;
+    document.getElementById('p-level-name').textContent = lvl.name;
+    const pct = Math.min(pts/(lvl.next||5000)*100, 100);
+    document.getElementById('p-level-fill').style.width = pct + '%';
+    document.getElementById('p-level-sub').textContent = pts < 5000 ? `再积 ${lvl.next - pts} 分升级` : '已达最高等级';
+  }
+}
+
+// ── 钱包 ──
+function openWallet() { openOverlay('wallet-overlay'); closePanel(); }
+
+// ── 积分政策 ──
+function openPointsPolicy() { openOverlay('policy-overlay'); }
+
+// ── 积分明细 ──
+function openPointsDetail() {
+  addAIMsg('您的积分明细：\n\n⭐ 当前积分：0分\n🏆 等级：新手会员\n\n完成一次出行即可获得积分！');
+  closeOverlay('profile-overlay');
+}
+
+// ── 我的订单 ──
+function openMyOrders() {
+  closeOverlay('profile-overlay');
+  sendMessage('查询我的订单');
+}
+
+// ── 预约用车（菜单进入） ──
+function openBooking() {
+  closePanel();
+  addAIMsg('请问您需要哪种服务？', ['✈️ 接机', '🧳 送机', '🚌 包车旅游']);
+}
+
+// ── 旅游广场 ──
+function openPlaza() {
+  closePanel();
+  window.location.href = 'plaza.html';
+}
+
+// ── 查询订单（旧入口保留） ──
+function showMyOrders() {
+  closePanel();
+  sendMessage('查询我的订单');
+}
+
+// ── 发送位置 ──
+function sendLocation() {
+  closePanel();
+  if (!navigator.geolocation) { addAIMsg('您的浏览器不支持定位，请直接输入地址。'); return; }
+  addUserMsg('📍 正在获取位置...');
+  navigator.geolocation.getCurrentPosition(pos => {
+    const { latitude: lat, longitude: lng } = pos.coords;
+    const body = document.getElementById('chat-body');
+    const last = body.lastElementChild;
+    last.querySelector('.bubble').textContent = `📍 我的位置 (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+    chatHistory.push({role:'user', content:`我的当前位置：纬度${lat.toFixed(4)}，经度${lng.toFixed(4)}`});
+    addAIMsg('收到您的位置！这个地址作为出发点/目的地吗？', ['是的', '不，我另外输入地址']);
+  }, () => {
+    addAIMsg('获取位置失败，请直接输入地址。');
+  });
+}
+
+// ── + 号面板 ──
+function togglePanel() {
+  panelOpen ? closePanel() : openPanel();
+}
+function openPanel() {
+  panelOpen = true;
+  document.getElementById('plus-panel').classList.add('open');
+  document.getElementById('overlay').classList.add('show');
+  document.getElementById('plus-btn').style.transform = 'rotate(45deg)';
+  document.getElementById('plus-btn').style.transition = 'transform 0.2s';
+}
+function closePanel() {
+  panelOpen = false;
+  document.getElementById('plus-panel').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+  document.getElementById('plus-btn').style.transform = 'rotate(0deg)';
+}
+
+// ── 拍照/相册 ──
+function triggerPhoto() {
+  closePanel();
+  document.getElementById('photo-input').click();
+}
+function triggerAlbum() {
+  closePanel();
+  document.getElementById('album-input').click();
+}
+function handleImage(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    addImgMsg(e.target.result, true);
+    chatHistory.push({role:'user', content:'[用户发送了一张图片]'});
+    setTimeout(() => addAIMsg('收到图片！这是行程截图还是地址图片？', ['行程截图', '地址/地图', '其他']), 600);
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
 }
 
 // ── 语音输入 ──
-// ── 连续语音对话 ──
-let voiceMode = false; // 是否在连续语音模式
-let isSpeaking = false; // Bot是否在说话
-let isUserSpeaking = false; // 用户是否在说话
-
-function toggleMic(){
-  if(!('webkitSpeechRecognition' in window)&&!('SpeechRecognition' in window)){alert('请使用Safari或Chrome');return;}
-  if(voiceMode){
-    stopVoiceMode();
-  } else {
-    startVoiceMode();
-  }
-}
-
-function startVoiceMode(){
-  if(navigator.mediaDevices?.getUserMedia){
-    navigator.mediaDevices.getUserMedia({audio:true}).catch(()=>{});
-  }
-  voiceMode = true;
-  const btn = document.getElementById('mic-btn');
-  btn.textContent = '🔴';
-  btn.classList.add('recording');
-  const vi = document.getElementById('voice-indicator');
-  if(vi){ vi.style.display='block'; vi.textContent='🎙️ 连续对话中...'; }
-  startListeningLoop();
-}
-
-function stopVoiceMode(){
-  voiceMode = false;
-  recognition?.stop();
-  stopTTS();
-  const btn = document.getElementById('mic-btn');
-  btn.textContent = '🎤';
-  btn.classList.remove('recording');
-  const vi = document.getElementById('voice-indicator');
-  if(vi) vi.style.display='none';
-}
-
-let voicePauseTimer = null;
-let pendingVoiceText = '';
-
-function clearVoicePauseTimer() {
-  if(voicePauseTimer){ clearTimeout(voicePauseTimer); voicePauseTimer = null; }
-}
-
-function startListeningLoop(){
-  if(!voiceMode) return;
-  const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
-  recognition = new SR();
-  recognition.lang = window._recognitionLang || 'zh-CN';
-  recognition.continuous = true;
-  recognition.interimResults = true;
-
-  recognition.onstart = () => {
-    isRecording = true;
-    isUserSpeaking = false;
-    updateVoiceStatus('👂 听着...');
-  };
-
-  recognition.onspeechstart = () => {
-    isUserSpeaking = true;
-    if(isSpeaking){ stopTTS(); isSpeaking=false; }
-    clearVoicePauseTimer();
-    updateVoiceStatus('🗣️ 说话中...');
-  };
-
-  recognition.onspeechend = () => {
-    isUserSpeaking = false;
-    updateVoiceStatus('⏳ 等待中...');
-  };
-
-  recognition.onresult = (e) => {
-    let finalText = '';
-    let interim = '';
-    for(let i = e.resultIndex; i < e.results.length; i++){
-      if(e.results[i].isFinal) finalText += e.results[i][0].transcript;
-      else interim += e.results[i][0].transcript;
-    }
-    // 实时显示interim文字
-    const current = (finalText + interim).trim();
-    if(current) document.getElementById('chat-input').value = current;
-
-    if(finalText.trim()){
-      // 有final结果：累加到pending，重置2秒定时器
-      pendingVoiceText += finalText;
-      clearVoicePauseTimer();
-      voicePauseTimer = setTimeout(() => {
-        const text = pendingVoiceText.trim();
-        pendingVoiceText = '';
-        clearVoicePauseTimer();
-        if(text){
-          document.getElementById('chat-input').value = '';
-          updateVoiceStatus('💭 思考中...');
-          sendVoiceMessage(text);
-        }
-      }, 2000);
-    } else if(interim.trim()){
-      // 只有interim：重置定时器等待final
-      clearVoicePauseTimer();
-      voicePauseTimer = setTimeout(() => {
-        // 超时还没有final，用interim强制发送
-        const text = (pendingVoiceText + interim).trim();
-        pendingVoiceText = '';
-        clearVoicePauseTimer();
-        if(text){
-          document.getElementById('chat-input').value = '';
-          updateVoiceStatus('💭 思考中...');
-          sendVoiceMessage(text);
-        }
-      }, 3000);
-    }
-  };
-
-  recognition.onend = () => {
-    isRecording = false;
-    if(voiceMode && !isSpeaking && !voicePauseTimer){
-      setTimeout(startListeningLoop, 200);
-    }
-  };
-
-  recognition.onerror = (e) => {
-    if(e.error === 'no-speech' && voiceMode){
-      clearVoicePauseTimer();
-      setTimeout(startListeningLoop, 500);
-    }
-  };
-
-  try { recognition.start(); } catch(e){}
-}
-
-function updateVoiceStatus(text){
-  const vi = document.getElementById('voice-indicator');
-  if(vi) vi.textContent = text;
-}
-
-// ── 谐音纠错表 ──
-const HOMOPHONES = [
-  // 送机 谐音
-  {wrong:/宋集|送集|宋机|松鸡|松机|颂机|送鸡/g, right:'送机'},
-  // 接机 谐音
-  {wrong:/阶级|接急|姐急|接集|截机|街机|阶机/g, right:'接机'},
-  // 包车 谐音
-  {wrong:/炮车|跑车(?!.*跑车跑车)|抱车|保车|豹车/g, right:'包车'},
-  // 机场 谐音
-  {wrong:/鸡场|机厂|及场/g, right:'机场'},
-  // 墨尔本 谐音
-  {wrong:/墨尔笨|默尔本|莫尔本/g, right:'墨尔本'},
-  // 粤语常见误识别
-  {wrong:/王先生(?=.*[嘅㗎咁系唔]|$)/g, right:'冇问题'},  // 冇问题→王先生
-  {wrong:/系嘎|系架|系呀/g, right:'系嘅'},
-  {wrong:/无问题|冇问提/g, right:'冇问题'},
-  {wrong:/落鸡|落基/g, right:'落机'},
-  {wrong:/几时候/g, right:'几时'},
-];
-
-// 方言关键词检测
-const DIALECT_SIGNALS = {
-  cantonese: /系咩|唔係|点解|咁样|几时|而家|喺边|搭车|落机|边度|OK嘅|啱㗎/,
-  hokkien: /哪里去|安怎|遮|欲去叨|叨位/,
-};
-
-// ── 相对日期解析 ──
-function detectRoundTrip(text){
-  // 往返由AI引导，无需自动检测
-}
-
-function parseRelativeDate(text){
-  const today = new Date();
-  const wd = ['日','一','二','三','四','五','六'];
-
-  // 今天/明天/后天
-  if(/今天|今日/.test(text)) return today.toISOString().split('T')[0];
-  if(/明天|明日/.test(text)){
-    const d=new Date(today); d.setDate(d.getDate()+1);
-    return d.toISOString().split('T')[0];
-  }
-  if(/后天/.test(text)){
-    const d=new Date(today); d.setDate(d.getDate()+2);
-    return d.toISOString().split('T')[0];
-  }
-
-  // 下周X / 这周X
-  const weekMatch = text.match(/(下周|这周|本周|下下周)(一|二|三|四|五|六|日|天)/);
-  if(weekMatch){
-    const isNext = weekMatch[1]==='下周'||weekMatch[1]==='下下周';
-    const isNextNext = weekMatch[1]==='下下周';
-    const targetDay = wd.indexOf(weekMatch[2]==='天'?'日':weekMatch[2]);
-    const d = new Date(today);
-    const curDay = d.getDay();
-    let diff = targetDay - curDay;
-    if(isNext) diff += 7;
-    if(isNextNext) diff += 14;
-    if(diff<=0 && !isNext) diff += 7;
-    d.setDate(d.getDate()+diff);
-    return d.toISOString().split('T')[0];
-  }
-
-  // X号（当月或下月）
-  const dayMatch = text.match(/(\d{1,2})[号日]/);
-  if(dayMatch){
-    const day = parseInt(dayMatch[1]);
-    const d = new Date(today.getFullYear(), today.getMonth(), day);
-    if(d < today) d.setMonth(d.getMonth()+1);
-    return d.toISOString().split('T')[0];
-  }
-
-  // X月X号
-  const fullMatch = text.match(/(\d{1,2})月(\d{1,2})[号日]/);
-  if(fullMatch){
-    const d = new Date(today.getFullYear(), parseInt(fullMatch[1])-1, parseInt(fullMatch[2]));
-    return d.toISOString().split('T')[0];
-  }
-
-  return null;
-}
-
-function correctHomophones(text){
-  let corrected = text;
-  for(const h of HOMOPHONES){
-    if(h.wrong.test(corrected)){
-      const original = corrected;
-      corrected = corrected.replace(h.wrong, h.right);
-      // 提示用户已纠错
-      if(original !== corrected){
-        window._lastCorrection = {original, corrected, keyword: h.right};
-      }
-    }
-    h.wrong.lastIndex = 0; // 重置regex
-  }
-  return corrected;
-}
-
-function detectDialect(text){
-  if(DIALECT_SIGNALS.cantonese.test(text)) return 'cantonese';
-  if(DIALECT_SIGNALS.hokkien.test(text)) return 'hokkien';
-  return null;
-}
-
-async function sendVoiceMessage(text){
-  // 重新下单拦截（区别于修改）
-  if(/再.*订|重新.*订|新.*订单|下.*次|再来.*次|另.*一单|再.*预约/i.test(text)){
-    addMsg(text, true);
-    document.getElementById('chat-input').value='';
-    // 完整重置S对象
-    S.direction=null;S.address=null;S.date=null;S.time=null;
-    S.vehicle=null;S.price=null;S.base_price=0;S.surcharge=0;
-    S.distance_km=0;S.trip_type='standard';S.wait_hours=0;
-    bookingSubmitted=false;
-    await agentSay('好的，重新来一单！这次去哪里，几点出发？',300);
+function startVoice() {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    addAIMsg('您的浏览器不支持语音输入，请使用Safari或Chrome。');
     return;
   }
-
-  // 查订单/打开订单快捷拦截（AI也会输出ACTION，双重保障）
-  if(/打开.*订单|订单.*打开|查.*订单|看.*订单/i.test(text)){
-    addMsg(text, true);
-    document.getElementById('chat-input').value='';
-    openProfile();
-    await agentSay('好，个人中心打开了',200);
-    return;
-  }
-
-  // 往返检测（统一由detectRoundTrip处理）
-  detectRoundTrip(text);
-  // 换车型快捷拦截：不走AI直接弹车型卡
-  if(/换.*车|改.*车|重新.*选车|换个车|车型|换车型/i.test(text) && S.address && S.direction){
-    addMsg(text, true);
-    document.getElementById('chat-input').value='';
-    // 从历史对话补提取日期时间
-    const allHist = aiHistory.map(m=>m.content).join(' ');
-    extractInfo(allHist);
-    await agentSay('好，重新选个车型吧',200);
-    setTimeout(()=>showVehicleCards(),600);
-    return;
-  }
-
-  // 谐音纠错
-  const corrected = correctHomophones(text);
-  const displayText = corrected !== text ?
-    `${corrected} <span style="font-size:11px;color:rgba(0,212,255,0.6);">（已识别"${text}"→"${corrected}"）</span>` :
-    text;
-  addMsg(displayText, true);
-  if(text && text.trim()) aiHistory.push({role:'user',content:corrected.trim()});
-  if(currentRole==='passenger') extractInfo(corrected);
-
-  // 方言检测
-  const dialect = detectDialect(text);
-  if(dialect && !localStorage.getItem('dialect_noticed')){
-    localStorage.setItem('dialect_noticed', dialect);
-    if(dialect==='cantonese'){
-      window._recognitionLang = 'zh-HK'; // 切换到粤语声学模型
-      setTimeout(()=>agentSay('我听到你用广东话，你可以继续用广东话或普通话跟我说，都OK嘅😊'),500);
-    } else {
-      setTimeout(()=>agentSay('你也可以用习惯的语言跟我说话，普通话、广东话都可以'),500);
-    }
-  }
-
-  const typing = addTyping();
-  updateVoiceStatus('💭 思考中...');
-
-  try{
-    const prompt = currentRole==='driver' ? buildDriverPrompt() : buildPrompt();
-    let cleanHistory = fixMessageRoles(aiHistory.slice(-20));
-    if(cleanHistory.length===0) cleanHistory=[{role:'user',content:text.trim()||'你好'}];
-    const res = await fetch('/api/chat',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({system:prompt, messages:cleanHistory})
-    });
-    if(!res.ok){const t=await res.text();throw new Error('HTTP'+res.status+': '+t.slice(0,200));}
-    const data = await res.json();
-    const reply = data.content?.[0]?.text || data.error || '请再说一遍';
-    aiHistory.push({role:'assistant', content:reply});
-    if(aiHistory.length>20) aiHistory=aiHistory.slice(-20);
-    typing.remove();
-
-    // 从AI回复里补提取时间/地址/方向
-    extractInfo(reply);
-    // 检测AI是否在引导地址输入→显示粘贴快捷卡
-    if(/复制.*地址|粘贴.*地址|地址.*输入框|把地址|copy.*address/i.test(reply)){
-      showPasteAddressHint();
-    }
-    // 智能识别用户性别
-    detectUserGender(text);
-
-    // 联系方式收集模式：从语音里提取姓名和电话
-    if(window._contactListening){
-      const phoneMatch = text.match(/0[45]\d{8}|\d{4}\s?\d{3}\s?\d{3}/);
-      const nameMatch = text.match(/(?:我叫|姓名|称呼|叫我|我是)\s*([^\s，。！？]{2,5})/)||
-                        (text.length<=5 && !phoneMatch ? [null, text.trim()] : null);
-      if(phoneMatch){
-        document.getElementById('c-phone').value = phoneMatch[0].replace(/\s/g,'');
-      }
-      if(nameMatch && nameMatch[1]){
-        document.getElementById('c-name').value = nameMatch[1];
-      }
-      // 如果姓名和电话都有了，自动提交
-      const name = document.getElementById('c-name')?.value.trim();
-      const phone = document.getElementById('c-phone')?.value.trim();
-      if(name && phone){
-        window._contactListening = false;
-        await delay(500);
-        await submitFromForm();
-      }
-    }
-    
-    // 提取用户画像
-    extractProfileFromChat(text, reply);
-
-    const actionMatch = reply.match(/\[ACTION:\s*(\w+)\s*(\w+)?\]/);
-    const clean = reply.replace(/\[ACTION:.*?\]/,'').trim();
-    addMsg(clean);
-
-    // 语音播报，播完后重启监听
-    isSpeaking = true;
-    updateVoiceStatus('🔊 回答中...');
-    speakAndResume(clean, ()=>{
-      isSpeaking = false;
-      pendingVoiceText = '';
-      clearVoicePauseTimer();
-      if(voiceMode) {
-        updateVoiceStatus('👂 听着...');
-        startListeningLoop();
-      }
-    });
-
-    if(actionMatch){
-      await delay(800);
-      handleAction(actionMatch[1], actionMatch[2]);
-    }
-  } catch(e){
-    typing.remove();
-    addMsg('错误：'+e.message);
-    isSpeaking = false;
-    pendingVoiceText = '';
-    clearVoicePauseTimer();
-    if(voiceMode) startListeningLoop();
-  }
+  document.getElementById('voice-overlay').classList.add('show');
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  voiceRecognition = new SR();
+  voiceRecognition.lang = 'zh-CN';
+  voiceRecognition.onresult = e => {
+    const text = e.results[0][0].transcript;
+    cancelVoice();
+    sendMessage(text);
+  };
+  voiceRecognition.onerror = voiceRecognition.onend = () => cancelVoice();
+  voiceRecognition.start();
+}
+function cancelVoice() {
+  voiceRecognition?.stop();
+  document.getElementById('voice-overlay').classList.remove('show');
 }
 
-async function speakAndResume(text, onDone) {
-  const clean = text.replace(/<[^>]*>/g,'').replace(/\s+/g,' ')
-    .replace(/AUD\s*([\d.]+)/g,'澳元$1').replace(/A\$([\d.]+)/g,'澳元$1').replace(/\$([\d.]+)/g,'澳元$1')
-    .replace(/美元/g,'澳元').trim();
-  if(!clean){ onDone && onDone(); return; }
-  stopTTS();
-  if(recognition){ try{ recognition.stop(); }catch(e){} }
-  // 清空队列，只播这一条，播完执行onDone
-  ttsQueue = [{text: clean, onDone}];
-  processTTSQueue();
-}
-
-// ── 身份和数据 ──
-function getLocal(key){try{return JSON.parse(localStorage.getItem(key)||'null');}catch{return null;}}
-function setLocal(key,val){localStorage.setItem(key,JSON.stringify(val));}
-function getPassenger(){return getLocal('au_passenger')||{};}
-function getDriver(){return getLocal('au_driver')||{};}
-function genRef(){return Math.random().toString(36).substring(2,8).toUpperCase();}
-
-function saveAddress(addr){
-  if(!addr)return;
-  let a=getLocal('au_addresses')||[];
-  a=a.filter(x=>x!==addr);a.unshift(addr);a=a.slice(0,3);
-  setLocal('au_addresses',a);
-}
-function getSavedAddresses(){return getLocal('au_addresses')||[];}
-
-// 性别猜测（根据名字）
-function guessGender(name){
-  if(!name)return null;
-  const femaleChars=/丽|芳|美|娟|英|华|玲|红|燕|静|雪|梅|兰|秀|珍|萍|晶|云|霞|彩|凤/;
-  const maleChars=/明|强|伟|勇|军|刚|涛|峰|磊|超|龙|飞|鹏|昊|浩|宇|博|杰|辉|威/;
-  if(femaleChars.test(name))return 'female';
-  if(maleChars.test(name))return 'male';
-  return null;
-}
-
-// 根据用户性别决定管家性别（异性）+ TTS音色
-function setAgentByUserGender(userGender){
-  if(currentGender === userGender) return; // 没变就不动
-  currentGender = userGender;
-  localStorage.setItem('au_gender', userGender);
-  if(userGender==='female'){
-    agentEmoji='🧑‍✈️'; agentName='小墨';
-    window._ttsVoice = 'FunAudioLLM/CosyVoice2-0.5B:charles'; // 男声
-  } else {
-    agentEmoji='👩‍✈️'; agentName='小本';
-    window._ttsVoice = 'FunAudioLLM/CosyVoice2-0.5B:diana'; // 女声
-  }
-  // 更新顶部头像
-  const av = document.getElementById('agent-avatar');
-  const nm = document.getElementById('agent-name');
-  if(av) av.textContent = agentEmoji;
-  if(nm) nm.textContent = agentName + ' · 在线';
-}
-
-// 智能识别用户性别
-function detectUserGender(text){
-  const saved = localStorage.getItem('au_gender');
-  if(saved) return; // 已确认，不再覆盖
-
-  // 1. 明确声明
-  if(/我是男|本人男|男生|男士|先生|老爷们/.test(text)){
-    setAgentByUserGender('male'); return;
-  }
-  if(/我是女|本人女|女生|女士|小姐|姐姐|妹妹/.test(text)){
-    setAgentByUserGender('female'); return;
-  }
-
-  // 2. 名字推断（登录后的姓名）
-  const p = getPassenger();
-  if(p.name){
-    if(/[丽芳梅红霞燕玲娟秀英华兰凤莲慧云珍]/.test(p.name)){
-      setAgentByUserGender('female'); return;
-    }
-    if(/[军强明伟刚勇磊峰超杰涛波宇龙斌]/.test(p.name)){
-      setAgentByUserGender('male'); return;
-    }
-  }
-
-  // 3. 语气词推断（弱信号，仅作初始化）
-  const femaleWords = /嗯嗯|好呀|好的呀|哎呀|宝宝|老公|我家先生/;
-  const maleWords = /哥们|老铁|兄弟|媳妇|老婆|我家小孩他妈/;
-  if(femaleWords.test(text) && !maleWords.test(text)){
-    setAgentByUserGender('female');
-  } else if(maleWords.test(text) && !femaleWords.test(text)){
-    setAgentByUserGender('male');
-  }
-}
-
-// ── Supabase ──
-async function supaGet(path){
-  const res=await fetch(SUPA_URL+'/rest/v1/'+path,{
-    headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
-  });
-  if(!res.ok)return[];
-  return res.json();
-}
-async function supaInsert(table,data){
-  const res=await fetch(SUPA_URL+'/rest/v1/'+table,{
-    method:'POST',
-    headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
-    body:JSON.stringify(data)
-  });
-  if(!res.ok){const e=await res.json();throw new Error(e.message||'error');}
-  return res.json();
-}
-
-// ── 启动 ──
-window.onload=async function(){
-  // 落地读取推荐码
-  const urlRef = new URLSearchParams(window.location.search).get('ref');
-  if(urlRef) sessionStorage.setItem('incoming_ref', urlRef);
-  window.speechSynthesis.getVoices();
-  speechSynthesis.onvoiceschanged=()=>{window.speechSynthesis.getVoices();};
-
-  // 入场动画
-  await delay(1500);
-  document.getElementById('splash').style.animation='splashFade 0.5s ease forwards';
-  await delay(500);
-  document.getElementById('splash').style.display='none';
-
-  // 检查是否有记录的角色
-  const savedRole=localStorage.getItem('au_role');
-  const savedPassenger=getPassenger();
-  const savedDriver=getDriver();
-
-  if(savedRole==='passenger'&&savedPassenger.phone){
-    // 老乘客直接进
-    currentRole='passenger';
-    const g=guessGender(savedPassenger.name);
-    setAgentByUserGender(g||'male');
-    document.getElementById('exit-btn').style.display='block';
-    const _t1=localStorage.getItem('au_gender')==='female'?'小姐':'先生';
-    showBottomNav(); // 显示底部导航
-    // 检查是否有进行中的订单
-    let activeTrip = null;
-    try{
-      const recentTrips = await supaGet(`trips?passenger_phone=eq.${savedPassenger.phone}&tenant_id=eq.${TENANT_ID}&status=in.(pending,confirmed)&order=created_at.desc&limit=1`);
-      if(recentTrips && recentTrips.length) activeTrip = recentTrips[0];
-    }catch(e){}
-
-    if(activeTrip){
-      // 有进行中订单：恢复S对象并弹出确认卡
-      const t = activeTrip;
-      if(t.scheduled_at){ const dt=new Date(t.scheduled_at); S.date=dt.toISOString().split('T')[0]; S.time=`${dt.getUTCHours().toString().padStart(2,'0')}:${dt.getUTCMinutes().toString().padStart(2,'0')}`; }
-      if(t.pickup_address) S.address=t.pickup_address;
-      if(t.direction) S.direction=t.direction;
-      if(t.vehicle_type){ S.vehicle=t.vehicle_type; S.base_price=t.base_price||t.total_price; }
-      if(t.total_price) S.price=t.total_price;
-      if(t.surcharge) S.surcharge=t.surcharge;
-      if(t.distance_km) S.distance_km=t.distance_km;
-      if(t.trip_type) S.trip_type=t.trip_type;
-      await agentSay(`${agentName}来啦${savedPassenger.name?'，'+savedPassenger.name+_t1:''}！您有一个${t.status==='confirmed'?'已确认':'待确认'}的预约，帮您调出来 👇`,600);
-      showResumeOrderCard(t);
-    } else {
-      await agentSay(`${agentName}来啦${savedPassenger.name?'，'+savedPassenger.name+_t1:''}！要预约什么服务？`,700);
-      // 直接进AI对话
-    }
-  } else if(savedRole==='driver'&&savedDriver.id){
-    // 老司机直接进
-    currentRole='driver';
-    setAgentByUserGender(savedDriver.gender||'male');
-    document.getElementById('exit-btn').style.display='block';
-    await agentSay(`${agentEmoji} 来啦${savedDriver.full_name?'，'+savedDriver.full_name:''}！`,700);
-    showDriverModeChoice();
-  } else {
-    // 新用户
-    await agentSay(`${agentEmoji} 出行管家${agentName}来啦，要预约什么服务？`,800);
-    showRoleChoice();
-  }
-};
-
-// ── 角色选择 ── 直接进入乘客模式
-function showRoleChoice(){
-  selectRole('passenger');
-}
-
-async function selectRole(role){
-  currentRole=role;
-  const roleText=role==='passenger'?'我要出行':'预约往返接送';
-  addMsg(roleText,true);
-  await delay(300);
-  await agentSay('请输入手机号 📱',400);
-  showPhoneInput(role);
-}
-
-function showPhoneInput(role){
-  const div=document.createElement('div');
-  div.className='phone-input-card';
-  div.innerHTML=`
-    <input id="phone-inp" type="tel" placeholder="04XX XXX XXX 或 +86 138..." maxlength="15"
-      onkeydown="if(event.key==='Enter')submitPhone('${role}')">
-    <button class="phone-submit" onclick="submitPhone('${role}')">确认 →</button>`;
-  chatArea.appendChild(div);scrollBottom();
-  setTimeout(()=>document.getElementById('phone-inp')?.focus(),300);
-}
-
-async function submitPhone(role){
-  const phone=document.getElementById('phone-inp')?.value.trim();
-  if(!phone||phone.length<8){alert('请输入正确的手机号');return;}
-  addMsg(phone.replace(/(\d{4})(?=\d)/g,'$1 '),true);
-  document.querySelector('.phone-input-card')?.remove();
-
-  const typing=addTyping();
-  try{
-    if(role==='driver'){
-      // 查司机表
-      const drivers=await supaGet(`drivers?phone=eq.${encodeURIComponent(phone)}&tenant_id=eq.${TENANT_ID}`);
-      typing.remove();
-      if(drivers.length>0){
-        const d=drivers[0];
-        setLocal('au_driver',d);
-        localStorage.setItem('driver', JSON.stringify(d)); // driver-app.html兼容
-        localStorage.setItem('au_role','driver');
-        const g=guessGender(d.full_name);
-        setAgentByUserGender(g||'male');
-        document.getElementById('exit-btn').style.display='block';
-        await agentSay(`${d.full_name||'师傅'}，找到您了！${agentEmoji}<br>要打开工作台，还是让我来帮您？`,500);
-        showDriverModeChoice();
-      } else {
-        // 新司机，跳转司机端注册
-        await agentSay('没找到您的司机账号，带您去注册 🧑‍✈️',400);
-        await delay(1000);
-        window.location.href='driver-app.html';
-      }
-    } else {
-      // 查乘客表
-      const contacts=await supaGet(`contacts?phone=eq.${encodeURIComponent(phone)}&tenant_id=eq.${TENANT_ID}`);
-      typing.remove();
-      let passenger=getPassenger();
-      passenger.phone=phone;
-      if(contacts.length>0){
-        passenger.name=contacts[0].full_name||passenger.name;
-        passenger.wechat=contacts[0].wechat_id||passenger.wechat;
-      }
-      if(!passenger.ref)passenger.ref=genRef();
-      setLocal('au_passenger',passenger);
-      localStorage.setItem('au_role','passenger');
-      const g=guessGender(passenger.name);
-      setAgentByUserGender(g||'male');
-      document.getElementById('exit-btn').style.display='block';
-      const _t3=localStorage.getItem('au_gender')==='female'?'小姐':'先生';const greeting=passenger.name?`${agentName}来啦，${passenger.name}${_t3}！`:
-        `好的，我记住您的号码了 ${agentEmoji}`;
-      await agentSay(greeting+'，要预约什么服务？',500);
-      // 直接进AI对话
-    }
-  }catch(e){
-    typing.remove();
-    await agentSay('网络有点问题，请稍后再试 😅',300);
-  }
-}
-
-// ── 乘客模式选择 ──
-function selectRoundTrip(){
-  currentRole='passenger';
-  document.getElementById('exit-btn').style.display='block';
-  showBottomNav();
-  agentSay('好的！告诉我去程和回程的日期时间，一起帮您预约～',400);
-}
-
-async function startPassengerAI(){
-  addMsg('帮我下单',true);
-  await agentSay('好的！说出日期和时间，往返一起帮您预约～',400);
-}
-
-// ── 司机模式选择 ──
-function showDriverModeChoice(){
-  const div=document.createElement('div');
-  div.className='choice-cards';
-  div.innerHTML=`
-    <div class="choice-card gold" onclick="gotoDriver()">
-      <div class="card-icon">📋</div>
-      <div class="card-text"><h4>打开工作台</h4><p>查看订单、接单、发布</p></div>
-      <div class="card-arrow">›</div>
-    </div>
-    <div class="choice-card blue" onclick="startDriverAI()">
-      <div class="card-icon">${agentEmoji}</div>
-      <div class="card-text"><h4>让我来帮您</h4><p>语音助理处理事务</p></div>
-      <div class="card-arrow">›</div>
-    </div>`;
-  chatArea.appendChild(div);scrollBottom();
-}
-
-function gotoDriver(){
-  window.location.href='driver-app.html';
-}
-
-function openUserProfile(){
-  document.getElementById('profile-overlay')?.classList.add('show');
-  openProfile && openProfile();
-}
-
-async function startDriverAI(){
-  addMsg('让你来帮我',true);
-  const d = getDriver();
-  await agentSay(`${d.full_name||'师傅'}，有什么需要处理？<br>比如：查订单、切换状态、发布包车`,400);
-  // 切换为司机助理模式
-  currentRole = 'driver';
-}
-
-// ── 退出/切换身份 ──
-function exitToHome(){
-  localStorage.removeItem('au_role');
-  location.reload();
-}
-
-// ── AI对话（乘客下单流程）──
-
-function buildDriverPrompt(){
-  const d = getDriver();
-  return `你是澳洲出行AI助理，现在服务的是司机${d.full_name||"老板"}，称呼他"老板"，口语化简短。
-
-可以帮司机：
-1. 查询订单状态
-2. 切换工作状态（上线候单/下线）
-3. 跳转工作台
-4. 发布包车信息
-5. 查询收入和积分
-
-当司机想去工作台时，回复末尾加：[GOTO: driver]
-当司机想查订单时，回复末尾加：[GOTO: driver]
-当司机想发布包车时，回复末尾加：[GOTO: driver]
-当司机需要旅游广场时，回复末尾加：[GOTO: plaza]
-
-回复简短直接，不超过2句话。`;
-}
-
-function buildPrompt(){
-  const saved = getPassenger();
-  const addrs = getSavedAddresses();
-  const agentGender = localStorage.getItem('au_gender')==='female' ? 'male' : 'male';
-
-  let p = `你是澳洲出行AI管家${agentName}，专为华人服务的中文出行助手。
-
-【身份】
-名字：${agentName}，${agentEmoji}
-服务：接机、送机、包车出游
-平台：不抽佣，司机直接与乘客结算，平台靠积分分红盈利
-语气：像朋友聊天，口语化，每次只说1句话
-
-【一句话下单——最高优先级】
-用户说"下周五下午四点送我去机场" → 立即 [ACTION: show_vehicles to_airport]
-用户说"9月8号上午10点从家出发去机场" → 立即 [ACTION: show_vehicles to_airport]
-用户说"24号上午从机场接我回家" → 缺具体时间 → 只问"几点出关？"
-用户说"明天接机" → 缺时间 → 只问"几点出关上车？"
-原则：
-- 有日期+时间+方向 → 立即触发，零追问
-- 缺什么只问那一项
-- 地址绝对不问（GPS自动）
-- "从家出发/从家里"="出发地已知"，不需要问地址
-
-【机场识别】
-墨尔本国际机场(MEL)：默认
-Avalon Airport(AVV)：捷星/Jetstar/阿瓦隆
-用户没说明：问"请问是墨尔本国际机场还是Avalon Airport？"
-
-【接机目的地】
-有保存地址 → "是回[地址]吗？" → 确认直接用
-没有保存地址 → GPS定位
-
-【时段计价说明】
-冬季(5-9月) 08:00-18:00 / 其余 07:00-19:00：正常价
-时段外2小时内：+10% / 超2小时（深夜）：+20%
-超出25km：每公里+AUD 1
-接机等候：前30分钟免费，超出每30分钟AUD 20
-
-【车型推荐】
-用户问推荐 → 问"几个人？几件行李？" → 根据回答推荐具体车型
-→ 自动选中 [ACTION: select_vehicle comfort_8]
-
-【谐音纠错】
-宋集/松鸡→送机，阶级/姐急→接机，炮车→包车
-
-【方言】
-检测到粤语 → 用粤语回应
-
-【取消政策】
-乘客：24h+免费/12-24h收20%/12h内收50%/已出发全额
-司机：第1次警告/第2次扣20积分/第3次暂停
-
-【积分说明】
-注册+10，每单+5，完成+10，评价+2/5，推荐好友+20/30
-100积分=A$1，500分🌟常旅客×1.2，2000分💎钻石×1.5，5000分👑创始合伙人×3
-
-【往返预约】
-先处理去程，完成后自动问"要预约回程吗？"
-回程独立流程，地址和车型可以不同
-
-【提交后状态】
-订单提交后不再问行程信息
-用户问订单 → [ACTION: open_orders]
-用户问修改 → 引导联系客服微信：DIVE-DING
-
-【触发标记】
-送机信息齐全 → [ACTION: show_vehicles to_airport]
-接机信息齐全 → [ACTION: show_vehicles from_airport]
-包车 → [ACTION: show_vehicles charter]
-旅游广场 → [ACTION: goto plaza]
-查订单 → [ACTION: open_orders]
-换车型 → [ACTION: edit_vehicle]
-改时间 → [ACTION: edit_time]
-改地址 → [ACTION: edit_address]
-重新下单 → [ACTION: new_booking]
-推荐车型 → [ACTION: select_vehicle {车型key}]
-
-【分段输入】
-用户可能分两条发送完整信息，结合上下文合并理解后再触发，不要因单条不完整就追问。
-
-【禁止】
-问航班号/起飞时间
-让用户说地址
-重复确认已知信息
-贬损同行
-说"美元"（只说"澳元"或"AUD"）
-`;
-
-  if(saved.name){
-    const title = localStorage.getItem('au_gender')==='female'?'小姐':'先生';
-    p += `
-用户：${saved.name}${title}，称呼时用姓名+${title}。`;
-  }
-  if(addrs.length>0) p += `
-常用地址：${addrs.slice(0,2).join('、')}`;
-  p += buildProfileContext();
-  return p;
-}
-
-async function sendMessage(){ stopTTS();
-  const input=document.getElementById('chat-input');
-  const msg=input.value.trim();if(!msg)return;
-  input.value='';
-  addMsg(msg,true);
-  if(msg && msg.trim()) aiHistory.push({role:'user',content:msg.trim()});
-
-  // 提取信息（仅乘客模式）
-  if(currentRole==='passenger'){
-    detectRoundTrip(msg);
-    extractInfo(msg);
-  }
-
-  const typing=addTyping();
-  try{
-    const prompt = currentRole==='driver' ? buildDriverPrompt() : buildPrompt();
-    // 过滤空消息，确保role交替
-    let cleanHistory = fixMessageRoles(aiHistory.slice(-20));
-    if(cleanHistory.length===0) cleanHistory=[{role:'user',content:msg.trim()||'你好'}];
-    const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({system:prompt,messages:cleanHistory})});
-    if(!res.ok){const t=await res.text();throw new Error('HTTP'+res.status+': '+t.slice(0,200));}
-    const data=await res.json();
-    const reply=data.content?.[0]?.text||data.error||'请再说一遍';
-    window._lastAIReply=reply; // debug
-    console.log('AI回复：',reply);
-    aiHistory.push({role:'assistant',content:reply});
-    if(aiHistory.length>20)aiHistory=aiHistory.slice(-20);
-    typing.remove();
-    
-    // 从对话中提取用户画像
-    extractProfileFromChat(msg, reply);
-
-    const actionMatch=reply.match(/\[ACTION:\s*(\w+)\s*(\w+)?\]/);
-    const clean=reply.replace(/\[ACTION:.*?\]/,'').trim();
-    addMsg(clean);
-    if(!voiceMode) speak(clean); // 语音模式下由sendVoiceMessage处理
-
-    if(actionMatch){
-      await delay(800);
-      handleAction(actionMatch[1],actionMatch[2]);
-    }
-  }catch(e){typing.remove();addMsg('错误：'+e.message);console.error('sendMessage error:',e);}
-}
-
-function extractInfo(msg){
-  // 机场识别
-  if(/阿瓦隆|avalon airport|avv/i.test(msg)) selectedAirport='avalon';
-  else if(/捷星|jetstar|tiger.*air/i.test(msg)) selectedAirport='avalon';
-  else if(/墨尔本.*机场|国际机场|tullamarine|mel/i.test(msg)) selectedAirport='melbourne';
-
-  if(S.trip_type!=='charter'){
-    // 华人词库扩展
-    if(/送机|去机场.*送|送.*机场|打飞的|赶飞机|坐飞机.*去|去坐飞机/i.test(msg))S.direction='to_airport';
-    if(/接机|落地|到澳洲|回来|出关|过关|提行李.*出|飞机.*到了|降落|接.*机场|去.*机场.*接/i.test(msg))S.direction='from_airport';
-    if(/陪.*去.*接|帮我去接|全程陪|陪同/i.test(msg))S.trip_type='accompanied';
-  }
-  if(!S.direction && /包车|租车|按小时|几小时|包个车|租个车/i.test(msg))S.trip_type='charter';
-
-  const today=new Date();
-  const yr=today.getFullYear();
-  const mo=today.getMonth()+1;
-  const todayDay=today.getDay(); // 0=周日
-
-  // 今天/明天/后天
-  if(/今天|今日/i.test(msg))S.date=today.toISOString().split('T')[0];
-  if(/明天|明日/i.test(msg)){const d=new Date(today);d.setDate(d.getDate()+1);S.date=d.toISOString().split('T')[0];}
-  if(/后天/i.test(msg)){const d=new Date(today);d.setDate(d.getDate()+2);S.date=d.toISOString().split('T')[0];}
-  if(/大后天/i.test(msg)){const d=new Date(today);d.setDate(d.getDate()+3);S.date=d.toISOString().split('T')[0];}
-
-  // 星期/礼拜/周
-  const weekMap={'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'日':0,'天':0,'1':1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':0};
-  const weekMatch=msg.match(/(?:这个?|本|下个?|下下个?)?(?:星期|礼拜|周)([一二三四五六七日天\d])/);
-  if(weekMatch){
-    const target=weekMap[weekMatch[1]];
-    if(target!==undefined){
-      const isNext=/下下/.test(msg);
-      const isThisNext=/下/.test(msg)&&!isNext;
-      let diff=target-todayDay;
-      if(isNext||(diff<=0&&!(/这|本/.test(msg))))diff+=7;
-      if(isNext&&diff<=7)diff+=7;
-      const d=new Date(today);d.setDate(d.getDate()+diff);
-      S.date=d.toISOString().split('T')[0];
-    }
-  }
-
-  // 月/日格式：6月15号、6/15
-  const dateMatch=msg.match(/(\d{1,2})[月\/\-](\d{1,2})/);
-  if(dateMatch)S.date=`${yr}-${dateMatch[1].padStart(2,'0')}-${dateMatch[2].padStart(2,'0')}`;
-
-  // 只有日期：15号、15日
-  const dayOnlyMatch=msg.match(/(?:^|[^月\/\d])(\d{1,2})[号日]/);
-  if(dayOnlyMatch&&!dateMatch&&!weekMatch){
-    const day=parseInt(dayOnlyMatch[1]);
-    if(day>=1&&day<=31){
-      const targetDate=new Date(yr,mo-1,day);
-      if(targetDate<=today)targetDate.setMonth(targetDate.getMonth()+1);
-      S.date=targetDate.toISOString().split('T')[0];
-    }
-  }
-
-  const timeMatch=msg.match(/(\d{1,2})[点:：时](\d{0,2})/);
-  if(timeMatch && (!S.time||isModify))S.time=`${timeMatch[1].padStart(2,'0')}:${(timeMatch[2]||'00').padStart(2,'0')}`;
-
-  const addrs=getSavedAddresses();
-  if(/回家|回我家|老地址|从家|家里/i.test(msg)&&addrs.length>0)S.address=addrs[0];
-
-  const hoursMatch=msg.match(/(\d+)\s*小时/);
-  if(hoursMatch){
-    const h=parseInt(hoursMatch[1]);
-    if(S.trip_type==='accompanied')S.wait_hours=h;
-    else if(S.trip_type==='charter')S.charter_hours=Math.max(4,h);
-  }
-  const kmMatch=msg.match(/(\d+)\s*(公里|km)/i);
-  if(kmMatch){S.charter_km=parseInt(kmMatch[1]);S.charter_hours=Math.max(4,Math.ceil(S.charter_km/50));}
-
-  // 早/中/晚时段识别
-  if(!S.time){
-    if(/早上|早晨|上午/.test(msg)&&!S.time){
-      const t=msg.match(/(\d{1,2})[点:：时]/);
-      if(t)S.time=`${t[1].padStart(2,'0')}:00`;
-    }
-    if(/下午|傍晚/.test(msg)){
-      const t=msg.match(/(\d{1,2})[点:：时]/);
-      if(t){const h=parseInt(t[1]);S.time=`${(h<12?h+12:h).toString().padStart(2,'0')}:00`;}
-    }
-    if(/晚上|夜里|深夜/.test(msg)){
-      const t=msg.match(/(\d{1,2})[点:：时]/);
-      if(t){const h=parseInt(t[1]);S.time=`${(h<18?h+12:h).toString().padStart(2,'0')}:00`;}
-    }
-    if(/凌晨/.test(msg)){
-      const t=msg.match(/(\d{1,2})[点:：时]/);
-      if(t)S.time=`0${t[1].padStart(1,'0')}:00`.slice(-5);
-    }
-    if(/中午|正午/.test(msg))S.time='12:00';
-  }
-}
-
-async function handleAction(action,param){
-  if(action==='show_vehicles'){
-    if(param==='charter')S.trip_type='charter';
-    else if(param)S.direction=param;
-
-    // 如果去程已提交且现在是回程→直接弹回程确认卡（不选车）
-    if(bookingSubmitted && param==='from_airport' && S.vehicle){
-      await showReturnTripFromHistory();
-      return;
-    }
-
-    if(!S.address&&S.trip_type!=='charter'){
-      if(S.direction==='from_airport'){
-        // 接机：优先用已保存的家庭地址
-        const addrs = getSavedAddresses();
-        const profile = getProfile();
-        const homeAddr = profile.home_address || addrs[0];
-        if(homeAddr){
-          S.address = homeAddr;
-          const title = localStorage.getItem('au_gender')==='female'?'小姐':'先生';
-          const name = getPassenger().name||'';
-          await agentSay(`是送您回 ${homeAddr} 吗？欢迎回家 🏠`,400);
-          // 显示确认卡让用户选择
-          showHomeAddressConfirm(homeAddr);
-          return;
-        }
-      }
-      // 送机或没有历史地址：GPS定位
-      if(S.direction==='to_airport'){
-        await agentSay('帮您定位一下出发地址',300);
-      }
-      await gpsConfirmAddress();
-    } else {
-      showVehicleCards();
-    }
-  } else if(action==='gps_locate'){
-    // AI引导GPS定位目的地
-    await gpsConfirmAddress('destination');
-  } else if(action==='new_booking'){
-    S.direction=null;S.address=null;S.date=null;S.time=null;
-    S.vehicle=null;S.price=null;S.base_price=0;S.surcharge=0;
-    S.distance_km=0;S.trip_type='standard';S.wait_hours=0;
-    bookingSubmitted=false;
-  } else if(action==='open_orders'||action==='open_profile'){
-    openProfile();
-  } else if(action==='select_vehicle'){
-    // AI直接推荐车型，自动选中
-    const vPrices={"comfort_5":70,"comfort_8":90,"comfort_12":120,"comfort_15":160,"luxury_alpha":113,"luxury_benz_8":113,"luxury_benz_12":150,"luxury_benz_15":200};
-    const price = vPrices[param]||70;
-    const card = document.querySelector(`.vehicle-card[data-type="${param}"]`);
-    if(card) selectVehicle(param, price, card);
-  } else if(action==='edit_vehicle'){
-    const allH=aiHistory.map(m=>m.content).join(' ');extractInfo(allH);
-    S.vehicle=null;S.price=null;S.base_price=0;
-    showVehicleCards();
-  } else if(action==='edit_time'){
-    // 弹时间修改卡
-    showEditTimeCard();
-  } else if(action==='edit_address'){
-    await gpsConfirmAddress();
-  } else if(action==='goto'){
-    const map={plaza:'plaza.html',driver:'driver-app.html'};
-    if(map[param])setTimeout(()=>window.location.href=map[param],800);
-  }
-}
-
-async function showVehicleCards(){
-  // 补提取日期时间（防止丢失）
-  if(!S.date||!S.time){
-    const allText = aiHistory.map(m=>m.content).join(' ');
-    extractInfo(allText);
-  }
-
-  // 拉取司机报价区间
-  let priceRanges = {};
-  try{
-    const drivers = await supaGet(`drivers?is_active=eq.true&tenant_id=eq.${TENANT_ID}&select=pricing`);
-    if(drivers && drivers.length){
-      const types = ['comfort_5','comfort_8','comfort_12','comfort_15','luxury_alpha','luxury_benz_8','luxury_benz_12','luxury_benz_15'];
-      types.forEach(t=>{
-        const prices = drivers.map(d=>d.pricing?.[t]).filter(p=>p>0);
-        if(prices.length){
-          priceRanges[t] = {min:Math.min(...prices), max:Math.max(...prices)};
-        }
-      });
-    }
-  }catch(e){}
-  window._priceRanges = priceRanges;
-
-  // 检查历史车型（常旅客）
-  const p = getPassenger();
-  if(p.phone && !S.vehicle){
-    try{
-      const recent = await supaGet(`trips?passenger_phone=eq.${p.phone}&tenant_id=eq.${TENANT_ID}&status=eq.completed&order=created_at.desc&limit=1`);
-      if(recent && recent.length && recent[0].vehicle_type){
-        S._lastVehicle = recent[0].vehicle_type;
-      }
-    }catch(e){}
-  }
-  const wrap=document.createElement('div');
-  wrap.className='vehicle-section';
-
-  const cl=document.createElement('div');cl.className='vehicle-group-label';cl.textContent='舒适型';
-  const cg=document.createElement('div');cg.className='vehicle-grid';
-  cg.innerHTML=COMFORT_VEHICLES.map(v=>{
-    const r=window._priceRanges?.[v.type];
-    const priceStr=r?(r.min===r.max?'AUD '+r.min:'AUD '+r.min+'-'+r.max):'AUD '+v.price;
-    return `<div class="vehicle-card" data-type="${v.type}" onclick="selectVehicle('${v.type}',${v.price},this)">
-      <div class="v-icon">${v.icon}</div>
-      <div class="v-name">${v.name}</div>
-      <div class="v-cap">${v.cap}</div>
-      <div class="v-price">${priceStr}</div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.55);margin-top:2px;">参考价</div>
-    </div>`;
-  }).join('');
-  const ll=document.createElement('div');ll.className='vehicle-group-label gold';ll.textContent='✨ 豪华型';
-  const lg=document.createElement('div');lg.className='vehicle-grid';
-  lg.innerHTML=LUXURY_VEHICLES.map(v=>{
-    const r=window._priceRanges?.[v.type];
-    const priceStr=r?(r.min===r.max?'AUD '+r.min:'AUD '+r.min+'-'+r.max):'AUD '+v.price;
-    return `<div class="vehicle-card luxury" data-type="${v.type}" onclick="selectVehicle('${v.type}',${v.price},this)">
-      <div class="v-icon">${v.icon}</div>
-      <div class="v-name">${v.name}</div>
-      <div class="v-cap">${v.cap}</div>
-      <div class="v-price">${priceStr}</div>
-      <div style="font-size:11px;color:rgba(200,160,32,0.65);margin-top:2px;">参考价</div>
-    </div>`;
-  }).join('');
-  wrap.appendChild(cl);wrap.appendChild(cg);wrap.appendChild(ll);wrap.appendChild(lg);
-  chatArea.appendChild(wrap);scrollBottom();
-  stopTTS();
-  // 常旅客：自动高亮上次车型
-  if(S._lastVehicle){
-    setTimeout(()=>{
-      const lastCard = document.querySelector(`.vehicle-card[data-type="${S._lastVehicle}"]`);
-      if(lastCard){
-        lastCard.style.border = '2px solid rgba(0,212,255,0.6)';
-        const vNames={"comfort_5":"舒适5座","comfort_8":"舒适8座","comfort_12":"舒适12座","comfort_15":"舒适15座","luxury_alpha":"阿尔法6/7座","luxury_benz_8":"奔驰8座","luxury_benz_12":"奔驰12座","luxury_benz_15":"奔驰15座"};
-        agentSay(`上次您选的是${vNames[S._lastVehicle]||S._lastVehicle}，这次一样吗？`,400);
-      }
-    }, 300);
-  } else {
-    setTimeout(()=>agentSay('不知道选哪个？告诉我几个人、几件行李，我来推荐 😊',600), 300);
-  }
-}
-
-async function selectVehicle(type,price,el){ stopTTS();
-  document.querySelectorAll('.vehicle-card').forEach(c=>c.classList.remove('selected'));
-  el.classList.add('selected');S.vehicle=type;S.base_price=price;
-  if(S.trip_type==='charter'){
-    S.hourly_rate=price;S.price=S.hourly_rate*S.charter_hours;
-    showConfirmCard();
-  } else {
-    // 距离附加费
-    let distSurcharge = 0;
-    if(S.distance_km && S.distance_km > 25){
-      distSurcharge = Math.round(S.distance_km - 25);
-    }
-
-    // 时段附加费
-    const timeResult = calcTimeSurcharge(price, S.date, S.time);
-    const timeSurcharge = timeResult.surcharge;
-
-    S.surcharge = distSurcharge;
-    S.time_surcharge = timeSurcharge;
-    S.time_surcharge_label = timeResult.label;
-    S.price = price + distSurcharge + timeSurcharge;
-
-    showConfirmCard();
-
-    // 没有距离数据时后台算
-    if(!S.distance_km && S.address && window.google){
-      const surcharge=await calcDistanceSurcharge(S.address,S.direction);
-      if(surcharge>0){
-        S.surcharge=surcharge;
-        S.price=price+surcharge+timeSurcharge;
-        const feeEl=document.querySelector('.confirm-value[data-fee]');
-        if(feeEl) feeEl.textContent='AUD '+S.price;
-        await agentSay(`您的地址距机场约${S.distance_km}km，超出${S.distance_km-25}km，参考附加费AUD ${surcharge}${timeSurcharge>0?'，'+timeResult.label:''}，参考合计AUD ${S.price}，最终与司机线下确认`,400);
-      } else if(timeSurcharge>0){
-        await agentSay(timeResult.label+`，参考合计AUD ${S.price}`,400);
-      }
-    } else if(timeSurcharge>0){
-      await agentSay(timeResult.label+`，参考合计AUD ${S.price}`,400);
-    }
-  }
-}
-
-async function showConfirmCard(){
-  // 如果有接送机方向，强制重置为standard（防止误判charter）
-  if(S.direction && S.trip_type==='charter'){
-    S.trip_type='standard';
-    S.hourly_rate=0;
-    S.price=S.base_price+(S.surcharge||0);
-  }
-  await delay(300);
-  const isAcc=S.trip_type==='accompanied';
-  const isCharter=S.trip_type==='charter';
-  const dirText=isCharter?'包车':isAcc?'陪同接机':S.direction==='from_airport'?'接机':'送机';
-  const timeLabel=isCharter?'出发时间':S.direction==='from_airport'?'上车时间':'司机到达';
-  const addrLabel=isCharter?'出发地':S.direction==='from_airport'?'目的地':'出发地';
-  const vInfo=VEHICLES.find(v=>v.type===S.vehicle);
-  const waitFee=isAcc?S.wait_hours*20:0;
-  const preCollect=isCharter?S.hourly_rate*12:0;
-  const total=isCharter?S.price:S.price+waitFee;
-
-  const div=document.createElement('div');div.className='confirm-card';
-  div.innerHTML=`
-    <div style="font-size:14px;font-weight:900;color:white;margin-bottom:12px;">📋 行程确认</div>
-    <div class="confirm-row"><span class="confirm-label">类型</span><span class="confirm-value">${dirText}</span></div>
-    <div class="confirm-row"><span class="confirm-label">机场</span><span class="confirm-value">${AIRPORT_COORDS[selectedAirport]?.name||'墨尔本国际机场'}</span></div>
-    <div class="confirm-row"><span class="confirm-label">日期</span><span class="confirm-value">${S.date?(()=>{const d=new Date(S.date+'T00:00:00');return d.getMonth()+1+'月'+d.getDate()+'日';})():'未填'}</span></div>
-    <div class="confirm-row"><span class="confirm-label">${timeLabel}</span><span class="confirm-value">${S.time||'未填'}</span></div>
-    <div class="confirm-row"><span class="confirm-label">${addrLabel}</span><span class="confirm-value">${S.address||'未填'}</span></div>
-    <div class="confirm-row"><span class="confirm-label">车型</span><span class="confirm-value">${vInfo?.icon} ${vInfo?.name}</span></div>
-    ${isCharter?`
-    <div class="confirm-row"><span class="confirm-label">时长</span><span class="confirm-value">${S.charter_hours}小时${S.charter_km>0?' ('+S.charter_km+'km)':''}</span></div>
-    <div class="confirm-row"><span class="confirm-label">预收款</span><span class="confirm-value" style="color:rgba(245,166,35,0.9);">AUD ${preCollect}<br><span style="font-size:11px;opacity:0.6;">完成后按AUD ${total}结算退差价</span></span></div>
-    `:''}
-    ${isAcc?`<div class="confirm-row"><span class="confirm-label">等候费</span><span class="confirm-value">AUD ${waitFee}（${S.wait_hours}小时）</span></div>`:''}
-    ${S.distance_km?`<div class="confirm-row"><span class="confirm-label">距离</span><span class="confirm-value">${S.distance_km}km${S.surcharge>0?' (超出'+(S.distance_km-25)+'km，附加AUD '+S.surcharge+')':' (25km内)'}</span></div>`:''}
-    ${S.time_surcharge>0?`<div class="confirm-row"><span class="confirm-label">时段</span><span class="confirm-value" style="color:rgba(255,165,0,0.9);">${S.time_surcharge_label}</span></div>`:''}
-    <div class="confirm-row"><span class="confirm-label">费用</span><span class="confirm-value" style="color:rgba(0,212,255,0.9);font-size:18px;font-weight:900;" data-fee>AUD ${total}</span></div>
-    ${returnTrip?`
-    <div style="background:rgba(0,150,199,0.08);border:1px solid rgba(0,150,199,0.25);border-radius:10px;padding:12px 14px;margin:6px 0 4px;">
-      <div style="font-size:12px;color:rgba(0,212,255,0.7);font-weight:700;margin-bottom:6px;">🔄 往返回程（自动创建）</div>
-      <div style="font-size:13px;color:white;">${returnTrip.direction==='from_airport'?'接机':'送机'} · ${returnTrip.date} ${returnTrip.time}</div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:4px;">系统自动生成独立订单，同等车型</div>
-    </div>`:''}
-    <div style="background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.25);border-radius:10px;padding:10px 14px;margin:6px 0 4px;text-align:center;">
-      <div style="font-size:13px;color:rgba(245,166,35,0.9);font-weight:700;">⚠️ 以上为市场参考价</div>
-      <div style="font-size:12px;color:rgba(255,255,255,0.55);margin-top:4px;">实际费用请与司机确认后再付款</div>
-    </div>
-    <div style="margin-top:10px;background:rgba(39,174,96,0.08);border:1px solid rgba(39,174,96,0.2);border-radius:10px;padding:10px 12px;">
-      <div style="font-size:12px;color:rgba(255,255,255,0.6);line-height:1.7;">
-        💰 付款方式由您与司机直接协商<br>
-        <span style="color:rgba(255,255,255,0.4);font-size:11px;">与司机线下确认付款</span>
-      </div>
-    </div>
-    <div class="confirm-btns">
-      <button class="confirm-btn secondary" onclick="restartBooking()">✏️ 修改</button>
-      <button class="confirm-btn primary" onclick="showContactStep()">✅ 确认</button>
-    </div>`;
-  chatArea.appendChild(div);scrollBottom();
-}
-
-function selPay(el,val){document.querySelectorAll('.pay-opt').forEach(o=>o.classList.remove('selected'));el.classList.add('selected');S.payment=val;}
-function restartBooking(){ stopTTS();
-  // 从历史对话补提取日期时间（确保不丢失）
-  const allHist = aiHistory.map(m=>m.content).join(' ');
-  extractInfo(allHist);
-  // 只重置车型和价格，保留已收集的日期/时间/地址/距离
-  S.vehicle=null; S.price=null; S.base_price=0;
-  agentSay('想换什么车型？',300);
-  setTimeout(()=>showVehicleCards(), 800);
-}
-
-async function showContactStep(){ stopTTS();
-  const saved=getPassenger();
-  if(saved.name&&saved.phone){S.name=saved.name;S.phone=saved.phone;S.wechat=saved.wechat||'';await submitBooking();return;}
-
-  // 新用户：AI语音问，用户语音答，同时显示小表单备用
-  await agentSay('快好了！请问怎么称呼您，方便联系的手机号是多少？',400);
-
-  const div=document.createElement('div');div.className='confirm-card';
-  const title = localStorage.getItem('au_gender')==='female'?'小姐':'先生';
-  div.innerHTML=`
-    <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:10px;">也可以直接填写 👇</div>
-    <div style="display:flex;flex-direction:column;gap:10px;">
-      <input id="c-name" placeholder="姓名/称呼" style="background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.12);border-radius:10px;padding:11px 14px;color:white;font-size:15px;font-family:inherit;outline:none;" value="${saved.name||''}">
-      <input id="c-phone" placeholder="澳洲手机号" type="tel" style="background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.12);border-radius:10px;padding:11px 14px;color:white;font-size:15px;font-family:inherit;outline:none;" value="${saved.phone||''}">
-      <input id="c-wechat" placeholder="微信号（选填，方便司机联系）" style="background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.12);border-radius:10px;padding:11px 14px;color:white;font-size:14px;font-family:inherit;outline:none;" value="${saved.wechat||''}">
-    </div>
-    <button onclick="submitFromForm()" style="width:100%;margin-top:14px;padding:14px;background:linear-gradient(135deg,#0096c7,#0077a0);color:white;border:none;border-radius:12px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;">🚀 确认预约</button>`;
-  chatArea.appendChild(div);scrollBottom();
-
-  // 监听下一条语音消息，尝试自动提取姓名和电话
-  window._contactListening = true;
-}
-
-async function submitFromForm(){
-  const name=document.getElementById('c-name')?.value.trim();
-  const phone=document.getElementById('c-phone')?.value.trim();
-  if(!name||!phone){alert('请填写姓名和手机号');return;}
-  S.name=name;S.phone=phone;S.wechat=document.getElementById('c-wechat')?.value.trim()||'';
-  // 更新性别猜测
-  const g=guessGender(name);if(g)setAgentByUserGender(g);
-  await submitBooking();
-}
-
-async function submitBooking(){ stopTTS();
-  if(bookingSubmitted)return;
-  // 从对话历史补提取缺失的日期时间
-  if(!S.date||!S.time){
-    const allText=aiHistory.map(m=>m.content).join(' ');
-    extractInfo(allText);
-  }
-  // 验证必填信息
-  if(!S.date){await agentSay('请问您哪天出发？');return;}
-  if(!S.time){await agentSay('请问几点需要司机到门口？');return;}
-  if(!S.address){await agentSay('请问从哪里出发？');return;}
-  if(!S.vehicle){alert('请选择车型');return;}
-  bookingSubmitted=true;
-  const isCharter=S.trip_type==='charter';
-  const isAcc=S.trip_type==='accompanied';
-  let p=getPassenger();if(!p.ref)p.ref=genRef();
-  p.name=S.name;p.phone=S.phone;p.wechat=S.wechat;
-  setLocal('au_passenger',p);saveAddress(S.address);
-  const scheduledAt=new Date(`${S.date}T${S.time}:00`);
-  const isUrgent=(scheduledAt-new Date())/60000<=90;
-  const waitFee=isAcc?S.wait_hours*20:0;
-  const finalPrice=isCharter?S.price:S.price+waitFee;
-  const preCollect=isCharter?S.hourly_rate*12:finalPrice;
-  const points=Math.floor(finalPrice/10);
-  try{
-    const [trip]=await supaInsert('trips',{
-      tenant_id:TENANT_ID,passenger_name:S.name,passenger_phone:S.phone,
-      passenger_wechat:S.wechat||null,direction:S.direction||'to_airport',
-      pickup_address:isAcc||S.direction==='to_airport'?S.address:'墨尔本国际机场',
-      dropoff_address:isAcc||S.direction==='from_airport'?S.address:'墨尔本国际机场',
-      vehicle_type:S.vehicle,scheduled_at:`${S.date}T${S.time}:00`,
-      total_price:preCollect,payment_method:'offline',
-      payment_status:'pending',
-      prepaid_amount:null,
-      status:'pending',is_urgent:isUrgent,
-      trip_type:S.trip_type,wait_hours:S.wait_hours,
-      charter_hours:isCharter?S.charter_hours:null,
-      hourly_rate:isCharter?S.hourly_rate:null,
-      passenger_count:1,
-      distance_km:S.distance_km||null,
-      surcharge:S.surcharge||null
-    });
-    try{await supaInsert('contacts',{tenant_id:TENANT_ID,full_name:S.name,phone:S.phone,wechat_id:S.wechat||null,source:'其他',status:'customer'});}catch(e){}
-    // 推荐码绑定
-    const incomingRef = sessionStorage.getItem('incoming_ref');
-    if(incomingRef){
-      try{
-        await supaInsert('referrals',{tenant_id:TENANT_ID,referrer_code:incomingRef,referee_phone:S.phone,referee_name:S.name,trip_id:trip.id,points_awarded:20,status:'confirmed'});
-        sessionStorage.removeItem('incoming_ref');
-      }catch(e){}
-    }
-    document.getElementById('suc-id').textContent='TRP-'+trip.id.slice(-8).toUpperCase();
-    document.getElementById('success-modal').classList.add('show');
-    showBottomNav();
-    // 提交成功后AI引导回程（简洁版）
-    returnTrip = null;
-    // 注入回程引导到aiHistory，让AI下一轮自然问
-    setTimeout(()=>{
-      aiHistory.push({role:'assistant', content:'去程预约成功！要顺便预约回程吗？'});
-      agentSay('去程预约成功！要顺便预约回程吗？', 800);
-    }, 1000);
-    // 触发n8n FW_03派单工作流
-    try{
-      fetch('https://primary-production-68f8.up.railway.app/webhook/new-trip-dispatch',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({
-          trip_id: trip.id,
-          tenant_id: TENANT_ID,
-          direction: S.direction,
-          address: S.address,
-          scheduled_at: `${S.date}T${S.time}:00`,
-          vehicle_type: S.vehicle,
-          total_price: S.price,
-          passenger_name: S.name,
-          passenger_phone: S.phone
-        })
-      });
-    }catch(e){}
-    // 下单积分（含等级加成）
-    const isFirstBooking = !(await supaGet(`trips?passenger_phone=eq.${S.phone}&tenant_id=eq.${TENANT_ID}&limit=2`).then(r=>r?.length>1).catch(()=>false));
-    const bookingPts = await awardPoints(S.phone, isFirstBooking?'first_booking':'booking');
-    if(bookingPts>0){
-      const lvl = getLevel(bookingPts);
-      setTimeout(()=>agentSay(`🎉 +${bookingPts}积分到账${lvl.multiplier>1?' ('+lvl.name+'加成)':''}！`,600), 2000);
-    }
-    setTimeout(()=>showConfetti(points),1800);
-    const _t=localStorage.getItem('au_gender')==='female'?'小姐':'先生';
-    await agentSay(`${S.name}${_t}，预约成功！司机会尽快确认联系您 🎉`, 300);
-  }catch(e){bookingSubmitted=false;alert('提交遇到问题\n'+e.message);}
-}
-
-function closeSuccess(){document.getElementById('success-modal').classList.remove('show');}
-
-// 烟花
-let confettiInterval=null;
-function showConfetti(pts){
-  document.getElementById('confetti-pts').textContent='+'+pts;
-  document.getElementById('confetti-overlay').style.display='flex';
-  const canvas=document.getElementById('confetti-canvas');
-  const ctx=canvas.getContext('2d');canvas.width=window.innerWidth;canvas.height=window.innerHeight;
-  const colors=['#00d4ff','#f5a623','#00c896','#ff4d6d','#a855f7','#fff'];
-  const pieces=Array.from({length:120},()=>({
-    x:Math.random()*canvas.width,y:Math.random()*canvas.height-canvas.height,
-    w:Math.random()*10+5,h:Math.random()*6+3,
-    color:colors[Math.floor(Math.random()*colors.length)],
-    speed:Math.random()*3+2,angle:Math.random()*360,spin:Math.random()*10-5,wobble:Math.random()*3
-  }));
-  function draw(){
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    pieces.forEach(p=>{p.y+=p.speed;p.angle+=p.spin;p.x+=Math.sin(p.angle*0.05)*p.wobble;
-      if(p.y>canvas.height){p.y=-10;p.x=Math.random()*canvas.width;}
-      ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.angle*Math.PI/180);
-      ctx.fillStyle=p.color;ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);ctx.restore();});
-  }
-  confettiInterval=setInterval(draw,16);
-}
-function closeConfetti(){document.getElementById('confetti-overlay').style.display='none';if(confettiInterval){clearInterval(confettiInterval);confettiInterval=null;}}
-
-// ── 距离计算 ──
-const AIRPORT_COORDS = {
-  melbourne: {lat:-37.6690,lng:144.8410,name:'墨尔本国际机场'},
-  avalon: {lat:-38.0394,lng:144.4690,name:'Avalon Airport (AVV)'},
-};
-let selectedAirport = 'melbourne';
-const BASE_KM = 25;
-const SURCHARGE_PER_KM = 1;
-
-// ── 时段附加费计算 ──
-function calcTimeSurcharge(basePrice, dateStr, timeStr){
-  if(!dateStr||!timeStr) return {surcharge:0, label:'', rate:1};
-  const date = new Date(dateStr+'T'+timeStr+':00');
-  const month = date.getMonth()+1;
-  const hour = date.getHours();
-  const minute = date.getMinutes();
-  const totalMins = hour*60+minute;
-
-  // 正常时段：冬季5-9月 08:00-18:00，其余 07:00-19:00
-  let normalStart = (month>=5&&month<=9) ? 8*60 : 7*60;
-  let normalEnd   = (month>=5&&month<=9) ? 18*60 : 19*60;
-
-  if(totalMins>=normalStart && totalMins<normalEnd){
-    return {surcharge:0, label:'', rate:1};
-  }
-
-  // 偏出正常时段的分钟数
-  const minsOutside = totalMins<normalStart ? normalStart-totalMins : totalMins-normalEnd;
-
-  if(minsOutside<=120){
-    const extra = Math.round(basePrice*0.1);
-    return {surcharge:extra, label:`非高峰时段附加（+10%）AUD ${extra}`, rate:1.1};
-  } else {
-    const extra = Math.round(basePrice*0.2);
-    return {surcharge:extra, label:`深夜时段附加（+20%）AUD ${extra}`, rate:1.2};
-  }
-}
-
-// 接机等候费
-function calcWaitFee(waitMins){
-  if(waitMins<=30) return 0;
-  return Math.ceil((waitMins-30)/30)*20;
-}
-
-async function calcDistanceSurcharge(address, direction) {
-  if (!window.google || !address) return 0;
+// ── 提交订单到Supabase ──
+async function submitOrder() {
+  if (!pendingOrder) return;
   try {
-    const service = new google.maps.DistanceMatrixService();
-    const airport = AIRPORT_COORDS[selectedAirport] || AIRPORT_COORDS.melbourne;
-    const airportLatLng = new google.maps.LatLng(airport.lat, airport.lng);
-
-    return new Promise((resolve) => {
-      service.getDistanceMatrix({
-        origins: direction === 'to_airport' ? [address] : [airportLatLng],
-        destinations: direction === 'to_airport' ? [airportLatLng] : [address],
-        travelMode: google.maps.TravelMode.DRIVING,
-      }, (response, status) => {
-        if (status !== 'OK') { resolve(0); return; }
-        const km = response.rows[0].elements[0].distance.value / 1000;
-        S.distance_km = Math.round(km);
-        const surcharge = km > BASE_KM ? Math.round((km - BASE_KM) * SURCHARGE_PER_KM) : 0;
-        resolve(surcharge);
-      });
+    await fetch(SUPA_URL + '/rest/v1/trips', {
+      method: 'POST',
+      headers: {
+        'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY,
+        'Content-Type': 'application/json', 'Prefer': 'return=representation'
+      },
+      body: JSON.stringify({
+        tenant_id: TENANT_ID,
+        ...pendingOrder,
+        status: 'pending'
+      })
     });
-  } catch(e) { return 0; }
-}
-
-// ── 从历史自动弹回程确认卡 ──
-
-// ── 第二单确认卡 ──
-
-</script>
-<script>
-// ── 地址簿系统 ──
-function getAddressBook(){
-  try{ return JSON.parse(localStorage.getItem('au_addressbook')||'[]'); }
-  catch(e){ return []; }
-}
-
-function saveAddressBook(book){
-  localStorage.setItem('au_addressbook', JSON.stringify(book));
-}
-
-function addToAddressBook(address, label=''){
-  if(!address||address.length<5) return;
-  const book = getAddressBook();
-  const existing = book.find(a=>a.address===address);
-  if(existing){ existing.used=(existing.used||0)+1; }
-  else{ book.push({id:Date.now(), label:label||address.split(',')[0], address, used:1}); }
-  // 最多保存10个，按使用频率排序
-  book.sort((a,b)=>(b.used||0)-(a.used||0));
-  if(book.length>10) book.pop();
-  saveAddressBook(book);
-}
-
-// 弹出地址簿选择（回程目的地）
-function showAddressBookForPick(direction){
-  const book = getAddressBook();
-  const profile = getProfile();
-  const homeAddr = profile.home_address;
-
-  // 合并：地址簿+家庭地址
-  const allAddrs = [...book];
-  if(homeAddr && !allAddrs.find(a=>a.address===homeAddr)){
-    allAddrs.unshift({id:'home', label:'我家', address:homeAddr, used:99});
-  }
-
-  const label = direction==='from_airport'?'回程目的地':'出发地';
-  const div = document.createElement('div');
-  div.className = 'confirm-card';
-  div.style.border = '1.5px solid rgba(0,150,199,0.3)';
-
-  const addrItems = allAddrs.slice(0,6).map((a,i)=>`
-    <div onclick="selectFromAddressBook('${a.address.replace(/'/g,"\'")}', this)"
-      style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;background:rgba(255,255,255,0.04);margin-bottom:6px;border:1px solid rgba(255,255,255,0.08);">
-      <span style="font-size:18px;min-width:28px;text-align:center;">${a.id==='home'?'🏠':'📍'}</span>
-      <div style="flex:1;">
-        <div style="font-size:13px;font-weight:700;color:white;">${a.label}</div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:1px;">${a.address.slice(0,40)}</div>
-      </div>
-    </div>`).join('');
-
-  div.innerHTML = `
-    <div style="font-size:14px;font-weight:800;color:white;margin-bottom:12px;">📍 选择${label}</div>
-    ${addrItems}
-    <div style="display:flex;gap:8px;margin-top:8px;">
-      <button onclick="gpsConfirmAddress();this.closest('.confirm-card').remove();"
-        style="flex:1;padding:10px;background:rgba(0,200,150,0.15);border:1px solid rgba(0,200,150,0.3);border-radius:10px;color:rgba(0,200,150,0.9);font-size:13px;cursor:pointer;font-family:inherit;">
-        📍 定位当前位置
-      </button>
-      <button onclick="showManualAddressInput();this.closest('.confirm-card').remove();"
-        style="flex:1;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:rgba(255,255,255,0.5);font-size:13px;cursor:pointer;font-family:inherit;">
-        ✏️ 输入新地址
-      </button>
-    </div>`;
-
-  chatArea.appendChild(div);
-  scrollBottom();
-}
-
-function selectFromAddressBook(address, el){
-  stopTTS();
-  // 高亮选中
-  el.closest('.confirm-card').querySelectorAll('div[onclick]').forEach(d=>d.style.background='rgba(255,255,255,0.04)');
-  el.style.background='rgba(0,150,199,0.15)';
-  el.style.borderColor='rgba(0,150,199,0.4)';
-  setTimeout(()=>{
-    useGPSAddr(address, null);
-    el.closest('.confirm-card')?.remove();
-  }, 300);
-}
-
-// 地址簿管理页面（在个人中心里）
-function showAddressBookEditor(){
-  const book = getAddressBook();
-  const overlay = document.createElement('div');
-  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:3000;display:flex;align-items:flex-end;justify-content:center;';
-  const items = book.map((a,i)=>`
-    <div style="display:flex;align-items:center;gap:10px;padding:12px;background:rgba(255,255,255,0.04);border-radius:10px;margin-bottom:8px;">
-      <span style="font-size:16px;">📍</span>
-      <div style="flex:1;">
-        <input value="${a.label}" onchange="updateAddressLabel(${i},this.value)"
-          style="background:none;border:none;color:white;font-size:13px;font-weight:700;font-family:inherit;outline:none;width:100%;">
-        <div style="font-size:11px;color:rgba(255,255,255,0.4);">${a.address.slice(0,45)}</div>
-      </div>
-      <button onclick="deleteAddress(${i})" style="background:rgba(255,59,48,0.15);border:1px solid rgba(255,59,48,0.3);border-radius:8px;padding:6px 10px;color:rgba(255,100,90,0.8);font-size:12px;cursor:pointer;font-family:inherit;">删除</button>
-    </div>`).join('');
-
-  overlay.innerHTML=`
-    <div style="background:#0d1f3c;border-radius:24px 24px 0 0;padding:24px 20px 44px;width:100%;max-width:480px;max-height:80vh;overflow-y:auto;">
-      <div style="width:40px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:0 auto 20px;"></div>
-      <div style="font-size:16px;font-weight:900;color:white;margin-bottom:16px;">📍 我的地址簿</div>
-      ${items||'<div style="text-align:center;color:rgba(255,255,255,0.3);padding:20px;">暂无保存地址</div>'}
-      <button onclick="this.closest('div[style*=fixed]').remove()"
-        style="width:100%;padding:12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:rgba(255,255,255,0.6);font-size:13px;cursor:pointer;font-family:inherit;margin-top:8px;">关闭</button>
-    </div>`;
-  overlay.onclick=(e)=>{ if(e.target===overlay) overlay.remove(); };
-  document.body.appendChild(overlay);
-}
-
-function updateAddressLabel(idx, label){
-  const book = getAddressBook();
-  if(book[idx]) book[idx].label=label;
-  saveAddressBook(book);
-}
-
-function deleteAddress(idx){
-  const book = getAddressBook();
-  book.splice(idx,1);
-  saveAddressBook(book);
-  document.querySelector('div[style*=fixed]')?.remove();
-  showAddressBookEditor();
-}
-
-// ── 底部导航 ──
-function showBottomNav(){
-  document.getElementById('main-bottom-nav').style.display='flex';
-  document.querySelector('.input-bar')?.classList.remove('no-nav');
-}
-
-function hideBottomNav(){
-  document.getElementById('main-bottom-nav').style.display='none';
-  document.querySelector('.input-bar')?.classList.add('no-nav');
-}
-
-function switchMainTab(tab){
-  document.querySelectorAll('.nav-tab').forEach(el=>el.classList.remove('active'));
-  document.getElementById('nav-'+tab)?.classList.add('active');
-  if(tab==='chat'){
-    // 回到对话，不做其他操作
-  } else if(tab==='orders'){
-    openProfile();
-  } else if(tab==='messages'){
-    showMainMessages();
-  } else if(tab==='profile'){
-    openProfile();
+    addOrderCard(pendingOrder);
+    pendingOrder = null;
+  } catch(e) {
+    addAIMsg('提交遇到问题，请稍后再试或联系客服。');
   }
 }
 
-async function showMainMessages(){
-  const p = getPassenger();
-  if(!p.phone){ speak('请先登录查看消息'); return; }
-  try{
-    const trips = await supaGet(`trips?passenger_phone=eq.${p.phone}&tenant_id=eq.${TENANT_ID}&status=eq.confirmed&order=created_at.desc&limit=5`);
-    if(!trips||trips.length===0){
-      addMsg('📭 暂无新消息，司机确认订单后会在这里通知您');
-      return;
-    }
-    for(const t of trips){
-      const dt=t.scheduled_at?new Date(t.scheduled_at):null;
-      const dtStr=dt?`${dt.getUTCMonth()+1}月${dt.getUTCDate()}日 ${dt.getUTCHours().toString().padStart(2,'0')}:${dt.getUTCMinutes().toString().padStart(2,'0')}`:'—';
-      let driverName='司机',driverPhone='';
-      if(t.driver_id){
-        try{
-          const drivers=await supaGet(`drivers?id=eq.${t.driver_id}&tenant_id=eq.${TENANT_ID}&select=full_name,phone`);
-          if(drivers&&drivers.length){driverName=drivers[0].full_name||'司机';driverPhone=drivers[0].phone||'';}
-        }catch(e){}
-      }
-      const div=document.createElement('div');
-      div.className='confirm-card';
-      div.style.border='1.5px solid rgba(0,200,150,0.3)';
-      div.innerHTML=`
-        <div style="font-size:13px;font-weight:800;color:rgba(0,200,150,0.9);margin-bottom:10px;">✅ 司机已确认您的预约</div>
-        <div style="font-size:12px;color:rgba(255,255,255,0.6);margin-bottom:4px;">📅 ${dtStr} · 📍 ${(t.pickup_address||'').slice(0,30)}</div>
-        ${driverPhone?`<div style="background:rgba(0,200,150,0.08);border-radius:10px;padding:12px;margin-top:10px;text-align:center;">
-          <div style="font-size:13px;color:white;font-weight:700;margin-bottom:6px;">${driverName}</div>
-          <a href="tel:${driverPhone}" style="display:block;font-size:18px;font-weight:900;color:rgba(0,200,150,0.9);text-decoration:none;">📞 ${driverPhone}</a>
-        </div>`:''}`;
-      chatArea.appendChild(div);
-    }
-    scrollBottom();
-    speak('司机已确认您的预约，联系电话已显示');
-  }catch(e){ addMsg('消息加载失败，请稍后再试'); }
-}
-
-// ── 订单恢复卡片 ──
-function showResumeOrderCard(t){
-  const div = document.createElement('div');
-  div.className = 'confirm-card';
-  div.style.border = '1.5px solid rgba(0,200,150,0.35)';
-  const dt = t.scheduled_at ? new Date(t.scheduled_at) : null;
-  const dtStr = dt ? `${dt.getUTCMonth()+1}月${dt.getUTCDate()}日 ${dt.getUTCHours().toString().padStart(2,'0')}:${dt.getUTCMinutes().toString().padStart(2,'0')}` : '—';
-  const vMap={"comfort_5":"舒适 5座","comfort_8":"舒适 8座","comfort_12":"舒适 12座","comfort_15":"舒适 15座","luxury_alpha":"阿尔法 6/7座","luxury_benz_8":"奔驰 8座","luxury_benz_12":"奔驰 12座","luxury_benz_15":"奔驰 15座"};
-  const statusLabel = t.status==='confirmed'?'✅ 司机已确认':'⏳ 待司机确认';
-  const statusColor = t.status==='confirmed'?'rgba(0,200,150,0.9)':'rgba(255,165,0,0.9)';
-  div.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-      <div style="font-size:14px;font-weight:900;color:white;">📋 您的预约</div>
-      <span style="font-size:12px;font-weight:700;color:${statusColor};">${statusLabel}</span>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
-      <div class="confirm-row"><span class="confirm-label">日期</span><span class="confirm-value">${dtStr}</span></div>
-      <div class="confirm-row"><span class="confirm-label">出发地</span><span class="confirm-value" style="font-size:12px;">${(t.pickup_address||'—').slice(0,35)}</span></div>
-      <div class="confirm-row"><span class="confirm-label">车型</span><span class="confirm-value">${vMap[t.vehicle_type]||t.vehicle_type||'—'}</span></div>
-      <div class="confirm-row"><span class="confirm-label">费用</span><span class="confirm-value" style="color:rgba(0,212,255,0.9);font-weight:900;">AUD ${t.total_price} <span style="font-size:11px;color:rgba(255,255,255,0.3);">参考</span></span></div>
-    </div>
-    ${t.status==='confirmed'?`
-    <div id="driver-contact-${t.id}" style="background:rgba(0,200,150,0.08);border:1px solid rgba(0,200,150,0.2);border-radius:10px;padding:12px;margin-bottom:12px;text-align:center;">
-      <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:4px;">司机联系方式</div>
-      <div style="font-size:13px;color:white;font-weight:700;" id="driver-name-${t.id}">加载中...</div>
-      <a id="driver-phone-${t.id}" href="#" style="font-size:16px;font-weight:900;color:rgba(0,200,150,0.9);display:block;margin-top:6px;">📞 —</a>
-    </div>`:''}
-    <div style="display:flex;gap:8px;">
-      <button onclick="this.closest('.confirm-card').remove();"
-        style="flex:1;padding:11px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:rgba(255,255,255,0.5);font-size:13px;cursor:pointer;font-family:inherit;">重新下单</button>
-      <button onclick="this.closest('.confirm-card').remove();"
-        style="flex:1;padding:11px;background:rgba(0,150,199,0.2);border:1px solid rgba(0,150,199,0.3);border-radius:10px;color:white;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">好的，知道了</button>
-    </div>`;
-  chatArea.appendChild(div);
-  scrollBottom();
-
-  // 如果已确认，拉取司机联系方式
-  if(t.status==='confirmed' && t.driver_id){
-    supaGet(`drivers?id=eq.${t.driver_id}&tenant_id=eq.${TENANT_ID}&select=full_name,phone`).then(drivers=>{
-      if(drivers && drivers.length){
-        const d = drivers[0];
-        const nameEl = document.getElementById('driver-name-'+t.id);
-        const phoneEl = document.getElementById('driver-phone-'+t.id);
-        if(nameEl) nameEl.textContent = d.full_name||'司机';
-        if(phoneEl){ phoneEl.textContent='📞 '+d.phone; phoneEl.href='tel:'+d.phone; }
-      }
-    }).catch(()=>{});
-  }
-}
-
-// ── 个人中心 ──
-async function openProfile(){ stopTTS();
-  const panel = document.getElementById('profile-panel');
-  panel.classList.add('open');
-  const p = getPassenger();
-  // 填充用户信息
-  document.getElementById('profile-name').textContent = p.name||'未登录';
-  document.getElementById('profile-phone').textContent = p.phone||'—';
-  // 读取积分+等级
-  if(p.phone){
-    supaGet(`contacts?phone=eq.${p.phone}&tenant_id=eq.${TENANT_ID}&select=voucher_balance,registration_rank`).then(rows=>{
-      if(rows&&rows.length){
-        const pts = rows[0].voucher_balance||0;
-        const level = getLevel(pts);
-        document.getElementById('profile-points').textContent = pts;
-        // 等级显示
-        const lvlEl = document.getElementById('profile-level');
-        if(lvlEl) lvlEl.textContent = `${level.icon} ${level.name}`;
-        // 下一等级进度
-        const nextLevel = LEVELS.find(l=>l.min>pts);
-        const divEl = document.getElementById('profile-dividend');
-        if(divEl){
-          if(nextLevel){
-            const pct = Math.round((pts-level.min)/(nextLevel.min-level.min)*100);
-            divEl.textContent = `距${nextLevel.icon}${nextLevel.name} 还差${nextLevel.min-pts}分`;
-          } else {
-            divEl.textContent = `顶级会员 · 折现价值A$${(pts/100).toFixed(0)}`;
-          }
-        }
-        // 折现价值
-        const cashEl = document.getElementById('profile-cash');
-        if(cashEl) cashEl.textContent = `A$${(pts/100).toFixed(2)}`;
-      }
-    }).catch(()=>{});
-  }
-  // 推荐链接
-  if(!p.ref) p.ref = genRef();
-  const refLink = `${location.origin}?ref=${p.ref}`;
-  document.getElementById('profile-ref-link').textContent = refLink;
-  // 加载订单
-  loadProfileTrips(p.phone);
-}
-
-function closeProfile(){
-  document.getElementById('profile-panel').classList.remove('open');
-}
-
-async function loadProfileTrips(phone){
-  const el = document.getElementById('profile-trips');
-  if(!phone){ el.innerHTML='<div style="text-align:center;padding:20px;color:rgba(255,255,255,0.3);font-size:13px;">请先登录</div>'; return; }
-  try{
-    const trips = await supaGet(`trips?passenger_phone=eq.${phone}&tenant_id=eq.${TENANT_ID}&order=created_at.desc&limit=10`);
-    if(!trips||trips.length===0){
-      el.innerHTML='<div style="text-align:center;padding:20px;color:rgba(255,255,255,0.3);font-size:13px;">暂无订单</div>';
-      return;
-    }
-    const statusMap={pending:'待确认',confirmed:'已确认',completed:'已完成',cancelled:'已取消'};
-    const statusClass={pending:'pending',confirmed:'confirmed',completed:'completed',cancelled:'completed'};
-    el.innerHTML = trips.map(t=>{
-      const dt = t.scheduled_at ? new Date(t.scheduled_at) : null;
-      const dtStr = dt ? `${dt.getUTCMonth()+1}月${dt.getUTCDate()}日 ${dt.getUTCHours().toString().padStart(2,'0')}:${dt.getUTCMinutes().toString().padStart(2,'0')}` : '—';
-      const addr = t.pickup_address||'—';
-      return `<div class="trip-card-mini" onclick="showTripDetail('${t.id}','${statusMap[t.status]||t.status}','${addr}','${dtStr}',${t.total_price},'${({"comfort_5":"舒适 5座","comfort_8":"舒适 8座","comfort_12":"舒适 12座","comfort_15":"舒适 15座","luxury_alpha":"阿尔法 6/7座","luxury_benz_8":"奔驰 8座","luxury_benz_12":"奔驰 12座","luxury_benz_15":"奔驰 15座"})[t.vehicle_type]||t.vehicle_type||'—'}','${t.status}')">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <span class="trip-status ${statusClass[t.status]||'pending'}">${statusMap[t.status]||t.status}</span>
-          <span style="font-size:13px;font-weight:800;color:rgba(0,212,255,0.9);">AUD ${t.total_price}</span>
-        </div>
-        <div style="font-size:13px;color:white;margin-bottom:4px;">📍 ${addr.slice(0,35)}</div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.4);">⏰ ${dtStr} · ${({"comfort_5":"舒适 5座","comfort_8":"舒适 8座","comfort_12":"舒适 12座","comfort_15":"舒适 15座","luxury_alpha":"阿尔法 6/7座","luxury_benz_8":"奔驰 8座","luxury_benz_12":"奔驰 12座","luxury_benz_15":"奔驰 15座"})[t.vehicle_type]||t.vehicle_type||'—'}</div>
-      </div>`;
-    }).join('');
-  }catch(e){
-    el.innerHTML='<div style="text-align:center;padding:20px;color:rgba(255,100,90,0.6);font-size:13px;">加载失败，请重试</div>';
-  }
-}
-
-async function shareRefLink(){
-  const p = getPassenger();
-  if(!p.ref) p.ref = genRef();
-  const link = `${location.origin}?ref=${p.ref}`;
-  const shareData = {
-    title: '澳洲出行AI管家',
-    text: '墨尔本华人专属出行平台，AI管家中文全程服务，用车还能分红！不抽佣，快来试试 👇',
-    url: link
-  };
-  try{
-    if(navigator.share){
-      await navigator.share(shareData);
-    } else {
-      // 降级：复制链接
-      await navigator.clipboard.writeText(link);
-      await agentSay('链接已复制，可以粘贴分享给朋友', 200);
-    }
-  }catch(e){
-    if(e.name!=='AbortError'){
-      await navigator.clipboard.writeText(link).catch(()=>{});
-      await agentSay('链接已复制', 200);
-    }
-  }
-}
-
-function copyRefLink(){
-  const p = getPassenger();
-  if(!p.ref) p.ref = genRef();
-  const link = `${location.origin}?ref=${p.ref}`;
-  navigator.clipboard.writeText(link).then(()=>{
-    speak('推荐链接已复制，发给朋友吧');
-  }).catch(()=>{
-    document.getElementById('profile-ref-link').select?.();
-    alert('链接：'+link);
-  });
-}
-
-async function showTripDetail(id, status, addr, time, price, vehicle, rawStatus){
-  const existing = document.getElementById('trip-detail-modal');
-  if(existing) existing.remove();
-
-  const vMap={"comfort_5":"舒适 5座","comfort_8":"舒适 8座","comfort_12":"舒适 12座","comfort_15":"舒适 15座","luxury_alpha":"阿尔法 6/7座","luxury_benz_8":"奔驰 8座","luxury_benz_12":"奔驰 12座","luxury_benz_15":"奔驰 15座"};
-  const statusMap={pending:'⏳ 待确认',confirmed:'✅ 已确认',completed:'🏁 已完成',cancelled:'❌ 已取消'};
-  const canCancel = rawStatus==='pending';
-  const isCompleted = rawStatus==='completed';
-  const isConfirmed = rawStatus==='confirmed';
-
-  // 从DB拉完整订单数据
-  let trip = null;
-  let driverName='', driverPhone='';
-  try{
-    const trips = await supaGet(`trips?id=eq.${id}&tenant_id=eq.${TENANT_ID}`);
-    if(trips&&trips.length) trip = trips[0];
-    if(trip&&trip.driver_id&&(isConfirmed||isCompleted)){
-      const drivers = await supaGet(`drivers?id=eq.${trip.driver_id}&tenant_id=eq.${TENANT_ID}&select=full_name,phone`);
-      if(drivers&&drivers.length){ driverName=drivers[0].full_name||'司机'; driverPhone=drivers[0].phone||''; }
-    }
-  }catch(e){}
-
-  // 用DB数据覆盖传参
-  if(trip){
-    const dt = trip.scheduled_at?new Date(trip.scheduled_at):null;
-    if(dt) time=`${dt.getUTCMonth()+1}月${dt.getUTCDate()}日 ${dt.getUTCHours().toString().padStart(2,'0')}:${dt.getUTCMinutes().toString().padStart(2,'0')}`;
-    if(trip.pickup_address) addr=trip.pickup_address;
-    if(trip.total_price) price=trip.total_price;
-    if(trip.vehicle_type) vehicle=vMap[trip.vehicle_type]||trip.vehicle_type;
-  }
-
-  const overlay = document.createElement('div');
-  overlay.id = 'trip-detail-modal';
-  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:3000;display:flex;align-items:flex-end;justify-content:center;';
-  overlay.innerHTML=`
-    <div style="background:#0d1f3c;border-radius:24px 24px 0 0;padding:24px 20px 44px;width:100%;max-width:480px;border-top:1px solid rgba(255,255,255,0.1);">
-      <div style="width:40px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:0 auto 20px;"></div>
-      <div style="font-size:16px;font-weight:900;color:white;margin-bottom:16px;">📋 订单详情</div>
-      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;">
-        <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.4);font-size:13px;">状态</span><span style="font-size:13px;font-weight:700;">${statusMap[rawStatus]||status}</span></div>
-        <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.4);font-size:13px;">时间</span><span style="color:white;font-size:13px;">${time}</span></div>
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;"><span style="color:rgba(255,255,255,0.4);font-size:13px;">地址</span><span style="color:white;font-size:12px;text-align:right;max-width:65%;">${addr}</span></div>
-        <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.4);font-size:13px;">车型</span><span style="color:white;font-size:13px;">${vehicle}</span></div>
-        <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.4);font-size:13px;">费用</span><span style="color:rgba(0,212,255,0.9);font-size:15px;font-weight:900;">AUD ${price}<span style="font-size:11px;color:rgba(255,255,255,0.3);margin-left:4px;">参考</span></span></div>
-      </div>
-      ${(isConfirmed||isCompleted)&&driverPhone?`
-      <div style="background:rgba(0,200,150,0.08);border:1px solid rgba(0,200,150,0.2);border-radius:10px;padding:12px;margin-bottom:14px;text-align:center;">
-        <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:4px;">司机联系方式</div>
-        <div style="font-size:14px;font-weight:700;color:white;margin-bottom:6px;">${driverName}</div>
-        <a href="tel:${driverPhone}" style="font-size:18px;font-weight:900;color:rgba(0,200,150,0.9);text-decoration:none;">📞 ${driverPhone}</a>
-      </div>`:''}
-      ${isCompleted?`
-      <div style="margin-bottom:14px;">
-        <button onclick="showRatingPanel('${id}')" style="width:100%;padding:12px;background:rgba(255,200,0,0.1);border:1px solid rgba(255,200,0,0.3);border-radius:12px;color:rgba(255,200,0,0.9);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">⭐ 评价此次行程</button>
-      </div>`:''}
-      <div style="display:flex;gap:10px;">
-        ${canCancel?`<button onclick="cancelTripById(this)" data-id="${id}" style="flex:1;padding:12px;background:rgba(255,59,48,0.1);border:1px solid rgba(255,59,48,0.3);border-radius:12px;color:rgba(255,100,90,0.8);font-size:13px;cursor:pointer;font-family:inherit;">取消订单</button>`:''}
-        <button onclick="document.getElementById('trip-detail-modal').remove()" style="flex:1;padding:12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:rgba(255,255,255,0.6);font-size:13px;cursor:pointer;font-family:inherit;">关闭</button>
-      </div>
-    </div>`;
-  overlay.onclick=(e)=>{ if(e.target===overlay) overlay.remove(); };
-  document.body.appendChild(overlay);
-}
-
-function showRatingPanel(tripId){
-  document.getElementById('trip-detail-modal')?.remove();
-  const overlay=document.createElement('div');
-  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:3000;display:flex;align-items:flex-end;justify-content:center;';
-  let stars=5;
-  overlay.innerHTML=`
-    <div style="background:#0d1f3c;border-radius:24px 24px 0 0;padding:24px 20px 44px;width:100%;max-width:480px;">
-      <div style="width:40px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:0 auto 20px;"></div>
-      <div style="font-size:16px;font-weight:900;color:white;margin-bottom:16px;">⭐ 评价行程</div>
-      <div style="display:flex;justify-content:center;gap:12px;margin-bottom:16px;" id="star-row">
-        ${[1,2,3,4,5].map(i=>`<span onclick="selectStar(${i})" data-star="${i}" style="font-size:32px;cursor:pointer;opacity:${i<=5?1:0.3};">⭐</span>`).join('')}
-      </div>
-      <textarea id="rating-comment" placeholder="说说您的体验（选填）" style="width:100%;padding:12px;background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.12);border-radius:10px;color:white;font-size:14px;font-family:inherit;outline:none;resize:none;height:80px;box-sizing:border-box;margin-bottom:14px;"></textarea>
-      <button onclick="submitRating('${tripId}',this)" style="width:100%;padding:14px;background:linear-gradient(135deg,#f5a623,#e8950f);color:white;border:none;border-radius:12px;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit;">提交评价</button>
-    </div>`;
-  overlay.onclick=(e)=>{ if(e.target===overlay) overlay.remove(); };
-  document.body.appendChild(overlay);
-}
-
-function selectStar(n){
-  document.querySelectorAll('#star-row span').forEach(s=>{
-    s.style.opacity = parseInt(s.dataset.star)<=n?1:0.3;
-  });
-  window._selectedStars=n;
-}
-
-async function submitRating(tripId, btn){
-  const stars = window._selectedStars||5;
-  const comment = document.getElementById('rating-comment')?.value.trim()||'';
-  btn.textContent='提交中...'; btn.disabled=true;
-  try{
-    await fetch(SUPA_URL+'/rest/v1/trips?id=eq.'+tripId,{
-      method:'PATCH',
-      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'},
-      body:JSON.stringify({rating:stars,review_text:comment})
-    });
-    btn.closest('div[style*="fixed"]')?.remove();
-    // 评价积分（含等级加成）
-    const p=getPassenger();
-    if(p.phone){
-      const reviewPts = await awardPoints(p.phone, comment?'review_text':'review_star');
-      speak(`感谢您的评价！+${reviewPts}积分到账`);
-    } else {
-      speak('感谢您的评价！');
-    }
-    openProfile();
-  }catch(e){ btn.textContent='提交评价'; btn.disabled=false; alert('提交失败，请重试'); }
-}
-
-function cancelTripById(btn){
-  const id = btn.getAttribute('data-id');
-  cancelTrip(id);
-}
-
-async function cancelTrip(tripId){
-  // 先查出订单的scheduled_at计算取消费用
-  let trip = null;
-  try{
-    const res = await supaGet(`trips?id=eq.${tripId}&tenant_id=eq.${TENANT_ID}`);
-    if(res && res.length) trip = res[0];
-  }catch(e){}
-
-  // 计算距出发时间
-  let hoursLeft = 999;
-  let feeNote = '免费取消';
-  let feeRate = 0;
-  if(trip && trip.scheduled_at){
-    const dept = new Date(trip.scheduled_at);
-    hoursLeft = (dept - new Date()) / 3600000;
-    if(hoursLeft > 24){ feeNote = '免费取消（出发前24小时以上）'; feeRate=0; }
-    else if(hoursLeft > 12){ feeNote = `收取基础价20%（约AUD ${Math.round((trip.base_price||trip.total_price)*0.2)}）`; feeRate=0.2; }
-    else if(hoursLeft > 0){ feeNote = `收取基础价50%（约AUD ${Math.round((trip.base_price||trip.total_price)*0.5)}）`; feeRate=0.5; }
-    else { feeNote = '司机已出发，将收取全额费用'; feeRate=1; }
-  }
-
-  // 政策弹窗
-  const overlay = document.createElement('div');
-  overlay.id = 'cancel-policy-modal';
-  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:4000;display:flex;align-items:flex-end;justify-content:center;';
-  overlay.innerHTML=`
-    <div style="background:#0d1f3c;border-radius:24px 24px 0 0;padding:24px 20px 44px;width:100%;max-width:480px;border-top:1px solid rgba(255,255,255,0.1);">
-      <div style="width:40px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:0 auto 20px;"></div>
-      <div style="font-size:16px;font-weight:900;color:white;margin-bottom:4px;">⚠️ 取消订单政策</div>
-      <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:16px;">请确认以下取消费用</div>
-      <div style="background:rgba(255,255,255,0.05);border-radius:12px;padding:14px;margin-bottom:16px;">
-        <div style="font-size:13px;color:rgba(255,255,255,0.6);line-height:1.9;">
-          📅 出发前24小时以上：<strong style="color:rgba(0,200,150,0.9);">免费</strong><br>
-          🕐 出发前12-24小时：<strong style="color:rgba(255,165,0,0.9);">收基础价20%</strong><br>
-          ⏰ 出发前12小时内：<strong style="color:rgba(255,100,50,0.9);">收基础价50%</strong><br>
-          🚗 司机已出发：<strong style="color:rgba(255,59,48,0.9);">收全额费用</strong>
-        </div>
-      </div>
-      <div style="background:rgba(${feeRate>0?'255,100,50':'0,200,150'},0.1);border:1px solid rgba(${feeRate>0?'255,100,50':'0,200,150'},0.3);border-radius:10px;padding:12px;margin-bottom:20px;text-align:center;">
-        <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:4px;">您的取消费用</div>
-        <div style="font-size:15px;font-weight:800;color:${feeRate>0?'rgba(255,130,80,0.9)':'rgba(0,200,150,0.9)'};">${feeNote}</div>
-      </div>
-      <div style="display:flex;gap:10px;">
-        <button onclick="document.getElementById('cancel-policy-modal').remove()"
-          style="flex:1;padding:13px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:rgba(255,255,255,0.6);font-size:14px;cursor:pointer;font-family:inherit;">返回</button>
-        <button onclick="confirmCancelTrip('${tripId}')"
-          style="flex:1;padding:13px;background:rgba(255,59,48,0.2);border:1px solid rgba(255,59,48,0.4);border-radius:12px;color:rgba(255,100,90,0.9);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">确认取消</button>
-      </div>
-    </div>`;
-  document.body.appendChild(overlay);
-}
-
-async function confirmCancelTrip(tripId){
-  document.getElementById('cancel-policy-modal')?.remove();
-  try{
-    await fetch(SUPA_URL+'/rest/v1/trips?id=eq.'+tripId, {
-      method:'PATCH',
-      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
-      body:JSON.stringify({status:'cancelled'})
-    });
-    document.getElementById('trip-detail-modal')?.remove();
-    const p=getPassenger();
-    loadProfileTrips(p.phone);
-    speak('订单已取消');
-  }catch(e){ alert('取消失败，请联系客服'); }
-}
-
-function switchToDriver(){
-  const p = getPassenger();
-  if(!p.phone){
-    speak('请先登录再切换司机身份');
-    return;
-  }
-  // 把乘客信息存入localStorage给driver-app读取
-  localStorage.setItem('driver_from_passenger', JSON.stringify({
-    phone: p.phone,
-    name: p.name||'',
-    wechat: p.wechat||''
-  }));
+// ── 跳转司机端 ──
+function goToDriver() {
   window.location.href = 'driver-app.html';
 }
-
-function addToHome(){
-  speak('在Safari点击底部分享按钮，选择添加到主屏幕，就可以像App一样使用了');
-  alert('📱 添加步骤：\n1. 点击Safari底部"分享"按钮（方块加箭头）\n2. 选择"添加到主屏幕"\n3. 点击"添加"');
-}
-
-function switchAgentGender(){
-  const current = localStorage.getItem('au_gender')||'male';
-  const newGender = current==='female'?'male':'female';
-  localStorage.setItem('au_gender', newGender);
-  setAgentByUserGender(newGender);
-  const el = document.getElementById('profile-agent-name');
-  if(el) el.textContent = '当前：'+agentName;
-  speak('好的，已为您切换管家');
-}
-
-function logoutUser(){
-  if(!confirm('确定退出登录？')) return;
-  localStorage.removeItem('au_passenger');
-  localStorage.removeItem('au_role');
-  localStorage.removeItem('au_addresses');
-  localStorage.removeItem('au_profile');
-  localStorage.removeItem('au_gender');
-  localStorage.removeItem('dialect_noticed');
-  closeProfile();
-  location.reload();
-}
-
-// ── 时间修改卡 ──
-function showEditTimeCard(){
-  const div=document.createElement('div');
-  div.className='confirm-card';
-  div.innerHTML=`
-    <div style="font-size:13px;color:rgba(255,255,255,0.7);margin-bottom:10px;">修改出发时间</div>
-    <div style="display:flex;gap:10px;align-items:center;">
-      <input id="edit-date" type="date" value="${S.date||''}"
-        style="flex:1;background:rgba(255,255,255,0.07);border:1.5px solid rgba(0,150,199,0.4);
-        border-radius:10px;padding:10px;color:white;font-size:14px;font-family:inherit;outline:none;">
-      <input id="edit-time" type="time" value="${S.time||''}"
-        style="flex:1;background:rgba(255,255,255,0.07);border:1.5px solid rgba(0,150,199,0.4);
-        border-radius:10px;padding:10px;color:white;font-size:14px;font-family:inherit;outline:none;">
-    </div>
-    <button onclick="confirmEditTime()"
-      style="width:100%;margin-top:10px;padding:12px;background:rgba(0,150,199,0.3);
-      border:1.5px solid rgba(0,150,199,0.4);border-radius:10px;color:white;
-      font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">确认</button>`;
-  chatArea.appendChild(div);scrollBottom();
-}
-
-function confirmEditTime(){
-  const d=document.getElementById('edit-date')?.value;
-  const t=document.getElementById('edit-time')?.value;
-  if(d)S.date=d;
-  if(t)S.time=t;
-  document.querySelector('.confirm-card:last-child')?.remove();
-  agentSay(`好，已更新为${S.date} ${S.time}，需要换车型吗？`,300);
-}
-
-// ── 接机家庭地址确认卡 ──
-function showHomeAddressConfirm(homeAddr){
-  const div=document.createElement('div');
-  div.className='confirm-card';
-  div.style.border='1.5px solid rgba(0,200,150,0.3)';
-  div.innerHTML=`
-    <div style="font-size:13px;color:rgba(255,255,255,0.6);margin-bottom:10px;">🏠 目的地确认</div>
-    <div onclick="useGPSAddr('${homeAddr.replace(/'/g,"\'")}',null)"
-      style="background:rgba(0,200,150,0.08);border:1.5px solid rgba(0,200,150,0.3);border-radius:12px;padding:12px 14px;margin-bottom:8px;cursor:pointer;">
-      <div style="font-size:10px;color:rgba(0,200,150,0.7);margin-bottom:3px;">🏠 我的家 — 点击确认</div>
-      <div style="font-size:13px;color:white;font-weight:600;">${homeAddr}</div>
-    </div>
-    <div style="display:flex;gap:8px;">
-      <button onclick="gpsConfirmAddress('destination');this.closest('.confirm-card').remove();"
-        style="flex:1;padding:9px;background:rgba(0,150,199,0.15);border:1px solid rgba(0,150,199,0.3);border-radius:10px;color:rgba(0,212,255,0.8);font-size:12px;cursor:pointer;font-family:inherit;">
-        📍 换个地址
-      </button>
-    </div>`;
-  chatArea.appendChild(div);
-  scrollBottom();
-}
-
-// ── 粘贴地址快捷提示卡 ──
-function showPasteAddressHint(){
-  // 避免重复显示
-  if(document.getElementById('paste-addr-hint')) return;
-  const div = document.createElement('div');
-  div.id = 'paste-addr-hint';
-  div.className = 'confirm-card';
-  div.style.cssText = 'border:1.5px solid rgba(0,212,255,0.3);';
-  div.innerHTML = `
-    <div style="font-size:13px;color:rgba(255,255,255,0.7);margin-bottom:12px;">
-      📋 地址说不清楚？试试这几个方法：
-    </div>
-    <button onclick="pasteAndFocus()" style="width:100%;padding:11px;background:rgba(0,150,199,0.2);
-      border:1px solid rgba(0,150,199,0.4);border-radius:10px;color:white;font-size:14px;
-      font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:8px;">
-      📋 从手机粘贴地址
-    </button>
-    <button onclick="gpsConfirmAddress('destination');this.closest('.confirm-card').remove();"
-      style="width:100%;padding:11px;background:rgba(39,174,96,0.15);
-      border:1px solid rgba(39,174,96,0.3);border-radius:10px;color:rgba(255,255,255,0.8);
-      font-size:13px;cursor:pointer;font-family:inherit;margin-bottom:8px;">
-      📍 用GPS定位我现在的位置
-    </button>
-    <div style="font-size:12px;color:rgba(255,255,255,0.35);text-align:center;">
-      或者告诉我附近的购物中心/学校名称
-    </div>`;
-  chatArea.appendChild(div);
-  scrollBottom();
-}
-
-async function pasteAndFocus(){
-  try{
-    const text = await navigator.clipboard.readText();
-    if(text && text.trim().length > 3){
-      document.getElementById('chat-input').value = text.trim();
-      document.getElementById('paste-addr-hint')?.remove();
-      // 自动发送
-      sendMessage();
-    } else {
-      document.getElementById('chat-input').focus();
-      document.getElementById('paste-addr-hint')?.remove();
-    }
-  } catch(e){
-    // 没有剪贴板权限，聚焦输入框让用户手动粘贴
-    const input = document.getElementById('chat-input');
-    input.focus();
-    input.placeholder = '长按这里粘贴地址...';
-    document.getElementById('paste-addr-hint')?.remove();
-    speak('请长按输入框，选择粘贴');
-  }
-}
-
-// ── GPS定位确认地址 ──
-async function gpsConfirmAddress() {
-  const addrs = getSavedAddresses();
-  const isDropoff = S.direction === 'from_airport';
-  const label = isDropoff ? '送您去哪里？' : '从哪里出发？';
-
-  // 先尝试GPS定位
-  if (navigator.geolocation && !isDropoff) {
-    // 送机场景才GPS（用户在家出发）
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        try {
-          const res = await fetch(
-            `https://maps.googleapis.com/maps/api/geocode/json?latlng=${pos.coords.latitude},${pos.coords.longitude}&key=AIzaSyAHGLzz7_TpG2MLnqT1kCROeNIzRr-EQac&language=zh-CN`
-          );
-          const data = await res.json();
-          if (data.results && data.results[0]) {
-            const gpsAddr = data.results[0].formatted_address;
-            showAddressConfirm(gpsAddr, addrs, label);
-          } else {
-            showAddressInputCard(label, addrs);
-          }
-        } catch(e) {
-          showAddressInputCard(label, addrs);
-        }
-      },
-      () => {
-        // 定位失败，直接显示历史地址
-        showAddressInputCard(label, addrs);
-      },
-      { timeout: 5000 }
-    );
-  } else {
-    // 接机目的地或无定位权限，直接输入
-    showAddressInputCard(label, addrs);
-  }
-}
-
-// 从GPS地址提取街道（去掉门牌号）
-function extractStreet(addr) {
-  return addr.replace(/^\d+[A-Za-z]?\/?\d*\s+/, '').trim();
-}
-
-// 门牌号修正
-function showNumberFixInput(gpsAddr) {
-  document.querySelectorAll('.addr-confirm-card').forEach(c => c.remove());
-  const street = extractStreet(gpsAddr);
-  const div = document.createElement('div');
-  div.className = 'confirm-card addr-confirm-card';
-  div.innerHTML = `
-    <div style="font-size:13px;color:rgba(255,255,255,0.6);margin-bottom:4px;">输入正确的门牌号</div>
-    <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-bottom:10px;">街道：${street}</div>
-    <div style="display:flex;gap:8px;align-items:center;">
-      <input id="number-fix-input" placeholder="如：13" inputmode="text"
-        style="flex:1;background:rgba(255,255,255,0.08);border:1.5px solid rgba(0,150,199,0.4);
-        border-radius:10px;padding:11px 14px;color:white;font-size:16px;font-family:inherit;outline:none;">
-      <button onclick="confirmNumberFix('${gpsAddr.replace(/'/g, "\'")}')"
-        style="padding:11px 18px;background:rgba(0,150,199,0.3);border:1.5px solid rgba(0,150,199,0.4);
-        border-radius:10px;color:white;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">确认</button>
-    </div>`;
-  chatArea.appendChild(div);
-  scrollBottom();
-  setTimeout(() => document.getElementById('number-fix-input')?.focus(), 200);
-}
-
-function confirmNumberFix(gpsAddr) {
-  const val = document.getElementById('number-fix-input')?.value.trim();
-  if (!val) { alert('请输入门牌号'); return; }
-  const corrected = val + ' ' + extractStreet(gpsAddr);
-  useGPSAddr(corrected, null);
-}
-
-// 显示GPS定位确认卡（含地图图钉）
-async function showAddressConfirm(gpsAddr, savedAddrs, label) {
-  const div = document.createElement('div');
-  div.className = 'confirm-card addr-confirm-card';
-
-  const encoded = encodeURIComponent(gpsAddr);
-  const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${encoded}&zoom=16&size=360x160&markers=color:red%7C${encoded}&key=AIzaSyAHGLzz7_TpG2MLnqT1kCROeNIzRr-EQac`;
-
-  const diffAddr = savedAddrs.length > 0 && savedAddrs[0].trim() !== gpsAddr.trim();
-  const savedAddr = savedAddrs[0];
-
-  let questionHtml = '';
-  if (diffAddr) {
-    questionHtml = `
-      <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:8px;">选择出发地址：</div>
-      <div onclick="useGPSAddr('${gpsAddr.replace(/'/g, "\'")}',null)"
-        style="background:rgba(0,150,199,0.1);border:1.5px solid rgba(0,150,199,0.3);border-radius:12px;padding:10px 14px;margin-bottom:8px;cursor:pointer;">
-        <div style="font-size:10px;color:rgba(0,212,255,0.6);margin-bottom:2px;">📍 当前定位 — 点击确认</div>
-        <div style="font-size:13px;color:white;font-weight:600;">${gpsAddr}</div>
-      </div>
-      <div onclick="useGPSAddr('${savedAddr.replace(/'/g, "\'")}',null)"
-        style="background:rgba(255,255,255,0.05);border:1.5px solid rgba(255,255,255,0.12);border-radius:12px;padding:10px 14px;margin-bottom:8px;cursor:pointer;">
-        <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-bottom:2px;">📌 常用地址 — 点击确认</div>
-        <div style="font-size:13px;color:rgba(255,255,255,0.85);font-weight:600;">${savedAddr}</div>
-      </div>`;
-  } else {
-    questionHtml = `
-      <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:8px;">确认出发地址：</div>
-      <div onclick="useGPSAddr('${gpsAddr.replace(/'/g, "\'")}',null)"
-        style="background:rgba(0,150,199,0.1);border:1.5px solid rgba(0,150,199,0.3);border-radius:12px;padding:10px 14px;margin-bottom:8px;cursor:pointer;">
-        <div style="font-size:10px;color:rgba(0,212,255,0.6);margin-bottom:2px;">📍 当前定位 — 点击确认</div>
-        <div style="font-size:13px;color:white;font-weight:600;">${gpsAddr}</div>
-      </div>`;
-  }
-
-  div.innerHTML = `
-    <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:8px;">${label}</div>
-    <div style="border-radius:12px;overflow:hidden;margin-bottom:10px;position:relative;">
-      <img src="${mapUrl}" style="width:100%;height:140px;object-fit:cover;display:block;"
-        onerror="this.parentElement.style.display='none'">
-      <div style="position:absolute;bottom:6px;right:8px;background:rgba(0,0,0,0.5);border-radius:6px;padding:3px 8px;font-size:10px;color:white;">Google Maps</div>
-    </div>
-    ${questionHtml}
-    <div style="display:flex;gap:8px;margin-top:4px;">
-      <button onclick="showNumberFixInput('${gpsAddr.replace(/'/g, "\'")}' )"
-        style="flex:1;padding:9px;background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.25);
-        border-radius:10px;color:rgba(245,166,35,0.8);font-size:12px;cursor:pointer;font-family:inherit;">
-        🔢 门牌号不对
-      </button>
-      <button onclick="showManualAddressInput()"
-        style="flex:1;padding:9px;background:none;border:1px solid rgba(255,255,255,0.1);
-        border-radius:10px;color:rgba(255,255,255,0.4);font-size:12px;cursor:pointer;font-family:inherit;">
-        ✏️ 换个地址
-      </button>
-    </div>`;
-
-  chatArea.appendChild(div);
-  scrollBottom();
-
-  // 不重复语音，避免与前一条TTS叠加
-}
-
-function useGPSAddr(addr, el) {
-  S.address = addr;
-  S.address = addr;
-  saveAddress(addr);
-  addToAddressBook(addr); // 自动存地址簿
-  document.querySelectorAll('.confirm-card').forEach(c => {
-    if (c.querySelector('[onclick*="useGPSAddr"]')) c.remove();
-  });
-  addMsg(addr, true);
-  aiHistory.push({role:'user', content:'出发地址是：'+addr});
-  showVehicleCards();
-}
-
-function showManualAddressInput() {
-  document.querySelectorAll('.confirm-card').forEach(c => {
-    if (c.querySelector('[onclick*="useGPSAddr"]')) c.remove();
-  });
-  const addrs = getSavedAddresses();
-  showAddressInputCard('请输入地址', addrs);
-}
-
-// 显示手动输入地址卡（带历史+自动补全）
-function showAddressInputCard(label, addrs) {
-  const div = document.createElement('div');
-  div.className = 'confirm-card';
-  div.innerHTML = `
-    <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:8px;">${label}</div>
-    ${addrs.length>0?`
-    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">
-      ${addrs.map(a=>`<div onclick="useGPSAddr('${a.replace(/'/g,"\'")}',this)"
-        style="font-size:11px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);
-        border-radius:8px;padding:5px 10px;cursor:pointer;color:rgba(255,255,255,0.7);">
-        📍 ${a.length>30?a.substring(0,30)+'...':a}</div>`).join('')}
-    </div>`:''}
-    <input class="address-autocomplete" id="addr-input" placeholder="输入地址..."
-      style="width:100%;background:rgba(255,255,255,0.08);border:1.5px solid rgba(255,255,255,0.15);
-      border-radius:10px;padding:11px 14px;color:white;font-size:14px;font-family:inherit;outline:none;">
-    <button onclick="confirmManualAddress()"
-      style="width:100%;margin-top:8px;padding:12px;background:rgba(0,150,199,0.3);
-      border:1.5px solid rgba(0,150,199,0.4);border-radius:10px;color:white;
-      font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">确认地址</button>`;
-
-  chatArea.appendChild(div);
-  scrollBottom();
-  setTimeout(()=>{
-    initAddressAutocomplete();
-    document.getElementById('addr-input')?.focus();
-  }, 300);
-}
-
-function confirmManualAddress() {
-  const val = document.getElementById('addr-input')?.value.trim();
-  if (!val) { alert('请输入地址'); return; }
-  useGPSAddr(val, null);
-}
-
-// ── Google Maps 地址自动补全 ──
-let autocomplete = null;
-
-function initAddressAutocomplete() {
-  if (!window.google || !window.google.maps) return;
-
-  // 找到当前对话中的地址输入框（如果有）
-  const addressInputs = document.querySelectorAll('.address-autocomplete');
-  addressInputs.forEach(input => {
-    if (input.dataset.autocompleteInit) return;
-    input.dataset.autocompleteInit = 'true';
-    const ac = new google.maps.places.Autocomplete(input, {
-      componentRestrictions: { country: 'au' },
-      fields: ['formatted_address', 'geometry', 'name'],
-      types: ['address']
-    });
-    ac.addListener('place_changed', () => {
-      const place = ac.getPlace();
-      if (place.formatted_address) {
-        input.value = place.formatted_address;
-        S.address = place.formatted_address;
-        saveAddress(place.formatted_address);
-      }
-    });
-  });
-}
-
-// 显示地址输入卡片（带自动补全）
-async function showAddressInput(label, onConfirm) {
-  const div = document.createElement('div');
-  div.className = 'confirm-card';
-  div.innerHTML = `
-    <div style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.6);margin-bottom:8px;">${label}</div>
-    <input class="address-autocomplete" id="addr-input" placeholder="输入地址，自动补全..."
-      style="width:100%;background:rgba(255,255,255,0.08);border:1.5px solid rgba(255,255,255,0.15);
-      border-radius:10px;padding:12px 14px;color:white;font-size:14px;font-family:inherit;outline:none;">
-    <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;" id="addr-suggestions"></div>
-    <button onclick="confirmAddress()" style="width:100%;margin-top:12px;padding:12px;
-      background:rgba(0,150,199,0.3);border:1.5px solid rgba(0,150,199,0.4);
-      border-radius:10px;color:white;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">
-      确认地址
-    </button>`;
-  chatArea.appendChild(div);
-  scrollBottom();
-
-  // 显示常用地址
-  const addrs = getSavedAddresses();
-  if (addrs.length > 0) {
-    const suggestEl = document.getElementById('addr-suggestions');
-    if (suggestEl) {
-      suggestEl.innerHTML = addrs.map(a =>
-        `<div onclick="useAddress('${a.replace(/'/g,"\'")}',this)"
-          style="font-size:11px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);
-          border-radius:8px;padding:4px 10px;cursor:pointer;color:rgba(255,255,255,0.7);">
-          📍 ${a.length>25?a.substring(0,25)+'...':a}
-        </div>`
-      ).join('');
-    }
-  }
-
-  setTimeout(() => {
-    initAddressAutocomplete();
-    document.getElementById('addr-input')?.focus();
-  }, 300);
-
-  window._addrConfirmCallback = onConfirm;
-}
-
-function useAddress(addr, el) {
-  document.getElementById('addr-input').value = addr;
-  S.address = addr;
-  document.querySelectorAll('#addr-suggestions > div').forEach(d => d.style.borderColor = 'rgba(255,255,255,0.1)');
-  el.style.borderColor = 'rgba(0,212,255,0.5)';
-  el.style.color = 'rgba(0,212,255,0.9)';
-}
-
-async function confirmAddress() {
-  const val = document.getElementById('addr-input')?.value.trim();
-  if (!val) { alert('请输入地址'); return; }
-  S.address = val;
-  saveAddress(val);
-  // 移除地址输入卡片
-  document.querySelectorAll('.confirm-card').forEach(c => {
-    if (c.querySelector('#addr-input')) c.remove();
-  });
-  addMsg(val, true);
-  aiHistory.push({role:'user', content: '我的地址是：' + val});
-  // 检查信息是否完整
-  console.log('地址确认后状态：', {direction:S.direction, date:S.date, time:S.time, address:S.address});
-  // 如果日期时间缺失，从AI历史记录里补提取一次
-  if(!S.date || !S.time){
-    const allText = aiHistory.map(m=>m.content).join(' ');
-    extractInfo(allText);
-    console.log('补提取后：', {date:S.date, time:S.time});
-  }
-  if (S.direction && S.date && S.time && S.address) {
-    // AI向乘客确认地址
-    await agentSay(`收到！您的地址是：<br><strong>${S.address}</strong><br>正在计算距离...`, 300);
-    showVehicleCards();
-  } else {
-    const missing = [];
-    if (!S.date) missing.push('日期');
-    if (!S.time) missing.push('时间');
-    if (!S.direction) missing.push('接机还是送机');
-    await agentSay('地址已记录！还需要确认：' + missing.join('、'), 300);
-  }
-}
-
-// GPS自动定位
-function getGPSLocation() {
-  if (!navigator.geolocation) return;
-  navigator.geolocation.getCurrentPosition(async pos => {
-    const lat = pos.coords.latitude;
-    const lng = pos.coords.longitude;
-    try {
-      const res = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=AIzaSyAHGLzz7_TpG2MLnqT1kCROeNIzRr-EQac&language=zh-CN`
-      );
-      const data = await res.json();
-      if (data.results && data.results[0]) {
-        const addr = data.results[0].formatted_address;
-        S.address = addr;
-        saveAddress(addr);
-        // 填入输入框
-        const inp = document.getElementById('addr-input');
-        if (inp) inp.value = addr;
-        await agentSay(`已定位到：${addr}`, 300);
-      }
-    } catch(e) {}
-  });
-}
-
 </script>
 </body>
 </html>
