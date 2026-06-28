@@ -122,6 +122,8 @@ body {
   color: var(--text);
   word-break: break-word;
   position: relative;
+  writing-mode: horizontal-tb;
+  direction: ltr;
 }
 .bubble.ai {
   background: var(--bubble-ai);
@@ -1039,7 +1041,7 @@ async function sendMessage(presetText) {
     const data = await res.json();
     const raw = data.content?.[0]?.text || '抱歉，请重试';
 
-    // 解析 [OPTIONS:xxx,yyy] 标记
+    // 解析标记
     let reply = raw, options = [];
     const optMatch = raw.match(/\[OPTIONS:(.*?)\]/);
     if (optMatch) {
@@ -1047,12 +1049,36 @@ async function sendMessage(presetText) {
       reply = raw.replace(/\[OPTIONS:.*?\]/, '').trim();
     }
 
+    // 车型卡片
+    const vehicleMatch = reply.match(/\[SHOW_VEHICLES:(.*?)\]/);
+    if (vehicleMatch) {
+      reply = reply.replace(/\[SHOW_VEHICLES:.*?\]/, '').trim();
+      const parts = vehicleMatch[1].split(',');
+      pendingOrder = { date: parts[0], time: parts[1], direction: parts[2], address: parts[3] };
+      hideTyping();
+      chatHistory.push({role:'assistant', content: reply});
+      if (reply) addAIMsg(reply);
+      showVehicleCards(pendingOrder);
+      document.getElementById('agent-status').textContent = '澳洲机场接送 · 随时为您服务';
+      return;
+    }
+
+    // 提交预约
+    const bookMatch = reply.match(/\[BOOK:(.*?)\]/);
+    if (bookMatch) {
+      reply = reply.replace(/\[BOOK:.*?\]/, '').trim();
+      hideTyping();
+      if (reply) addAIMsg(reply);
+      await submitOrder();
+      document.getElementById('agent-status').textContent = '澳洲机场接送 · 随时为您服务';
+      return;
+    }
+
     chatHistory.push({role:'assistant', content: reply});
     if (chatHistory.length > 30) chatHistory = chatHistory.slice(-30);
     addAIMsg(reply, options);
     document.getElementById('agent-status').textContent = '澳洲机场接送 · 随时为您服务';
 
-    // 检查是否需要提交订单
     if (pendingOrder && /确认|下单|好的|对|是的/.test(text)) {
       await submitOrder();
     }
@@ -1066,32 +1092,51 @@ async function sendMessage(presetText) {
 
 // ── 系统提示 ──
 function buildSystemPrompt() {
+  const now = new Date();
+  const today = now.toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
   const passengerInfo = currentPassenger
-    ? `当前乘客：${currentPassenger.name||''}，手机：${currentPassenger.phone}`
-    : '乘客尚未登录';
-  return `你是澳洲出行AI管家小本，服务澳洲华人社区的机场接送预约助理。
+    ? `当前乘客：${currentPassenger.name||'用户'}，手机：${currentPassenger.phone}，历史地址：${currentPassenger.home_address||'未知'}`
+    : '乘客尚未登录，需收集姓名和手机号';
 
+  return `你是澳洲出行AI管家小本，墨尔本华人机场接送助理。今天是${today}。
 ${passengerInfo}
 
-你的核心任务是通过自然对话收集预约信息：
-1. 服务类型：接机（from_airport）/ 送机（to_airport）/ 包车（charter）
-2. 日期和时间（航班到达/出发时间）
-3. 航班号（可选）
-4. 上车/送达地址
-5. 人数和行李数
-6. 车型偏好（5座轿车/8座MPV/12座大巴）
-7. 乘客姓名和手机号（如未登录）
+【核心原则】
+- 绝不啰嗦，绝不重复问已知信息
+- 用户随意表达，你智能提取，缺什么才问什么
+- 日期识别：今天/明天/后天/大后天/下周X/礼拜X/周X/X月X日/X号 都能理解，转换为具体日期后直接使用
+- 用户提到地址（包括区域如"东区""Glen Waverley"），直接记住，不要再问
+- 如果乘客有历史地址，接机时主动问"送您回${currentPassenger?.home_address||'之前的地址'}吗？"
 
-收集完整后，用中文报价并确认，格式：
-- 接机：机场→目的地，25km内$XX起
-- 送机：出发地→机场，同上
-- 包车：$XX/小时，最少4小时
+【预约流程 — 极简版】
+接机：只需收集 ①日期时间 ②目的地（用定位或历史地址确认）③车型选择
+送机：只需收集 ①日期时间（几点到机场）②出发地 ③车型选择
+包车：只需收集 ①日期 ②目的地/路线 ③人数
 
-风格：简洁自然，像朋友聊天，不要过分客套。
-当你需要给用户提供选项时，用[OPTIONS:选项1,选项2,选项3]标记放在回复末尾。
-当信息收集完整准备提交时，用[READY_TO_BOOK]标记。
+信息够了就直接出车型卡片，用[SHOW_VEHICLES:日期,时间,类型,地址]标记。
+全部确认后用[BOOK:direction,scheduled_at,pickup,dropoff,vehicle_type,price]标记提交。
 
-当前城市：墨尔本。服务区域：墨尔本全市及周边。`;
+【车型与参考价（25km内）】
+🚗 轿车5座：$58–$68
+🚐 MPV 8座：$78–$92  
+🚌 12座商务：$108–$128
+✨ 阿尔法6座：$95–$115
+
+【风格】
+- 一句话说清，不加感叹号堆砌
+- 选项用[OPTIONS:A,B,C]放末尾，最多3个
+- 不提Uber/出租车/公共交通
+- 不提佣金、平台抽成
+
+【Few-shot示例】
+用户：接机，下周三，QF407
+小本：QF407下周三到，送您去哪里？
+
+用户：Glen Waverley
+小本：好，几个人几件行李？[OPTIONS:1人1件,2人2件,4人4件]
+
+用户：2人2件
+小本：[SHOW_VEHICLES:2025-07-09,航班落地后,from_airport,Glen Waverley]`;
 }
 
 // ── 本地AI演示（无API时使用）──
@@ -1153,9 +1198,165 @@ function localAI(text) {
   };
 }
 
-// ── 快捷回复 ──
-function quickReply(text) {
-  sendMessage(text);
+// ── 车型选择卡片 ──
+function showVehicleCards(order) {
+  const vehicles = [
+    { icon:'🚗', name:'轿车', seats:5, price:'$58–$68', type:'comfort_5' },
+    { icon:'🚐', name:'MPV', seats:8, price:'$78–$92', type:'comfort_8' },
+    { icon:'🚌', name:'12座商务', seats:12, price:'$108–$128', type:'comfort_12' },
+    { icon:'✨', name:'阿尔法', seats:6, price:'$95–$115', type:'luxury_alpha' },
+  ];
+  const body = document.getElementById('chat-body');
+  const wrap = document.createElement('div');
+  wrap.className = 'msg-row';
+  wrap.innerHTML = `
+    <div class="msg-avatar">✈️</div>
+    <div style="max-width:88%;">
+      <div style="background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e5e5e5;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+        <div style="background:linear-gradient(135deg,#1aad19,#07c160);padding:10px 14px;color:white;">
+          <div style="font-size:13px;font-weight:700;">请选择车型</div>
+          <div style="font-size:11px;opacity:0.85;margin-top:1px;">${order.date} · 墨尔本机场 → ${order.address||'目的地'}</div>
+        </div>
+        ${vehicles.map(v=>`
+          <div onclick="selectVehicle('${v.type}','${v.name}','${v.price}')"
+            style="display:flex;align-items:center;gap:12px;padding:13px 14px;border-bottom:1px solid #f5f5f5;cursor:pointer;transition:background 0.15s;"
+            onmousedown="this.style.background='#f5f5f5'" onmouseup="this.style.background=''">
+            <div style="font-size:28px;width:36px;text-align:center;">${v.icon}</div>
+            <div style="flex:1;">
+              <div style="font-size:14px;font-weight:600;color:#1a1a1a;">${v.name}</div>
+              <div style="font-size:12px;color:#999;margin-top:1px;">最多${v.seats}人</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:15px;font-weight:800;color:#07c160;">${v.price}</div>
+              <div style="font-size:10px;color:#bbb;">参考价</div>
+            </div>
+          </div>`).join('')}
+      </div>
+      <div class="msg-time">${nowTime()}</div>
+    </div>`;
+  body.appendChild(wrap);
+  scrollBottom();
+}
+
+function selectVehicle(type, name, price) {
+  if (!pendingOrder) return;
+  pendingOrder.vehicle_type = type;
+  pendingOrder.vehicle_name = name;
+  pendingOrder.price = price;
+  addUserMsg(`选 ${name}（${price}）`);
+  chatHistory.push({role:'user', content:`我选${name}，${price}`});
+  // 显示确认单
+  showConfirmCard();
+}
+
+function showConfirmCard() {
+  const o = pendingOrder;
+  const dir = o.direction==='from_airport'?'接机':'送机';
+  const body = document.getElementById('chat-body');
+  const wrap = document.createElement('div');
+  wrap.className = 'msg-row';
+  wrap.innerHTML = `
+    <div class="msg-avatar">✈️</div>
+    <div style="max-width:88%;">
+      <div style="background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e5e5e5;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+        <div style="background:linear-gradient(135deg,#1aad19,#07c160);padding:10px 14px;color:white;">
+          <div style="font-size:13px;font-weight:700;">📋 确认预约信息</div>
+        </div>
+        <div style="padding:12px 14px;">
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f5f5f5;font-size:13px;"><span style="color:#888;">服务</span><span style="font-weight:600;">${dir}</span></div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f5f5f5;font-size:13px;"><span style="color:#888;">时间</span><span style="font-weight:600;">${o.date} ${o.time||''}</span></div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f5f5f5;font-size:13px;"><span style="color:#888;">目的地</span><span style="font-weight:600;max-width:60%;text-align:right;">${o.address||'-'}</span></div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f5f5f5;font-size:13px;"><span style="color:#888;">车型</span><span style="font-weight:600;">${o.vehicle_name}</span></div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;"><span style="color:#888;">参考价</span><span style="font-size:16px;font-weight:800;color:#07c160;">${o.price}</span></div>
+        </div>
+        <div style="display:flex;border-top:1px solid #f0f0f0;">
+          <button onclick="pendingOrder=null;addAIMsg('好的，已取消。需要重新预约随时告诉我。')"
+            style="flex:1;padding:12px;background:none;border:none;border-right:1px solid #f0f0f0;color:#888;font-size:14px;cursor:pointer;font-family:inherit;">取消</button>
+          <button onclick="confirmAndBook()"
+            style="flex:1;padding:12px;background:none;border:none;color:#07c160;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">✅ 确认下单</button>
+        </div>
+      </div>
+      <div class="msg-time">${nowTime()}</div>
+    </div>`;
+  body.appendChild(wrap);
+  scrollBottom();
+}
+
+async function confirmAndBook() {
+  await submitOrder();
+}
+
+// ── 礼花动画 ──
+function showConfetti() {
+  const canvas = document.createElement('canvas');
+  canvas.style.cssText = 'position:fixed;inset:0;z-index:9999;pointer-events:none;width:100%;height:100%;';
+  document.body.appendChild(canvas);
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const ctx = canvas.getContext('2d');
+  const colors = ['#07c160','#1aad19','#ffd700','#ff6b6b','#4ecdc4','#45b7d1','#96ceb4','#ffeaa7'];
+  const pieces = Array.from({length:100}, () => ({
+    x: Math.random()*canvas.width, y: -10,
+    w: Math.random()*10+4, h: Math.random()*6+3,
+    color: colors[Math.floor(Math.random()*colors.length)],
+    speed: Math.random()*4+2, angle: Math.random()*360,
+    spin: Math.random()*8-4, wobble: Math.random()*3
+  }));
+  let frame = 0;
+  const anim = setInterval(() => {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    pieces.forEach(p => {
+      p.y += p.speed; p.angle += p.spin; p.x += Math.sin(p.angle*0.05)*p.wobble;
+      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.angle*Math.PI/180);
+      ctx.fillStyle = p.color; ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h); ctx.restore();
+    });
+    if(++frame > 120) { clearInterval(anim); canvas.remove(); }
+  }, 16);
+}
+
+// ── 预约成功提示 ──
+function showBookingSuccess(order) {
+  showConfetti();
+  const body = document.getElementById('chat-body');
+  const wrap = document.createElement('div');
+  wrap.className = 'msg-row';
+  const dir = order.direction==='from_airport'?'接机':'送机';
+  wrap.innerHTML = `
+    <div class="msg-avatar">✈️</div>
+    <div style="max-width:90%;">
+      <div style="background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e5e5e5;box-shadow:0 2px 8px rgba(7,193,96,0.15);">
+        <div style="background:linear-gradient(135deg,#1aad19,#07c160);padding:16px 14px;color:white;text-align:center;">
+          <div style="font-size:28px;margin-bottom:6px;">🎉</div>
+          <div style="font-size:15px;font-weight:800;">预约成功！</div>
+          <div style="font-size:12px;opacity:0.85;margin-top:3px;">司机将尽快与您确认</div>
+        </div>
+        <div style="padding:14px;">
+          <div style="display:flex;justify-content:space-between;padding:5px 0;font-size:13px;border-bottom:1px solid #f5f5f5;"><span style="color:#888;">${dir}</span><span style="font-weight:600;">${order.date} ${order.time||''}</span></div>
+          <div style="display:flex;justify-content:space-between;padding:5px 0;font-size:13px;"><span style="color:#888;">参考价</span><span style="font-size:15px;font-weight:800;color:#07c160;">${order.price}</span></div>
+        </div>
+        <div style="background:#f8fff9;border-top:1px solid #e5f5e8;padding:12px 14px;">
+          <div style="font-size:13px;font-weight:700;color:#1aad19;margin-bottom:6px;">⭐ 您获得了 +20 积分！</div>
+          <div style="font-size:12px;color:#666;line-height:1.6;">积分可在下次出行时抵扣费用。<br>推荐朋友预约可额外获得 <strong>+30分</strong>！</div>
+          <div style="display:flex;gap:8px;margin-top:10px;">
+            <button onclick="openPointsPolicy()" style="flex:1;padding:8px;background:#f0f0f0;border:none;border-radius:8px;font-size:12px;color:#555;cursor:pointer;font-family:inherit;">查看积分规则</button>
+            <button onclick="shareApp()" style="flex:1;padding:8px;background:linear-gradient(135deg,#1aad19,#07c160);border:none;border-radius:8px;font-size:12px;color:white;font-weight:700;cursor:pointer;font-family:inherit;">📤 分享得积分</button>
+          </div>
+        </div>
+      </div>
+      <div class="msg-time">${nowTime()}</div>
+    </div>`;
+  body.appendChild(wrap);
+  scrollBottom();
+}
+
+function shareApp() {
+  const url = window.location.origin + '/index.html';
+  if (navigator.share) {
+    navigator.share({ title:'澳洲出行 · 机场接送', text:'推荐你用这个！全程中文，华人司机，一口价', url });
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(url);
+    alert('链接已复制，分享给朋友即可获得积分！');
+  }
 }
 
 // ── 快速预约 ──
@@ -1428,6 +1629,7 @@ function cancelVoice() {
 // ── 提交订单到Supabase ──
 async function submitOrder() {
   if (!pendingOrder) return;
+  const order = { ...pendingOrder };
   try {
     await fetch(SUPA_URL + '/rest/v1/trips', {
       method: 'POST',
@@ -1437,12 +1639,22 @@ async function submitOrder() {
       },
       body: JSON.stringify({
         tenant_id: TENANT_ID,
-        ...pendingOrder,
+        direction: order.direction || 'from_airport',
+        trip_type: order.trip_type || 'airport',
+        scheduled_at: order.scheduled_at || new Date().toISOString(),
+        pickup_address: order.pickup || '墨尔本国际机场',
+        dropoff_address: order.address || order.dropoff || '',
+        vehicle_type: order.vehicle_type || 'comfort_5',
+        total_price: order.price ? parseFloat(order.price.replace(/[^0-9.]/g,'')) : 0,
+        passenger_name: currentPassenger?.name || '',
+        passenger_phone: currentPassenger?.phone || '',
+        passenger_count: order.passenger_count || 1,
+        luggage_count: order.luggage_count || 1,
         status: 'pending'
       })
     });
-    addOrderCard(pendingOrder);
     pendingOrder = null;
+    showBookingSuccess(order);
   } catch(e) {
     addAIMsg('提交遇到问题，请稍后再试或联系客服。');
   }
