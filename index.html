@@ -156,6 +156,7 @@ body {
 .quick-options {
   display: flex; flex-wrap: wrap; gap: 8px;
   margin-top: 10px;
+  writing-mode: horizontal-tb;
 }
 .quick-option {
   background: #f0f0f0;
@@ -165,6 +166,9 @@ body {
   font-size: 13px; color: #333;
   cursor: pointer; transition: all 0.15s;
   white-space: nowrap;
+  writing-mode: horizontal-tb;
+  text-orientation: mixed;
+  display: inline-block;
 }
 .quick-option:active { background: #e0e0e0; }
 
@@ -1018,33 +1022,31 @@ async function sendMessage(presetText) {
 
   try {
     const systemPrompt = buildSystemPrompt();
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch('/api/chat', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': '', 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:1000, system:systemPrompt, messages:chatHistory })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ system: systemPrompt, messages: chatHistory })
     });
 
-    let reply, options=[];
+    hideTyping();
 
     if (!res.ok) {
-      // 本地演示模式（无API）
-      const result = localAI(text);
-      reply = result.text;
-      options = result.options || [];
-    } else {
-      const data = await res.json();
-      const raw = data.content?.[0]?.text || '抱歉，请重试';
-      // 解析 [OPTIONS:xxx,yyy] 标记
-      const optMatch = raw.match(/\[OPTIONS:(.*?)\]/);
-      if (optMatch) {
-        options = optMatch[1].split(',').map(s=>s.trim());
-        reply = raw.replace(/\[OPTIONS:.*?\]/,'').trim();
-      } else {
-        reply = raw;
-      }
+      addAIMsg('网络连接有问题，请稍后再试 🙏');
+      document.getElementById('agent-status').textContent = '澳洲机场接送 · 随时为您服务';
+      return;
     }
 
-    hideTyping();
+    const data = await res.json();
+    const raw = data.content?.[0]?.text || '抱歉，请重试';
+
+    // 解析 [OPTIONS:xxx,yyy] 标记
+    let reply = raw, options = [];
+    const optMatch = raw.match(/\[OPTIONS:(.*?)\]/);
+    if (optMatch) {
+      options = optMatch[1].split(',').map(s => s.trim());
+      reply = raw.replace(/\[OPTIONS:.*?\]/, '').trim();
+    }
+
     chatHistory.push({role:'assistant', content: reply});
     if (chatHistory.length > 30) chatHistory = chatHistory.slice(-30);
     addAIMsg(reply, options);
@@ -1057,8 +1059,7 @@ async function sendMessage(presetText) {
 
   } catch(e) {
     hideTyping();
-    const result = localAI(text);
-    addAIMsg(result.text, result.options||[]);
+    addAIMsg('网络连接有问题，请稍后再试 🙏');
     document.getElementById('agent-status').textContent = '澳洲机场接送 · 随时为您服务';
   }
 }
@@ -1328,10 +1329,74 @@ function handleImage(input) {
   const file = input.files[0];
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = e => {
+  reader.onload = async e => {
+    const base64 = e.target.result.split(',')[1];
+    const mediaType = file.type || 'image/jpeg';
+
     addImgMsg(e.target.result, true);
-    chatHistory.push({role:'user', content:'[用户发送了一张图片]'});
-    setTimeout(() => addAIMsg('收到图片！这是行程截图还是地址图片？', ['行程截图', '地址/地图', '其他']), 600);
+    closePanel();
+    showTyping();
+    document.getElementById('agent-status').textContent = '正在识别图片...';
+
+    try {
+      // 构建带图片的消息
+      const imageMessage = {
+        role: 'user',
+        content: [
+          {
+            type: 'image',
+            source: { type: 'base64', media_type: mediaType, data: base64 }
+          },
+          {
+            type: 'text',
+            text: '请识别这张图片，如果是航班信息/行程单/登机牌，请提取：航班号、日期、时间、出发地、目的地。如果是地址或地图，请提取地址信息。用中文简洁回复，并问我下一步需要什么。'
+          }
+        ]
+      };
+
+      // 临时加入历史
+      const messagesWithImage = [...chatHistory, imageMessage];
+
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          system: buildSystemPrompt(),
+          messages: messagesWithImage
+        })
+      });
+
+      hideTyping();
+
+      if (!res.ok) {
+        addAIMsg('图片识别失败，请直接告诉我航班信息 🙏');
+        document.getElementById('agent-status').textContent = '澳洲机场接送 · 随时为您服务';
+        return;
+      }
+
+      const data = await res.json();
+      const raw = data.content?.[0]?.text || '收到图片，请告诉我您需要什么服务？';
+
+      let reply = raw, options = [];
+      const optMatch = raw.match(/\[OPTIONS:(.*?)\]/);
+      if (optMatch) {
+        options = optMatch[1].split(',').map(s => s.trim());
+        reply = raw.replace(/\[OPTIONS:.*?\]/, '').trim();
+      }
+
+      // 把图片消息和AI回复加入历史
+      chatHistory.push({ role: 'user', content: '[用户发送了一张图片]' });
+      chatHistory.push({ role: 'assistant', content: reply });
+      if (chatHistory.length > 30) chatHistory = chatHistory.slice(-30);
+
+      addAIMsg(reply, options);
+      document.getElementById('agent-status').textContent = '澳洲机场接送 · 随时为您服务';
+
+    } catch(err) {
+      hideTyping();
+      addAIMsg('图片识别失败，请直接告诉我航班信息 🙏');
+      document.getElementById('agent-status').textContent = '澳洲机场接送 · 随时为您服务';
+    }
   };
   reader.readAsDataURL(file);
   input.value = '';
