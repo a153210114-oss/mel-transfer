@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>管理后台 · 澳洲出行</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg: #0a0f1a;
+  --surface: #111827;
+  --surface2: #1a2235;
+  --border: #1e2d45;
+  --accent: #00d4ff;
+  --green: #00c896;
+  --gold: #f5a623;
+  --red: #ff4d6d;
+  --orange: #ff8c42;
+  --purple: #a855f7;
+  --text: #e8f0fe;
+  --text2: #7a9cc4;
+  --text3: #3d5a80;
+}
+body {
+  font-family: 'SF Pro Display', -apple-system, 'Noto Sans SC', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* Layout */
+.layout { display: flex; min-height: 100vh; }
+.sidebar {
+  width: 220px; flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  position: fixed; top: 0; left: 0; height: 100vh;
+  z-index: 100;
+}
+.main { margin-left: 220px; flex: 1; display: flex; flex-direction: column; }
+
+/* Sidebar */
+.sidebar-logo {
+  padding: 20px 16px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-logo .logo-title { font-size: 15px; font-weight: 800; color: var(--text); }
+.sidebar-logo .logo-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.sidebar-logo .logo-icon { font-size: 24px; margin-bottom: 8px; }
+
+.nav-section { padding: 12px 8px 4px; }
+.nav-label { font-size: 10px; color: var(--text3); letter-spacing: 0.1em; font-weight: 700; padding: 0 8px; margin-bottom: 4px; text-transform: uppercase; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px; border-radius: 10px;
+  font-size: 13px; font-weight: 500; color: var(--text2);
+  cursor: pointer; transition: all 0.15s; margin-bottom: 2px;
+}
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { background: rgba(0,212,255,0.12); color: var(--accent); }
+.nav-item .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+
+.sidebar-bottom { margin-top: auto; padding: 12px 8px; border-top: 1px solid var(--border); }
+.sidebar-driver {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px; border-radius: 10px;
+  cursor: pointer; transition: background 0.15s;
+}
+.sidebar-driver:hover { background: var(--surface2); }
+.sidebar-driver .avatar { width: 32px; height: 32px; border-radius: 50%; background: rgba(0,212,255,0.15); display: flex; align-items: center; justify-content: center; font-size: 16px; }
+.sidebar-driver .name { font-size: 12px; font-weight: 600; color: var(--text); }
+.sidebar-driver .role { font-size: 10px; color: var(--text3); }
+
+/* Topbar */
+.topbar {
+  padding: 16px 24px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 50;
+}
+.page-title { font-size: 18px; font-weight: 800; }
+.page-sub { font-size: 12px; color: var(--text3); margin-top: 1px; }
+.topbar-actions { display: flex; gap: 10px; align-items: center; }
+.btn {
+  padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 700;
+  cursor: pointer; border: none; font-family: inherit; transition: all 0.15s;
+}
+.btn-primary { background: var(--accent); color: var(--bg); }
+.btn-primary:hover { opacity: 0.9; }
+.btn-ghost { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
+.btn-ghost:hover { color: var(--text); border-color: var(--text3); }
+
+/* Content */
+.content { padding: 24px; flex: 1; }
+
+/* Stats Grid */
+.stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 24px; }
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+}
+.stat-card .label { font-size: 11px; color: var(--text3); letter-spacing: 0.08em; font-weight: 600; text-transform: uppercase; margin-bottom: 12px; }
+.stat-card .value { font-size: 32px; font-weight: 800; font-variant-numeric: tabular-nums; margin-bottom: 4px; }
+.stat-card .delta { font-size: 12px; color: var(--text3); }
+.stat-card .delta.up { color: var(--green); }
+.stat-card .delta.down { color: var(--red); }
+.stat-card .icon { font-size: 28px; margin-bottom: 10px; }
+
+/* Two column layout */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.three-col { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 24px; }
+
+/* Card */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.card-title { font-size: 14px; font-weight: 700; }
+.card-action { font-size: 12px; color: var(--accent); cursor: pointer; }
+.card-body { padding: 20px; }
+
+/* Table */
+.table { width: 100%; border-collapse: collapse; }
+.table th {
+  text-align: left; font-size: 11px; color: var(--text3);
+  font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 10px 16px; border-bottom: 1px solid var(--border);
+}
+.table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px; vertical-align: middle;
+}
+.table tr:last-child td { border-bottom: none; }
+.table tr:hover td { background: rgba(255,255,255,0.02); }
+
+/* Badges */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px; border-radius: 20px;
+  font-size: 11px; font-weight: 700;
+}
+.badge-pending { background: rgba(245,166,35,0.15); color: var(--gold); }
+.badge-confirmed { background: rgba(0,212,255,0.15); color: var(--accent); }
+.badge-enroute { background: rgba(168,85,247,0.15); color: var(--purple); }
+.badge-arrived { background: rgba(255,140,66,0.15); color: var(--orange); }
+.badge-inprogress { background: rgba(0,200,150,0.12); color: var(--green); }
+.badge-completed { background: rgba(0,200,150,0.15); color: var(--green); }
+.badge-cancelled { background: rgba(255,77,109,0.12); color: var(--red); }
+.badge-active { background: rgba(0,200,150,0.15); color: var(--green); }
+.badge-inactive { background: rgba(122,156,196,0.1); color: var(--text3); }
+.badge-pending-driver { background: rgba(245,166,35,0.12); color: var(--gold); }
+
+/* Driver row */
+.driver-info { display: flex; align-items: center; gap: 10px; }
+.driver-avatar { width: 34px; height: 34px; border-radius: 50%; background: rgba(0,212,255,0.12); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.driver-name { font-size: 13px; font-weight: 600; }
+.driver-phone { font-size: 11px; color: var(--text3); margin-top: 1px; font-family: monospace; }
+
+/* Action menu */
+.action-btn {
+  background: none; border: 1px solid var(--border);
+  border-radius: 6px; padding: 5px 10px;
+  font-size: 11px; color: var(--text2);
+  cursor: pointer; transition: all 0.15s;
+}
+.action-btn:hover { border-color: var(--accent); color: var(--accent); }
+.action-btn.danger:hover { border-color: var(--red); color: var(--red); }
+.action-btn.success:hover { border-color: var(--green); color: var(--green); }
+
+/* Map placeholder */
+.map-area {
+  height: 200px;
+  background: var(--surface2);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 8px;
+  color: var(--text3); font-size: 13px;
+  position: relative; overflow: hidden;
+}
+.map-area::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 30% 60%, rgba(0,200,150,0.08) 0%, transparent 60%),
+              radial-gradient(ellipse at 70% 30%, rgba(0,212,255,0.06) 0%, transparent 60%);
+}
+
+/* Activity feed */
+.activity-item {
+  display: flex; gap: 12px; align-items: flex-start;
+  padding: 12px 0; border-bottom: 1px solid var(--border);
+}
+.activity-item:last-child { border-bottom: none; }
+.activity-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+.activity-text { font-size: 13px; line-height: 1.5; }
+.activity-time { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+/* Metric bar */
+.metric-bar { margin-bottom: 14px; }
+.metric-label { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 12px; }
+.metric-label .name { color: var(--text2); }
+.metric-label .val { color: var(--text); font-weight: 700; }
+.bar-track { height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+
+/* Mini chart (CSS bars) */
+.mini-chart { display: flex; align-items: flex-end; gap: 4px; height: 60px; }
+.mini-bar { flex: 1; border-radius: 3px 3px 0 0; min-width: 8px; transition: opacity 0.2s; cursor: pointer; }
+.mini-bar:hover { opacity: 0.75; }
+
+/* Tag */
+.tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; background: var(--surface2); color: var(--text3); }
+
+/* Input */
+.input {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 9px 12px;
+  color: var(--text); font-size: 13px; font-family: inherit;
+  outline: none; transition: border-color 0.15s;
+}
+.input:focus { border-color: var(--accent); }
+.input::placeholder { color: var(--text3); }
+
+/* Page sections */
+.section { display: none; }
+.section.active { display: block; }
+
+/* Loading pulse */
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+.loading { animation: pulse 1.5s infinite; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* Responsive tweaks */
+@media (max-width: 1100px) {
+  .stats-grid { grid-template-columns: repeat(2,1fr); }
+  .two-col, .three-col { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">✈️</div>
+    <div class="logo-title">澳洲出行</div>
+    <div class="logo-sub">管理后台 · Melbourne</div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">概览</div>
+    <div class="nav-item active" onclick="showSection('dashboard')">
+      <span class="nav-icon">📊</span> 数据看板
+    </div>
+    <div class="nav-item" onclick="showSection('trips')">
+      <span class="nav-icon">🚗</span> 订单管理
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">运营</div>
+    <div class="nav-item" onclick="showSection('drivers')">
+      <span class="nav-icon">🧑‍✈️</span> 司机管理
+    </div>
+    <div class="nav-item" onclick="showSection('passengers')">
+      <span class="nav-icon">👤</span> 乘客管理
+    </div>
+    <div class="nav-item" onclick="showSection('dispatch')">
+      <span class="nav-icon">📡</span> 实时调度
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">财务</div>
+    <div class="nav-item" onclick="showSection('finance')">
+      <span class="nav-icon">💰</span> 收入统计
+    </div>
+  </div>
+
+  <div class="sidebar-bottom">
+    <div class="sidebar-driver">
+      <div class="avatar">👑</div>
+      <div>
+        <div class="name">管理员</div>
+        <div class="role">超级管理员</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- Main -->
+<div class="main">
+
+<!-- ══ 数据看板 ══ -->
+<div class="section active" id="section-dashboard">
+  <div class="topbar">
+    <div>
+      <div class="page-title">数据看板</div>
+      <div class="page-sub" id="dashboard-date">加载中...</div>
+    </div>
+    <div class="topbar-actions">
+      <select class="input" id="date-range" onchange="loadDashboard()" style="width:120px;">
+        <option value="today">今天</option>
+        <option value="week">本周</option>
+        <option value="month">本月</option>
+      </select>
+      <button class="btn btn-primary" onclick="loadDashboard()">↻ 刷新</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="icon">🚗</div>
+        <div class="label">今日订单</div>
+        <div class="value" id="stat-today-trips" style="color:var(--accent)">-</div>
+        <div class="delta" id="stat-today-trips-sub">加载中...</div>
+      </div>
+      <div class="stat-card">
+        <div class="icon">💰</div>
+        <div class="label">今日流水</div>
+        <div class="value" id="stat-today-revenue" style="color:var(--gold)">-</div>
+        <div class="delta" id="stat-today-revenue-sub">含参考价</div>
+      </div>
+      <div class="stat-card">
+        <div class="icon">🧑‍✈️</div>
+        <div class="label">在线司机</div>
+        <div class="value" id="stat-online-drivers" style="color:var(--green)">-</div>
+        <div class="delta" id="stat-online-drivers-sub">加载中...</div>
+      </div>
+      <div class="stat-card">
+        <div class="icon">⏳</div>
+        <div class="label">待接订单</div>
+        <div class="value" id="stat-pending-trips" style="color:var(--orange)">-</div>
+        <div class="delta up" id="stat-pending-sub">需要人工跟进</div>
+      </div>
+    </div>
+
+    <div class="three-col">
+      <!-- Recent Trips -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">最近订单</div>
+          <div class="card-action" onclick="showSection('trips')">查看全部 →</div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>订单</th>
+                <th>乘客</th>
+                <th>类型</th>
+                <th>金额</th>
+                <th>状态</th>
+              </tr>
+            </thead>
+            <tbody id="recent-trips-body">
+              <tr><td colspan="5" style="text-align:center;color:var(--text3);padding:30px;">加载中...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Activity + Metrics -->
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <!-- Online drivers -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">司机状态</div>
+            <div class="card-action" onclick="showSection('drivers')">管理</div>
+          </div>
+          <div class="card-body" id="driver-status-panel">
+            <div class="loading" style="color:var(--text3);font-size:13px;">加载中...</div>
+          </div>
+        </div>
+
+        <!-- Activity -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">实时动态</div>
+          </div>
+          <div class="card-body" id="activity-feed">
+            <div style="color:var(--text3);font-size:13px;">加载中...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 订单管理 ══ -->
+<div class="section" id="section-trips">
+  <div class="topbar">
+    <div>
+      <div class="page-title">订单管理</div>
+      <div class="page-sub">全部行程记录</div>
+    </div>
+    <div class="topbar-actions">
+      <select class="input" id="trip-status-filter" onchange="loadTrips()" style="width:130px;">
+        <option value="">全部状态</option>
+        <option value="pending">待接单</option>
+        <option value="confirmed">已确认</option>
+        <option value="driver_en_route">前往中</option>
+        <option value="driver_arrived">已到达</option>
+        <option value="in_progress">行程中</option>
+        <option value="completed">已完成</option>
+        <option value="cancelled">已取消</option>
+      </select>
+      <button class="btn btn-ghost" onclick="loadTrips()">↻ 刷新</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="card">
+      <div style="overflow-x:auto;">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>单号</th>
+              <th>时间</th>
+              <th>乘客</th>
+              <th>路线</th>
+              <th>车型</th>
+              <th>金额</th>
+              <th>司机</th>
+              <th>状态</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="trips-body">
+            <tr><td colspan="9" style="text-align:center;color:var(--text3);padding:40px;">加载中...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 司机管理 ══ -->
+<div class="section" id="section-drivers">
+  <div class="topbar">
+    <div>
+      <div class="page-title">司机管理</div>
+      <div class="page-sub">注册审核与账号管理</div>
+    </div>
+    <div class="topbar-actions">
+      <select class="input" id="driver-filter" onchange="loadDrivers()" style="width:130px;">
+        <option value="">全部司机</option>
+        <option value="true">已激活</option>
+        <option value="false">待审核</option>
+      </select>
+      <button class="btn btn-ghost" onclick="loadDrivers()">↻ 刷新</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="card">
+      <div style="overflow-x:auto;">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>司机</th>
+              <th>车辆</th>
+              <th>状态</th>
+              <th>完单数</th>
+              <th>积分</th>
+              <th>注册时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="drivers-body">
+            <tr><td colspan="7" style="text-align:center;color:var(--text3);padding:40px;">加载中...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 乘客管理 ══ -->
+<div class="section" id="section-passengers">
+  <div class="topbar">
+    <div>
+      <div class="page-title">乘客管理</div>
+      <div class="page-sub">contacts 表</div>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn btn-ghost" onclick="loadPassengers()">↻ 刷新</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="card">
+      <div style="overflow-x:auto;">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>姓名</th>
+              <th>手机</th>
+              <th>微信</th>
+              <th>下单次数</th>
+              <th>最近下单</th>
+            </tr>
+          </thead>
+          <tbody id="passengers-body">
+            <tr><td colspan="5" style="text-align:center;color:var(--text3);padding:40px;">加载中...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 实时调度 ══ -->
+<div class="section" id="section-dispatch">
+  <div class="topbar">
+    <div>
+      <div class="page-title">实时调度</div>
+      <div class="page-sub">当前在途订单</div>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn btn-ghost" onclick="loadDispatch()">↻ 刷新</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="two-col">
+      <div class="card">
+        <div class="card-header"><div class="card-title">🕐 待接订单</div></div>
+        <div class="card-body" id="dispatch-pending">加载中...</div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">🚗 进行中</div></div>
+        <div class="card-body" id="dispatch-active">加载中...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 收入统计 ══ -->
+<div class="section" id="section-finance">
+  <div class="topbar">
+    <div>
+      <div class="page-title">收入统计</div>
+      <div class="page-sub">已完成订单流水</div>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn btn-ghost" onclick="loadFinance()">↻ 刷新</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);">
+      <div class="stat-card">
+        <div class="label">总流水</div>
+        <div class="value" id="fin-total" style="color:var(--gold)">-</div>
+        <div class="delta">含参考价合计</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">本月流水</div>
+        <div class="value" id="fin-month" style="color:var(--accent)">-</div>
+        <div class="delta" id="fin-month-count">-</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">完成单数</div>
+        <div class="value" id="fin-count" style="color:var(--green)">-</div>
+        <div class="delta">历史总计</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">按司机收入</div></div>
+      <div style="overflow-x:auto;">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>司机</th>
+              <th>完单数</th>
+              <th>流水总额</th>
+              <th>平均单价</th>
+            </tr>
+          </thead>
+          <tbody id="finance-body">
+            <tr><td colspan="4" style="text-align:center;color:var(--text3);padding:40px;">加载中...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /main -->
+</div><!-- /layout -->
+
+<script>
+const SUPA_URL = 'https://gxocvpmgfjvmmkkbswgo.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b2N2cG1nZmp2bW1ra2Jzd2dvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyNDc4NzAsImV4cCI6MjA5NTgyMzg3MH0.ExUNuOP8YyHQmItY6cdl1Euj7nOXqQq-rQT5-7aNerE';
+const TENANT_ID = '00000000-0000-0000-0000-000000000001';
+
+async function supaFetch(path) {
+  const res = await fetch(SUPA_URL + '/rest/v1/' + path, {
+    headers: {
+      'apikey': SUPA_KEY,
+      'Authorization': 'Bearer ' + SUPA_KEY,
+      'Content-Type': 'application/json'
+    }
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+async function supaPatch(path, data) {
+  const res = await fetch(SUPA_URL + '/rest/v1/' + path, {
+    method: 'PATCH',
+    headers: {
+      'apikey': SUPA_KEY,
+      'Authorization': 'Bearer ' + SUPA_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    },
+    body: JSON.stringify(data)
+  });
+  return res.json();
+}
+
+// Navigation
+function showSection(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('section-' + name).classList.add('active');
+  event?.target?.closest('.nav-item')?.classList.add('active');
+
+  const actions = {
+    dashboard: loadDashboard,
+    trips: loadTrips,
+    drivers: loadDrivers,
+    passengers: loadPassengers,
+    dispatch: loadDispatch,
+    finance: loadFinance
+  };
+  if (actions[name]) actions[name]();
+}
+
+// Status badge helper
+function statusBadge(status) {
+  const map = {
+    pending:         ['badge-pending',    '⏳ 待接单'],
+    confirmed:       ['badge-confirmed',  '✅ 已确认'],
+    driver_en_route: ['badge-enroute',    '🚗 前往中'],
+    driver_arrived:  ['badge-arrived',    '📍 已到达'],
+    in_progress:     ['badge-inprogress', '🛣️ 行程中'],
+    completed:       ['badge-completed',  '✓ 已完成'],
+    cancelled:       ['badge-cancelled',  '✕ 已取消'],
+  };
+  const [cls, label] = map[status] || ['badge-inactive', status];
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+
+function fmtDate(iso) {
+  if (!iso) return '-';
+  const d = new Date(iso);
+  return d.toLocaleDateString('zh-CN', {month:'2-digit',day:'2-digit'}) + ' ' +
+         d.toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
+}
+
+function fmtDateShort(iso) {
+  if (!iso) return '-';
+  return new Date(iso).toLocaleDateString('zh-CN', {month:'2-digit',day:'2-digit'});
+}
+
+// ── Dashboard ──
+async function loadDashboard() {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('dashboard-date').textContent = new Date().toLocaleDateString('zh-CN', {year:'numeric',month:'long',day:'numeric',weekday:'long'});
+
+  try {
+    // Parallel fetches
+    const [todayTrips, pendingTrips, allDrivers, recentTrips] = await Promise.all([
+      supaFetch(`trips?tenant_id=eq.${TENANT_ID}&scheduled_at=gte.${today}T00:00:00&select=id,status,total_price`),
+      supaFetch(`trips?tenant_id=eq.${TENANT_ID}&status=eq.pending&scheduled_at=gte.${today}T00:00:00&select=id`),
+      supaFetch(`drivers?tenant_id=eq.${TENANT_ID}&select=id,full_name,status,is_active`),
+      supaFetch(`trips?tenant_id=eq.${TENANT_ID}&order=created_at.desc&limit=8&select=id,passenger_name,direction,trip_type,total_price,status,scheduled_at,driver_id`)
+    ]);
+
+    // Stats
+    const completed = todayTrips.filter(t => t.status === 'completed');
+    const revenue = todayTrips.reduce((s,t) => s + (parseFloat(t.total_price)||0), 0);
+    const onlineDrivers = allDrivers.filter(d => d.is_active && ['at_depot','on_trip'].includes(d.status));
+
+    document.getElementById('stat-today-trips').textContent = todayTrips.length;
+    document.getElementById('stat-today-trips-sub').textContent = `${completed.length} 已完成`;
+    document.getElementById('stat-today-revenue').textContent = '$' + revenue.toFixed(0);
+    document.getElementById('stat-online-drivers').textContent = onlineDrivers.length;
+    document.getElementById('stat-online-drivers-sub').textContent = `共 ${allDrivers.filter(d=>d.is_active).length} 位激活司机`;
+    document.getElementById('stat-pending-trips').textContent = pendingTrips.length;
+
+    // Recent trips table
+    const tbody = document.getElementById('recent-trips-body');
+    if (!recentTrips.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:30px;">暂无订单</td></tr>';
+    } else {
+      tbody.innerHTML = recentTrips.map(t => {
+        const dir = t.trip_type==='charter'?'包车':t.direction==='from_airport'?'接机':'送机';
+        return `<tr>
+          <td><span style="font-family:monospace;font-size:11px;color:var(--text3);">TRP-${t.id.slice(-6).toUpperCase()}</span></td>
+          <td>${t.passenger_name||'-'}</td>
+          <td><span class="tag">${dir}</span></td>
+          <td style="color:var(--gold);font-weight:700;">$${t.total_price||'-'}</td>
+          <td>${statusBadge(t.status)}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    // Driver status panel
+    const panel = document.getElementById('driver-status-panel');
+    const groups = {
+      at_depot: allDrivers.filter(d => d.status === 'at_depot' && d.is_active),
+      on_trip: allDrivers.filter(d => d.status === 'on_trip' && d.is_active),
+      offline: allDrivers.filter(d => (!d.is_active || d.status === 'offline')),
+      pending: allDrivers.filter(d => !d.is_active),
+    };
+    panel.innerHTML = `
+      <div class="metric-bar">
+        <div class="metric-label"><span class="name">🟢 候单中</span><span class="val">${groups.at_depot.length}</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:${allDrivers.length?groups.at_depot.length/allDrivers.length*100:0}%;background:var(--green);"></div></div>
+      </div>
+      <div class="metric-bar">
+        <div class="metric-label"><span class="name">🚗 行程中</span><span class="val">${groups.on_trip.length}</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:${allDrivers.length?groups.on_trip.length/allDrivers.length*100:0}%;background:var(--accent);"></div></div>
+      </div>
+      <div class="metric-bar">
+        <div class="metric-label"><span class="name">⏳ 待审核</span><span class="val">${groups.pending.length}</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:${allDrivers.length?groups.pending.length/allDrivers.length*100:0}%;background:var(--gold);"></div></div>
+      </div>
+      <div style="margin-top:8px;">
+        ${groups.at_depot.slice(0,3).map(d=>`<div style="font-size:12px;color:var(--text2);padding:3px 0;">🟢 ${d.full_name}</div>`).join('')}
+        ${groups.on_trip.slice(0,3).map(d=>`<div style="font-size:12px;color:var(--accent);padding:3px 0;">🚗 ${d.full_name}</div>`).join('')}
+      </div>
+    `;
+
+    // Activity feed
+    const feed = document.getElementById('activity-feed');
+    const activities = recentTrips.slice(0,5).map(t => {
+      const dir = t.trip_type==='charter'?'包车':t.direction==='from_airport'?'接机':'送机';
+      const colors = {pending:'var(--gold)',confirmed:'var(--accent)',completed:'var(--green)',cancelled:'var(--red)',in_progress:'var(--purple)'};
+      return {
+        color: colors[t.status] || 'var(--text3)',
+        text: `<strong>${t.passenger_name||'乘客'}</strong> 预约${dir} · ${statusBadge(t.status)}`,
+        time: fmtDate(t.scheduled_at)
+      };
+    });
+    feed.innerHTML = activities.map(a => `
+      <div class="activity-item">
+        <div class="activity-dot" style="background:${a.color};"></div>
+        <div>
+          <div class="activity-text">${a.text}</div>
+          <div class="activity-time">${a.time}</div>
+        </div>
+      </div>
+    `).join('') || '<div style="color:var(--text3);font-size:13px;">暂无动态</div>';
+
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+// ── Trips ──
+async function loadTrips() {
+  const statusFilter = document.getElementById('trip-status-filter').value;
+  let q = `trips?tenant_id=eq.${TENANT_ID}&order=created_at.desc&limit=50&select=id,passenger_name,passenger_phone,direction,trip_type,scheduled_at,total_price,status,vehicle_type,driver_id,pickup_address,dropoff_address`;
+  if (statusFilter) q += `&status=eq.${statusFilter}`;
+
+  const tbody = document.getElementById('trips-body');
+  tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:30px;">加载中...</td></tr>';
+
+  try {
+    const [trips, drivers] = await Promise.all([
+      supaFetch(q),
+      supaFetch(`drivers?tenant_id=eq.${TENANT_ID}&select=id,full_name`)
+    ]);
+
+    const driverMap = {};
+    drivers.forEach(d => driverMap[d.id] = d.full_name);
+
+    if (!trips.length) {
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:40px;">暂无订单</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = trips.map(t => {
+      const dir = t.trip_type==='charter'?'包车':t.direction==='from_airport'?'接机':'送机';
+      const driverName = t.driver_id ? (driverMap[t.driver_id] || t.driver_id.slice(0,8)) : '<span style="color:var(--text3)">未分配</span>';
+      const route = `<div style="font-size:11px;color:var(--text3);max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.pickup_address||''}→${t.dropoff_address||''}</div>`;
+      return `<tr>
+        <td><span style="font-family:monospace;font-size:11px;color:var(--text3);">TRP-${t.id.slice(-6).toUpperCase()}</span></td>
+        <td><div style="font-size:13px;font-weight:600;">${fmtDate(t.scheduled_at)}</div></td>
+        <td>
+          <div style="font-weight:600;">${t.passenger_name||'-'}</div>
+          <div style="font-size:11px;color:var(--text3);font-family:monospace;">${t.passenger_phone||''}</div>
+        </td>
+        <td><span class="tag">${dir}</span>${route}</td>
+        <td><span style="font-size:12px;color:var(--text3);">${t.vehicle_type||'-'}</span></td>
+        <td style="color:var(--gold);font-weight:700;">$${t.total_price||'-'}</td>
+        <td>${driverName}</td>
+        <td>${statusBadge(t.status)}</td>
+        <td>
+          ${t.status === 'pending' ? `<button class="action-btn success" onclick="assignTrip('${t.id}')">分配</button>` : ''}
+          ${t.status !== 'cancelled' && t.status !== 'completed' ? `<button class="action-btn danger" onclick="cancelTrip('${t.id}')" style="margin-left:4px;">取消</button>` : ''}
+        </td>
+      </tr>`;
+    }).join('');
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--red);padding:30px;">${e.message}</td></tr>`;
+  }
+}
+
+async function cancelTrip(id) {
+  if (!confirm('确认取消此订单？')) return;
+  await supaPatch(`trips?id=eq.${id}`, {status: 'cancelled'});
+  loadTrips();
+}
+
+async function assignTrip(tripId) {
+  const driverIdInput = prompt('输入司机ID（从司机管理页复制）：');
+  if (!driverIdInput) return;
+  await supaPatch(`trips?id=eq.${tripId}`, {status:'confirmed', driver_id: driverIdInput});
+  loadTrips();
+}
+
+// ── Drivers ──
+async function loadDrivers() {
+  const filter = document.getElementById('driver-filter').value;
+  let q = `drivers?tenant_id=eq.${TENANT_ID}&order=created_at.desc&limit=100&select=id,full_name,phone,wechat_id,status,is_active,vehicle_type,points,created_at`;
+  if (filter !== '') q += `&is_active=eq.${filter}`;
+
+  const tbody = document.getElementById('drivers-body');
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:30px;">加载中...</td></tr>';
+
+  try {
+    const [drivers, trips] = await Promise.all([
+      supaFetch(q),
+      supaFetch(`trips?tenant_id=eq.${TENANT_ID}&status=eq.completed&select=driver_id`)
+    ]);
+
+    const tripCount = {};
+    trips.forEach(t => { if(t.driver_id) tripCount[t.driver_id] = (tripCount[t.driver_id]||0)+1; });
+
+    if (!drivers.length) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:40px;">暂无司机</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = drivers.map(d => {
+      const activeBadge = d.is_active
+        ? '<span class="badge badge-active">✓ 已激活</span>'
+        : '<span class="badge badge-pending-driver">⏳ 待审核</span>';
+      const statusLabel = {at_depot:'🟢 候单',on_trip:'🚗 行程中',offline:'⚫ 离线'}[d.status] || d.status;
+      return `<tr>
+        <td>
+          <div class="driver-info">
+            <div class="driver-avatar">🧑‍✈️</div>
+            <div>
+              <div class="driver-name">${d.full_name}</div>
+              <div class="driver-phone">${d.phone}</div>
+            </div>
+          </div>
+        </td>
+        <td><span style="font-size:12px;color:var(--text2);">${d.vehicle_type||'-'}</span></td>
+        <td>
+          ${activeBadge}
+          <div style="font-size:11px;color:var(--text3);margin-top:4px;">${statusLabel}</div>
+        </td>
+        <td style="font-weight:700;color:var(--accent);">${tripCount[d.id]||0}</td>
+        <td style="color:var(--purple);font-weight:700;">${d.points||0}</td>
+        <td style="font-size:12px;color:var(--text3);">${fmtDateShort(d.created_at)}</td>
+        <td>
+          ${!d.is_active ? `<button class="action-btn success" onclick="activateDriver('${d.id}')">激活</button>` : `<button class="action-btn" onclick="deactivateDriver('${d.id}')">停用</button>`}
+          <button class="action-btn" onclick="copyId('${d.id}')" style="margin-left:4px;">复制ID</button>
+        </td>
+      </tr>`;
+    }).join('');
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="7" style="color:var(--red);padding:20px;">${e.message}</td></tr>`;
+  }
+}
+
+async function activateDriver(id) {
+  await supaPatch(`drivers?id=eq.${id}`, {is_active: true, status: 'offline'});
+  alert('✅ 司机已激活，可以开始接单');
+  loadDrivers();
+}
+
+async function deactivateDriver(id) {
+  if (!confirm('确认停用此司机？')) return;
+  await supaPatch(`drivers?id=eq.${id}`, {is_active: false});
+  loadDrivers();
+}
+
+function copyId(id) {
+  navigator.clipboard.writeText(id);
+  alert('ID已复制：' + id);
+}
+
+// ── Passengers ──
+async function loadPassengers() {
+  const tbody = document.getElementById('passengers-body');
+  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:30px;">加载中...</td></tr>';
+  try {
+    const [contacts, trips] = await Promise.all([
+      supaFetch(`contacts?tenant_id=eq.${TENANT_ID}&order=updated_at.desc&limit=100`),
+      supaFetch(`trips?tenant_id=eq.${TENANT_ID}&select=passenger_phone,created_at&order=created_at.desc`)
+    ]);
+
+    const tripCount = {}, lastTrip = {};
+    trips.forEach(t => {
+      if (!t.passenger_phone) return;
+      tripCount[t.passenger_phone] = (tripCount[t.passenger_phone]||0) + 1;
+      if (!lastTrip[t.passenger_phone]) lastTrip[t.passenger_phone] = t.created_at;
+    });
+
+    if (!contacts.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:40px;">暂无乘客</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = contacts.map(c => `<tr>
+      <td style="font-weight:600;">${c.name||'-'}</td>
+      <td style="font-family:monospace;font-size:12px;">${c.phone||'-'}</td>
+      <td style="font-size:12px;color:var(--text3);">${c.wechat_id||'-'}</td>
+      <td style="color:var(--accent);font-weight:700;">${tripCount[c.phone]||0} 单</td>
+      <td style="font-size:12px;color:var(--text3);">${fmtDateShort(lastTrip[c.phone])||'-'}</td>
+    </tr>`).join('');
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="5" style="color:var(--red);padding:20px;">${e.message}</td></tr>`;
+  }
+}
+
+// ── Dispatch ──
+async function loadDispatch() {
+  const today = new Date().toISOString().split('T')[0];
+  try {
+    const [pending, active, drivers] = await Promise.all([
+      supaFetch(`trips?tenant_id=eq.${TENANT_ID}&status=eq.pending&scheduled_at=gte.${today}T00:00:00&order=scheduled_at.asc&limit=20&select=id,passenger_name,scheduled_at,direction,trip_type,total_price,pickup_address`),
+      supaFetch(`trips?tenant_id=eq.${TENANT_ID}&status=in.(confirmed,driver_en_route,driver_arrived,in_progress)&order=scheduled_at.asc&select=id,passenger_name,scheduled_at,status,driver_id,pickup_address,dropoff_address`),
+      supaFetch(`drivers?tenant_id=eq.${TENANT_ID}&select=id,full_name`)
+    ]);
+
+    const driverMap = {};
+    drivers.forEach(d => driverMap[d.id] = d.full_name);
+
+    // Pending
+    const pendingEl = document.getElementById('dispatch-pending');
+    pendingEl.innerHTML = pending.length ? pending.map(t => {
+      const dir = t.trip_type==='charter'?'包车':t.direction==='from_airport'?'接机':'送机';
+      return `<div style="padding:12px 0;border-bottom:1px solid var(--border);">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+          <span style="font-size:13px;font-weight:700;">${dir}</span>
+          <span style="color:var(--gold);font-size:13px;font-weight:700;">$${t.total_price}</span>
+        </div>
+        <div style="font-size:12px;color:var(--text2);">${fmtDate(t.scheduled_at)}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px;">${t.passenger_name} · ${(t.pickup_address||'').slice(0,30)}</div>
+      </div>`;
+    }).join('') : '<div style="color:var(--text3);font-size:13px;padding:20px 0;">暂无待接订单</div>';
+
+    // Active
+    const activeEl = document.getElementById('dispatch-active');
+    activeEl.innerHTML = active.length ? active.map(t => {
+      const prog = {confirmed:'已确认',driver_en_route:'🚗 前往中',driver_arrived:'📍 已到达',in_progress:'🛣️ 行程中'}[t.status]||t.status;
+      return `<div style="padding:12px 0;border-bottom:1px solid var(--border);">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+          <span style="font-size:13px;font-weight:700;">${t.passenger_name}</span>
+          <span style="font-size:12px;color:var(--accent);">${prog}</span>
+        </div>
+        <div style="font-size:12px;color:var(--text2);">司机：${t.driver_id ? driverMap[t.driver_id]||'未知' : '未分配'}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px;">${fmtDate(t.scheduled_at)}</div>
+      </div>`;
+    }).join('') : '<div style="color:var(--text3);font-size:13px;padding:20px 0;">暂无进行中订单</div>';
+
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+// ── Finance ──
+async function loadFinance() {
+  try {
+    const thisMonth = new Date();
+    thisMonth.setDate(1); thisMonth.setHours(0,0,0,0);
+    const monthStart = thisMonth.toISOString();
+
+    const [allCompleted, monthCompleted, drivers] = await Promise.all([
+      supaFetch(`trips?tenant_id=eq.${TENANT_ID}&status=eq.completed&select=total_price,driver_id`),
+      supaFetch(`trips?tenant_id=eq.${TENANT_ID}&status=eq.completed&completed_at=gte.${monthStart}&select=total_price,driver_id`),
+      supaFetch(`drivers?tenant_id=eq.${TENANT_ID}&select=id,full_name`)
+    ]);
+
+    const total = allCompleted.reduce((s,t) => s+(parseFloat(t.total_price)||0), 0);
+    const monthTotal = monthCompleted.reduce((s,t) => s+(parseFloat(t.total_price)||0), 0);
+
+    document.getElementById('fin-total').textContent = '$' + total.toFixed(0);
+    document.getElementById('fin-month').textContent = '$' + monthTotal.toFixed(0);
+    document.getElementById('fin-month-count').textContent = monthCompleted.length + ' 单';
+    document.getElementById('fin-count').textContent = allCompleted.length;
+
+    // By driver
+    const driverMap = {};
+    drivers.forEach(d => driverMap[d.id] = d.full_name);
+
+    const byDriver = {};
+    allCompleted.forEach(t => {
+      if (!t.driver_id) return;
+      if (!byDriver[t.driver_id]) byDriver[t.driver_id] = { count: 0, total: 0 };
+      byDriver[t.driver_id].count++;
+      byDriver[t.driver_id].total += parseFloat(t.total_price)||0;
+    });
+
+    const sorted = Object.entries(byDriver).sort((a,b) => b[1].total - a[1].total);
+
+    const tbody = document.getElementById('finance-body');
+    tbody.innerHTML = sorted.length ? sorted.map(([id, data]) => `<tr>
+      <td style="font-weight:600;">${driverMap[id]||id.slice(0,8)}</td>
+      <td style="color:var(--accent);font-weight:700;">${data.count}</td>
+      <td style="color:var(--gold);font-weight:700;">$${data.total.toFixed(0)}</td>
+      <td style="color:var(--text2);">$${data.count ? (data.total/data.count).toFixed(0) : 0}</td>
+    </tr>`).join('') : '<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:40px;">暂无完成订单</td></tr>';
+
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+// Init
+window.addEventListener('DOMContentLoaded', () => {
+  loadDashboard();
+  // Auto refresh every 60s
+  setInterval(() => {
+    const active = document.querySelector('.section.active')?.id;
+    if (active === 'section-dashboard') loadDashboard();
+    if (active === 'section-dispatch') loadDispatch();
+  }, 60000);
+});
+</script>
+</body>
+</html>
