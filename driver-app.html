@@ -3139,7 +3139,30 @@ async function loadTripDetail(tripId) {
       }
     } catch(e) {}
 
-  } catch(e) { console.error('订单详情加载失败', e); }
+     // ── 状态推进按钮 ──
+    const acceptBtn = document.getElementById('accept-trip-btn');
+    const dynContent = document.getElementById('detail-dynamic-content');
+    if (acceptBtn && dynContent && t.driver_id && t.driver_id === currentDriver?.id) {
+      acceptBtn.style.display = 'none';
+      document.querySelector('.action-btn[onclick="rejectTrip()"]')?.remove();
+      const statusActions = {
+        'confirmed':       { label: '🚗 出发前往上车点',  fn: 'driverEnRoute()',  cls: 'btn-primary' },
+        'dispatched':      { label: '🚗 出发前往上车点',  fn: 'driverEnRoute()',  cls: 'btn-primary' },
+        'driver_en_route': { label: '📍 已到达，通知乘客', fn: 'driverArrived()', cls: 'btn-primary' },
+        'driver_arrived':  { label: '✅ 开始行程',        fn: 'startTrip()',      cls: 'btn-success' },
+        'in_progress':     { label: '✅ 完成行程',        fn: 'completeTrip()',   cls: 'btn-success btn-complete' },
+      };
+      const action = statusActions[t.status];
+      if (action) {
+        const btn = document.createElement('button');
+        btn.className = `action-btn ${action.cls}`;
+        btn.style.width = '100%';
+        btn.textContent = action.label;
+        btn.setAttribute('onclick', action.fn);
+        dynContent.appendChild(btn);
+      }
+    }
+ } catch(e) { console.error('订单详情加载失败', e); }
 }
 
 function goBack(pageId) {
@@ -3256,6 +3279,30 @@ async function acceptTrip() {
   // 自动跳回任务列表并刷新
   goBack('page-home');
   await loadTrips();
+}
+
+async function driverEnRoute() {
+  if (!currentTripId) return;
+  await updateTripStatus(currentTripId, 'driver_en_route');
+  await updateDriverStatus('on_trip');
+  speakDriver('正在前往上车点');
+  openNavigation();
+  goBack('page-home'); loadHome();
+}
+
+async function driverArrived() {
+  if (!currentTripId) return;
+  await updateTripStatus(currentTripId, 'driver_arrived');
+  speakDriver('已到达上车点，正在通知乘客');
+  alert('✅ 已通知乘客！请等待乘客上车。');
+  goBack('page-home'); loadHome();
+}
+
+async function startTrip() {
+  if (!currentTripId) return;
+  await updateTripStatus(currentTripId, 'in_progress');
+  speakDriver('行程已开始，祝旅途愉快！');
+  goBack('page-home'); loadHome();
 }
 
 function departTrip() {
