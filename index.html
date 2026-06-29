@@ -569,8 +569,8 @@ body {
   <div class="header-inner">
     <div class="header-avatar">✈️</div>
     <div class="header-info">
-      <div class="header-name">出行管家小本</div>
-      <div class="header-sub" id="agent-status">澳洲机场接送 · 随时为您服务</div>
+      <div class="header-name" id="agent-name-display">出行管家小本</div>
+      <div class="header-sub" id="agent-status">小本 · 随时为您服务</div>
     </div>
     <div class="header-more" onclick="goToDriver()">⋯</div>
   </div>
@@ -834,12 +834,144 @@ body {
 <input type="file" id="photo-input" accept="image/*" capture="environment" style="display:none" onchange="handleImage(this)">
 <input type="file" id="album-input" accept="image/*" style="display:none" onchange="handleImage(this)">
 
-<!-- 语音录音遮罩 -->
+<!-- 管家取名弹窗 -->
+<div id="name-picker-overlay" style="
+  display:none; position:fixed; inset:0; z-index:400;
+  background:rgba(0,0,0,0.5); align-items:flex-end; justify-content:center;
+">
+  <div style="
+    background:#fff; border-radius:24px 24px 0 0;
+    padding:28px 20px 48px; width:100%; max-width:480px;
+    animation:slideUp 0.3s cubic-bezier(0.34,1.1,0.64,1);
+  ">
+    <div style="width:40px;height:4px;background:#e0e0e0;border-radius:2px;margin:0 auto 20px;"></div>
+    <div style="text-align:center;margin-bottom:20px;">
+      <div style="font-size:36px;margin-bottom:10px;">✈️</div>
+      <div style="font-size:18px;font-weight:700;color:#1a1a1a;margin-bottom:6px;">给你的专属管家取个名字</div>
+      <div style="font-size:13px;color:#999;line-height:1.6;">以后就叫这个名字，随时为你服务</div>
+    </div>
+    <!-- 预设名字 -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+      <button onclick="pickName('小本')" style="padding:14px;background:#f7f7f7;border:2px solid #e0e0e0;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.15s;" onmousedown="this.style.borderColor='#07c160'" onmouseup="this.style.borderColor='#e0e0e0'">
+        小本 ✈️<div style="font-size:11px;font-weight:400;color:#999;margin-top:3px;">默认管家</div>
+      </button>
+      <button onclick="pickName('小澳')" style="padding:14px;background:#f7f7f7;border:2px solid #e0e0e0;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
+        小澳 🦘<div style="font-size:11px;font-weight:400;color:#999;margin-top:3px;">澳洲风格</div>
+      </button>
+      <button onclick="pickName('Mia')" style="padding:14px;background:#f7f7f7;border:2px solid #e0e0e0;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
+        Mia 🌟<div style="font-size:11px;font-weight:400;color:#999;margin-top:3px;">英文名</div>
+      </button>
+      <button onclick="pickName('阿飞')" style="padding:14px;background:#f7f7f7;border:2px solid #e0e0e0;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
+        阿飞 🛫<div style="font-size:11px;font-weight:400;color:#999;margin-top:3px;">活泼风格</div>
+      </button>
+    </div>
+    <!-- 自定义 -->
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <input id="custom-name-input" placeholder="自己取个名字..." maxlength="6"
+        style="flex:1;padding:12px 14px;border:2px solid #e0e0e0;border-radius:12px;font-size:15px;font-family:inherit;outline:none;"
+        onfocus="this.style.borderColor='#07c160'" onblur="this.style.borderColor='#e0e0e0'"
+        onkeydown="if(event.key==='Enter')pickName('custom')">
+      <button onclick="pickName('custom')" style="padding:12px 18px;background:#07c160;border:none;border-radius:12px;color:white;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">确定</button>
+    </div>
+    <button onclick="pickName('小本')" style="width:100%;padding:12px;background:none;border:none;color:#bbb;font-size:13px;cursor:pointer;font-family:inherit;">跳过，用默认名字</button>
+  </div>
+</div>
+
+<!-- 语音录音遮罩（单次输入） -->
 <div class="voice-recording" id="voice-overlay">
   <div class="voice-circle">🎤</div>
-  <div class="voice-tip">正在聆听，松开取消</div>
+  <div class="voice-tip">正在聆听...</div>
   <button class="voice-cancel" onclick="cancelVoice()">取消</button>
 </div>
+
+<!-- 语音对话全屏界面 -->
+<div id="voice-call-overlay" style="
+  display:none; position:fixed; inset:0; z-index:300;
+  background:linear-gradient(160deg,#0a1628 0%,#0d2a1a 50%,#0a1628 100%);
+  flex-direction:column; align-items:center; justify-content:space-between;
+  padding:60px 24px 50px;
+  max-width:480px; margin:0 auto;
+">
+  <!-- 顶部 -->
+  <div style="text-align:center;">
+    <div style="font-size:13px;color:rgba(255,255,255,0.4);letter-spacing:0.1em;margin-bottom:8px;">语音对话模式</div>
+    <div style="font-size:18px;font-weight:700;color:white;" id="vc-status">等待说话...</div>
+  </div>
+
+  <!-- 中间：AI头像 + 波形 -->
+  <div style="display:flex;flex-direction:column;align-items:center;gap:28px;">
+    <!-- 头像 -->
+    <div id="vc-avatar" style="
+      width:100px; height:100px; border-radius:50%;
+      background:linear-gradient(135deg,#07c160,#0a9a50);
+      display:flex; align-items:center; justify-content:center;
+      font-size:48px;
+      box-shadow:0 0 0 0 rgba(7,193,96,0.4);
+      transition:all 0.3s;
+    ">✈️</div>
+
+    <!-- 波形动画 -->
+    <div id="vc-wave" style="display:flex;align-items:center;gap:4px;height:40px;">
+      <div class="vc-bar" style="width:4px;background:rgba(7,193,96,0.3);border-radius:2px;height:8px;"></div>
+      <div class="vc-bar" style="width:4px;background:rgba(7,193,96,0.3);border-radius:2px;height:8px;"></div>
+      <div class="vc-bar" style="width:4px;background:rgba(7,193,96,0.3);border-radius:2px;height:8px;"></div>
+      <div class="vc-bar" style="width:4px;background:rgba(7,193,96,0.3);border-radius:2px;height:8px;"></div>
+      <div class="vc-bar" style="width:4px;background:rgba(7,193,96,0.3);border-radius:2px;height:8px;"></div>
+      <div class="vc-bar" style="width:4px;background:rgba(7,193,96,0.3);border-radius:2px;height:8px;"></div>
+      <div class="vc-bar" style="width:4px;background:rgba(7,193,96,0.3);border-radius:2px;height:8px;"></div>
+    </div>
+
+    <!-- 最新一句话 -->
+    <div id="vc-last-msg" style="
+      max-width:300px; text-align:center;
+      font-size:14px; color:rgba(255,255,255,0.7);
+      line-height:1.6; min-height:44px;
+    "></div>
+  </div>
+
+  <!-- 底部：麦克风 + 挂断 -->
+  <div style="display:flex;align-items:center;gap:40px;">
+    <!-- 静音 -->
+    <button id="vc-mute-btn" onclick="toggleMute()" style="
+      width:52px; height:52px; border-radius:50%;
+      background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);
+      color:white; font-size:22px; cursor:pointer;
+    ">🎤</button>
+
+    <!-- 挂断 -->
+    <button onclick="endVoiceCall()" style="
+      width:68px; height:68px; border-radius:50%;
+      background:#ff3b30; border:none;
+      color:white; font-size:28px; cursor:pointer;
+      box-shadow:0 4px 20px rgba(255,59,48,0.4);
+    ">📵</button>
+
+    <!-- 键盘切换 -->
+    <button onclick="switchToText()" style="
+      width:52px; height:52px; border-radius:50%;
+      background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);
+      color:white; font-size:22px; cursor:pointer;
+    ">⌨️</button>
+  </div>
+</div>
+
+<style>
+@keyframes vcPulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(7,193,96,0.4); }
+  50% { box-shadow: 0 0 0 20px rgba(7,193,96,0); }
+}
+@keyframes vcBar {
+  0%,100% { height: 8px; opacity:0.3; }
+  50% { height: 32px; opacity:1; }
+}
+.vc-bar-active:nth-child(1) { animation: vcBar 0.8s ease-in-out infinite 0s; }
+.vc-bar-active:nth-child(2) { animation: vcBar 0.8s ease-in-out infinite 0.1s; }
+.vc-bar-active:nth-child(3) { animation: vcBar 0.8s ease-in-out infinite 0.2s; }
+.vc-bar-active:nth-child(4) { animation: vcBar 0.8s ease-in-out infinite 0.3s; }
+.vc-bar-active:nth-child(5) { animation: vcBar 0.8s ease-in-out infinite 0.2s; }
+.vc-bar-active:nth-child(6) { animation: vcBar 0.8s ease-in-out infinite 0.1s; }
+.vc-bar-active:nth-child(7) { animation: vcBar 0.8s ease-in-out infinite 0s; }
+</style>
 
 <script>
 // ── 配置 ──
@@ -854,9 +986,46 @@ let pendingOrder = null;       // 待确认订单数据
 let voiceRecognition = null;
 let panelOpen = false;
 
+// ── 管家名字 ──
+let agentName = localStorage.getItem('agent_name') || '小本';
+
+function getAgentName() { return agentName; }
+
+function setAgentName(name) {
+  agentName = name;
+  localStorage.setItem('agent_name', name);
+  // 更新顶部显示
+  const nameEl = document.getElementById('agent-name-display');
+  if (nameEl) nameEl.textContent = '出行管家' + agentName;
+  const statusEl = document.getElementById('agent-status');
+  if (statusEl) statusEl.textContent = agentName + ' · 随时为您服务';
+}
+
+function showNamePicker() {
+  const el = document.getElementById('name-picker-overlay');
+  if (el) el.style.display = 'flex';
+}
+function closeNamePicker() {
+  const el = document.getElementById('name-picker-overlay');
+  if (el) el.style.display = 'none';
+}
+function pickName(name) {
+  if (name === 'custom') {
+    const input = document.getElementById('custom-name-input');
+    const val = input?.value.trim();
+    if (!val) { input?.focus(); return; }
+    setAgentName(val);
+  } else {
+    setAgentName(name);
+  }
+  closeNamePicker();
+  // 用新名字打招呼
+  addAIMsg(`好嘞！以后叫我${agentName}就行～要预约什么出行？一句话告诉我，马上帮你搞定！`);
+  addWelcomeCard();
+}
+
 // ── 初始化 ──
 window.addEventListener('DOMContentLoaded', () => {
-  // 今日日期
   document.getElementById('today-label').textContent =
     new Date().toLocaleDateString('zh-CN', {month:'numeric',day:'numeric',weekday:'short'});
 
@@ -866,11 +1035,22 @@ window.addEventListener('DOMContentLoaded', () => {
     try { currentPassenger = JSON.parse(saved); } catch(e) {}
   }
 
-  // 欢迎语 + 服务卡片
-  setTimeout(() => {
-    addAIMsg('出行管家小本来啦，要预约什么服务？');
-    addWelcomeCard();
-  }, 300);
+  // 更新头部名字
+  const nameEl = document.getElementById('agent-name-display');
+  if (nameEl) nameEl.textContent = '出行管家' + agentName;
+  const statusEl = document.getElementById('agent-status');
+  if (statusEl) statusEl.textContent = agentName + ' · 随时为您服务';
+
+  // 首次使用 → 取名；否则直接欢迎
+  const isFirst = !localStorage.getItem('agent_name');
+  if (isFirst) {
+    setTimeout(() => showNamePicker(), 400);
+  } else {
+    setTimeout(() => {
+      addAIMsg(`嘿，我是${agentName}！要去机场还是从机场回来？一句话告诉我，马上搞定！`);
+      addWelcomeCard();
+    }, 300);
+  }
 
   // 输入框自适应高度
   const ta = document.getElementById('chat-input');
@@ -896,12 +1076,18 @@ function addAIMsg(text, options=[]) {
   const body = document.getElementById('chat-body');
   const row = document.createElement('div');
   row.className = 'msg-row';
+  const optHtml = options.length ? `
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;writing-mode:horizontal-tb;direction:ltr;">
+      ${options.map(o => `<button onclick="quickReply(this.dataset.v)" data-v="${o}"
+        style="writing-mode:horizontal-tb;direction:ltr;white-space:nowrap;display:inline-flex;align-items:center;
+        background:#f0f0f0;border:1px solid #ddd;border-radius:18px;padding:6px 14px;
+        font-size:13px;color:#333;cursor:pointer;font-family:inherit;line-height:1.4;
+        flex-direction:row;">${o}</button>`).join('')}
+    </div>` : '';
   row.innerHTML = `
     <div class="msg-avatar">✈️</div>
-    <div style="flex:1;max-width:78%;">
-      <div class="bubble ai">${text.replace(/\n/g,'<br>')}
-        ${options.length ? `<div class="quick-options">${options.map(o=>`<div class="quick-option" onclick="quickReply('${o}')">${o}</div>`).join('')}</div>` : ''}
-      </div>
+    <div style="flex:1;max-width:78%;writing-mode:horizontal-tb;direction:ltr;">
+      <div class="bubble ai" style="writing-mode:horizontal-tb;direction:ltr;">${text.replace(/\n/g,'<br>')}${optHtml}</div>
       <div class="msg-time">${nowTime()}</div>
     </div>`;
   body.appendChild(row);
@@ -1096,47 +1282,56 @@ function buildSystemPrompt() {
   const today = now.toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
   const passengerInfo = currentPassenger
     ? `当前乘客：${currentPassenger.name||'用户'}，手机：${currentPassenger.phone}，历史地址：${currentPassenger.home_address||'未知'}`
-    : '乘客尚未登录，需收集姓名和手机号';
+    : '乘客尚未登录';
 
-  return `你是澳洲出行AI管家小本，墨尔本华人机场接送助理。今天是${today}。
+  return `你是澳洲出行管家小本，墨尔本华人机场接送助理。今天是${today}。
 ${passengerInfo}
 
-【核心原则】
-- 绝不啰嗦，绝不重复问已知信息
-- 用户随意表达，你智能提取，缺什么才问什么
-- 日期识别：今天/明天/后天/大后天/下周X/礼拜X/周X/X月X日/X号 都能理解，转换为具体日期后直接使用
-- 用户提到地址（包括区域如"东区""Glen Waverley"），直接记住，不要再问
-- 如果乘客有历史地址，接机时主动问"送您回${currentPassenger?.home_address||'之前的地址'}吗？"
+【你的性格】
+超级接地气的华人小助理。说话像朋友，简短有趣，不用敬语，不说废话。
+第一句话永远是引导用户一句话说清楚需求，比如：
+"要不您直接告诉我：几号、几点、去哪，我一分钟帮您搞定！"
+或者："一句话告诉我行程，我帮你搞定，比你查攻略快多了！"
 
-【预约流程 — 极简版】
-接机：只需收集 ①日期时间 ②目的地（用定位或历史地址确认）③车型选择
-送机：只需收集 ①日期时间（几点到机场）②出发地 ③车型选择
-包车：只需收集 ①日期 ②目的地/路线 ③人数
+【核心规则】
+1. 用户说了什么就记住什么，绝对不重复问
+2. 缺什么才问什么，一次只问一个问题
+3. 日期识别全覆盖：今天/明天/后天/下周三/礼拜天/周日/8月3号/X月X日/下周/下个月 全能理解
+4. 地址随便说，东区/南区/Glen Waverley/CBD/家 都能接受
+5. 手机号最后问，说法是："最后，方便留个手机号吗？司机到了好联系您～"
+6. 有历史地址直接问确认："送您回老地方吗？"
+7. 信息够了直接出车型卡片，用[SHOW_VEHICLES:日期,时间,类型,地址]
 
-信息够了就直接出车型卡片，用[SHOW_VEHICLES:日期,时间,类型,地址]标记。
-全部确认后用[BOOK:direction,scheduled_at,pickup,dropoff,vehicle_type,price]标记提交。
+【预约只需要这几样】
+接机：日期时间 + 目的地 → 出车型卡片
+送机：日期+几点到机场 + 出发地 → 出车型卡片
+包车：日期 + 去哪 + 几个人 → 出车型卡片
 
-【车型与参考价（25km内）】
-🚗 轿车5座：$58–$68
-🚐 MPV 8座：$78–$92  
-🚌 12座商务：$108–$128
-✨ 阿尔法6座：$95–$115
+【车型参考价（25km内）】
+🚗 轿车5座 $58–$68 | 🚐 MPV 8座 $78–$92 | 🚌 12座 $108–$128 | ✨ 阿尔法6座 $95–$115
 
-【风格】
-- 一句话说清，不加感叹号堆砌
-- 选项用[OPTIONS:A,B,C]放末尾，最多3个
+【快捷回复选项】
+需要给选项时用[OPTIONS:A,B,C]放末尾，最多3个，要口语化
+例：[OPTIONS:今天,明天,说个具体日期]
+
+【禁止】
 - 不提Uber/出租车/公共交通
-- 不提佣金、平台抽成
+- 不说"您好"/"请问"/"感谢"等客套话
+- 不一次问多个问题
+- 不重复确认已知信息
 
 【Few-shot示例】
-用户：接机，下周三，QF407
-小本：QF407下周三到，送您去哪里？
+用户：接机
+小本：好嘞～几号到，去哪里？一句话告诉我，我帮你搞定！[OPTIONS:今天,明天,说个日期]
 
-用户：Glen Waverley
-小本：好，几个人几件行李？[OPTIONS:1人1件,2人2件,4人4件]
+用户：8月3号，QF407，Glen Waverley
+小本：明白了！几个人几件行李？[OPTIONS:1人1件,2人2件,多人多件]
 
 用户：2人2件
-小本：[SHOW_VEHICLES:2025-07-09,航班落地后,from_airport,Glen Waverley]`;
+小本：[SHOW_VEHICLES:8月3日,航班落地,from_airport,Glen Waverley]
+
+用户：选了轿车后问手机号
+小本：搞定！最后，方便留个手机号吗？司机到了好联系您～`;
 }
 
 // ── 本地AI演示（无API时使用）──
@@ -1398,19 +1593,290 @@ function addWelcomeCard() {
   scrollBottom();
 }
 
-// ── 对话模式切换 ──
-let chatModeActive = false;
+// ── 语音对话模式 ──
+const SILICONFLOW_KEY = 'sk-roiuyrvsunbhtzvzozikfpycwndwsxqyibtbubglrvviqppd';
+let vcActive = false;
+let vcRecognition = null;
+let vcMuted = false;
+let vcSpeaking = false;
+let vcCurrentAudio = null;
+
 function toggleChatMode() {
-  chatModeActive = !chatModeActive;
-  const btn = document.getElementById('chat-mode-btn');
-  if (chatModeActive) {
-    btn.textContent = '🟢';
-    btn.title = '退出对话模式';
-    addAIMsg('已进入语音对话模式，点击麦克风即可连续对话 🎤');
+  if (vcActive) {
+    endVoiceCall();
   } else {
-    btn.textContent = '💬';
-    btn.title = '对话模式';
+    startVoiceCall();
   }
+}
+
+function startVoiceCall() {
+  vcActive = true;
+  vcMuted = false;
+  const overlay = document.getElementById('voice-call-overlay');
+  overlay.style.display = 'flex';
+  document.getElementById('chat-mode-btn').textContent = '🟢';
+
+  // 欢迎语
+  vcSpeak(`您好！我是${agentName}，请说话，我来帮您安排出行。`, () => {
+    if (vcActive && !vcMuted) vcListen();
+  });
+  setVcStatus(agentName + '正在说话...');
+}
+
+function endVoiceCall() {
+  vcActive = false;
+  vcRecognition?.stop();
+  vcCurrentAudio?.pause();
+  vcCurrentAudio = null;
+  document.getElementById('voice-call-overlay').style.display = 'none';
+  document.getElementById('chat-mode-btn').textContent = '💬';
+  setWaveIdle();
+}
+
+function switchToText() {
+  endVoiceCall();
+  document.getElementById('chat-input').focus();
+}
+
+function toggleMute() {
+  vcMuted = !vcMuted;
+  document.getElementById('vc-mute-btn').textContent = vcMuted ? '🔇' : '🎤';
+  if (vcMuted) {
+    vcRecognition?.stop();
+    setVcStatus('已静音');
+    setWaveIdle();
+  } else {
+    setVcStatus('等待说话...');
+    if (!vcSpeaking) vcListen();
+  }
+}
+
+function setVcStatus(text) {
+  const el = document.getElementById('vc-status');
+  if (el) el.textContent = text;
+}
+
+function setWaveActive(color='#07c160') {
+  const bars = document.querySelectorAll('.vc-bar');
+  bars.forEach(b => {
+    b.classList.add('vc-bar-active');
+    b.style.background = color;
+  });
+  const avatar = document.getElementById('vc-avatar');
+  if (avatar) avatar.style.animation = 'vcPulse 1.2s ease-in-out infinite';
+}
+
+function setWaveIdle() {
+  const bars = document.querySelectorAll('.vc-bar');
+  bars.forEach(b => {
+    b.classList.remove('vc-bar-active');
+    b.style.background = 'rgba(7,193,96,0.3)';
+    b.style.height = '8px';
+  });
+  const avatar = document.getElementById('vc-avatar');
+  if (avatar) avatar.style.animation = 'none';
+}
+
+// 语音识别（用户说话）
+function vcListen() {
+  if (!vcActive || vcMuted || vcSpeaking) return;
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    setVcStatus('浏览器不支持语音，请用Safari或Chrome');
+    return;
+  }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  vcRecognition = new SR();
+  vcRecognition.lang = 'zh-CN';
+  vcRecognition.continuous = false;
+  vcRecognition.interimResults = false;
+
+  vcRecognition.onstart = () => {
+    setVcStatus('正在聆听...');
+    setWaveActive('#07c160');
+  };
+
+  vcRecognition.onresult = async (e) => {
+    const text = e.results[0][0].transcript.trim();
+    if (!text) { if (vcActive && !vcMuted) vcListen(); return; }
+
+    setWaveIdle();
+    setVcStatus(agentName + '思考中...');
+    document.getElementById('vc-last-msg').textContent = '你：' + text;
+
+    // 同步到聊天记录
+    addUserMsg(text);
+    chatHistory.push({ role: 'user', content: text });
+
+    // 调 AI
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ system: buildSystemPrompt(), messages: chatHistory.slice(-16) })
+      });
+      const data = await res.json();
+      let reply = data.content?.[0]?.text || '请再说一遍';
+
+      // 去掉标记符号，只保留纯文字朗读
+      reply = reply.replace(/\[OPTIONS:.*?\]/g,'').replace(/\[SHOW_VEHICLES:.*?\]/g,'').replace(/\[BOOK:.*?\]/g,'').trim();
+      // 去掉markdown
+      reply = reply.replace(/\*\*/g,'').replace(/\*/g,'').replace(/`/g,'');
+
+      chatHistory.push({ role: 'assistant', content: reply });
+      if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
+
+      // 显示在聊天里
+      addAIMsg(reply);
+      document.getElementById('vc-last-msg').textContent = agentName + '：' + reply.slice(0, 60) + (reply.length > 60 ? '...' : '');
+
+      // TTS朗读
+      setVcStatus(agentName + '正在说话...');
+      setWaveActive('#1aad19');
+      await vcSpeak(reply, () => {
+        if (vcActive && !vcMuted) {
+          setVcStatus('等待说话...');
+          setWaveIdle();
+          setTimeout(() => { if (vcActive && !vcMuted) vcListen(); }, 600);
+        }
+      });
+    } catch(err) {
+      setVcStatus('网络问题，请重试');
+      setWaveIdle();
+      setTimeout(() => { if (vcActive && !vcMuted) vcListen(); }, 2000);
+    }
+  };
+
+  vcRecognition.onerror = (e) => {
+    setWaveIdle();
+    if (e.error === 'no-speech') {
+      if (vcActive && !vcMuted) vcListen(); // 没说话就继续监听
+    } else {
+      setVcStatus('识别出错，重试中...');
+      setTimeout(() => { if (vcActive && !vcMuted) vcListen(); }, 1500);
+    }
+  };
+
+  vcRecognition.onend = () => {
+    // onresult 会处理，这里不重复启动
+  };
+
+  try { vcRecognition.start(); } catch(e) {}
+}
+
+// TTS — SiliconFlow + VAD打断
+let vcAudioCtx = null;
+let vcAudioSource = null;
+let vcVadStream = null;
+let vcVadTimer = null;
+
+async function vcSpeak(text, onDone) {
+  vcSpeaking = true;
+  const speakText = text.length > 150 ? text.slice(0, 150) + '。' : text;
+
+  // 同步启动VAD（AI说话时监听用户开口）
+  startVAD(onDone);
+
+  try {
+    const res = await fetch('https://api.siliconflow.cn/v1/audio/speech', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${SILICONFLOW_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'FunAudioLLM/CosyVoice2-0.5B',
+        input: speakText,
+        voice: 'FunAudioLLM/CosyVoice2-0.5B:alex',
+        response_format: 'mp3',
+        speed: 1.0,
+        gain: 0.0
+      })
+    });
+
+    if (!res.ok) throw new Error('SF TTS ' + res.status);
+
+    const arrayBuffer = await res.arrayBuffer();
+    vcAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const decoded = await vcAudioCtx.decodeAudioData(arrayBuffer);
+    vcAudioSource = vcAudioCtx.createBufferSource();
+    vcAudioSource.buffer = decoded;
+    vcAudioSource.connect(vcAudioCtx.destination);
+    vcAudioSource.onended = () => {
+      stopVAD();
+      vcSpeaking = false;
+      vcAudioCtx?.close(); vcAudioCtx = null;
+      if (onDone) onDone();
+    };
+    vcAudioSource.start(0);
+    return;
+  } catch(e) {
+    console.warn('SiliconFlow TTS失败:', e.message);
+    stopVAD();
+  }
+
+  vcSpeakFallback(speakText, onDone);
+}
+
+// 打断AI说话 → 立刻监听用户
+function interruptVcSpeak() {
+  if (!vcSpeaking) return;
+  stopVAD();
+  try { vcAudioSource?.stop(); } catch(e) {}
+  try { window.speechSynthesis?.cancel(); } catch(e) {}
+  vcSpeaking = false;
+  try { vcAudioCtx?.close(); } catch(e) {}
+  vcAudioCtx = null;
+  setVcStatus('正在聆听...');
+  setWaveActive('#07c160');
+  if (vcActive && !vcMuted) vcListen();
+}
+
+// VAD：麦克风音量监测
+async function startVAD() {
+  try {
+    vcVadStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 256;
+    ctx.createMediaStreamSource(vcVadStream).connect(analyser);
+    const buf = new Uint8Array(analyser.frequencyBinCount);
+    let triggerCount = 0; // 防止误触发
+
+    vcVadTimer = setInterval(() => {
+      if (!vcSpeaking) { stopVAD(); return; }
+      analyser.getByteFrequencyData(buf);
+      const avg = buf.reduce((a,b) => a+b, 0) / buf.length;
+      if (avg > 20) {
+        triggerCount++;
+        if (triggerCount >= 2) { // 连续2次检测到才打断，防抖
+          stopVAD();
+          interruptVcSpeak();
+        }
+      } else {
+        triggerCount = 0;
+      }
+    }, 80);
+  } catch(e) {
+    // 无麦克风权限，跳过VAD正常播放
+  }
+}
+
+function stopVAD() {
+  if (vcVadTimer) { clearInterval(vcVadTimer); vcVadTimer = null; }
+  if (vcVadStream) { vcVadStream.getTracks().forEach(t => t.stop()); vcVadStream = null; }
+}
+
+function vcSpeakFallback(text, onDone) {
+  if (!window.speechSynthesis) { vcSpeaking = false; if (onDone) onDone(); return; }
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'zh-CN'; u.rate = 1.05; u.pitch = 1.1;
+  const voices = window.speechSynthesis.getVoices();
+  const cnVoice = voices.find(v => v.lang.includes('zh') && /female|女|Ting|Mei/i.test(v.name));
+  if (cnVoice) u.voice = cnVoice;
+  u.onend = () => { vcSpeaking = false; if (onDone) onDone(); };
+  u.onerror = () => { vcSpeaking = false; if (onDone) onDone(); };
+  window.speechSynthesis.speak(u);
 }
 
 // ── 浮层控制 ──
