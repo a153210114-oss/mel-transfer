@@ -20,6 +20,30 @@
   --header: #ebebeb;
   --header-border: #d0d0d0;
   --panel-bg: #f2f2f2;
+  --date-divider: rgba(0,0,0,0.06);
+  --date-text: #b0b0b0;
+}
+
+/* 夜间模式 */
+body.night-mode {
+  --bg: #1a1a2e;
+  --surface: #222236;
+  --bubble-me: #2a7a4a;
+  --bubble-ai: #2c2c44;
+  --text: #e8e8f0;
+  --text2: #9090aa;
+  --bar: #16213e;
+  --bar-border: #2a2a4a;
+  --accent: #07c160;
+  --header: #16213e;
+  --header-border: #2a2a4a;
+  --panel-bg: #16213e;
+  --date-divider: rgba(255,255,255,0.06);
+  --date-text: #666688;
+}
+
+body {
+  transition: background 0.6s ease, color 0.6s ease;
 }
 
 body {
@@ -83,8 +107,8 @@ body {
   margin: 8px 0 12px;
 }
 .date-divider span {
-  font-size: 11px; color: #b0b0b0;
-  background: rgba(0,0,0,0.06);
+  font-size: 11px; color: var(--date-text);
+  background: var(--date-divider);
   padding: 3px 10px; border-radius: 12px;
 }
 
@@ -986,6 +1010,29 @@ let pendingOrder = null;       // 待确认订单数据
 let voiceRecognition = null;
 let panelOpen = false;
 
+// ── 日夜模式 ──
+function applyTheme() {
+  // 用本地时间判断，如果有定位再用当地时区
+  const hour = new Date().getHours();
+  const isNight = hour < 6 || hour >= 18;
+  document.body.classList.toggle('night-mode', isNight);
+}
+
+async function applyThemeByLocation() {
+  try {
+    if (!navigator.geolocation) { applyTheme(); return; }
+    navigator.geolocation.getCurrentPosition(pos => {
+      // 用经度估算UTC偏移（粗略）
+      const lng = pos.coords.longitude;
+      const offsetHours = Math.round(lng / 15);
+      const utc = new Date().getTime() + new Date().getTimezoneOffset() * 60000;
+      const localHour = new Date(utc + offsetHours * 3600000).getHours();
+      const isNight = localHour < 6 || localHour >= 18;
+      document.body.classList.toggle('night-mode', isNight);
+    }, () => applyTheme()); // 定位失败用设备时间
+  } catch(e) { applyTheme(); }
+}
+
 // ── 管家名字 ──
 let agentName = localStorage.getItem('agent_name') || '小本';
 
@@ -1026,6 +1073,10 @@ function pickName(name) {
 
 // ── 初始化 ──
 window.addEventListener('DOMContentLoaded', () => {
+  // 日夜模式
+  applyThemeByLocation();
+  setInterval(applyTheme, 60 * 60 * 1000); // 每小时重判
+
   document.getElementById('today-label').textContent =
     new Date().toLocaleDateString('zh-CN', {month:'numeric',day:'numeric',weekday:'short'});
 
@@ -1725,18 +1776,18 @@ function vcListen() {
       chatHistory.push({ role: 'assistant', content: reply });
       if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
 
-      // 显示在聊天里
-      addAIMsg(reply);
-      document.getElementById('vc-last-msg').textContent = agentName + '：' + reply.slice(0, 60) + (reply.length > 60 ? '...' : '');
-
-      // TTS朗读
+      // 先播语音，播完再显示文字气泡
       setVcStatus(agentName + '正在说话...');
       setWaveActive('#1aad19');
+      document.getElementById('vc-last-msg').textContent = agentName + '：' + reply.slice(0, 60) + (reply.length > 60 ? '...' : '');
+
       await vcSpeak(reply, () => {
+        // 语音播完后才渲染文字到聊天
+        addAIMsg(reply);
         if (vcActive && !vcMuted) {
           setVcStatus('等待说话...');
           setWaveIdle();
-          setTimeout(() => { if (vcActive && !vcMuted) vcListen(); }, 600);
+          setTimeout(() => { if (vcActive && !vcMuted) vcListen(); }, 500);
         }
       });
     } catch(err) {

@@ -24,6 +24,19 @@
   --text3: #3d5a80;
 }
 
+/* 司机端白天模式（稍微提亮，护眼） */
+body.day-mode {
+  --bg: #0f1829;
+  --surface: #1a2540;
+  --surface2: #22304e;
+  --border: #2a3d5e;
+  --text: #f0f4ff;
+  --text2: #8aaad4;
+  --text3: #4a6a90;
+}
+
+body { transition: background 0.6s ease; }
+
 body {
   font-family: -apple-system, 'PingFang SC', 'Noto Sans SC', sans-serif;
   background: var(--bg);
@@ -924,9 +937,71 @@ function enterApp(){
   const app = document.getElementById('app');
   app.style.display='flex'; app.style.flexDirection='column';
   document.getElementById('top-name').textContent = currentDriver.full_name||'司机工作台';
+
+  // 日夜模式
+  applyDriverTheme();
+  setInterval(applyDriverTheme, 60*60*1000);
+
+  // 助理取名（首次）
+  const isFirstDriver = !localStorage.getItem('driver_agent_name');
+  if(isFirstDriver){
+    setTimeout(()=>showDriverNamePicker(), 600);
+  } else {
+    driverAgentName = localStorage.getItem('driver_agent_name') || '澳小墨';
+    updateDriverAgentName();
+  }
+
   loadHome();
   loadVehicleInfo();
   startAutoRefresh();
+}
+
+// ── 司机端日夜模式 ──
+function applyDriverTheme(){
+  const hour = new Date().getHours();
+  // 司机端：白天(6-18)用day-mode稍亮，夜间保持默认深色
+  const isDay = hour >= 6 && hour < 18;
+  document.body.classList.toggle('day-mode', isDay);
+}
+
+// ── 司机助理名字 ──
+let driverAgentName = localStorage.getItem('driver_agent_name') || '澳小墨';
+
+function updateDriverAgentName(){
+  const el = document.getElementById('top-vehicle');
+  // 顶部副标题显示助理名
+}
+
+function showDriverNamePicker(){
+  document.getElementById('driver-name-picker').style.display='flex';
+}
+function closeDriverNamePicker(){
+  document.getElementById('driver-name-picker').style.display='none';
+}
+function pickDriverName(name){
+  if(name==='custom'){
+    const val = document.getElementById('driver-custom-name').value.trim();
+    if(!val){ document.getElementById('driver-custom-name').focus(); return; }
+    driverAgentName = val;
+  } else {
+    driverAgentName = name;
+  }
+  localStorage.setItem('driver_agent_name', driverAgentName);
+  closeDriverNamePicker();
+  // 欢迎语播报（Web Speech API）
+  speakDriver(`嗨老板！以后叫我${driverAgentName}就好，随时叫我，为您播报订单消息！`);
+  showToast('✅ 助理名字已设置：' + driverAgentName);
+}
+
+function speakDriver(text){
+  if(!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang='zh-CN'; u.rate=1.0; u.pitch=1.1;
+  const voices = window.speechSynthesis.getVoices();
+  const cn = voices.find(v=>v.lang.includes('zh')&&/female|女|Ting|Mei/i.test(v.name))||voices.find(v=>v.lang.includes('zh'));
+  if(cn) u.voice=cn;
+  window.speechSynthesis.speak(u);
 }
 
 function doLogout(){
@@ -1516,5 +1591,47 @@ function showToast(msg){
   setTimeout(()=>{ el.style.display='none'; },2500);
 }
 </script>
+
+<!-- 司机助理取名弹窗 -->
+<div id="driver-name-picker" style="
+  display:none; position:fixed; inset:0; z-index:400;
+  background:rgba(0,0,0,0.7); align-items:flex-end; justify-content:center;
+">
+  <div style="
+    background:var(--surface); border-radius:24px 24px 0 0;
+    padding:28px 20px 48px; width:100%; max-width:480px;
+    animation:slideUp 0.3s cubic-bezier(0.34,1.1,0.64,1);
+  ">
+    <div style="width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px;"></div>
+    <div style="text-align:center;margin-bottom:8px;font-size:32px;">🧑‍✈️</div>
+    <div style="text-align:center;font-size:18px;font-weight:800;color:var(--text);margin-bottom:6px;">给您的助理取个名字</div>
+    <div style="text-align:center;font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.7;">
+      嗨老板！随时唤醒我，为您播报订单消息<br>让您解放双手，开车更安全 🚗
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+      <button onclick="pickDriverName('澳小墨')" style="padding:14px;background:var(--surface2);border:2px solid var(--border);border-radius:14px;font-size:15px;font-weight:700;color:var(--text);cursor:pointer;font-family:inherit;">
+        澳小墨 🧑‍✈️<div style="font-size:11px;font-weight:400;color:var(--text3);margin-top:3px;">默认助理</div>
+      </button>
+      <button onclick="pickDriverName('小捷')" style="padding:14px;background:var(--surface2);border:2px solid var(--border);border-radius:14px;font-size:15px;font-weight:700;color:var(--text);cursor:pointer;font-family:inherit;">
+        小捷 ⚡<div style="font-size:11px;font-weight:400;color:var(--text3);margin-top:3px;">快人快语</div>
+      </button>
+      <button onclick="pickDriverName('阿强')" style="padding:14px;background:var(--surface2);border:2px solid var(--border);border-radius:14px;font-size:15px;font-weight:700;color:var(--text);cursor:pointer;font-family:inherit;">
+        阿强 💪<div style="font-size:11px;font-weight:400;color:var(--text3);margin-top:3px;">稳重风格</div>
+      </button>
+      <button onclick="pickDriverName('Max')" style="padding:14px;background:var(--surface2);border:2px solid var(--border);border-radius:14px;font-size:15px;font-weight:700;color:var(--text);cursor:pointer;font-family:inherit;">
+        Max 🌟<div style="font-size:11px;font-weight:400;color:var(--text3);margin-top:3px;">英文名</div>
+      </button>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <input id="driver-custom-name" placeholder="自己取个名字..." maxlength="6"
+        style="flex:1;padding:12px 14px;background:var(--surface2);border:2px solid var(--border);border-radius:12px;font-size:15px;color:var(--text);font-family:inherit;outline:none;"
+        onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"
+        onkeydown="if(event.key==='Enter')pickDriverName('custom')">
+      <button onclick="pickDriverName('custom')" style="padding:12px 18px;background:var(--accent);border:none;border-radius:12px;color:var(--bg);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">确定</button>
+    </div>
+    <button onclick="pickDriverName('澳小墨')" style="width:100%;padding:12px;background:none;border:none;color:var(--text3);font-size:13px;cursor:pointer;font-family:inherit;">跳过，用默认名字</button>
+  </div>
+</div>
+
 </body>
 </html>
