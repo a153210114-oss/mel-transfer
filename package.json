@@ -1,10 +1,14 @@
 {
-  "name": "mel-transfer",
+  "name": "au-travel-ai-assistant",
   "version": "1.0.0",
-  "engines": {
-    "node": "24.x"
+  "private": true,
+  "scripts": {
+    "start": "vercel dev"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.39.0"
+    "@anthropic-ai/sdk": "^0.54.0"
+  },
+  "devDependencies": {
+    "vercel": "^44.2.8"
   }
 }

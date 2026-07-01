@@ -38,18 +38,15 @@ function getFlightLink(flightNumber) {
 }
 
 // 构建工具结果注入到系统提示
-async function enrichSystemPrompt(system, messages, region = {}) {
+async function enrichSystemPrompt(system, messages) {
   const lastMsg = messages[messages.length - 1]?.content || '';
   let extra = '';
-  const city = typeof region.city === 'string' ? region.city.trim().slice(0, 80) : 'Melbourne';
-  const country = typeof region.country === 'string' ? region.country.trim().slice(0, 80) : '澳大利亚';
-  const currency = typeof region.currency === 'string' ? region.currency.trim().slice(0, 8) : 'AUD';
 
   // 检测是否需要天气
   if (/天气|下雨|温度|几度|冷不冷|热不热|带伞|穿什么|weather/i.test(lastMsg)) {
-    const w = await getWeather(city || 'Melbourne');
+    const w = await getWeather('Melbourne');
     if (w) {
-      extra += `\n\n【实时${city}天气】
+      extra += `\n\n【实时墨尔本天气】
 当前：${w.temp}°C（体感${w.feels_like}°C），${w.desc}
 湿度：${w.humidity}%，风速：${w.wind}km/h，UV指数：${w.uv}
 明日：${w.tomorrow.minTemp}°C ~ ${w.tomorrow.maxTemp}°C，${w.tomorrow.desc}
@@ -71,7 +68,7 @@ async function enrichSystemPrompt(system, messages, region = {}) {
 
 
   const noTransitRule = '\n\n【重要限制】不提供任何公共交通、出租车、Uber、拼车等地面交通信息和建议。如用户询问，礼貌说明我们专注私人接送服务。';
-  return `${system}\n\n【服务地区】${city}，${country}；当地币种${currency}。不要套用其他国家的机场、币种或价格。` + noTransitRule + extra;
+  return system + noTransitRule + extra;
 }
 
 module.exports = async function handler(req, res) {
@@ -84,13 +81,13 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const { system, messages, region } = req.body;
+    const { system, messages } = req.body;
     if (!messages || !Array.isArray(messages)) {
       return res.status(400).json({ error: 'Invalid messages' });
     }
 
     // 注入实时数据到system prompt
-    const enrichedSystem = await enrichSystemPrompt(system || '', messages, region || {});
+    const enrichedSystem = await enrichSystemPrompt(system || '', messages);
 
     const response = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',

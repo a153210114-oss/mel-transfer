@@ -1,0 +1,212 @@
+{
+  "name": "FW_02_派单工作流",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "new-trip-dispatch",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "新订单触发",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "received",
+        "options": {}
+      },
+      "id": "webhook-response",
+      "name": "立即响应",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [460, 180]
+    },
+    {
+      "parameters": {
+        "url": "https://gxocvpmgfjvmmkkbswgo.supabase.co/rest/v1/drivers",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b2N2cG1nZmp2bW1ra2Jzd2dvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyNDc4NzAsImV4cCI6MjA5NTgyMzg3MH0.ExUNuOP8YyHQmItY6cdl1Euj7nOXqQq-rQT5-7aNerE" },
+            { "name": "Authorization", "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b2N2cG1nZmp2bW1ra2Jzd2dvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyNDc4NzAsImV4cCI6MjA5NTgyMzg3MH0.ExUNuOP8YyHQmItY6cdl1Euj7nOXqQq-rQT5-7aNerE" }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "status", "value": "eq.at_depot" },
+            { "name": "is_active", "value": "eq.true" },
+            { "name": "tenant_id", "value": "eq.00000000-0000-0000-0000-000000000001" },
+            { "name": "order", "value": "depot_checkin_at.asc" },
+            { "name": "select", "value": "id,full_name,phone,wechat_id,depot_checkin_at" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "get-depot-drivers",
+      "name": "查询驿站司机队列",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true },
+          "conditions": [
+            {
+              "id": "check-depot",
+              "leftValue": "={{ $json.length }}",
+              "rightValue": 0,
+              "operator": { "type": "number", "operation": "gt" }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "check-depot-queue",
+      "name": "有驿站司机？",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "1", "name": "target_driver", "value": "={{ $json[0] }}", "type": "object" },
+            { "id": "2", "name": "dispatch_type", "value": "depot_queue", "type": "string" },
+            { "id": "3", "name": "trip_id", "value": "={{ $('新订单触发').item.json.body.trip_id }}", "type": "string" },
+            { "id": "4", "name": "round", "value": 1, "type": "number" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-depot-driver",
+      "name": "取队列第一位",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [900, 200]
+    },
+    {
+      "parameters": {
+        "url": "https://gxocvpmgfjvmmkkbswgo.supabase.co/rest/v1/drivers",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b2N2cG1nZmp2bW1ra2Jzd2dvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyNDc4NzAsImV4cCI6MjA5NTgyMzg3MH0.ExUNuOP8YyHQmItY6cdl1Euj7nOXqQq-rQT5-7aNerE" },
+            { "name": "Authorization", "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b2N2cG1nZmp2bW1ra2Jzd2dvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyNDc4NzAsImV4cCI6MjA5NTgyMzg3MH0.ExUNuOP8YyHQmItY6cdl1Euj7nOXqQq-rQT5-7aNerE" }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "status", "value": "eq.available" },
+            { "name": "is_active", "value": "eq.true" },
+            { "name": "tenant_id", "value": "eq.00000000-0000-0000-0000-000000000001" },
+            { "name": "select", "value": "id,full_name,phone,wechat_id" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "get-available-drivers",
+      "name": "查询所有在线司机",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 420]
+    },
+    {
+      "parameters": {
+        "url": "https://gxocvpmgfjvmmkkbswgo.supabase.co/rest/v1/dispatch_log",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b2N2cG1nZmp2bW1ra2Jzd2dvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyNDc4NzAsImV4cCI6MjA5NTgyMzg3MH0.ExUNuOP8YyHQmItY6cdl1Euj7nOXqQq-rQT5-7aNerE" },
+            { "name": "Authorization", "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b2N2cG1nZmp2bW1ra2Jzd2dvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyNDc4NzAsImV4cCI6MjA5NTgyMzg3MH0.ExUNuOP8YyHQmItY6cdl1Euj7nOXqQq-rQT5-7aNerE" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=minimal" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"tenant_id\": \"00000000-0000-0000-0000-000000000001\",\n  \"trip_id\": \"{{ $('新订单触发').item.json.body.trip_id }}\",\n  \"driver_id\": \"{{ $json.target_driver.id }}\",\n  \"round\": {{ $json.round }},\n  \"response\": \"pending\"\n}",
+        "options": {}
+      },
+      "id": "log-dispatch",
+      "name": "记录派单日志",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 200],
+      "method": "POST"
+    },
+    {
+      "parameters": {
+        "url": "https://gxocvpmgfjvmmkkbswgo.supabase.co/rest/v1/trips",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b2N2cG1nZmp2bW1ra2Jzd2dvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyNDc4NzAsImV4cCI6MjA5NTgyMzg3MH0.ExUNuOP8YyHQmItY6cdl1Euj7nOXqQq-rQT5-7aNerE" },
+            { "name": "Authorization", "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b2N2cG1nZmp2bW1ra2Jzd2dvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyNDc4NzAsImV4cCI6MjA5NTgyMzg3MH0.ExUNuOP8YyHQmItY6cdl1Euj7nOXqQq-rQT5-7aNerE" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=minimal" }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "id", "value": "=eq.{{ $('新订单触发').item.json.body.trip_id }}" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"status\": \"dispatched\",\n  \"driver_id\": \"{{ $('取队列第一位').item.json.target_driver.id }}\"\n}",
+        "options": {}
+      },
+      "id": "update-trip-dispatched",
+      "name": "更新订单为已派单",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1340, 200],
+      "method": "PATCH"
+    }
+  ],
+  "connections": {
+    "新订单触发": {
+      "main": [
+        [
+          { "node": "立即响应", "type": "main", "index": 0 },
+          { "node": "查询驿站司机队列", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "查询驿站司机队列": {
+      "main": [
+        [{ "node": "有驿站司机？", "type": "main", "index": 0 }]
+      ]
+    },
+    "有驿站司机？": {
+      "main": [
+        [{ "node": "取队列第一位", "type": "main", "index": 0 }],
+        [{ "node": "查询所有在线司机", "type": "main", "index": 0 }]
+      ]
+    },
+    "取队列第一位": {
+      "main": [
+        [{ "node": "记录派单日志", "type": "main", "index": 0 }]
+      ]
+    },
+    "记录派单日志": {
+      "main": [
+        [{ "node": "更新订单为已派单", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

@@ -343,7 +343,15 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);min-height:100vh
   </div>
 </div>
 
+<script src="region-context.js"></script>
 <script>
+const currentRegion=WorldRegion.load();
+document.addEventListener('DOMContentLoaded',()=>{
+  ['dm-phone','gm-phone','book-phone'].forEach(id=>{
+    const input=document.getElementById(id);
+    if(input)input.placeholder=WorldRegion.phonePlaceholder(currentRegion);
+  });
+});
 const SUPA_URL='https://gxocvpmgfjvmmkkbswgo.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b2N2cG1nZmp2bW1ra2Jzd2dvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyNDc4NzAsImV4cCI6MjA5NTgyMzg3MH0.ExUNuOP8YyHQmItY6cdl1Euj7nOXqQq-rQT5-7aNerE';
 const TENANT_ID='00000000-0000-0000-0000-000000000001';
@@ -618,7 +626,7 @@ function closeBookModal(){document.getElementById('book-modal').classList.remove
 async function submitBooking(){
   if(!selectedBookDate){alert('请选择日期');return;}
   const name=document.getElementById('book-name').value.trim();
-  const phone=document.getElementById('book-phone').value.trim();
+  const phone=WorldRegion.normalizePhone(document.getElementById('book-phone').value,currentRegion);
   if(!name||!phone){alert('请填写联系方式');return;}
   const p=currentBookPost;
   const pre=p.hourly_rate*12;
@@ -651,7 +659,7 @@ function closeDemandModal(){document.getElementById('demand-modal').classList.re
 
 async function submitDemand(){
   const name=document.getElementById('dm-name').value.trim();
-  const phone=document.getElementById('dm-phone').value.trim();
+  const phone=WorldRegion.normalizePhone(document.getElementById('dm-phone').value,currentRegion);
   const date=document.getElementById('dm-date').value;
   if(!name||!phone||!date){alert('请填写称呼、手机号和日期');return;}
   const data={
@@ -684,7 +692,7 @@ function closeGroupModal(){document.getElementById('group-modal').classList.remo
 
 async function submitGroup(){
   const name=document.getElementById('gm-name').value.trim();
-  const phone=document.getElementById('gm-phone').value.trim();
+  const phone=WorldRegion.normalizePhone(document.getElementById('gm-phone').value,currentRegion);
   const dest=document.getElementById('gm-dest').value.trim();
   const date=document.getElementById('gm-date').value;
   if(!name||!phone||!dest||!date){alert('请填写目的地、日期、称呼和手机号');return;}
