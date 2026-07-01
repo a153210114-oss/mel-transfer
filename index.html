@@ -257,6 +257,58 @@ body{background:var(--wx-bg);color:var(--wx-text);}
 .phone-input-card input{background:#f7f7f7;border:1px solid #ddd;border-radius:5px;color:var(--wx-text);}
 .phone-input-card input::placeholder{color:#aaa;}.phone-submit{background:var(--wx-green);border-radius:5px;font-weight:500;}
 
+/* 浅色画布下的对话卡片：避免深色主题白字落在浅灰背景上 */
+.chat-area .choice-card,
+.chat-area .vehicle-card,
+.chat-area .confirm-card{
+  background:#fff;
+  border-color:#d8d8d8;
+  box-shadow:0 1px 2px rgba(0,0,0,.04);
+}
+.chat-area .choice-card.blue{background:#f4fbfd;border-color:#9fd6e2;}
+.chat-area .choice-card.gold{background:#fffaf0;border-color:#e4c982;}
+.chat-area .choice-card.green{background:#f3fbf6;border-color:#9ed5b4;}
+.chat-area .card-text h4,
+.chat-area .v-name,
+.chat-area .confirm-value{color:var(--wx-text);}
+.chat-area .card-text p,
+.chat-area .v-cap,
+.chat-area .confirm-label{color:#666;}
+.chat-area .card-arrow{color:#888;}
+.chat-area .vehicle-group-label{color:#555;}
+.chat-area .vehicle-group-label.gold{color:#8a6500;}
+.chat-area .vehicle-card.selected{background:#eefbff;border-color:#1598b5;}
+.chat-area .vehicle-card.luxury{background:#fffdf7;border-color:#d8c58d;}
+.chat-area .vehicle-card.luxury.selected{background:#fff8df;border-color:#a97b00;}
+.chat-area .v-price{color:#087c98;}
+.chat-area .vehicle-card.luxury .v-price{color:#8a6500;}
+.chat-area .confirm-row{border-bottom-color:#ececec;}
+.chat-area .confirm-btn.secondary{background:#f3f3f3;color:#444;border-color:#d8d8d8;}
+.chat-area .pay-opt{background:#f5f5f5;border-color:#d8d8d8;color:#555;}
+.chat-area .pay-opt.selected{background:#eefbff;border-color:#1598b5;color:#087c98;}
+.chat-area .confirm-card input,
+.chat-area .confirm-card select,
+.chat-area .confirm-card textarea{color:var(--wx-text)!important;background:#f7f7f7!important;border-color:#d5d5d5!important;}
+.chat-area .confirm-card input::placeholder{color:#888;}
+.chat-area .confirm-card [style*="color:white"],
+.chat-area .confirm-card [style*="color: white"],
+.chat-area .confirm-card [style*="color:rgba(255,255,255"],
+.chat-area .vehicle-section [style*="color:rgba(255,255,255"]{color:var(--wx-text)!important;}
+.chat-area .confirm-card [style*="color:rgba(0,212,255"]{color:#087c98!important;}
+.chat-area .confirm-card [style*="color:rgba(0,200,150"]{color:#087f62!important;}
+.chat-area .confirm-card [style*="color:rgba(255,165,0"]{color:#9a5a00!important;}
+.chat-area .confirm-card button[style*="color:white"],
+.chat-area .confirm-card button[style*="color: white"]{color:#fff!important;}
+.chat-area .confirm-card button[style*="background:rgba(0,150,199"]{
+  background:#087f99!important;border-color:#087f99!important;color:#fff!important;
+}
+.chat-area .confirm-card button[style*="background:rgba(39,174,96"]{
+  background:#16834a!important;border-color:#16834a!important;color:#fff!important;
+}
+.chat-area .confirm-card button[style*="background:rgba(255,255,255"]{
+  background:#f3f3f3!important;border-color:#d8d8d8!important;color:#444!important;
+}
+
 .home-welcome{width:100%;padding:4px 0 16px;}
 .home-greeting{padding:4px 4px 18px;}
 .home-greeting h1{font-size:24px;line-height:1.35;font-weight:650;letter-spacing:0;margin-bottom:7px;}
