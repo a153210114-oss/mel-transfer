@@ -59,7 +59,7 @@ module.exports = async function handler(req, res) {
     if (!response.ok) {
       const message = await response.text();
       console.error('SiliconFlow TTS failed:', response.status, message.slice(0, 500));
-      return res.status(502).json({ error: 'SiliconFlow TTS upstream failed', status: response.status, detail: message.slice(0, 500) });
+      return res.status(502).json({ error: 'TTS service temporarily unavailable' });
     }
 
     const audioBuffer = await response.arrayBuffer();
