@@ -5,6 +5,7 @@ const DEFAULT_VOICE = 'FunAudioLLM/CosyVoice2-0.5B:diana';
 
 const ALLOWED_VOICES = new Set([
   'FunAudioLLM/CosyVoice2-0.5B:diana',
+  'FunAudioLLM/CosyVoice2-0.5B:charles',
 ]);
 
 module.exports = async function handler(req, res) {
