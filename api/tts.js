@@ -7,11 +7,6 @@ const ALLOWED_VOICES = new Set([
   'FunAudioLLM/CosyVoice2-0.5B:diana',
 ]);
 
-const DIALECT_INSTRUCTIONS = {
-  cantonese: '用粤语说这句话',
-  mandarin: '',
-};
-
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -25,7 +20,6 @@ module.exports = async function handler(req, res) {
     const {
       text,
       voice = DEFAULT_VOICE,
-      dialect = 'mandarin',
     } = req.body || {};
 
     if (typeof text !== 'string') {
@@ -46,9 +40,6 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'Unsupported voice' });
     }
 
-    const instruction = DIALECT_INSTRUCTIONS[dialect] || '';
-    const input = instruction ? `${instruction}<|endofprompt|>${clean}` : clean;
-
     const response = await fetch('https://api.siliconflow.cn/v1/audio/speech', {
       method: 'POST',
       headers: {
@@ -57,7 +48,7 @@ module.exports = async function handler(req, res) {
       },
       body: JSON.stringify({
         model: MODEL,
-        input,
+        input: clean,
         voice,
         response_format: 'mp3',
         speed: 1.0,

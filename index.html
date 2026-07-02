@@ -153,7 +153,7 @@ body{
 
 /* 底部输入 */
 .input-bar{
-  position:fixed;bottom:60px;left:50%;transform:translateX(-50%);
+  position:fixed;bottom:0;left:50%;transform:translateX(-50%);
   width:100%;max-width:480px;
   background:rgba(8,12,25,0.97);
   backdrop-filter:blur(20px);
@@ -162,10 +162,7 @@ body{
   display:flex;gap:10px;align-items:center;
   transition:bottom 0.2s;
 }
-.input-bar.no-nav{
-  bottom:0;
-  padding-bottom:24px;
-}
+.input-bar.no-nav{bottom:0;}
 .chat-input{
   flex:1;background:rgba(255,255,255,0.07);
   border:1.5px solid rgba(255,255,255,0.1);
@@ -174,16 +171,11 @@ body{
 }
 .chat-input::placeholder{color:rgba(255,255,255,0.28);}
 .chat-input:focus{border-color:rgba(0,212,255,0.35);}
-.mic-btn{
-  width:44px;height:44px;
-  background:linear-gradient(135deg,#0096c7,#0077a0);
-  border:none;border-radius:50%;font-size:20px;
-  cursor:pointer;color:white;flex-shrink:0;
-  box-shadow:0 4px 14px rgba(0,150,199,0.35);
-}
-.mic-btn.recording{background:linear-gradient(135deg,#ff3b30,#cc2222);animation:mp 0.8s ease-in-out infinite;}
+.mic-btn{width:40px;height:40px;background:#fff;border:1px solid #ddd;border-radius:5px;cursor:pointer;color:#333;flex-shrink:0;box-shadow:none;}
+.mic-btn.recording{background:#e8fff1;border-color:#07c160;animation:mp 0.8s ease-in-out infinite;}
 @keyframes mp{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
-.send-btn{width:44px;height:44px;background:rgba(255,255,255,0.08);border:1.5px solid rgba(255,255,255,0.12);border-radius:50%;font-size:16px;cursor:pointer;color:white;}
+.send-btn{height:40px;min-width:40px;padding:0 10px;background:#fff;border:1px solid #ddd;border-radius:5px;font-size:22px;cursor:pointer;color:#333;font-family:inherit;flex-shrink:0;}
+.send-btn.ready{background:var(--wx-green);border-color:var(--wx-green);color:#fff;font-size:13px;font-weight:600;}
 
 /* 入场动画 */
 #splash{position:fixed;inset:0;z-index:9999;background:linear-gradient(160deg,#0a0f1e,#0d2040);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;}
@@ -195,15 +187,6 @@ body{
 .modal-overlay.show{display:flex;}
 .modal-sheet{background:#0d1f3c;border-radius:28px 28px 0 0;padding:28px 22px 44px;width:100%;max-width:480px;border-top:1px solid rgba(255,255,255,0.1);}
 .modal-handle{width:40px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:0 auto 20px;}
-
-/* 底部导航 */
-.bottom-nav{display:flex;background:#0a1628;border-top:1px solid rgba(255,255,255,0.08);position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;z-index:101;}
-.nav-tab{flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 4px 12px;gap:3px;cursor:pointer;font-size:10px;color:rgba(255,255,255,0.35);border:none;background:none;font-family:inherit;transition:color 0.2s;}
-.nav-tab.active{color:#00d4ff;}
-.nav-tab-icon{font-size:20px;line-height:1;}
-.nav-badge{position:relative;display:inline-block;}
-.nav-badge::after{content:'';position:absolute;top:-2px;right:-4px;width:7px;height:7px;border-radius:50%;background:#ff4d6d;border:1.5px solid #0a1628;display:none;}
-.nav-badge.has-msg::after{display:block;}
 
 /* 烟花 */
 #confetti-overlay{display:none;position:fixed;inset:0;z-index:9998;pointer-events:all;flex-direction:column;align-items:center;justify-content:center;}
@@ -249,9 +232,10 @@ body{background:var(--wx-bg);color:var(--wx-text);}
 .input-bar.no-nav{padding-bottom:calc(8px + env(safe-area-inset-bottom));}
 .chat-input{height:42px;padding:9px 13px;background:#fff;border:1px solid #ddd;border-radius:5px;color:var(--wx-text);font-size:15px;}
 .chat-input::placeholder{color:#aaa;}.chat-input:focus{border-color:#aaa;}
-.mic-btn,.send-btn{width:40px;height:40px;border-radius:5px;box-shadow:none;font-size:19px;}
+.mic-btn,.send-btn{height:40px;border-radius:5px;box-shadow:none;}
 .mic-btn{background:#fff;color:#333;border:1px solid #ddd;}
-.send-btn{background:var(--wx-green);border:1px solid var(--wx-green);color:#fff;}
+.send-btn{background:#fff;border:1px solid #ddd;color:#333;}
+.send-btn.ready{background:var(--wx-green);border-color:var(--wx-green);color:#fff;}
 #splash{background:#f7f7f7;}#splash>div:nth-child(2){color:var(--wx-text)!important;}#splash>div:nth-child(3){color:var(--wx-muted)!important;}
 .phone-input-card{background:#fff;border:1px solid #dedede;border-radius:6px;padding:14px;}
 .phone-input-card input{background:#f7f7f7;border:1px solid #ddd;border-radius:5px;color:var(--wx-text);}
@@ -326,7 +310,35 @@ body{background:var(--wx-bg);color:var(--wx-text);}
 .home-trust{padding:13px 5px 0;color:#999;font-size:12px;text-align:center;}
 .region-btn{max-width:132px;border:0;background:transparent;color:#555;font-family:inherit;font-size:12px;display:flex;align-items:center;gap:3px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .region-btn span{overflow:hidden;text-overflow:ellipsis;}.region-dot{width:6px;height:6px;border-radius:50%;background:var(--wx-green);flex-shrink:0;}
-@media(min-width:481px){body{margin-top:24px;height:calc(100vh - 48px);border:1px solid #ddd;box-shadow:0 10px 35px rgba(0,0,0,.09)}.input-bar{bottom:24px;}}
+
+/* 微信式三模式输入栏 */
+.composer-tool{width:40px;height:40px;border:0;background:transparent;color:#262626;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;padding:0;}
+.wave-icon{width:25px;height:24px;display:flex;align-items:center;justify-content:center;gap:3px;}
+.wave-icon i{display:block;width:3px;border-radius:3px;background:#222;}
+.wave-icon i:nth-child(1),.wave-icon i:nth-child(5){height:8px}.wave-icon i:nth-child(2),.wave-icon i:nth-child(4){height:15px}.wave-icon i:nth-child(3){height:23px}
+.mic-btn.recording .wave-icon i{background:var(--wx-green);animation:wavePulse .8s ease-in-out infinite alternate;}
+.mic-btn.recording .wave-icon i:nth-child(2),.mic-btn.recording .wave-icon i:nth-child(4){animation-delay:.12s}.mic-btn.recording .wave-icon i:nth-child(3){animation-delay:.24s}
+@keyframes wavePulse{to{transform:scaleY(.45)}}
+.oy-mic-icon{width:25px;height:30px;position:relative;display:block;}
+.oy-mic-icon::before{content:'0';position:absolute;top:-3px;left:5px;font:700 21px/21px 'DM Mono',monospace;transform:scaleX(.72);}
+.oy-mic-icon::after{content:'Y';position:absolute;top:13px;left:6px;font:700 17px/17px 'DM Mono',monospace;}
+.keyboard-icon{font-size:24px;line-height:1;}
+.hold-talk{display:none;flex:1;height:42px;border:1px solid #ddd;border-radius:5px;background:#fff;color:#333;font-size:15px;font-weight:500;font-family:inherit;user-select:none;-webkit-user-select:none;touch-action:none;}
+.hold-talk.active{background:#d9d9d9;}
+.input-bar.voice-input .chat-input{display:none;}
+.input-bar.voice-input .hold-talk{display:block;}
+.more-panel{display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:59px;width:100%;max-width:480px;background:#f7f7f7;border-top:1px solid #d6d6d6;padding:14px 14px calc(18px + env(safe-area-inset-bottom));z-index:100;box-shadow:0 -8px 22px rgba(0,0,0,.06);}
+.more-panel.open{display:block;}
+.more-panel-head{height:28px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;color:#666;font-size:13px;}
+.more-back{border:0;background:none;color:#576b95;font-size:13px;font-family:inherit;padding:4px;cursor:pointer;}
+.more-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px 10px;}
+.more-item{border:0;background:none;font-family:inherit;color:#333;font-size:12px;display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;min-width:0;}
+.more-item-icon{width:54px;height:54px;border:1px solid #ddd;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:25px;box-shadow:0 1px 2px rgba(0,0,0,.03);}
+.more-item.driver .more-item-icon{background:#eef7ff;border-color:#b9d2e8;}
+.media-input{display:none;}
+body.more-open .chat-area{padding-bottom:390px;}
+@media(max-width:360px){.more-grid{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:481px){body{margin-top:24px;height:calc(100vh - 48px);border:1px solid #ddd;box-shadow:0 10px 35px rgba(0,0,0,.09)}.input-bar{bottom:24px}.more-panel{bottom:83px}}
 </style>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAHGLzz7_TpG2MLnqT1kCROeNIzRr-EQac&libraries=places&language=zh-CN&loading=async" async defer></script>
 <script src="region-context.js"></script>
@@ -355,29 +367,22 @@ body{background:var(--wx-bg);color:var(--wx-text);}
 
 <!-- 底部输入 -->
 <div class="input-bar no-nav" id="main-input-bar">
-  <button class="mic-btn" id="mic-btn" onclick="toggleMic()">🎤</button>
-  <input class="chat-input" id="chat-input" placeholder="说话或输入..." onkeydown="if(event.key==='Enter')sendMessage()">
-  <button class="send-btn" onclick="sendMessage()">➤</button>
+  <button class="mic-btn composer-tool" id="mic-btn" onclick="toggleMic()" aria-label="连续语音对话" title="连续语音对话">
+    <span class="wave-icon" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+  </button>
+  <button class="composer-tool" id="input-mode-btn" onclick="toggleInputMode()" aria-label="切换到语音输入" title="切换输入方式"><span class="oy-mic-icon" aria-hidden="true"></span></button>
+  <input class="chat-input" id="chat-input" placeholder="输入你需要的帮助" oninput="updateComposerAction()" onkeydown="if(event.key==='Enter'){sendMessage();updateComposerAction();}">
+  <button class="hold-talk" id="hold-talk" onpointerdown="startPushToTalk(event)" onpointerup="stopPushToTalk(event)" onpointercancel="stopPushToTalk(event)" onpointerleave="stopPushToTalk(event)">按住说话</button>
+  <button class="send-btn" id="composer-action" onclick="handleComposerAction()" aria-label="展开全部功能">＋</button>
 </div>
 
-<!-- 底部导航 -->
-<div class="bottom-nav" id="main-bottom-nav" style="display:none;">
-  <button class="nav-tab active" id="nav-chat" onclick="switchMainTab('chat')">
-    <span class="nav-tab-icon">💬</span>对话
-  </button>
-  <button class="nav-tab" id="nav-orders" onclick="switchMainTab('orders')">
-    <span class="nav-tab-icon">📋</span>订单
-  </button>
-  <button class="nav-tab" id="nav-messages" onclick="switchMainTab('messages')">
-    <span class="nav-tab-icon nav-badge" id="msg-badge-main">📨</span>消息
-  </button>
-  <button class="nav-tab" id="nav-plaza" onclick="window.location.href='plaza.html'">
-    <span class="nav-tab-icon">🏕️</span>广场
-  </button>
-  <button class="nav-tab" id="nav-profile" onclick="switchMainTab('profile')">
-    <span class="nav-tab-icon">👤</span>我的
-  </button>
+<!-- ＋ 微信式全部功能面板 -->
+<div class="more-panel" id="more-panel" aria-hidden="true">
+  <div class="more-panel-head"><button class="more-back" id="more-back" onclick="renderMoreMenu()" style="visibility:hidden;">‹ 返回</button><span id="more-title">全部功能</span><span style="width:44px;"></span></div>
+  <div class="more-grid" id="more-grid"></div>
 </div>
+<input class="media-input" id="camera-input" type="file" accept="image/*" capture="environment" onchange="handleMediaPick(this,'相机')">
+<input class="media-input" id="image-input" type="file" accept="image/*" onchange="handleMediaPick(this,'图片')">
 
 <!-- 成功弹窗 -->
 <div class="modal-overlay" id="success-modal">
@@ -890,10 +895,9 @@ async function processTTSQueue() {
   const {text, onDone} = ttsQueue.shift();
   try {
     const voice = window._ttsVoice || 'FunAudioLLM/CosyVoice2-0.5B:diana';
-    const dialect = localStorage.getItem('dialect_noticed') === 'cantonese' ? 'cantonese' : undefined;
     const res = await fetch('/api/tts', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({text, voice, ...(dialect && {dialect})})
+      body: JSON.stringify({text, voice})
     });
     if(res.ok){
       const data = await res.json();
@@ -925,6 +929,84 @@ async function speak(text) {
 let voiceMode = false; // 是否在连续语音模式
 let isSpeaking = false; // Bot是否在说话
 let isUserSpeaking = false; // 用户是否在说话
+let inputMode = 'text'; // text | voice-input
+let dictationRecognition = null;
+let dictationText = '';
+
+function updateComposerAction(){
+  const input=document.getElementById('chat-input');
+  const action=document.getElementById('composer-action');
+  if(!input||!action)return;
+  const hasText=inputMode==='text'&&input.value.trim().length>0;
+  action.textContent=hasText?'发送':'＋';
+  action.classList.toggle('ready',hasText);
+  action.setAttribute('aria-label',hasText?'发送消息':'展开全部功能');
+}
+
+function handleComposerAction(){
+  const input=document.getElementById('chat-input');
+  if(inputMode==='text'&&input?.value.trim()){
+    closeMorePanel();
+    sendMessage();
+    updateComposerAction();
+  }else{
+    toggleMorePanel();
+  }
+}
+
+function toggleInputMode(){
+  const bar=document.getElementById('main-input-bar');
+  const btn=document.getElementById('input-mode-btn');
+  if(!bar||!btn)return;
+  inputMode=inputMode==='text'?'voice-input':'text';
+  const isVoice=inputMode==='voice-input';
+  bar.classList.toggle('voice-input',isVoice);
+  btn.innerHTML=isVoice?'<span class="keyboard-icon" aria-hidden="true">⌨</span>':'<span class="oy-mic-icon" aria-hidden="true"></span>';
+  btn.setAttribute('aria-label',isVoice?'切换到文字输入':'切换到语音输入');
+  document.getElementById('composer-action').textContent='＋';
+  document.getElementById('composer-action').classList.remove('ready');
+  closeMorePanel();
+  if(!isVoice)document.getElementById('chat-input')?.focus();
+}
+
+function startPushToTalk(event){
+  event?.preventDefault();
+  if(voiceMode)stopVoiceMode();
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){alert('请使用Safari或Chrome');return;}
+  dictationText='';
+  const hold=document.getElementById('hold-talk');
+  hold?.classList.add('active');
+  if(hold)hold.textContent='松开发送';
+  dictationRecognition=new SR();
+  dictationRecognition.lang='zh-CN';
+  dictationRecognition.continuous=true;
+  dictationRecognition.interimResults=true;
+  dictationRecognition.onresult=(e)=>{
+    let finalText='';
+    for(let i=e.resultIndex;i<e.results.length;i++)if(e.results[i].isFinal)finalText+=e.results[i][0].transcript;
+    if(finalText)dictationText+=finalText;
+  };
+  dictationRecognition.onerror=()=>finishPushToTalk(false);
+  dictationRecognition.onend=()=>finishPushToTalk(true);
+  try{dictationRecognition.start();}catch(e){finishPushToTalk(false);}
+}
+
+function stopPushToTalk(event){
+  event?.preventDefault();
+  if(dictationRecognition){try{dictationRecognition.stop();}catch(e){}}
+  else finishPushToTalk(false);
+}
+
+function finishPushToTalk(shouldSend){
+  const hold=document.getElementById('hold-talk');
+  hold?.classList.remove('active');
+  if(hold)hold.textContent='按住说话';
+  dictationRecognition=null;
+  const text=dictationText.trim();
+  dictationText='';
+  if(shouldSend&&text)sendVoiceMessage(text);
+}
 
 function toggleMic(){
   if(!('webkitSpeechRecognition' in window)&&!('SpeechRecognition' in window)){alert('请使用Safari或Chrome');return;}
@@ -941,8 +1023,8 @@ function startVoiceMode(){
   }
   voiceMode = true;
   const btn = document.getElementById('mic-btn');
-  btn.textContent = '🔴';
   btn.classList.add('recording');
+  btn.setAttribute('aria-label','停止连续语音对话');
   const vi = document.getElementById('voice-indicator');
   if(vi){ vi.style.display='block'; vi.textContent='🎙️ 连续对话中...'; }
   startListeningLoop();
@@ -953,8 +1035,8 @@ function stopVoiceMode(){
   recognition?.stop();
   stopTTS();
   const btn = document.getElementById('mic-btn');
-  btn.textContent = '🎤';
   btn.classList.remove('recording');
+  btn.setAttribute('aria-label','连续语音对话');
   const vi = document.getElementById('voice-indicator');
   if(vi) vi.style.display='none';
 }
@@ -970,7 +1052,7 @@ function startListeningLoop(){
   if(!voiceMode) return;
   const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
   recognition = new SR();
-  recognition.lang = window._recognitionLang || 'zh-CN';
+  recognition.lang = 'zh-CN';
   recognition.continuous = true;
   recognition.interimResults = true;
 
@@ -1068,19 +1150,7 @@ const HOMOPHONES = [
   {wrong:/鸡场|机厂|及场/g, right:'机场'},
   // 墨尔本 谐音
   {wrong:/墨尔笨|默尔本|莫尔本/g, right:'墨尔本'},
-  // 粤语常见误识别
-  {wrong:/王先生(?=.*[嘅㗎咁系唔]|$)/g, right:'冇问题'},  // 冇问题→王先生
-  {wrong:/系嘎|系架|系呀/g, right:'系嘅'},
-  {wrong:/无问题|冇问提/g, right:'冇问题'},
-  {wrong:/落鸡|落基/g, right:'落机'},
-  {wrong:/几时候/g, right:'几时'},
 ];
-
-// 方言关键词检测
-const DIALECT_SIGNALS = {
-  cantonese: /系咩|唔係|点解|咁样|几时|而家|喺边|搭车|落机|边度|OK嘅|啱㗎/,
-  hokkien: /哪里去|安怎|遮|欲去叨|叨位/,
-};
 
 // ── 相对日期解析 ──
 function detectRoundTrip(text){
@@ -1153,11 +1223,6 @@ function correctHomophones(text){
   return corrected;
 }
 
-function detectDialect(text){
-  if(DIALECT_SIGNALS.cantonese.test(text)) return 'cantonese';
-  if(DIALECT_SIGNALS.hokkien.test(text)) return 'hokkien';
-  return null;
-}
 
 async function sendVoiceMessage(text){
   // 重新下单拦截（区别于修改）
@@ -1206,17 +1271,6 @@ async function sendVoiceMessage(text){
   if(currentRole==='passenger') extractInfo(corrected);
 
   // 方言检测
-  const dialect = detectDialect(text);
-  if(dialect && !localStorage.getItem('dialect_noticed')){
-    localStorage.setItem('dialect_noticed', dialect);
-    if(dialect==='cantonese'){
-      window._recognitionLang = 'zh-HK'; // 切换到粤语声学模型
-      setTimeout(()=>agentSay('我听到你用广东话，你可以继续用广东话或普通话跟我说，都OK嘅😊'),500);
-    } else {
-      setTimeout(()=>agentSay('你也可以用习惯的语言跟我说话，普通话、广东话都可以'),500);
-    }
-  }
-
   const typing = addTyping();
   updateVoiceStatus('💭 思考中...');
 
@@ -1477,43 +1531,97 @@ window.onload=async function(){
 // ── 首次访问首页 ──
 function renderWelcomeHome(){
   currentRole='passenger';
-  chatArea.innerHTML=`
-    <section class="home-welcome" aria-label="常用服务">
-      <div class="home-greeting">
-        <h1>你好，我是${agentName}</h1>
-        <p id="home-region-copy">在${currentRegion.city||currentRegion.country}需要出行或华人帮助，直接用中文告诉我。</p>
-      </div>
-      <button class="voice-entry" onclick="beginVoiceChat()">
-        <span class="voice-entry-icon">🎙</span>
-        <span><strong>语音告诉我</strong><small>普通话、粤语都可以</small></span>
-      </button>
-      <div class="service-panel">
-        <div class="service-title">常用服务</div>
-        <button class="service-item" onclick="beginQuickService('送机')">
-          <span class="service-icon" style="background:#576b95">✈</span>
-          <span class="service-copy"><strong>预约送机</strong><span>中文沟通，华人司机接送</span></span><span class="service-arrow">›</span>
-        </button>
-        <button class="service-item" onclick="beginQuickService('接机')">
-          <span class="service-icon" style="background:#07c160">⌂</span>
-          <span class="service-copy"><strong>预约接机</strong><span>落地接机，行李友好</span></span><span class="service-arrow">›</span>
-        </button>
-        <button class="service-item" onclick="beginQuickService('华人帮办')">
-          <span class="service-icon" style="background:#fa9d3b">人</span>
-          <span class="service-copy"><strong>找华人帮忙</strong><span>生活办事、本地协助与中文沟通</span></span><span class="service-arrow">›</span>
-        </button>
-        <button class="service-item" onclick="window.location.href='plaza.html'">
-          <span class="service-icon" style="background:#10aeff">游</span>
-          <span class="service-copy"><strong>本地华人广场</strong><span>看看附近服务与出行信息</span></span><span class="service-arrow">›</span>
-        </button>
-      </div>
-      <div class="home-trust">中文服务 · 费用由双方确认 · 隐私信息按需提供</div>
-    </section>`;
+  chatArea.innerHTML='';
+  addMsg(`<strong>你好，我是${agentName}</strong><br><span style="color:#666;">在${currentRegion.city||currentRegion.country}需要出行或华人服务，直接用普通话或文字告诉我。点击输入框后的＋可查看全部功能。</span>`);
   document.getElementById('chat-input').placeholder='输入你需要的帮助';
+  renderMoreMenu();
   refreshHomeRegionCopy();
 }
 
 function clearWelcomeHome(){
   document.querySelector('.home-welcome')?.remove();
+}
+
+const MORE_MENU={
+  home:[
+    {key:'ride',icon:'🚗',label:'用车',category:true},
+    {key:'travel',icon:'🧳',label:'旅游',category:true},
+    {key:'rental',icon:'🚙',label:'租车'},
+    {key:'camera',icon:'📷',label:'相机'},
+    {key:'image',icon:'🖼️',label:'图片'},
+    {key:'payment',icon:'💳',label:'支付'},
+    {key:'help',icon:'🤝',label:'华人帮',category:true},
+    {key:'friends',icon:'👥',label:'交友'},
+    {key:'market',icon:'🏪',label:'市场'},
+    {key:'driver',icon:'🧑‍✈️',label:'司机入驻',driver:true},
+  ],
+  ride:[
+    {key:'pickup',icon:'🛩️',label:'接机'},
+    {key:'dropoff',icon:'✈️',label:'送机'},
+    {key:'charter',icon:'🚐',label:'包车'},
+  ],
+  travel:[
+    {key:'tour-charter',icon:'🚐',label:'包车游'},
+    {key:'group-tour',icon:'👪',label:'拼团'},
+  ],
+  help:[
+    {key:'agency',icon:'🏠',label:'中介'},
+    {key:'translation',icon:'🗣️',label:'翻译'},
+    {key:'lawyer',icon:'⚖️',label:'律师'},
+    {key:'accountant',icon:'🧮',label:'会计'},
+    {key:'other-help',icon:'🧰',label:'其他帮办'},
+  ]
+};
+
+function renderMoreMenu(category='home'){
+  const grid=document.getElementById('more-grid');
+  const title=document.getElementById('more-title');
+  const back=document.getElementById('more-back');
+  if(!grid||!title||!back)return;
+  const titles={home:'全部功能',ride:'用车',travel:'旅游',help:'华人帮'};
+  title.textContent=titles[category]||'全部功能';
+  back.style.visibility=category==='home'?'hidden':'visible';
+  grid.innerHTML=(MORE_MENU[category]||MORE_MENU.home).map(item=>`
+    <button class="more-item${item.driver?' driver':''}" onclick="${item.category?`renderMoreMenu('${item.key}')`:`runMoreAction('${item.key}','${item.label}')`}">
+      <span class="more-item-icon">${item.icon}</span><span>${item.label}</span>
+    </button>`).join('');
+}
+
+function toggleMorePanel(){
+  const panel=document.getElementById('more-panel');
+  if(!panel)return;
+  const open=!panel.classList.contains('open');
+  if(open)renderMoreMenu();
+  panel.classList.toggle('open',open);
+  panel.setAttribute('aria-hidden',String(!open));
+  document.body.classList.toggle('more-open',open);
+  if(open)scrollBottom();
+}
+
+function closeMorePanel(){
+  const panel=document.getElementById('more-panel');
+  panel?.classList.remove('open');
+  panel?.setAttribute('aria-hidden','true');
+  document.body.classList.remove('more-open');
+}
+
+function runMoreAction(key,label){
+  closeMorePanel();
+  const serviceMap={pickup:'接机',dropoff:'送机',charter:'包车','tour-charter':'旅游包车','group-tour':'旅游拼团',rental:'租车',payment:'支付',friends:'交友',agency:'中介服务',translation:'翻译',lawyer:'律师',accountant:'会计','other-help':'华人帮办'};
+  if(key==='market'){window.location.href='plaza.html';return;}
+  if(key==='driver'){window.location.href='driver-app.html';return;}
+  if(key==='camera'){document.getElementById('camera-input')?.click();return;}
+  if(key==='image'){document.getElementById('image-input')?.click();return;}
+  beginQuickService(serviceMap[key]||label);
+}
+
+function handleMediaPick(input,label){
+  const file=input.files?.[0];
+  if(!file)return;
+  const url=URL.createObjectURL(file);
+  const msg=addMsg(`<img src="${url}" alt="${label}" style="display:block;max-width:220px;max-height:220px;border-radius:6px;object-fit:cover;"><div style="font-size:11px;color:#666;margin-top:5px;">${label}已选择</div>`,true);
+  msg.querySelector('img').onload=()=>URL.revokeObjectURL(url);
+  input.value='';
 }
 
 async function beginQuickService(service){
@@ -1750,9 +1858,6 @@ function buildPrompt(){
 【谐音纠错】
 宋集/松鸡→送机，阶级/姐急→接机，炮车→包车
 
-【方言】
-检测到粤语 → 用粤语回应
-
 【取消政策】
 乘客：24h+免费/12-24h收20%/12h内收50%/已出发全额
 司机：第1次警告/第2次扣20积分/第3次暂停
@@ -1808,6 +1913,8 @@ async function sendMessage(){ stopTTS();
   const input=document.getElementById('chat-input');
   const msg=input.value.trim();if(!msg)return;
   input.value='';
+  updateComposerAction();
+  closeMorePanel();
   addMsg(msg,true);
   if(msg && msg.trim()) aiHistory.push({role:'user',content:msg.trim()});
 
@@ -2548,12 +2655,10 @@ function deleteAddress(idx){
 
 // ── 底部导航 ──
 function showBottomNav(){
-  document.getElementById('main-bottom-nav').style.display='flex';
-  document.querySelector('.input-bar')?.classList.remove('no-nav');
+  document.querySelector('.input-bar')?.classList.add('no-nav');
 }
 
 function hideBottomNav(){
-  document.getElementById('main-bottom-nav').style.display='none';
   document.querySelector('.input-bar')?.classList.add('no-nav');
 }
 
@@ -2992,7 +3097,6 @@ function logoutUser(){
   localStorage.removeItem('au_addresses');
   localStorage.removeItem('au_profile');
   localStorage.removeItem('au_gender');
-  localStorage.removeItem('dialect_noticed');
   closeProfile();
   location.reload();
 }
