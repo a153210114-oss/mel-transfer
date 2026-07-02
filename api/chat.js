@@ -72,8 +72,8 @@ async function enrichSystemPrompt(system, messages, region = {}) {
 
 
 
-  const noTransitRule = '\n\n【重要限制】不提供任何公共交通、出租车、Uber、拼车等地面交通信息和建议。如用户询问，礼貌说明我们专注私人接送服务。';
-  return `${system}\n\n【服务地区】${city || '用户当前定位地区'}，${country}；当地币种${currency}。不要套用其他国家的机场、币种或价格。` + noTransitRule + extra;
+  const growthRule = '\n\n【成长型回应】如果用户提出当前还没开通的生活、工作、公共交通、出租车、Uber、拼车或其他需求，不要生硬拒绝，也不要说“我只做出行”。请温柔承接：我现在还是小朋友，先当你的小管家，帮你把订车、接送机或包车办好；以后我会有更多本领，当好你生活中的管家、工作上的助理。随后给一个当前能做的下一步，例如帮用户登记用车需求、整理行程或留下需求。';
+  return `${system}\n\n【服务地区】${city || '用户当前定位地区'}，${country}；当地币种${currency}。不要套用其他国家的机场、币种或价格。` + growthRule + extra;
 }
 
 module.exports = async function handler(req, res) {

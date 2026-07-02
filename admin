@@ -231,6 +231,72 @@ body {
 }
 .input:focus { border-color: var(--accent); }
 .input::placeholder { color: var(--text3); }
+.textarea {
+  width: 100%;
+  min-height: 120px;
+  resize: vertical;
+  line-height: 1.6;
+}
+.training-layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.9fr) minmax(420px, 1.1fr);
+  gap: 16px;
+}
+.training-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 620px;
+  overflow: auto;
+  padding: 14px;
+}
+.training-item {
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.02);
+  border-radius: 12px;
+  padding: 12px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.training-item:hover,
+.training-item.active {
+  border-color: var(--accent);
+  background: rgba(0,212,255,0.08);
+}
+.training-question {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+.training-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  font-size: 11px;
+  color: var(--text3);
+}
+.training-empty {
+  padding: 40px 18px;
+  text-align: center;
+  color: var(--text3);
+  font-size: 13px;
+  line-height: 1.7;
+}
+.coach-field { margin-bottom: 16px; }
+.coach-label {
+  font-size: 12px;
+  color: var(--text2);
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.coach-note {
+  font-size: 12px;
+  color: var(--text3);
+  line-height: 1.7;
+  margin-top: 8px;
+}
 
 /* Page sections */
 .section { display: none; }
@@ -248,7 +314,7 @@ body {
 /* Responsive tweaks */
 @media (max-width: 1100px) {
   .stats-grid { grid-template-columns: repeat(2,1fr); }
-  .two-col, .three-col { grid-template-columns: 1fr; }
+  .two-col, .three-col, .training-layout { grid-template-columns: 1fr; }
 }
 </style>
 </head>
@@ -287,6 +353,9 @@ body {
     </div>
     <div class="nav-item" onclick="showSection('dispatch')">
       <span class="nav-icon">📡</span> 实时调度
+    </div>
+    <div class="nav-item" onclick="showSection('ai-training')">
+      <span class="nav-icon">🎓</span> AI 训练营
     </div>
   </div>
 
@@ -612,6 +681,95 @@ body {
   </div>
 </div>
 
+<!-- ══ AI 训练营 ══ -->
+<div class="section" id="section-ai-training">
+  <div class="topbar">
+    <div>
+      <div class="page-title">AI 训练营</div>
+      <div class="page-sub">把 AI 没接住的问题交给教官修正</div>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn btn-ghost" onclick="loadAITraining()">↻ 刷新</button>
+      <button class="btn btn-primary" onclick="addManualTrainingItem()">+ 手动添加</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="label">待训练</div>
+        <div class="value" id="train-open" style="color:var(--gold)">-</div>
+        <div class="delta">需要教官给答案</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">已训练</div>
+        <div class="value" id="train-done" style="color:var(--green)">-</div>
+        <div class="delta">已沉淀标准回答</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">今日新增</div>
+        <div class="value" id="train-today" style="color:var(--accent)">-</div>
+        <div class="delta">来自用户真实问题</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">人设提醒</div>
+        <div class="value" style="color:var(--purple);font-size:24px;">小管家</div>
+        <div class="delta">先承接，再引导</div>
+      </div>
+    </div>
+
+    <div class="training-layout">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">待教问题</div>
+          <select class="input" id="training-filter" onchange="loadAITraining()" style="width:120px;">
+            <option value="open">待训练</option>
+            <option value="trained">已训练</option>
+            <option value="ignored">已忽略</option>
+            <option value="all">全部</option>
+          </select>
+        </div>
+        <div class="card-body" style="border-bottom:1px solid var(--border);">
+          <div class="coach-label">手动补充一个问题</div>
+          <div style="display:flex;gap:8px;">
+            <input class="input" id="manual-training-question" placeholder="例如：能不能帮我找律师？" style="flex:1;">
+            <button class="btn btn-ghost" onclick="addManualTrainingItem()">添加</button>
+          </div>
+        </div>
+        <div class="training-list" id="training-list">
+          <div class="training-empty">还没有待训练问题。</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">教官回答</div>
+          <span class="tag" id="training-selected-status">未选择</span>
+        </div>
+        <div class="card-body">
+          <div class="coach-field">
+            <div class="coach-label">用户原问题</div>
+            <div class="input" id="training-question-view" style="min-height:56px;line-height:1.6;color:var(--text2);">请选择左侧问题</div>
+          </div>
+          <div class="coach-field">
+            <div class="coach-label">更符合人设的回答</div>
+            <textarea class="input textarea" id="training-answer" placeholder="教 AI 应该怎么回答。比如：先温柔承接，再说明现在能帮用户叫车，最后自然告诉用户以后会有更多生活管家能力。"></textarea>
+          </div>
+          <div class="coach-field">
+            <div class="coach-label">人设提示</div>
+            <textarea class="input textarea" id="training-persona" style="min-height:90px;" placeholder="例如：不要冷冰冰拒绝；保持小朋友成长中的小管家口吻；不要说“我只做出行”。"></textarea>
+            <div class="coach-note">训练营会先保存这些教官答案，后面接入服务端后可以直接变成 AI 的长期训练样本。</div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn btn-primary" onclick="saveTrainingAnswer()">保存为已训练</button>
+            <button class="btn btn-ghost" onclick="copyTrainingAnswer()">复制回答</button>
+            <button class="btn btn-ghost" onclick="ignoreTrainingItem()">忽略</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ══ 收入统计 ══ -->
 <div class="section" id="section-finance">
   <div class="topbar">
@@ -710,6 +868,7 @@ function showSection(name) {
     passengers: loadPassengers,
     suppliers: loadSuppliers,
     dispatch: loadDispatch,
+    'ai-training': loadAITraining,
     finance: loadFinance
   };
   if (actions[name]) actions[name]();
@@ -746,6 +905,144 @@ function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, m => ({
     '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#039;'
   }[m]));
+}
+
+const AI_TRAINING_KEY = 'huaban_ai_training_queue';
+let selectedTrainingId = null;
+
+function readTrainingItems() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(AI_TRAINING_KEY) || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch(e) {
+    return [];
+  }
+}
+
+function writeTrainingItems(items) {
+  localStorage.setItem(AI_TRAINING_KEY, JSON.stringify(items));
+}
+
+function trainingBadge(status) {
+  const map = {
+    open: ['badge-pending', '待训练'],
+    trained: ['badge-completed', '已训练'],
+    ignored: ['badge-inactive', '已忽略']
+  };
+  const [cls, label] = map[status] || map.open;
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+
+function trainingSourceLabel(source) {
+  const map = {
+    'chat-error': '文字对话',
+    'voice-error': '语音对话',
+    'weak-reply': '回答偏弱',
+    'more-menu': '未开通入口',
+    manual: '手动添加'
+  };
+  return map[source] || '用户问题';
+}
+
+function loadAITraining() {
+  const items = readTrainingItems().sort((a,b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+  const today = new Date().toDateString();
+  document.getElementById('train-open').textContent = items.filter(i => (i.status || 'open') === 'open').length;
+  document.getElementById('train-done').textContent = items.filter(i => i.status === 'trained').length;
+  document.getElementById('train-today').textContent = items.filter(i => new Date(i.createdAt || 0).toDateString() === today).length;
+
+  const filter = document.getElementById('training-filter')?.value || 'open';
+  const visible = filter === 'all' ? items : items.filter(i => (i.status || 'open') === filter);
+  const list = document.getElementById('training-list');
+  if (!visible.length) {
+    list.innerHTML = '<div class="training-empty">这里暂时没有问题。前台遇到 AI 回答不了、服务异常或未开通能力时，会自动进入这里。</div>';
+    if (!items.some(i => i.id === selectedTrainingId)) selectTrainingItem(null);
+    return;
+  }
+  if (!visible.some(i => i.id === selectedTrainingId)) selectedTrainingId = visible[0].id;
+  list.innerHTML = visible.map(item => `
+    <div class="training-item ${item.id === selectedTrainingId ? 'active' : ''}" onclick="selectTrainingItem('${escapeHtml(item.id)}')">
+      <div class="training-question">${escapeHtml(item.question || '未命名问题')}</div>
+      <div class="training-meta">
+        ${trainingBadge(item.status || 'open')}
+        <span>${escapeHtml(trainingSourceLabel(item.source))}</span>
+        <span>${fmtDate(item.createdAt)}</span>
+      </div>
+    </div>
+  `).join('');
+  selectTrainingItem(selectedTrainingId, false);
+}
+
+function selectTrainingItem(id, rerender = true) {
+  selectedTrainingId = id;
+  const item = readTrainingItems().find(i => i.id === id);
+  document.getElementById('training-question-view').textContent = item?.question || '请选择左侧问题';
+  document.getElementById('training-answer').value = item?.coachAnswer || '';
+  document.getElementById('training-persona').value = item?.personaNote || '';
+  document.getElementById('training-selected-status').textContent = item ? ({open:'待训练',trained:'已训练',ignored:'已忽略'}[item.status || 'open'] || '待训练') : '未选择';
+  if (rerender) loadAITraining();
+}
+
+function addManualTrainingItem() {
+  const input = document.getElementById('manual-training-question');
+  const question = input?.value.trim();
+  if (!question) return;
+  const items = readTrainingItems();
+  const now = new Date().toISOString();
+  const item = {
+    id: 'manual-' + Date.now(),
+    question,
+    context: '教官手动添加',
+    source: 'manual',
+    status: 'open',
+    coachAnswer: '',
+    personaNote: '',
+    createdAt: now,
+    updatedAt: now
+  };
+  items.unshift(item);
+  writeTrainingItems(items);
+  if (input) input.value = '';
+  selectedTrainingId = item.id;
+  document.getElementById('training-filter').value = 'open';
+  loadAITraining();
+}
+
+function saveTrainingAnswer() {
+  if (!selectedTrainingId) return;
+  const items = readTrainingItems();
+  const item = items.find(i => i.id === selectedTrainingId);
+  if (!item) return;
+  item.coachAnswer = document.getElementById('training-answer').value.trim();
+  item.personaNote = document.getElementById('training-persona').value.trim();
+  item.status = 'trained';
+  item.updatedAt = new Date().toISOString();
+  writeTrainingItems(items);
+  document.getElementById('training-filter').value = 'open';
+  loadAITraining();
+}
+
+function ignoreTrainingItem() {
+  if (!selectedTrainingId) return;
+  const items = readTrainingItems();
+  const item = items.find(i => i.id === selectedTrainingId);
+  if (!item) return;
+  item.status = 'ignored';
+  item.updatedAt = new Date().toISOString();
+  writeTrainingItems(items);
+  selectedTrainingId = null;
+  loadAITraining();
+}
+
+async function copyTrainingAnswer() {
+  const text = document.getElementById('training-answer').value.trim();
+  if (!text) return;
+  try {
+    await navigator.clipboard.writeText(text);
+    document.getElementById('training-selected-status').textContent = '已复制';
+  } catch(e) {
+    document.getElementById('training-selected-status').textContent = '复制失败';
+  }
 }
 
 // ── Dashboard ──

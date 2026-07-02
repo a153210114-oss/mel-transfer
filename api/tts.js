@@ -5,7 +5,6 @@ const DEFAULT_VOICE = 'FunAudioLLM/CosyVoice2-0.5B:diana';
 
 const ALLOWED_VOICES = new Set([
   'FunAudioLLM/CosyVoice2-0.5B:diana',
-  'FunAudioLLM/CosyVoice2-0.5B:charles',
 ]);
 
 module.exports = async function handler(req, res) {
@@ -21,6 +20,7 @@ module.exports = async function handler(req, res) {
     const {
       text,
       voice = DEFAULT_VOICE,
+      speed = 1.0,
     } = req.body || {};
 
     if (typeof text !== 'string') {
@@ -41,6 +41,8 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'Unsupported voice' });
     }
 
+    const safeSpeed = Math.min(1.2, Math.max(0.85, Number(speed) || 1.0));
+
     const response = await fetch('https://api.siliconflow.cn/v1/audio/speech', {
       method: 'POST',
       headers: {
@@ -52,7 +54,7 @@ module.exports = async function handler(req, res) {
         input: clean,
         voice,
         response_format: 'mp3',
-        speed: 1.0,
+        speed: safeSpeed,
       }),
     });
 
