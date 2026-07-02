@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>澳洲出行 AI 管家</title>
+<title>华伴 AI 伙伴</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -596,7 +596,7 @@ let assistantRecognition = null;
 function buildAssistantPrompt() {
   const d = currentDriver || {};
   const today = new Date().toLocaleDateString('zh-CN');
-  return `你是澳洲出行平台的司机助理，服务对象是司机${d.full_name||''}老板。
+  return `你是华伴平台的司机助理，服务对象是司机${d.full_name||''}老板。
 称呼司机为"老板"，简洁直接，不废话。
 
 你能做的事：
@@ -1478,9 +1478,9 @@ function handleGlobalVoiceCommand(text) {
 
 <div class="page" id="page-home">
 
-  <!-- 澳小墨头部 -->
+  <!-- 华伴小墨头部 -->
   <div style="background:linear-gradient(135deg,#0d1f3c,#0a1628);padding:14px 16px;">
-    <!-- 第一行：澳小墨 + 助理按钮 -->
+    <!-- 第一行：华伴小墨 + 助理按钮 -->
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
       <div style="width:40px;height:40px;background:rgba(0,212,255,0.1);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;border:1.5px solid rgba(0,212,255,0.2);">🧑‍✈️</div>
       <div style="flex:1;">
@@ -1617,11 +1617,11 @@ function handleGlobalVoiceCommand(text) {
     <div class="topbar-sub" id="assistant-status">随时待命</div>
   </div>
 
-  <!-- 澳小墨卡片 -->
+  <!-- 华伴小墨卡片 -->
   <div style="margin:14px 16px;background:linear-gradient(135deg,rgba(0,212,255,0.1),rgba(0,150,199,0.05));border:1.5px solid rgba(0,212,255,0.25);border-radius:18px;padding:16px;display:flex;align-items:center;gap:14px;">
     <div style="width:52px;height:52px;background:rgba(0,212,255,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;border:2px solid rgba(0,212,255,0.3);flex-shrink:0;">🧑‍✈️</div>
     <div style="flex:1;">
-      <div style="color:var(--text);font-weight:800;font-size:16px;">澳小墨</div>
+      <div style="color:var(--text);font-weight:800;font-size:16px;">华伴小墨</div>
       <div style="color:var(--text2);font-size:12px;margin-top:2px;">语音/文字都可以，我来帮你搞定</div>
     </div>
     <button onclick="toggleAssistantMic()" id="assist-mic-btn" style="background:rgba(0,212,255,0.15);border:1.5px solid rgba(0,212,255,0.4);color:#00d4ff;border-radius:50%;width:44px;height:44px;font-size:20px;cursor:pointer;flex-shrink:0;">🎤</button>
@@ -1715,7 +1715,7 @@ function handleGlobalVoiceCommand(text) {
     <div style="font-size:11px;font-weight:800;color:var(--text2);letter-spacing:1px;margin:4px 0 6px;">📣 平台公告</div>
     <div style="background:var(--surface);border-radius:14px;padding:14px 16px;border:1px solid var(--border);">
       <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-        <div style="font-size:13px;font-weight:800;color:var(--text);">欢迎加入澳洲出行</div>
+        <div style="font-size:13px;font-weight:800;color:var(--text);">欢迎加入华伴</div>
         <div style="font-size:11px;color:var(--text3);">今天</div>
       </div>
       <div style="font-size:12px;color:var(--text2);line-height:1.7;">感谢您成为合伙人！我们帮您经营人脉、管理客户，让您赚更多钱，省出更多时间陪伴家人。</div>
@@ -1734,15 +1734,15 @@ function handleGlobalVoiceCommand(text) {
 <div class="page" id="page-announce" style="display:none!important;">
   <div class="topbar" style="display:flex;align-items:center;gap:12px;padding:14px 16px;">
     <div style="width:40px;height:40px;background:rgba(0,212,255,0.1);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🧑‍✈️</div>
-    <div><div style="font-size:15px;font-weight:800;color:var(--text);">澳小墨</div><div style="font-size:11px;color:var(--text2);">平台公告</div></div>
+    <div><div style="font-size:15px;font-weight:800;color:var(--text);">华伴小墨</div><div style="font-size:11px;color:var(--text2);">平台公告</div></div>
   </div>
   <div style="padding:16px;">
     <div style="background:var(--surface);border-radius:16px;padding:16px;margin-bottom:12px;border:1px solid var(--border);">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-        <div style="font-size:14px;font-weight:800;color:var(--text);">📣 欢迎加入澳洲出行</div>
+        <div style="font-size:14px;font-weight:800;color:var(--text);">📣 欢迎加入华伴</div>
         <div style="font-size:11px;color:var(--text3);">今天</div>
       </div>
-      <div style="font-size:13px;color:var(--text2);line-height:1.7;">感谢您成为澳洲出行合伙人！我们致力于帮助华人司机经营人脉、管理客户，让您赚更多钱，省出更多时间陪伴家人。</div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.7;">感谢您成为华伴合伙人！我们致力于帮助华人司机经营人脉、管理客户，让您赚更多钱，省出更多时间陪伴家人。</div>
     </div>
     <div style="background:var(--surface);border-radius:16px;padding:16px;border:1px solid var(--border);">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
@@ -1758,7 +1758,7 @@ function handleGlobalVoiceCommand(text) {
 <div class="page" id="page-notify">
   <div class="topbar" style="display:flex;align-items:center;gap:12px;padding:14px 16px;">
     <div style="width:40px;height:40px;background:rgba(0,212,255,0.1);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🧑‍✈️</div>
-    <div><div style="font-size:15px;font-weight:800;color:var(--text);">澳小墨</div><div style="font-size:11px;color:var(--text2);">我的通知</div></div>
+    <div><div style="font-size:15px;font-weight:800;color:var(--text);">华伴小墨</div><div style="font-size:11px;color:var(--text2);">我的通知</div></div>
   </div>
   <div id="notify-list" style="padding:16px;display:flex;flex-direction:column;gap:10px;">
     <div style="text-align:center;color:var(--text3);font-size:13px;padding:30px 0;">暂无新通知</div>
@@ -2166,7 +2166,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 // ── 澳洲城市自动识别 ──
 const CITY_AGENTS = {
-  melbourne:  { name: '澳小墨', city: '墨尔本', emoji: '🧑‍✈️' },
+  melbourne:  { name: '华伴小墨', city: '墨尔本', emoji: '🧑‍✈️' },
   sydney:     { name: '澳小悉', city: '悉尼',   emoji: '🧑‍✈️' },
   brisbane:   { name: '澳小布', city: '布里斯班', emoji: '🧑‍✈️' },
   canberra:   { name: '澳小堪', city: '堪培拉', emoji: '🧑‍✈️' },
@@ -2905,7 +2905,7 @@ async function generatePoster() {
 
 // 备用：Canvas手绘海报
 async function generatePosterFallback() {
-  const agentName = window.currentAgent?.name || '澳小墨';
+  const agentName = window.currentAgent?.name || '华伴小墨';
   const agentCity = window.currentAgent?.city || '澳洲';
 
   const canvas = document.createElement('canvas');
@@ -2991,7 +2991,7 @@ async function generatePosterFallback() {
   ctx.fillText('手机：13732299999', 375, 958);
 
   ctx.font='13px sans-serif'; ctx.fillStyle='rgba(255,255,255,0.2)';
-  ctx.fillText('mel-transfer.vercel.app', 375, 1000);
+  ctx.fillText('huabanapp.com', 375, 1000);
 
   ctx.font='bold 17px sans-serif'; ctx.fillStyle='rgba(200,134,10,0.55)';
   ctx.fillText('华人服务华人，安心出行每一程', 375, 1050);

@@ -1,0 +1,137 @@
+{
+  "name": "HB_02_user_recruit_agent",
+  "nodes": [
+    {
+      "id": "webhook-user",
+      "name": "User Recruit Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "parameters": {
+        "path": "huaban/user-recruit",
+        "httpMethod": "POST",
+        "responseMode": "responseNode"
+      }
+    },
+    {
+      "id": "normalize-user",
+      "name": "Normalize User Lead",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [260, 0],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const body = $json.body || $json;\nreturn [{ json: {\n  lead_type: 'user',\n  channel: body.channel || 'unknown',\n  user_id: body.user_id || '',\n  message: body.message || '',\n  city: body.city || '',\n  country: body.country || '',\n  contact: body.contact || '',\n  created_at: new Date().toISOString()\n}}];"
+      }
+    },
+    {
+      "id": "ai-user",
+      "name": "AI User Recruiter",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [520, 0],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-api-key", "value": "={{ $env.ANTHROPIC_API_KEY }}" },
+            { "name": "anthropic-version", "value": "2023-06-01" },
+            { "name": "content-type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "model": "claude-haiku-4-5-20251001",
+          "max_tokens": 700,
+          "system": "你是华伴AI用户招募客服。华伴口号：从旅行开始，共同成长；没有中间商赚差价，只让需要的人遇见可靠的人。目标：让用户说出一个真实需求，优先引导接机、送机、包车；其他功能说即将推出并记录需求。不要隐藏注册，不未经同意保存联系方式，不承诺服务一定可用。回复必须是JSON：{\"reply\":\"给用户的话\",\"stage\":\"U1|U2|U3|U4\",\"need_type\":\"ride|travel|local_help|other\",\"next_action\":\"chat|collect_contact|coming_soon|human_followup\",\"fields\":{...}}",
+          "messages": [
+            {
+              "role": "user",
+              "content": "={{ `渠道：${$json.channel}\\n城市：${$json.city}\\n国家：${$json.country}\\n联系方式：${$json.contact}\\n用户消息：${$json.message}` }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "parse-user-ai",
+      "name": "Parse AI JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [780, 0],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const text = $json.content?.[0]?.text || '{}';\nlet ai;\ntry { ai = JSON.parse(text); } catch(e) { ai = { reply: text, stage: 'U1', need_type: 'other', next_action: 'chat', fields: {} }; }\nreturn [{ json: { ...$input.item.json, ai_reply: ai.reply, stage: ai.stage, need_type: ai.need_type, next_action: ai.next_action, fields: ai.fields || {} } }];"
+      }
+    },
+    {
+      "id": "save-user",
+      "name": "Save User Lead",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1040, 0],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ `${$env.SUPABASE_URL}/rest/v1/recruitment_leads` }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_ANON_KEY }}" },
+            { "name": "Authorization", "value": "={{ `Bearer ${$env.SUPABASE_ANON_KEY}` }}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=representation" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "lead_type": "user",
+          "channel": "={{ $json.channel }}",
+          "contact": "={{ $json.contact }}",
+          "city": "={{ $json.city }}",
+          "country": "={{ $json.country }}",
+          "message": "={{ $json.message }}",
+          "stage": "={{ $json.stage }}",
+          "need_type": "={{ $json.need_type }}",
+          "next_action": "={{ $json.next_action }}",
+          "ai_reply": "={{ $json.ai_reply }}",
+          "fields": "={{ $json.fields }}",
+          "created_at": "={{ $json.created_at }}"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "id": "respond-user",
+      "name": "Respond to User Lead",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1300, 0],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { reply: $json.ai_reply, lead_type: 'user', stage: $json.stage, need_type: $json.need_type, next_action: $json.next_action, fields: $json.fields } }}"
+      }
+    }
+  ],
+  "connections": {
+    "User Recruit Webhook": {
+      "main": [[{ "node": "Normalize User Lead", "type": "main", "index": 0 }]]
+    },
+    "Normalize User Lead": {
+      "main": [[{ "node": "AI User Recruiter", "type": "main", "index": 0 }]]
+    },
+    "AI User Recruiter": {
+      "main": [[{ "node": "Parse AI JSON", "type": "main", "index": 0 }]]
+    },
+    "Parse AI JSON": {
+      "main": [[{ "node": "Save User Lead", "type": "main", "index": 0 }]]
+    },
+    "Save User Lead": {
+      "main": [[{ "node": "Respond to User Lead", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" }
+}

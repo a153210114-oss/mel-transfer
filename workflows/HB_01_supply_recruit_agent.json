@@ -1,0 +1,138 @@
+{
+  "name": "HB_01_supply_recruit_agent",
+  "nodes": [
+    {
+      "id": "webhook-supply",
+      "name": "Supply Recruit Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "parameters": {
+        "path": "huaban/supply-recruit",
+        "httpMethod": "POST",
+        "responseMode": "responseNode"
+      }
+    },
+    {
+      "id": "normalize-supply",
+      "name": "Normalize Lead",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [260, 0],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const body = $json.body || $json;\nreturn [{ json: {\n  lead_type: 'supply',\n  channel: body.channel || 'unknown',\n  message: body.message || '',\n  name: body.name || '',\n  contact: body.contact || '',\n  city: body.city || '',\n  country: body.country || '',\n  created_at: new Date().toISOString()\n}}];"
+      }
+    },
+    {
+      "id": "ai-supply",
+      "name": "AI Supply Recruiter",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [520, 0],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-api-key", "value": "={{ $env.ANTHROPIC_API_KEY }}" },
+            { "name": "anthropic-version", "value": "2023-06-01" },
+            { "name": "content-type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "model": "claude-haiku-4-5-20251001",
+          "max_tokens": 700,
+          "system": "你是华伴服务者招募客服。华伴是全球华人AI伙伴和供需互助平台。对外口径：不抽佣，不赚差价，只让需要的人遇见可靠的人。你的目标是温和地判断对方是否适合成为海外华人服务者，收集城市、国家、服务类型、经验、联系方式、资质、可服务时间。不要承诺固定收入，不谈投资或股权，不公开内部比例。回复必须是JSON：{\"reply\":\"给用户的话\",\"score\":\"A|B|C\",\"next_action\":\"collect_more|human_followup|reject\",\"fields\":{...}}",
+          "messages": [
+            {
+              "role": "user",
+              "content": "={{ `渠道：${$json.channel}\\n城市：${$json.city}\\n国家：${$json.country}\\n姓名：${$json.name}\\n联系方式：${$json.contact}\\n用户消息：${$json.message}` }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "parse-supply-ai",
+      "name": "Parse AI JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [780, 0],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const text = $json.content?.[0]?.text || '{}';\nlet ai;\ntry { ai = JSON.parse(text); } catch(e) { ai = { reply: text, score: 'B', next_action: 'collect_more', fields: {} }; }\nreturn [{ json: { ...$input.item.json, ai_reply: ai.reply, score: ai.score, next_action: ai.next_action, fields: ai.fields || {} } }];"
+      }
+    },
+    {
+      "id": "save-supply",
+      "name": "Save Supply Lead",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1040, 0],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ `${$env.SUPABASE_URL}/rest/v1/recruitment_leads` }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_ANON_KEY }}" },
+            { "name": "Authorization", "value": "={{ `Bearer ${$env.SUPABASE_ANON_KEY}` }}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=representation" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "lead_type": "supply",
+          "channel": "={{ $json.channel }}",
+          "name": "={{ $json.name }}",
+          "contact": "={{ $json.contact }}",
+          "city": "={{ $json.city }}",
+          "country": "={{ $json.country }}",
+          "message": "={{ $json.message }}",
+          "score": "={{ $json.score }}",
+          "next_action": "={{ $json.next_action }}",
+          "ai_reply": "={{ $json.ai_reply }}",
+          "fields": "={{ $json.fields }}",
+          "created_at": "={{ $json.created_at }}"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "id": "respond-supply",
+      "name": "Respond to Supply Lead",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1300, 0],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { reply: $json.ai_reply, lead_type: 'supply', score: $json.score, next_action: $json.next_action, fields: $json.fields } }}"
+      }
+    }
+  ],
+  "connections": {
+    "Supply Recruit Webhook": {
+      "main": [[{ "node": "Normalize Lead", "type": "main", "index": 0 }]]
+    },
+    "Normalize Lead": {
+      "main": [[{ "node": "AI Supply Recruiter", "type": "main", "index": 0 }]]
+    },
+    "AI Supply Recruiter": {
+      "main": [[{ "node": "Parse AI JSON", "type": "main", "index": 0 }]]
+    },
+    "Parse AI JSON": {
+      "main": [[{ "node": "Save Supply Lead", "type": "main", "index": 0 }]]
+    },
+    "Save Supply Lead": {
+      "main": [[{ "node": "Respond to Supply Lead", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" }
+}
+

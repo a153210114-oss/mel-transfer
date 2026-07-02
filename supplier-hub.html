@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>华伴供给中心</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:linear-gradient(180deg,#08192d,#06111f);color:#fff;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
+.wrap{max-width:520px;margin:0 auto;padding:22px 18px 40px}
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.brand{display:flex;align-items:center;gap:10px}
+.logo{width:38px;height:38px;border-radius:14px;background:linear-gradient(135deg,#00c896,#0096c7);display:flex;align-items:center;justify-content:center;font-size:22px}
+.brand-title{font-size:18px;font-weight:900}
+.brand-sub{font-size:11px;color:rgba(255,255,255,.45);margin-top:2px}
+.back{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:rgba(255,255,255,.75);border-radius:12px;padding:9px 12px;font-size:13px;text-decoration:none}
+.hero{border:1px solid rgba(0,200,150,.28);background:linear-gradient(135deg,rgba(0,200,150,.13),rgba(0,150,199,.08));border-radius:22px;padding:20px;margin-bottom:16px}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:rgba(0,200,150,.14);color:#6fffd2;font-size:12px;font-weight:800;margin-bottom:12px}
+h1{font-size:24px;line-height:1.25;margin:0 0 10px}
+p{margin:0;color:rgba(255,255,255,.62);font-size:14px;line-height:1.75}
+.grid{display:grid;gap:12px;margin-top:16px}
+.card{border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.055);border-radius:18px;padding:16px}
+.card-title{font-size:15px;font-weight:900;margin-bottom:6px}
+.card-desc{font-size:12px;color:rgba(255,255,255,.5);line-height:1.65}
+.btn{width:100%;margin-top:12px;border:none;border-radius:13px;padding:13px;color:#fff;background:linear-gradient(135deg,#00b889,#008fbd);font-size:14px;font-weight:900;font-family:inherit}
+.ghost{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1)}
+.locked{border-color:rgba(245,166,35,.22);background:rgba(245,166,35,.08)}
+.locked .badge{background:rgba(245,166,35,.12);color:#ffd27a}
+.note{margin-top:16px;border-radius:16px;padding:14px;background:rgba(255,255,255,.04);font-size:12px;color:rgba(255,255,255,.45);line-height:1.7}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="brand">
+      <div class="logo">伴</div>
+      <div>
+        <div class="brand-title">华伴供给中心</div>
+        <div class="brand-sub">从旅行开始，共同成长</div>
+      </div>
+    </div>
+    <a class="back" href="index.html">返回</a>
+  </div>
+
+  <div id="hub-root"></div>
+</div>
+
+<script>
+const SUPPLIER_TYPES=[
+  '出行用车：接送机 / 包车 / 商务车',
+  '旅游服务：包车游 / 拼团 / 向导',
+  '租车服务：车辆出租 / 长短租',
+  '本地帮办：接待 / 跑腿 / 陪同',
+  '专业服务：翻译 / 律师 / 会计',
+  '中介服务：房产 / 留学 / 移民 / 招聘',
+  '商品/市场：本地商品 / 二手交易',
+  '交友/社群：活动 / 兴趣小组',
+  '其他可靠服务'
+];
+
+function getSupplierApplication(){
+  try{return JSON.parse(localStorage.getItem('huaban_supplier_application')||'{}');}
+  catch(e){return {};}
+}
+
+function showComingSoon(kind){
+  const selected=prompt(`请选择${kind||'发布'}类型：\n\n${SUPPLIER_TYPES.map((t,i)=>`${i+1}. ${t}`).join('\n')}\n\n请输入序号`, '1');
+  const idx=parseInt(selected,10)-1;
+  const label=SUPPLIER_TYPES[idx]||SUPPLIER_TYPES[0];
+  alert(`${label}\n\n即将推出，敬请期待。审核通过的服务者会优先开放内测。`);
+}
+
+function renderHub(){
+  const app=getSupplierApplication();
+  const root=document.getElementById('hub-root');
+  if(app.status!=='approved'){
+    root.innerHTML=`
+      <section class="hero locked">
+        <div class="badge">⏳ 等待人工审核</div>
+        <h1>审核通过后，才能发布商品和服务</h1>
+        <p>为了让用户遇见可靠的人，华伴供给侧采用人工审核。请回到个人中心提交或查看申请状态。</p>
+        <button class="btn" onclick="location.href='index.html'">回到个人中心</button>
+      </section>
+      <div class="note">你仍然可以作为普通用户使用华伴。供给侧身份通过后，会在个人中心显示“进入供给中心”。</div>`;
+    return;
+  }
+  root.innerHTML=`
+    <section class="hero">
+      <div class="badge">✅ 服务者身份已通过</div>
+      <h1>欢迎进入华伴供给中心</h1>
+      <p>你可以在这里准备自己的本地服务与商品。首批功能会从服务资料、商品/服务发布、订单线索跟进逐步开放。</p>
+    </section>
+    <div class="grid">
+      <div class="card">
+        <div class="card-title">发布服务</div>
+        <div class="card-desc">接送机、包车、旅游、翻译、律师、会计、租车、本地帮办等服务。</div>
+        <button class="btn" onclick="showComingSoon('服务')">选择类型</button>
+      </div>
+      <div class="card">
+        <div class="card-title">发布商品</div>
+        <div class="card-desc">适合本地华人圈的可靠商品、二手市场、城市生活供给。</div>
+        <button class="btn" onclick="showComingSoon('商品')">选择类型</button>
+      </div>
+      <div class="card">
+        <div class="card-title">我的服务者资料</div>
+        <div class="card-desc">完善城市、服务范围、资质证明和可联系时间，提升用户信任。</div>
+        <button class="btn ghost" onclick="showComingSoon()">完善资料</button>
+      </div>
+    </div>
+    <div class="note">平台原则：没有中间商赚差价，只让需要的人遇见可靠的人。正式交易由用户与服务者达成共识合约。供应商应保证资质、商品与服务信息真实有效，并自行承担履约、质量、安全和合法合规责任；华伴主要提供信息连接、AI工具、信用记录和公开资质核验辅助。</div>`;
+}
+
+renderHub();
+</script>
+</body>
+</html>

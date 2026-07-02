@@ -4,7 +4,7 @@ const Anthropic = require('@anthropic-ai/sdk');
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 // 天气查询（wttr.in，无需API key）
-async function getWeather(city = 'Melbourne') {
+async function getWeather(city) {
   try {
     const res = await fetch(`https://wttr.in/${encodeURIComponent(city)}?format=j1`);
     const data = await res.json();
@@ -41,19 +41,21 @@ function getFlightLink(flightNumber) {
 async function enrichSystemPrompt(system, messages, region = {}) {
   const lastMsg = messages[messages.length - 1]?.content || '';
   let extra = '';
-  const city = typeof region.city === 'string' ? region.city.trim().slice(0, 80) : 'Melbourne';
-  const country = typeof region.country === 'string' ? region.country.trim().slice(0, 80) : '澳大利亚';
-  const currency = typeof region.currency === 'string' ? region.currency.trim().slice(0, 8) : 'AUD';
+  const city = typeof region.city === 'string' ? region.city.trim().slice(0, 80) : '';
+  const country = typeof region.country === 'string' ? region.country.trim().slice(0, 80) : '当前国家/地区';
+  const currency = typeof region.currency === 'string' ? region.currency.trim().slice(0, 8) : '当地货币';
 
   // 检测是否需要天气
   if (/天气|下雨|温度|几度|冷不冷|热不热|带伞|穿什么|weather/i.test(lastMsg)) {
-    const w = await getWeather(city || 'Melbourne');
+    const w = city ? await getWeather(city) : null;
     if (w) {
       extra += `\n\n【实时${city}天气】
 当前：${w.temp}°C（体感${w.feels_like}°C），${w.desc}
 湿度：${w.humidity}%，风速：${w.wind}km/h，UV指数：${w.uv}
 明日：${w.tomorrow.minTemp}°C ~ ${w.tomorrow.maxTemp}°C，${w.tomorrow.desc}
 请根据天气给出实用建议（如是否带伞、穿衣建议、出行注意等）。`;
+    } else if (!city) {
+      extra += '\n\n【天气查询】用户询问天气，但当前地区未知。请先请用户选择或授权定位城市。';
     }
   }
 
@@ -71,7 +73,7 @@ async function enrichSystemPrompt(system, messages, region = {}) {
 
 
   const noTransitRule = '\n\n【重要限制】不提供任何公共交通、出租车、Uber、拼车等地面交通信息和建议。如用户询问，礼貌说明我们专注私人接送服务。';
-  return `${system}\n\n【服务地区】${city}，${country}；当地币种${currency}。不要套用其他国家的机场、币种或价格。` + noTransitRule + extra;
+  return `${system}\n\n【服务地区】${city || '用户当前定位地区'}，${country}；当地币种${currency}。不要套用其他国家的机场、币种或价格。` + noTransitRule + extra;
 }
 
 module.exports = async function handler(req, res) {

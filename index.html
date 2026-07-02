@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>华人出行 AI 管家</title>
+<title>华伴 AI 伙伴</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -311,6 +311,30 @@ body{background:var(--wx-bg);color:var(--wx-text);}
 .region-btn{max-width:132px;border:0;background:transparent;color:#555;font-family:inherit;font-size:12px;display:flex;align-items:center;gap:3px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .region-btn span{overflow:hidden;text-overflow:ellipsis;}.region-dot{width:6px;height:6px;border-radius:50%;background:var(--wx-green);flex-shrink:0;}
 
+/* AI 旅行伙伴养成卡 */
+.companion-card{margin:0 0 2px 44px;border-radius:14px;overflow:hidden;background:linear-gradient(145deg,#dff7ff 0%,#fff7d9 100%);border:1px solid rgba(80,130,150,.18);box-shadow:0 4px 14px rgba(35,85,100,.08);}
+.companion-room{position:relative;min-height:142px;padding:16px 16px 13px;overflow:hidden;}
+.companion-room::before{content:'';position:absolute;width:94px;height:94px;border-radius:50%;right:-18px;top:-30px;background:rgba(255,255,255,.55);}
+.companion-room::after{content:'';position:absolute;left:0;right:0;bottom:0;height:35px;background:rgba(102,190,139,.16);border-radius:50% 50% 0 0/35% 35% 0 0;}
+.companion-head,.companion-stage,.companion-stats{position:relative;z-index:1;}
+.companion-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
+.companion-name{font-size:15px;font-weight:700;color:#23424b;}
+.companion-sub{font-size:11px;color:#6b8187;margin-top:2px;}
+.companion-checkin{border:0;border-radius:14px;background:#fff;color:#576b95;font:500 12px/1 inherit;padding:7px 10px;box-shadow:0 1px 4px rgba(0,0,0,.08);cursor:pointer;}
+.companion-checkin.done{color:#8a8a8a;background:rgba(255,255,255,.65);}
+.companion-stage{height:66px;display:flex;align-items:center;justify-content:center;}
+.companion-avatar{border:0;background:none;font-size:50px;line-height:1;cursor:pointer;filter:drop-shadow(0 5px 3px rgba(45,75,75,.14));transform-origin:50% 100%;}
+.companion-avatar.play{animation:companionHop .55s ease;}
+@keyframes companionHop{0%,100%{transform:translateY(0) rotate(0)}35%{transform:translateY(-12px) rotate(-7deg)}70%{transform:translateY(-3px) rotate(7deg)}}
+.companion-speech{position:absolute;right:4px;top:13px;max-width:105px;padding:6px 8px;border-radius:10px 10px 10px 2px;background:rgba(255,255,255,.88);color:#577077;font-size:10px;line-height:1.35;opacity:0;transform:translateY(4px);transition:.2s;pointer-events:none;}
+.companion-speech.show{opacity:1;transform:translateY(0);}
+.companion-stats{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;font-size:11px;color:#526b72;}
+.companion-level{font-weight:700;color:#3b626d;}
+.companion-progress{height:6px;border-radius:6px;background:rgba(255,255,255,.7);overflow:hidden;}
+.companion-progress i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#07c160,#64d88f);transition:width .35s ease;}
+.companion-badges{display:flex;gap:5px;padding:9px 12px;background:rgba(255,255,255,.72);border-top:1px solid rgba(80,130,150,.12);overflow-x:auto;}
+.companion-badge{white-space:nowrap;border-radius:12px;padding:4px 8px;background:#fff;color:#60777d;font-size:10px;border:1px solid rgba(80,130,150,.13);}
+
 /* 微信式三模式输入栏 */
 .composer-tool{width:40px;height:40px;border:0;background:transparent;color:#262626;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;padding:0;}
 .wave-icon{width:25px;height:24px;display:flex;align-items:center;justify-content:center;gap:3px;}
@@ -319,9 +343,7 @@ body{background:var(--wx-bg);color:var(--wx-text);}
 .mic-btn.recording .wave-icon i{background:var(--wx-green);animation:wavePulse .8s ease-in-out infinite alternate;}
 .mic-btn.recording .wave-icon i:nth-child(2),.mic-btn.recording .wave-icon i:nth-child(4){animation-delay:.12s}.mic-btn.recording .wave-icon i:nth-child(3){animation-delay:.24s}
 @keyframes wavePulse{to{transform:scaleY(.45)}}
-.oy-mic-icon{width:25px;height:30px;position:relative;display:block;}
-.oy-mic-icon::before{content:'0';position:absolute;top:-3px;left:5px;font:700 21px/21px 'DM Mono',monospace;transform:scaleX(.72);}
-.oy-mic-icon::after{content:'Y';position:absolute;top:13px;left:6px;font:700 17px/17px 'DM Mono',monospace;}
+.voice-mic-icon{width:25px;height:25px;display:block;fill:none;stroke:currentColor;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round;}
 .keyboard-icon{font-size:24px;line-height:1;}
 .hold-talk{display:none;flex:1;height:42px;border:1px solid #ddd;border-radius:5px;background:#fff;color:#333;font-size:15px;font-weight:500;font-family:inherit;user-select:none;-webkit-user-select:none;touch-action:none;}
 .hold-talk.active{background:#d9d9d9;}
@@ -348,13 +370,13 @@ body.more-open .chat-area{padding-bottom:390px;}
 <!-- 入场动画 -->
 <div id="splash">
   <div style="font-size:72px;animation:splashBounce 0.8s ease-out forwards;">👩‍✈️</div>
-  <div style="font-size:20px;font-weight:900;color:white;">华人出行 AI 管家</div>
+  <div style="font-size:20px;font-weight:900;color:white;">华伴 AI 伙伴</div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);">小本为您服务</div>
 </div>
 
 <!-- 顶部栏 -->
 <div class="top-bar">
-  <div class="top-logo">华人出行</div>
+  <div class="top-logo">华伴</div>
   <div id="voice-indicator" style="display:none;font-size:11px;color:rgba(255,59,48,0.9);animation:mp 0.8s ease-in-out infinite;">🔴 录音中</div>
   <button class="region-btn" id="region-btn" onclick="changeRegion()" aria-label="切换地区" title="切换地区"><i class="region-dot"></i><span id="region-label">正在定位</span>⌄</button>
   <button id="share-btn" onclick="shareRefLink()" aria-label="分享" title="分享" style="background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;">＋</button>
@@ -370,7 +392,14 @@ body.more-open .chat-area{padding-bottom:390px;}
   <button class="mic-btn composer-tool" id="mic-btn" onclick="toggleMic()" aria-label="连续语音对话" title="连续语音对话">
     <span class="wave-icon" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
   </button>
-  <button class="composer-tool" id="input-mode-btn" onclick="toggleInputMode()" aria-label="切换到语音输入" title="切换输入方式"><span class="oy-mic-icon" aria-hidden="true"></span></button>
+  <button class="composer-tool" id="input-mode-btn" onclick="toggleInputMode()" aria-label="切换到语音输入" title="切换输入方式">
+    <svg class="voice-mic-icon" aria-hidden="true" viewBox="0 0 24 24">
+      <rect x="9" y="3" width="6" height="11" rx="3"></rect>
+      <path d="M6.5 11.5a5.5 5.5 0 0 0 11 0"></path>
+      <path d="M12 17v4"></path>
+      <path d="M9 21h6"></path>
+    </svg>
+  </button>
   <input class="chat-input" id="chat-input" placeholder="输入你需要的帮助" oninput="updateComposerAction()" onkeydown="if(event.key==='Enter'){sendMessage();updateComposerAction();}">
   <button class="hold-talk" id="hold-talk" onpointerdown="startPushToTalk(event)" onpointerup="stopPushToTalk(event)" onpointercancel="stopPushToTalk(event)" onpointerleave="stopPushToTalk(event)">按住说话</button>
   <button class="send-btn" id="composer-action" onclick="handleComposerAction()" aria-label="展开全部功能">＋</button>
@@ -458,6 +487,15 @@ body.more-open .chat-area{padding-bottom:390px;}
           <button onclick="shareRefLink()" style="flex:1;padding:11px;background:rgba(0,200,150,0.2);border:1px solid rgba(0,200,150,0.3);border-radius:10px;color:white;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">📤 分享</button>
         </div>
         <div style="font-size:11px;color:rgba(255,255,255,0.3);text-align:center;margin-top:10px;">好友注册后双方各得20积分，永久二级收益</div>
+      </div>
+    </div>
+
+    <!-- 供给侧入口 -->
+    <div class="profile-section" style="margin-top:20px;">
+      <div class="profile-section-title">🧩 供给侧入口</div>
+      <div id="supplier-entry-card" style="background:linear-gradient(135deg,rgba(0,200,150,0.10),rgba(0,150,199,0.06));border:1px solid rgba(0,200,150,0.22);border-radius:14px;padding:16px;">
+        <div style="font-size:13px;color:rgba(255,255,255,0.55);line-height:1.7;">如果你在当地，也可以申请成为华伴服务者，提供接送机、包车、旅游、翻译、租车、本地帮办或商品服务。</div>
+        <button onclick="startSupplierApplication()" style="width:100%;margin-top:12px;padding:12px;background:rgba(0,200,150,0.22);border:1px solid rgba(0,200,150,0.36);border-radius:12px;color:white;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">申请成为服务者</button>
       </div>
     </div>
 
@@ -778,6 +816,151 @@ function saveProfile(updates){
   console.log('画像更新：', updates);
 }
 
+// ── AI 旅行伙伴养成 ──
+const COMPANION_LEVELS=[
+  {name:'初遇伙伴',min:0,max:39},
+  {name:'贴心旅伴',min:40,max:99},
+  {name:'城市达人',min:100,max:199},
+  {name:'旅行专家',min:200,max:359},
+  {name:'全球管家',min:360,max:Infinity}
+];
+
+function companionToday(){
+  const d=new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function getCompanion(){
+  try{
+    const saved=JSON.parse(localStorage.getItem('ai_companion')||'{}');
+    return {
+      xp:Number(saved.xp)||0,
+      affection:Math.min(100,Math.max(0,Number(saved.affection)||12)),
+      lastCheckIn:saved.lastCheckIn||'',
+      streak:Number(saved.streak)||0,
+      lastActiveDate:saved.lastActiveDate||'',
+      chatDate:saved.chatDate||'',
+      chatRewards:Number(saved.chatRewards)||0,
+      badges:Array.isArray(saved.badges)?saved.badges:[],
+      lastPetAt:Number(saved.lastPetAt)||0
+    };
+  }catch(e){
+    return {xp:0,affection:12,lastCheckIn:'',streak:0,lastActiveDate:'',chatDate:'',chatRewards:0,badges:[],lastPetAt:0};
+  }
+}
+
+function saveCompanion(state){
+  localStorage.setItem('ai_companion',JSON.stringify(state));
+  return state;
+}
+
+function companionLevel(xp){
+  return COMPANION_LEVELS.find(l=>xp>=l.min&&xp<=l.max)||COMPANION_LEVELS[0];
+}
+
+function companionEscape(value){
+  return String(value).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+
+function companionMood(state){
+  if(state.lastActiveDate&&state.lastActiveDate!==companionToday())return '想你了';
+  if(state.affection>=80)return '超开心';
+  if(state.affection>=45)return '很亲近';
+  if(state.affection>=20)return '心情不错';
+  return '有点害羞';
+}
+
+function addCompanionBadge(state,label,icon='📍'){
+  if(!label)return false;
+  const key=`${icon}${label}`;
+  if(state.badges.includes(key))return false;
+  state.badges.unshift(key);
+  state.badges=state.badges.slice(0,12);
+  return true;
+}
+
+function renderCompanionCard(){
+  const card=document.getElementById('companion-card');
+  if(!card)return;
+  const state=getCompanion();
+  const level=companionLevel(state.xp);
+  const levelIndex=COMPANION_LEVELS.indexOf(level);
+  const next=COMPANION_LEVELS[levelIndex+1];
+  const progress=next?Math.max(4,Math.min(100,((state.xp-level.min)/(next.min-level.min))*100)):100;
+  const checked=state.lastCheckIn===companionToday();
+  card.innerHTML=`
+    <div class="companion-room">
+      <div class="companion-head">
+        <div><div class="companion-name">${agentName} · ${level.name}</div><div class="companion-sub">心情：${companionMood(state)}　连续见面 ${state.streak} 天</div></div>
+        <button class="companion-checkin${checked?' done':''}" onclick="checkInCompanion()">${checked?'今天见过啦':'每日见面'}</button>
+      </div>
+      <div class="companion-stage">
+        <button class="companion-avatar" id="companion-avatar" onclick="petCompanion()" aria-label="和${agentName}互动">${agentEmoji}</button>
+        <span class="companion-speech" id="companion-speech">今天想去哪里？</span>
+      </div>
+      <div class="companion-stats"><span class="companion-level">Lv.${levelIndex+1}</span><span class="companion-progress"><i style="width:${progress}%"></i></span><span>亲密度 ${state.affection}</span></div>
+    </div>
+    <div class="companion-badges">${state.badges.length?state.badges.map(b=>`<span class="companion-badge">${companionEscape(b)}</span>`).join(''):'<span class="companion-badge">🌱 第一次相遇</span>'}</div>`;
+}
+
+function companionSay(text){
+  const bubble=document.getElementById('companion-speech');
+  if(!bubble)return;
+  bubble.textContent=text;
+  bubble.classList.add('show');
+  clearTimeout(window._companionSpeechTimer);
+  window._companionSpeechTimer=setTimeout(()=>bubble.classList.remove('show'),2200);
+}
+
+function rewardCompanion(type,xp=0,affection=0){
+  const state=getCompanion();
+  const today=companionToday();
+  if(type==='chat'){
+    if(state.chatDate!==today){state.chatDate=today;state.chatRewards=0;}
+    if(state.chatRewards>=5)return;
+    state.chatRewards+=1;
+  }
+  state.xp+=xp;
+  state.affection=Math.min(100,state.affection+affection);
+  state.lastActiveDate=today;
+  saveCompanion(state);
+  renderCompanionCard();
+}
+
+function checkInCompanion(){
+  const state=getCompanion();
+  const today=companionToday();
+  if(state.lastCheckIn===today){companionSay('今天已经见过啦～');return;}
+  const yesterday=new Date();
+  yesterday.setDate(yesterday.getDate()-1);
+  const y=`${yesterday.getFullYear()}-${String(yesterday.getMonth()+1).padStart(2,'0')}-${String(yesterday.getDate()).padStart(2,'0')}`;
+  state.streak=state.lastCheckIn===y?state.streak+1:1;
+  state.lastCheckIn=today;
+  state.lastActiveDate=today;
+  state.xp+=10;
+  state.affection=Math.min(100,state.affection+5);
+  saveCompanion(state);
+  renderCompanionCard();
+  companionSay(state.streak>1?`连续见面${state.streak}天！`:'见到你真好！');
+}
+
+function petCompanion(){
+  const state=getCompanion();
+  const now=Date.now();
+  if(now-state.lastPetAt>60000){
+    state.lastPetAt=now;
+    state.affection=Math.min(100,state.affection+1);
+    saveCompanion(state);
+    renderCompanionCard();
+  }
+  const avatar=document.getElementById('companion-avatar');
+  avatar?.classList.remove('play');
+  void avatar?.offsetWidth;
+  avatar?.classList.add('play');
+  const lines=['嘿嘿，被你发现啦！','我会陪你一起出发','今天也要顺顺利利','摸摸收到～'];
+  companionSay(lines[Math.floor(Math.random()*lines.length)]);
+}
+
 // AI提取用户信息并存入画像
 // ── 用户画像自动化升级系统 ──
 async function extractProfileFromChat(userMsg, botReply){
@@ -961,7 +1144,9 @@ function toggleInputMode(){
   inputMode=inputMode==='text'?'voice-input':'text';
   const isVoice=inputMode==='voice-input';
   bar.classList.toggle('voice-input',isVoice);
-  btn.innerHTML=isVoice?'<span class="keyboard-icon" aria-hidden="true">⌨</span>':'<span class="oy-mic-icon" aria-hidden="true"></span>';
+  btn.innerHTML=isVoice
+    ?'<span class="keyboard-icon" aria-hidden="true">⌨</span>'
+    :'<svg class="voice-mic-icon" aria-hidden="true" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M6.5 11.5a5.5 5.5 0 0 0 11 0"></path><path d="M12 17v4"></path><path d="M9 21h6"></path></svg>';
   btn.setAttribute('aria-label',isVoice?'切换到文字输入':'切换到语音输入');
   document.getElementById('composer-action').textContent='＋';
   document.getElementById('composer-action').classList.remove('ready');
@@ -1289,6 +1474,7 @@ async function sendVoiceMessage(text){
     aiHistory.push({role:'assistant', content:reply});
     if(aiHistory.length>20) aiHistory=aiHistory.slice(-20);
     typing.remove();
+    rewardCompanion('chat',2,1);
 
     // 从AI回复里补提取时间/地址/方向
     extractInfo(reply);
@@ -1532,10 +1718,19 @@ window.onload=async function(){
 function renderWelcomeHome(){
   currentRole='passenger';
   chatArea.innerHTML='';
-  addMsg(`<strong>你好，我是${agentName}</strong><br><span style="color:#666;">在${currentRegion.city||currentRegion.country}需要出行或华人服务，直接用普通话或文字告诉我。点击输入框后的＋可查看全部功能。</span>`);
+  addMsg(`<strong>你好，我是${agentName}</strong><br><span style="color:#666;">在${currentRegion.city||currentRegion.country}需要出行或华人服务，直接用普通话或文字告诉我。<br>没有中间商赚差价，只让需要的人遇见可靠的人。</span>`);
+  const companion=getCompanion();
+  if(addCompanionBadge(companion,currentRegion.city||currentRegion.country,'📍'))saveCompanion(companion);
+  const companionCard=document.createElement('section');
+  companionCard.id='companion-card';
+  companionCard.className='companion-card';
+  companionCard.setAttribute('aria-label',`${agentName}旅行伙伴养成状态`);
+  chatArea.appendChild(companionCard);
+  renderCompanionCard();
   document.getElementById('chat-input').placeholder='输入你需要的帮助';
   renderMoreMenu();
   refreshHomeRegionCopy();
+  scrollBottom();
 }
 
 function clearWelcomeHome(){
@@ -1582,7 +1777,7 @@ function renderMoreMenu(category='home'){
   title.textContent=titles[category]||'全部功能';
   back.style.visibility=category==='home'?'hidden':'visible';
   grid.innerHTML=(MORE_MENU[category]||MORE_MENU.home).map(item=>`
-    <button class="more-item${item.driver?' driver':''}" onclick="${item.category?`renderMoreMenu('${item.key}')`:`runMoreAction('${item.key}','${item.label}')`}">
+    <button class="more-item${item.driver?' driver':''}" onclick="${item.category&&item.key==='ride'?`renderMoreMenu('${item.key}')`:`runMoreAction('${item.key}','${item.label}')`}">
       <span class="more-item-icon">${item.icon}</span><span>${item.label}</span>
     </button>`).join('');
 }
@@ -1607,12 +1802,23 @@ function closeMorePanel(){
 
 function runMoreAction(key,label){
   closeMorePanel();
+  const activeKeys=['pickup','dropoff','charter','driver'];
+  if(!activeKeys.includes(key)){
+    showComingSoon(label);
+    return;
+  }
   const serviceMap={pickup:'接机',dropoff:'送机',charter:'包车','tour-charter':'旅游包车','group-tour':'旅游拼团',rental:'租车',payment:'支付',friends:'交友',agency:'中介服务',translation:'翻译',lawyer:'律师',accountant:'会计','other-help':'华人帮办'};
   if(key==='market'){window.location.href='plaza.html';return;}
   if(key==='driver'){window.location.href='driver-app.html';return;}
   if(key==='camera'){document.getElementById('camera-input')?.click();return;}
   if(key==='image'){document.getElementById('image-input')?.click();return;}
   beginQuickService(serviceMap[key]||label);
+}
+
+async function showComingSoon(label){
+  currentRole='passenger';
+  addMsg(label,true);
+  await agentSay(`${label}功能即将推出，敬请期待。我们先把用车服务打磨好 😊`,200);
 }
 
 function handleMediaPick(input,label){
@@ -1789,7 +1995,7 @@ function exitToHome(){
 
 function buildDriverPrompt(){
   const d = getDriver();
-  return `你是华人出行AI助理，现在服务的是${currentRegion.city}司机${d.full_name||"老板"}，称呼他"老板"，口语化简短。
+  return `你是华伴AI助理，现在服务的是${currentRegion.city}司机${d.full_name||"老板"}，称呼他"老板"，口语化简短。
 
 可以帮司机：
 1. 查询订单状态
@@ -1810,8 +2016,10 @@ function buildPrompt(){
   const saved = getPassenger();
   const addrs = getSavedAddresses();
   const agentGender = localStorage.getItem('au_gender')==='female' ? 'male' : 'male';
+  const companionState=getCompanion();
+  const companionStage=companionLevel(companionState.xp);
 
-  let p = `你是全球华人出行AI管家${agentName}，专为中文母语者提供海外帮助。
+  let p = `你是全球华伴AI伙伴${agentName}，专为中文母语者提供海外帮助。
 
 【当前地区】
 国家：${currentRegion.country}（${currentRegion.countryCode}）
@@ -1823,8 +2031,13 @@ function buildPrompt(){
 【身份】
 名字：${agentName}，${agentEmoji}
 服务：接机、送机、包车出游
-平台：不抽佣，司机直接与乘客结算，平台靠积分分红盈利
+平台：没有中间商赚差价，只让需要的人遇见可靠的人。平台不从单笔交易中抽佣，用户与服务者直接达成共识合约并交易，平台靠AI工具、认证展示、订阅、打赏和城市贡献网络盈利
 语气：像朋友聊天，口语化，每次只说1句话
+
+【陪伴成长状态】
+你也是用户正在养成的AI旅行伙伴。
+当前阶段：${companionStage.name}，经验值${companionState.xp}，亲密度${companionState.affection}/100，心情：${companionMood(companionState)}。
+可以偶尔自然表现陪伴感，但不要每句话都提等级、亲密度或养成，也不要影响用户办事效率。
 
 【一句话下单——最高优先级】
 用户说"下周五下午四点送我去机场" → 立即 [ACTION: show_vehicles to_airport]
@@ -1865,6 +2078,7 @@ function buildPrompt(){
 【积分说明】
 注册+10，每单+5，完成+10，评价+2/5，推荐好友+20/30
 100积分=A$1，500分🌟常旅客×1.2，2000分💎钻石×1.5，5000分👑创始合伙人×3
+城市贡献奖励按真实服务、信用和推荐积分综合计算，具体规则以平台后台结算为准
 
 【往返预约】
 先处理去程，完成后自动问"要预约回程吗？"
@@ -1940,6 +2154,7 @@ async function sendMessage(){ stopTTS();
     aiHistory.push({role:'assistant',content:reply});
     if(aiHistory.length>20)aiHistory=aiHistory.slice(-20);
     typing.remove();
+    rewardCompanion('chat',2,1);
 
     // 从对话中提取用户画像
     extractProfileFromChat(msg, reply);
@@ -2426,6 +2641,14 @@ async function submitBooking(){ stopTTS();
       const lvl = getLevel(bookingPts);
       setTimeout(()=>agentSay(`🎉 +${bookingPts}积分到账${lvl.multiplier>1?' ('+lvl.name+'加成)':''}！`,600), 2000);
     }
+    const companion=getCompanion();
+    companion.xp+=25;
+    companion.affection=Math.min(100,companion.affection+8);
+    companion.lastActiveDate=companionToday();
+    addCompanionBadge(companion,currentRegion.city||currentRegion.country,'🧳');
+    if(S.direction==='from_airport'||S.direction==='to_airport')addCompanionBadge(companion,regionAirport().name,'✈️');
+    saveCompanion(companion);
+    renderCompanionCard();
     setTimeout(()=>showConfetti(points),1800);
     const _t=localStorage.getItem('au_gender')==='female'?'小姐':'先生';
     await agentSay(`${S.name}${_t}，预约成功！司机会尽快确认联系您 🎉`, 300);
@@ -2803,10 +3026,203 @@ async function openProfile(){ stopTTS();
   document.getElementById('profile-ref-link').textContent = refLink;
   // 加载订单
   loadProfileTrips(p.phone);
+  refreshSupplierEntry();
 }
 
 function closeProfile(){
   document.getElementById('profile-panel').classList.remove('open');
+}
+
+function getSupplierApplication(){
+  try{return JSON.parse(localStorage.getItem('huaban_supplier_application')||'{}');}
+  catch(e){return {};}
+}
+
+function saveSupplierApplication(data){
+  const current=getSupplierApplication();
+  localStorage.setItem('huaban_supplier_application', JSON.stringify({...current,...data}));
+}
+
+function supplierStatusLabel(status){
+  const map={
+    new:['⏳ 审核中','管理员正在人工审核，通过后可进入供给中心。'],
+    pending:['⏳ 审核中','管理员正在人工审核，通过后可进入供给中心。'],
+    approved:['✅ 已通过','你已成为华伴服务者，可以进入供给中心。'],
+    rejected:['📝 需补充资料','申请暂未通过，可补充资料后重新提交。']
+  };
+  return map[status]||['✨ 也成为供应方','海外当地华人既可以使用华伴，也可以提供可靠服务。'];
+}
+
+function renderSupplierEntry(status){
+  const el=document.getElementById('supplier-entry-card');
+  if(!el)return;
+  const [title,desc]=supplierStatusLabel(status);
+  if(status==='approved'){
+    el.innerHTML=`
+      <div style="display:flex;gap:12px;align-items:flex-start;">
+        <div style="font-size:24px;">🧩</div>
+        <div style="flex:1;">
+          <div style="font-size:15px;font-weight:900;color:white;">${title}</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.55);line-height:1.6;margin-top:4px;">${desc}</div>
+        </div>
+      </div>
+      <button onclick="openSupplierHub()" style="width:100%;margin-top:12px;padding:12px;background:rgba(0,200,150,0.25);border:1px solid rgba(0,200,150,0.4);border-radius:12px;color:white;font-size:14px;font-weight:900;cursor:pointer;font-family:inherit;">进入供给中心</button>`;
+    return;
+  }
+  if(status==='new'||status==='pending'){
+    el.innerHTML=`
+      <div style="display:flex;gap:12px;align-items:flex-start;">
+        <div style="font-size:24px;">⏳</div>
+        <div style="flex:1;">
+          <div style="font-size:15px;font-weight:900;color:white;">${title}</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.55);line-height:1.6;margin-top:4px;">${desc}</div>
+        </div>
+      </div>
+      <div style="margin-top:12px;padding:10px;border-radius:10px;background:rgba(255,255,255,0.05);font-size:12px;color:rgba(255,255,255,0.45);text-align:center;">审核通过前不能发布商品和服务</div>`;
+    return;
+  }
+  el.innerHTML=`
+    <div style="display:flex;gap:12px;align-items:flex-start;">
+      <div style="font-size:24px;">${status==='rejected'?'📝':'🧩'}</div>
+      <div style="flex:1;">
+        <div style="font-size:15px;font-weight:900;color:white;">${title}</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.55);line-height:1.6;margin-top:4px;">${desc}</div>
+      </div>
+    </div>
+    <button onclick="startSupplierApplication()" style="width:100%;margin-top:12px;padding:12px;background:rgba(0,200,150,0.22);border:1px solid rgba(0,200,150,0.36);border-radius:12px;color:white;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">${status==='rejected'?'重新提交申请':'申请成为服务者'}</button>`;
+}
+
+const SUPPLIER_TYPES=[
+  {value:'ride',label:'出行用车：接送机 / 包车 / 商务车'},
+  {value:'travel',label:'旅游服务：包车游 / 拼团 / 向导'},
+  {value:'car_rental',label:'租车服务：车辆出租 / 长短租'},
+  {value:'local_help',label:'本地帮办：接待 / 跑腿 / 陪同'},
+  {value:'professional',label:'专业服务：翻译 / 律师 / 会计'},
+  {value:'agency',label:'中介服务：房产 / 留学 / 移民 / 招聘'},
+  {value:'goods',label:'商品/市场：本地商品 / 二手交易'},
+  {value:'community',label:'交友/社群：活动 / 兴趣小组'},
+  {value:'other',label:'其他可靠服务'}
+];
+
+async function refreshSupplierEntry(){
+  const p=getPassenger();
+  const local=getSupplierApplication();
+  let status=local.status||'none';
+  renderSupplierEntry(status);
+  if(!p.phone)return;
+  try{
+    const leads=await supaGet(`recruitment_leads?lead_type=eq.supply&contact=eq.${encodeURIComponent(p.phone)}&order=created_at.desc&limit=1`);
+    if(leads&&leads.length){
+      status=leads[0].status||'new';
+      saveSupplierApplication({lead_id:leads[0].id,status});
+      renderSupplierEntry(status);
+    }
+  }catch(e){}
+}
+
+async function startSupplierApplication(){
+  const p=getPassenger();
+  if(!p.phone){
+    await agentSay('先留一个联系方式，我才能帮你提交服务者申请。',200);
+    speak('请先在首页输入你的需求或完成一次联系方式登记，再回来提交服务者申请。');
+    return;
+  }
+  showSupplierApplicationSheet();
+}
+
+function showSupplierApplicationSheet(){
+  document.getElementById('supplier-apply-modal')?.remove();
+  const overlay=document.createElement('div');
+  overlay.id='supplier-apply-modal';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:4200;display:flex;align-items:flex-end;justify-content:center;';
+  overlay.innerHTML=`
+    <div style="background:#0d1f3c;border-radius:24px 24px 0 0;padding:22px 18px 40px;width:100%;max-width:480px;border-top:1px solid rgba(255,255,255,0.1);">
+      <div style="width:42px;height:4px;background:rgba(255,255,255,0.16);border-radius:2px;margin:0 auto 18px;"></div>
+      <div style="font-size:17px;font-weight:900;color:white;margin-bottom:6px;">申请成为服务者/商家</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.48);line-height:1.6;margin-bottom:16px;">请选择你要提供的商品或服务类型。管理员审核通过后，才可进入供给中心发布。</div>
+      <label style="display:block;font-size:12px;color:rgba(255,255,255,0.45);margin:0 0 6px;">供应类型</label>
+      <select id="supplier-type-select" style="width:100%;padding:13px 12px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.13);border-radius:12px;color:white;font-size:14px;font-family:inherit;outline:none;margin-bottom:12px;">
+        ${SUPPLIER_TYPES.map(t=>`<option value="${t.value}" style="color:#111;">${t.label}</option>`).join('')}
+      </select>
+      <label style="display:block;font-size:12px;color:rgba(255,255,255,0.45);margin:0 0 6px;">服务城市</label>
+      <input id="supplier-city-input" value="${currentRegion.city||''}" placeholder="例如：Melbourne / Sydney / Singapore" style="width:100%;padding:13px 12px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.13);border-radius:12px;color:white;font-size:14px;font-family:inherit;outline:none;margin-bottom:12px;">
+      <label style="display:block;font-size:12px;color:rgba(255,255,255,0.45);margin:0 0 6px;">服务说明 / 资质经验</label>
+      <textarea id="supplier-intro-input" placeholder="例如：5年本地接送机经验，可提供7座车；或持证翻译，可中英陪同。" style="width:100%;height:78px;padding:12px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.13);border-radius:12px;color:white;font-size:14px;font-family:inherit;outline:none;resize:none;margin-bottom:12px;"></textarea>
+      <label style="display:block;font-size:12px;color:rgba(255,255,255,0.45);margin:0 0 6px;">政府/行业资质（如适用）</label>
+      <input id="supplier-license-input" placeholder="资质编号、注册名或执照名称；无资质可填：无" style="width:100%;padding:13px 12px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.13);border-radius:12px;color:white;font-size:14px;font-family:inherit;outline:none;margin-bottom:12px;">
+      <label style="display:block;font-size:12px;color:rgba(255,255,255,0.45);margin:0 0 6px;">公开核验网址（如适用）</label>
+      <input id="supplier-verify-url-input" placeholder="政府公开查询页、行业协会页面或资质公示链接" style="width:100%;padding:13px 12px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.13);border-radius:12px;color:white;font-size:14px;font-family:inherit;outline:none;margin-bottom:12px;">
+      <label style="display:flex;gap:8px;align-items:flex-start;margin-bottom:14px;font-size:11px;line-height:1.55;color:rgba(255,255,255,0.45);">
+        <input id="supplier-disclaimer-check" type="checkbox" style="margin-top:3px;">
+        <span>我确认提交资料真实有效，并理解华伴主要提供信息连接、AI工具和资质核验辅助；服务/商品的履约、质量、安全和合法合规责任由供应商自行承担。</span>
+      </label>
+      <div style="display:flex;gap:10px;">
+        <button onclick="closeSupplierApplicationSheet()" style="flex:1;padding:13px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:12px;color:rgba(255,255,255,0.68);font-size:14px;font-family:inherit;">取消</button>
+        <button onclick="submitSupplierApplication(this)" style="flex:1;padding:13px;background:rgba(0,200,150,0.24);border:1px solid rgba(0,200,150,0.4);border-radius:12px;color:white;font-size:14px;font-weight:900;font-family:inherit;">提交审核</button>
+      </div>
+    </div>`;
+  overlay.onclick=(e)=>{if(e.target===overlay)closeSupplierApplicationSheet();};
+  document.body.appendChild(overlay);
+}
+
+function closeSupplierApplicationSheet(){
+  document.getElementById('supplier-apply-modal')?.remove();
+}
+
+async function submitSupplierApplication(btn){
+  const p=getPassenger();
+  const typeValue=document.getElementById('supplier-type-select')?.value||'other';
+  const typeItem=SUPPLIER_TYPES.find(t=>t.value===typeValue)||SUPPLIER_TYPES[SUPPLIER_TYPES.length-1];
+  const serviceType=typeItem.label;
+  const city=(document.getElementById('supplier-city-input')?.value||'').trim();
+  const intro=(document.getElementById('supplier-intro-input')?.value||'').trim();
+  const license=(document.getElementById('supplier-license-input')?.value||'').trim();
+  const verifyUrl=(document.getElementById('supplier-verify-url-input')?.value||'').trim();
+  const accepted=document.getElementById('supplier-disclaimer-check')?.checked;
+  if(!city){alert('请填写服务城市');return;}
+  if(!accepted){alert('请先确认平台免责与资料真实性说明');return;}
+  const message=`供应类型：${serviceType}\n城市：${city}\n说明：${intro||'未填写'}\n资质：${license||'未填写'}\n公开核验：${verifyUrl||'未填写'}`;
+  btn.disabled=true;
+  btn.textContent='提交中...';
+  const payload={
+    lead_type:'supply',
+    channel:'profile',
+    name:p.name||'华伴用户',
+    contact:p.phone,
+    city,
+    country:currentRegion.country||'',
+    message,
+    need_type:typeValue,
+    stage:'manual_review',
+    status:'new',
+    fields:{
+      source:'user_profile',
+      service_type:serviceType,
+      service_type_code:typeValue,
+      intro:intro||'',
+      license:license||'',
+      public_verification_url:verifyUrl||'',
+      disclaimer_accepted:true,
+      disclaimer_version:'supplier_v1',
+      passenger_ref:p.ref||''
+    }
+  };
+  try{
+    const [lead]=await supaInsert('recruitment_leads', payload);
+    saveSupplierApplication({lead_id:lead?.id,status:'new',service_type:serviceType,service_type_code:typeValue,city});
+    closeSupplierApplicationSheet();
+    renderSupplierEntry('new');
+    await agentSay('服务者申请已提交。管理员人工审核通过后，你就能进入供给中心发布服务和商品。',200);
+  }catch(e){
+    saveSupplierApplication({...payload,status:'new',offline:true});
+    closeSupplierApplicationSheet();
+    renderSupplierEntry('new');
+    await agentSay('我已先把申请保存在本机。后台表连接好后，可同步给管理员审核。',200);
+  }
+}
+
+function openSupplierHub(){
+  window.location.href='supplier-hub.html';
 }
 
 async function loadProfileTrips(phone){
@@ -2841,10 +3257,11 @@ async function loadProfileTrips(phone){
 async function shareRefLink(){
   const p = getPassenger();
   if(!p.ref) p.ref = genRef();
-  const link = `${location.origin}?ref=${p.ref}`;
+  const officialSite = 'https://huabanapp.com';
+  const link = `${officialSite}?ref=${p.ref}`;
   const shareData = {
-    title: '澳洲出行AI管家',
-    text: '墨尔本华人专属出行平台，AI管家中文全程服务，用车还能分红！不抽佣，快来试试 👇',
+    title: '华伴AI伙伴',
+    text: '从旅行开始，共同成长。没有中间商赚差价，只让需要的人遇见可靠的人。来试试华伴AI伙伴 👇',
     url: link
   };
   try{
@@ -3087,6 +3504,7 @@ function switchAgentGender(){
   setAgentByUserGender(newGender);
   const el = document.getElementById('profile-agent-name');
   if(el) el.textContent = '当前：'+agentName;
+  renderCompanionCard();
   speak('好的，已为您切换管家');
 }
 
@@ -3097,6 +3515,7 @@ function logoutUser(){
   localStorage.removeItem('au_addresses');
   localStorage.removeItem('au_profile');
   localStorage.removeItem('au_gender');
+  localStorage.removeItem('ai_companion');
   closeProfile();
   location.reload();
 }

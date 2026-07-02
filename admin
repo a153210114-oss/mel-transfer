@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>管理后台 · 澳洲出行</title>
+<title>管理后台 · 华伴</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 :root {
@@ -260,8 +260,8 @@ body {
 <aside class="sidebar">
   <div class="sidebar-logo">
     <div class="logo-icon">✈️</div>
-    <div class="logo-title">澳洲出行</div>
-    <div class="logo-sub">管理后台 · Melbourne</div>
+    <div class="logo-title">华伴</div>
+    <div class="logo-sub">管理后台 · Global Pilot</div>
   </div>
 
   <div class="nav-section">
@@ -281,6 +281,9 @@ body {
     </div>
     <div class="nav-item" onclick="showSection('passengers')">
       <span class="nav-icon">👤</span> 乘客管理
+    </div>
+    <div class="nav-item" onclick="showSection('suppliers')">
+      <span class="nav-icon">🧩</span> 供给审核
     </div>
     <div class="nav-item" onclick="showSection('dispatch')">
       <span class="nav-icon">📡</span> 实时调度
@@ -401,6 +404,20 @@ body {
             <div style="color:var(--text3);font-size:13px;">加载中...</div>
           </div>
         </div>
+
+        <!-- Platform rules -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">平台规则</div>
+          </div>
+          <div class="card-body" style="font-size:12px;color:var(--text2);line-height:1.75;">
+            <div><strong style="color:var(--text);">官网：</strong>huabanapp.com</div>
+            <div><strong style="color:var(--text);">原则：</strong>没有中间商赚差价</div>
+            <div><strong style="color:var(--text);">奖励池：</strong>100% 用于城市共建生态</div>
+            <div><strong style="color:var(--green);">当期奖励：</strong>80% 按贡献积分结算</div>
+            <div><strong style="color:var(--gold);">共建基金：</strong>20% 用于城市长期建设</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -519,6 +536,50 @@ body {
           </thead>
           <tbody id="passengers-body">
             <tr><td colspan="5" style="text-align:center;color:var(--text3);padding:40px;">加载中...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 供给侧审核 ══ -->
+<div class="section" id="section-suppliers">
+  <div class="topbar">
+    <div>
+      <div class="page-title">供给侧审核</div>
+      <div class="page-sub">本地华人服务者 / 商家申请</div>
+    </div>
+    <div class="topbar-actions">
+      <select class="input" id="supplier-filter" onchange="loadSuppliers()" style="width:130px;">
+        <option value="">全部状态</option>
+        <option value="new">待审核</option>
+        <option value="approved">已通过</option>
+        <option value="rejected">已驳回</option>
+      </select>
+      <button class="btn btn-ghost" onclick="loadSuppliers()">↻ 刷新</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="card">
+      <div class="card-body" style="font-size:12px;color:var(--text2);line-height:1.7;border-bottom:1px solid var(--border);padding-bottom:16px;margin-bottom:8px;">
+        审核通过后，用户端个人中心会显示“进入供给中心”。审核通过前，不能发布商品和服务。政府/行业资质由 AI 优先收集并尝试在公开网站核验，管理员通过前应人工复核关键资质。
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>申请人</th>
+              <th>城市</th>
+              <th>服务/商品</th>
+              <th>联系方式</th>
+              <th>状态</th>
+              <th>时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="suppliers-body">
+            <tr><td colspan="7" style="text-align:center;color:var(--text3);padding:40px;">加载中...</td></tr>
           </tbody>
         </table>
       </div>
@@ -647,6 +708,7 @@ function showSection(name) {
     trips: loadTrips,
     drivers: loadDrivers,
     passengers: loadPassengers,
+    suppliers: loadSuppliers,
     dispatch: loadDispatch,
     finance: loadFinance
   };
@@ -678,6 +740,12 @@ function fmtDate(iso) {
 function fmtDateShort(iso) {
   if (!iso) return '-';
   return new Date(iso).toLocaleDateString('zh-CN', {month:'2-digit',day:'2-digit'});
+}
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, m => ({
+    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#039;'
+  }[m]));
 }
 
 // ── Dashboard ──
@@ -947,6 +1015,102 @@ async function loadPassengers() {
   }
 }
 
+// ── Suppliers ──
+function supplierBadge(status) {
+  const map = {
+    new: ['badge-pending-driver', '⏳ 待审核'],
+    pending: ['badge-pending-driver', '⏳ 待审核'],
+    approved: ['badge-active', '✅ 已通过'],
+    rejected: ['badge-cancelled', '✕ 已驳回']
+  };
+  const [cls, label] = map[status] || ['badge-inactive', status || '未知'];
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+
+function supplierServiceText(lead) {
+  const fields = lead.fields || {};
+  return fields.service_type || lead.need_type || (lead.message || '').split('\n')[0].replace('服务类型：','') || '-';
+}
+
+function supplierQualificationText(lead) {
+  const fields = lead.fields || {};
+  const license = fields.license || '未填写资质';
+  const url = fields.public_verification_url || '';
+  return url ? `${license} · ${url}` : license;
+}
+
+async function loadSuppliers() {
+  const filter = document.getElementById('supplier-filter').value;
+  let q = `recruitment_leads?lead_type=eq.supply&order=created_at.desc&limit=100`;
+  if (filter) q += `&status=eq.${filter}`;
+
+  const tbody = document.getElementById('suppliers-body');
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:30px;">加载中...</td></tr>';
+
+  try {
+    const leads = await supaFetch(q);
+    if (!leads.length) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:40px;">暂无供给侧申请</td></tr>';
+      return;
+    }
+    tbody.innerHTML = leads.map(lead => {
+      const status = lead.status || 'new';
+      const service = supplierServiceText(lead);
+      const qualification = supplierQualificationText(lead);
+      const message = (lead.message || '').replace(/\n/g, ' · ');
+      return `<tr>
+        <td>
+          <div style="font-weight:700;">${escapeHtml(lead.name || '华伴用户')}</div>
+          <div style="font-size:11px;color:var(--text3);">${escapeHtml(lead.channel || 'profile')}</div>
+        </td>
+        <td>
+          <div style="font-size:13px;color:var(--text);">${escapeHtml(lead.city || '-')}</div>
+          <div style="font-size:11px;color:var(--text3);">${escapeHtml(lead.country || '')}</div>
+        </td>
+        <td>
+          <div style="font-weight:700;color:var(--accent);">${escapeHtml(service)}</div>
+          <div style="font-size:11px;color:var(--gold);max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">资质：${escapeHtml(qualification)}</div>
+          <div style="font-size:11px;color:var(--text3);max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(message)}</div>
+        </td>
+        <td style="font-family:monospace;font-size:12px;">${escapeHtml(lead.contact || '-')}</td>
+        <td>${supplierBadge(status)}</td>
+        <td style="font-size:12px;color:var(--text3);">${fmtDateShort(lead.created_at)}</td>
+        <td>
+          ${status !== 'approved' ? `<button class="action-btn success" onclick="approveSupplier('${lead.id}')">通过</button>` : ''}
+          ${status !== 'rejected' ? `<button class="action-btn danger" onclick="rejectSupplier('${lead.id}')" style="margin-left:4px;">驳回</button>` : ''}
+          <button class="action-btn" onclick="copyId('${lead.id}')" style="margin-left:4px;">复制ID</button>
+        </td>
+      </tr>`;
+    }).join('');
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="7" style="color:var(--red);padding:20px;">${escapeHtml(e.message)}</td></tr>`;
+  }
+}
+
+async function approveSupplier(id) {
+  if (!confirm('确认已完成必要资质核验，并通过这个供给侧申请？')) return;
+  await supaPatch(`recruitment_leads?id=eq.${id}`, {
+    status: 'approved',
+    stage: 'approved',
+    next_action: 'open_supplier_hub',
+    notes: 'admin_approved_after_qualification_review',
+    updated_at: new Date().toISOString()
+  });
+  alert('✅ 已通过。用户端个人中心将开放供给中心入口。');
+  loadSuppliers();
+}
+
+async function rejectSupplier(id) {
+  const notes = prompt('驳回原因/需要补充的资料（可选）：', '');
+  await supaPatch(`recruitment_leads?id=eq.${id}`, {
+    status: 'rejected',
+    stage: 'need_more_info',
+    notes: notes || null,
+    updated_at: new Date().toISOString()
+  });
+  loadSuppliers();
+}
+
 // ── Dispatch ──
 async function loadDispatch() {
   const today = new Date().toISOString().split('T')[0];
@@ -1049,6 +1213,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const active = document.querySelector('.section.active')?.id;
     if (active === 'section-dashboard') loadDashboard();
     if (active === 'section-dispatch') loadDispatch();
+    if (active === 'section-suppliers') loadSuppliers();
   }, 60000);
 });
 </script>
