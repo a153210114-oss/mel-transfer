@@ -2172,6 +2172,8 @@ async function sendMessage(){ stopTTS();
 }
 
 function extractInfo(msg){
+  const isModify = /修改|改成|改为|换成|换一下|重新|不是这个|不对|调整/i.test(msg);
+
   // 机场识别
   if(/阿瓦隆|avalon airport|avv/i.test(msg)) selectedAirport='avalon';
   else if(/捷星|jetstar|tiger.*air/i.test(msg)) selectedAirport='avalon';
