@@ -3,7 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>华伴 AI 伙伴</title>
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="assets/brand/huaban-logo-v1.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="华伴">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f7f7f7">
+<title>华伴｜海外华人 AI 伙伴</title>
+<meta name="description" content="从旅行开始，共同成长。华伴用普通话帮海外华人整理出行、本地服务和生活需求，让需要的人遇见可靠的人。">
+<link rel="canonical" href="https://huabanapp.com/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="华伴">
+<meta property="og:title" content="华伴｜海外华人 AI 伙伴">
+<meta property="og:description" content="从旅行开始，共同成长。华伴用普通话帮海外华人整理出行、本地服务和生活需求，让需要的人遇见可靠的人。">
+<meta property="og:url" content="https://huabanapp.com/">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="华伴｜海外华人 AI 伙伴">
+<meta name="twitter:description" content="从旅行开始，共同成长。华伴用普通话帮海外华人整理出行、本地服务和生活需求，让需要的人遇见可靠的人。">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -20,6 +36,9 @@ body{
   padding:14px 16px;flex-shrink:0;
 }
 .top-logo{font-size:13px;color:rgba(255,255,255,0.4);font-weight:700;}
+.brand-lockup{display:flex;align-items:center;gap:7px;min-width:0;}
+.brand-logo{width:26px;height:26px;border-radius:7px;display:block;object-fit:cover;flex-shrink:0;}
+.splash-logo{width:82px;height:82px;border-radius:22px;display:block;object-fit:cover;box-shadow:0 10px 28px rgba(0,0,0,.12);animation:splashBounce 0.8s ease-out forwards;}
 .top-exit{
   background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);
   color:rgba(255,255,255,0.5);border-radius:8px;
@@ -216,10 +235,11 @@ body{
 .trip-status.completed{background:rgba(100,100,100,0.2);color:rgba(255,255,255,0.4);}
 
 /* 微信式首页：熟悉、克制，以服务和对话为核心 */
-:root{--wx-green:#07c160;--wx-bg:#ededed;--wx-line:#e5e5e5;--wx-text:#191919;--wx-muted:#8a8a8a;}
+:root{--wx-green:#07c160;--wx-bg:#ededed;--wx-line:#e5e5e5;--wx-text:#191919;--wx-muted:#8a8a8a;--wx-top:#f7f7f7;--wx-panel:#f7f7f7;--wx-card:#fff;--wx-card-soft:#f7f7f7;--wx-border:#dedede;}
 body{background:var(--wx-bg);color:var(--wx-text);}
-.top-bar{height:52px;padding:0 16px;background:#f7f7f7;border-bottom:1px solid #dcdcdc;}
+.top-bar{height:52px;padding:0 16px;background:var(--wx-top);border-bottom:1px solid var(--wx-line);}
 .top-logo{font-size:16px;color:var(--wx-text);font-weight:600;}
+.brand-logo{box-shadow:0 0 0 1px rgba(0,0,0,.04);}
 .top-bar>button{color:#4b4b4b!important;}
 .chat-area{padding:18px 12px 150px;gap:14px;}
 .msg-av{border:0;border-radius:5px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.04);}
@@ -228,7 +248,7 @@ body{background:var(--wx-bg);color:var(--wx-text);}
 .msg.user .msg-bubble{color:var(--wx-text);background:#95ec69;border-color:#89dc61;border-radius:5px;}
 .typing-bubble{background:#fff;border:1px solid #dedede;border-radius:5px;}
 .typing-dot{background:#9a9a9a;}
-.input-bar{bottom:0;max-width:480px;padding:8px 10px calc(8px + env(safe-area-inset-bottom));background:#f7f7f7;border-top:1px solid #d6d6d6;gap:8px;}
+.input-bar{bottom:0;max-width:480px;padding:8px 10px calc(8px + env(safe-area-inset-bottom));background:var(--wx-panel);border-top:1px solid var(--wx-line);gap:8px;}
 .input-bar.no-nav{padding-bottom:calc(8px + env(safe-area-inset-bottom));}
 .chat-input{height:42px;padding:9px 13px;background:#fff;border:1px solid #ddd;border-radius:5px;color:var(--wx-text);font-size:15px;}
 .chat-input::placeholder{color:#aaa;}.chat-input:focus{border-color:#aaa;}
@@ -236,10 +256,67 @@ body{background:var(--wx-bg);color:var(--wx-text);}
 .mic-btn{background:#fff;color:#333;border:1px solid #ddd;}
 .send-btn{background:#fff;border:1px solid #ddd;color:#333;}
 .send-btn.ready{background:var(--wx-green);border-color:var(--wx-green);color:#fff;}
-#splash{background:#f7f7f7;}#splash>div:nth-child(2){color:var(--wx-text)!important;}#splash>div:nth-child(3){color:var(--wx-muted)!important;}
+#splash{background:var(--wx-top);}#splash>div:nth-child(2){color:var(--wx-text)!important;}#splash>div:nth-child(3){color:var(--wx-muted)!important;}
 .phone-input-card{background:#fff;border:1px solid #dedede;border-radius:6px;padding:14px;}
 .phone-input-card input{background:#f7f7f7;border:1px solid #ddd;border-radius:5px;color:var(--wx-text);}
 .phone-input-card input::placeholder{color:#aaa;}.phone-submit{background:var(--wx-green);border-radius:5px;font-weight:500;}
+
+body.theme-night{
+  --wx-bg:#111418;
+  --wx-line:#2b3138;
+  --wx-text:#f2f3f5;
+  --wx-muted:#9aa3ad;
+  --wx-top:#171b20;
+  --wx-panel:#171b20;
+  --wx-card:#20252c;
+  --wx-card-soft:#181d23;
+  --wx-border:#343b44;
+}
+body.theme-night .top-bar>button{color:#d7dce2!important;}
+body.theme-night .msg-av{background:#242a31;box-shadow:0 0 0 1px rgba(255,255,255,.05);}
+body.theme-night .msg-bubble{background:#20252c;border-color:#343b44;color:var(--wx-text);}
+body.theme-night .msg.user .msg-bubble{background:#145b39;border-color:#1b7048;color:#f7fff9;}
+body.theme-night .typing-bubble{background:#20252c;border-color:#343b44;}
+body.theme-night .chat-input,
+body.theme-night .hold-talk,
+body.theme-night .mic-btn,
+body.theme-night .send-btn{background:#242a31;border-color:#3a424c;color:var(--wx-text);}
+body.theme-night .chat-input::placeholder{color:#747d88;}
+body.theme-night .more-panel{background:var(--wx-panel);border-top-color:var(--wx-line);}
+body.theme-night .more-panel-head,
+body.theme-night .more-item{color:var(--wx-text);}
+body.theme-night .more-item-icon{background:#242a31;border-color:#3a424c;}
+body.theme-night .install-card,
+body.theme-night .wake-card,
+body.theme-night .service-panel,
+body.theme-night .service-item,
+body.theme-night .phone-input-card,
+body.theme-night .chat-area .choice-card,
+body.theme-night .chat-area .vehicle-card,
+body.theme-night .chat-area .confirm-card{background:var(--wx-card);border-color:var(--wx-border);}
+body.theme-night .install-copy strong,
+body.theme-night .wake-copy strong,
+body.theme-night .service-copy strong,
+body.theme-night .chat-area .card-text h4,
+body.theme-night .chat-area .v-name,
+body.theme-night .chat-area .confirm-value{color:var(--wx-text);}
+body.theme-night .install-copy span,
+body.theme-night .wake-copy span,
+body.theme-night .service-copy span,
+body.theme-night .chat-area .card-text p,
+body.theme-night .chat-area .v-cap,
+body.theme-night .chat-area .confirm-label{color:var(--wx-muted);}
+body.theme-night .companion-card{background:linear-gradient(145deg,#182d36 0%,#302b1f 100%);border-color:#344550;}
+body.theme-night .companion-room::before{background:rgba(255,255,255,.08);}
+body.theme-night .companion-room::after{background:rgba(32,183,123,.12);}
+body.theme-night .companion-name,
+body.theme-night .companion-level{color:#dceff2;}
+body.theme-night .companion-sub,
+body.theme-night .companion-stats{color:#aebbc0;}
+body.theme-night .companion-badges{background:rgba(255,255,255,.08);border-top-color:rgba(255,255,255,.08);}
+body.theme-night .companion-badge,
+body.theme-night .companion-checkin,
+body.theme-night .companion-rename{background:#242a31;color:#dceff2;border-color:#3a424c;}
 
 /* 浅色画布下的对话卡片：避免深色主题白字落在浅灰背景上 */
 .chat-area .choice-card,
@@ -310,6 +387,30 @@ body{background:var(--wx-bg);color:var(--wx-text);}
 .home-trust{padding:13px 5px 0;color:#999;font-size:12px;text-align:center;}
 .region-btn{max-width:132px;border:0;background:transparent;color:#555;font-family:inherit;font-size:12px;display:flex;align-items:center;gap:3px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .region-btn span{overflow:hidden;text-overflow:ellipsis;}.region-dot{width:6px;height:6px;border-radius:50%;background:var(--wx-green);flex-shrink:0;}
+.install-card{margin:0 0 0 44px;background:#fff;border:1px solid #dedede;border-radius:6px;padding:10px 11px;display:flex;align-items:center;gap:10px;box-shadow:0 1px 2px rgba(0,0,0,.04);}
+.install-card img{width:34px;height:34px;border-radius:9px;object-fit:cover;flex-shrink:0;}
+.install-copy{flex:1;min-width:0;line-height:1.35;}
+.install-copy strong{display:block;font-size:13px;font-weight:600;color:var(--wx-text);}
+.install-copy span{display:block;margin-top:2px;font-size:11px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.install-actions{display:flex;align-items:center;gap:4px;flex-shrink:0;}
+.install-primary{border:0;border-radius:5px;background:var(--wx-green);color:#fff;font:500 12px/1 inherit;padding:8px 10px;cursor:pointer;}
+.install-close{width:28px;height:28px;border:0;background:transparent;color:#999;font-size:18px;line-height:1;cursor:pointer;}
+.wake-card{margin:0 0 0 44px;background:#fff;border:1px solid #dedede;border-radius:6px;padding:12px;display:flex;align-items:center;gap:10px;box-shadow:0 1px 2px rgba(0,0,0,.04);}
+.wake-orb{width:34px;height:34px;border-radius:50%;background:#e8fff1;color:var(--wx-green);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.wake-card.listening .wake-orb{animation:mp 1s ease-in-out infinite;background:#d9f7e6;}
+.wake-copy{flex:1;min-width:0;line-height:1.35;}
+.wake-copy strong{display:block;font-size:13px;font-weight:600;color:var(--wx-text);}
+.wake-copy span{display:block;margin-top:2px;font-size:11px;color:#888;}
+.wake-toggle{border:0;border-radius:5px;background:var(--wx-green);color:#fff;font:500 12px/1 inherit;padding:8px 10px;cursor:pointer;flex-shrink:0;}
+.wake-toggle.off{background:#f1f1f1;color:#555;}
+.install-overlay{position:fixed;inset:0;z-index:3500;background:rgba(0,0,0,.48);display:flex;align-items:flex-end;justify-content:center;}
+.install-sheet{width:100%;max-width:480px;background:#fff;border-radius:18px 18px 0 0;padding:20px 18px calc(22px + env(safe-area-inset-bottom));box-shadow:0 -8px 24px rgba(0,0,0,.16);}
+.install-sheet-head{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+.install-sheet-head img{width:44px;height:44px;border-radius:11px;object-fit:cover;}
+.install-sheet-title{font-size:17px;font-weight:700;color:var(--wx-text);}
+.install-sheet-sub{font-size:12px;color:#888;margin-top:2px;}
+.install-steps{background:#f7f7f7;border-radius:10px;padding:12px 14px;margin:12px 0;color:#333;font-size:14px;line-height:1.9;}
+.install-sheet button{width:100%;border:0;border-radius:6px;background:var(--wx-green);color:#fff;font:500 15px/1 inherit;padding:13px;cursor:pointer;}
 
 /* AI 旅行伙伴养成卡 */
 .companion-card{margin:0 0 2px 44px;border-radius:14px;overflow:hidden;background:linear-gradient(145deg,#dff7ff 0%,#fff7d9 100%);border:1px solid rgba(80,130,150,.18);box-shadow:0 4px 14px rgba(35,85,100,.08);}
@@ -320,8 +421,18 @@ body{background:var(--wx-bg);color:var(--wx-text);}
 .companion-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
 .companion-name{font-size:15px;font-weight:700;color:#23424b;}
 .companion-sub{font-size:11px;color:#6b8187;margin-top:2px;}
+.companion-actions{display:flex;gap:6px;align-items:center;flex-shrink:0;}
 .companion-checkin{border:0;border-radius:14px;background:#fff;color:#576b95;font:500 12px/1 inherit;padding:7px 10px;box-shadow:0 1px 4px rgba(0,0,0,.08);cursor:pointer;}
 .companion-checkin.done{color:#8a8a8a;background:rgba(255,255,255,.65);}
+.companion-rename{border:0;border-radius:14px;background:rgba(255,255,255,.72);color:#20a070;font:500 12px/1 inherit;padding:7px 10px;box-shadow:0 1px 4px rgba(0,0,0,.06);cursor:pointer;}
+.agent-custom-field{margin-bottom:12px;}
+.agent-custom-field label{display:block;font-size:12px;color:#666;margin-bottom:6px;}
+.agent-custom-field input{width:100%;height:42px;border:1px solid #ddd;border-radius:7px;background:#f7f7f7;color:#191919;font:15px/1 inherit;padding:0 12px;outline:none;}
+.agent-custom-field input:focus{border-color:#20b77b;background:#fff;}
+.agent-preset-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;}
+.agent-preset{border:1px solid #ddd;border-radius:9px;background:#fff;padding:8px 4px;font:12px/1.3 inherit;color:#333;cursor:pointer;}
+.agent-preset strong{display:block;font-size:20px;margin-bottom:4px;}
+.agent-secondary{margin-top:8px!important;background:#f1f1f1!important;color:#555!important;}
 .companion-stage{height:66px;display:flex;align-items:center;justify-content:center;}
 .companion-avatar{border:0;background:none;font-size:50px;line-height:1;cursor:pointer;filter:drop-shadow(0 5px 3px rgba(45,75,75,.14));transform-origin:50% 100%;}
 .companion-avatar.play{animation:companionHop .55s ease;}
@@ -360,23 +471,35 @@ body{background:var(--wx-bg);color:var(--wx-text);}
 .media-input{display:none;}
 body.more-open .chat-area{padding-bottom:390px;}
 @media(max-width:360px){.more-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:360px){.install-card,.wake-card{margin-left:0}.install-copy span{white-space:normal}}
 @media(min-width:481px){body{margin-top:24px;height:calc(100vh - 48px);border:1px solid #ddd;box-shadow:0 10px 35px rgba(0,0,0,.09)}.input-bar{bottom:24px}.more-panel{bottom:83px}}
 </style>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAHGLzz7_TpG2MLnqT1kCROeNIzRr-EQac&libraries=places&language=zh-CN&loading=async" async defer></script>
 <script src="region-context.js"></script>
 </head>
 <body>
+<script>
+(function(){
+  var hour=new Date().getHours();
+  document.body.classList.toggle('theme-night',!(hour>=6&&hour<18));
+  var themeMeta=document.querySelector('meta[name="theme-color"]');
+  if(themeMeta)themeMeta.setAttribute('content',hour>=6&&hour<18?'#f7f7f7':'#171b20');
+})();
+</script>
 
 <!-- 入场动画 -->
 <div id="splash">
-  <div style="font-size:72px;animation:splashBounce 0.8s ease-out forwards;">👩‍✈️</div>
+  <img class="splash-logo" src="assets/brand/huaban-logo-v1.png" alt="华伴 logo">
   <div style="font-size:20px;font-weight:900;color:white;">华伴 AI 伙伴</div>
-  <div style="font-size:12px;color:rgba(255,255,255,0.4);">小本为您服务</div>
+  <div id="splash-agent-line" style="font-size:12px;color:rgba(255,255,255,0.4);">小本为您服务</div>
 </div>
 
 <!-- 顶部栏 -->
 <div class="top-bar">
-  <div class="top-logo">华伴</div>
+  <div class="brand-lockup">
+    <img class="brand-logo" src="assets/brand/huaban-logo-v1.png" alt="华伴 logo">
+    <div class="top-logo">华伴</div>
+  </div>
   <div id="voice-indicator" style="display:none;font-size:11px;color:rgba(255,59,48,0.9);animation:mp 0.8s ease-in-out infinite;">🔴 录音中</div>
   <button class="region-btn" id="region-btn" onclick="changeRegion()" aria-label="切换地区" title="切换地区"><i class="region-dot"></i><span id="region-label">正在定位</span>⌄</button>
   <button id="share-btn" onclick="shareRefLink()" aria-label="分享" title="分享" style="background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;">＋</button>
@@ -521,11 +644,11 @@ body.more-open .chat-area{padding-bottom:390px;}
         <div style="color:rgba(255,255,255,0.3);font-size:16px;">›</div>
       </div>
 
-      <div onclick="switchAgentGender()" style="display:flex;align-items:center;gap:12px;padding:14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:12px;margin-bottom:8px;cursor:pointer;">
-        <div style="font-size:20px;width:28px;text-align:center;">🔄</div>
+      <div onclick="openAgentCustomizer()" style="display:flex;align-items:center;gap:12px;padding:14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:12px;margin-bottom:8px;cursor:pointer;">
+        <div style="font-size:20px;width:28px;text-align:center;">✨</div>
         <div style="flex:1;">
-          <div style="font-size:14px;font-weight:600;color:white;">切换管家</div>
-          <div id="profile-agent-name" style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:2px;">当前：${agentName}</div>
+          <div style="font-size:14px;font-weight:600;color:white;">定制 AI 伙伴</div>
+          <div id="profile-agent-name" style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:2px;">当前：${agentEmoji} ${agentName} · ${agentTitle}</div>
         </div>
         <div style="color:rgba(255,255,255,0.3);font-size:16px;">›</div>
       </div>
@@ -573,6 +696,10 @@ let currentRole = null; // 'passenger' | 'driver'
 let currentGender = null; // 'male' | 'female'
 let agentEmoji = '👩‍✈️'; // 默认小本
 let agentName = '小本';
+let agentTitle = '出行管家';
+const AGENT_NAME_KEY = 'huaban_agent_name';
+const AGENT_TITLE_KEY = 'huaban_agent_title';
+const AGENT_EMOJI_KEY = 'huaban_agent_emoji';
 window._ttsVoice = 'FunAudioLLM/CosyVoice2-0.5B:diana';
 // 恢复已存性别（含currentGender同步）
 (function(){
@@ -580,17 +707,37 @@ window._ttsVoice = 'FunAudioLLM/CosyVoice2-0.5B:diana';
   if(g === 'female'){
     currentGender='female';
     agentEmoji='🧑‍✈️'; agentName='小墨';
-    window._ttsVoice='FunAudioLLM/CosyVoice2-0.5B:charles';
+    window._ttsVoice='FunAudioLLM/CosyVoice2-0.5B:diana';
   } else if(g === 'male'){
     currentGender='male';
     agentEmoji='👩‍✈️'; agentName='小本';
     window._ttsVoice='FunAudioLLM/CosyVoice2-0.5B:diana';
   }
 })();
+agentName = getSavedAgentName() || agentName;
+agentTitle = getSavedAgentTitle() || agentTitle;
+agentEmoji = getSavedAgentEmoji() || agentEmoji;
 let aiHistory = [];
 let isRecording = false;
 let recognition = null;
+let wakeRecognition = null;
+let wakeListening = false;
+let wakeSuspended = false;
 let bookingSubmitted = false;
+let deferredInstallPrompt = null;
+const VOICE_WAKE_KEY = 'huaban_voice_wake_enabled';
+
+window.addEventListener('beforeinstallprompt', (event) => {
+  event.preventDefault();
+  deferredInstallPrompt = event;
+  showInstallPrompt();
+});
+
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  localStorage.setItem('huaban_installed', '1');
+  dismissInstallPrompt();
+});
 
 // ── 全球地区上下文 ──
 // 地图定位全球可用；运营价格按 MARKET_CONFIG 逐个国家上线，避免误用澳洲规则。
@@ -638,6 +785,19 @@ function updateRegionUI(){
   const label=document.getElementById('region-label');
   if(label)label.textContent=currentRegion.city||currentRegion.country||'选择地区';
   document.documentElement.lang='zh-CN';
+}
+
+function applyTimeTheme(){
+  const hour=new Date().getHours();
+  const isDay=hour>=6&&hour<18;
+  document.body.classList.toggle('theme-night',!isDay);
+  const themeMeta=document.querySelector('meta[name="theme-color"]');
+  if(themeMeta)themeMeta.setAttribute('content',isDay?'#f7f7f7':'#171b20');
+}
+
+function startTimeTheme(){
+  applyTimeTheme();
+  setInterval(applyTimeTheme,5*60*1000);
 }
 
 function findAddressPart(components,type){
@@ -784,7 +944,12 @@ function addTyping(){
   chatArea.appendChild(div);scrollBottom();return div;
 }
 function delay(ms){return new Promise(r=>setTimeout(r,ms));}
-async function agentSay(html,ms=700){const t=addTyping();await delay(ms);t.remove();addMsg(html);speak(html);}
+async function agentSay(html,ms=700){
+  const t=addTyping();
+  await delay(ms);
+  t.remove();
+  speakBeforeText(html,()=>addMsg(html));
+}
 
 function fixMessageRoles(messages) {
   // 确保以user开头，且user/assistant交替
@@ -824,6 +989,13 @@ const COMPANION_LEVELS=[
   {name:'旅行专家',min:200,max:359},
   {name:'全球管家',min:360,max:Infinity}
 ];
+const COMPANION_VOICE_STAGES=[
+  {label:'童声',speed:1.15},
+  {label:'少女声',speed:1.08},
+  {label:'少女声',speed:1.03},
+  {label:'青年女性',speed:0.98},
+  {label:'青年女性',speed:0.95}
+];
 
 function companionToday(){
   const d=new Date();
@@ -858,6 +1030,12 @@ function companionLevel(xp){
   return COMPANION_LEVELS.find(l=>xp>=l.min&&xp<=l.max)||COMPANION_LEVELS[0];
 }
 
+function companionVoiceStage(state=getCompanion()){
+  const level=companionLevel(state.xp);
+  const index=Math.max(0,COMPANION_LEVELS.indexOf(level));
+  return COMPANION_VOICE_STAGES[index]||COMPANION_VOICE_STAGES[0];
+}
+
 function companionEscape(value){
   return String(value).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 }
@@ -888,11 +1066,15 @@ function renderCompanionCard(){
   const next=COMPANION_LEVELS[levelIndex+1];
   const progress=next?Math.max(4,Math.min(100,((state.xp-level.min)/(next.min-level.min))*100)):100;
   const checked=state.lastCheckIn===companionToday();
+  const voiceStage=companionVoiceStage(state);
   card.innerHTML=`
     <div class="companion-room">
       <div class="companion-head">
-        <div><div class="companion-name">${agentName} · ${level.name}</div><div class="companion-sub">心情：${companionMood(state)}　连续见面 ${state.streak} 天</div></div>
-        <button class="companion-checkin${checked?' done':''}" onclick="checkInCompanion()">${checked?'今天见过啦':'每日见面'}</button>
+        <div><div class="companion-name">${agentName} · ${agentTitle}</div><div class="companion-sub">${level.name} · 声音：${voiceStage.label} · 心情：${companionMood(state)}</div></div>
+        <div class="companion-actions">
+          <button class="companion-rename" onclick="openAgentCustomizer()">定制</button>
+          <button class="companion-checkin${checked?' done':''}" onclick="checkInCompanion()">${checked?'今天见过啦':'每日见面'}</button>
+        </div>
       </div>
       <div class="companion-stage">
         <button class="companion-avatar" id="companion-avatar" onclick="petCompanion()" aria-label="和${agentName}互动">${agentEmoji}</button>
@@ -1065,6 +1247,7 @@ function buildPersonalGreeting(){
 let ttsAudio = null;
 let ttsQueue = [];
 let ttsPlaying = false;
+const TEXT_AFTER_VOICE_MS = 180;
 
 function stopTTS() {
   ttsQueue = []; // 清空队列
@@ -1075,12 +1258,19 @@ function stopTTS() {
 async function processTTSQueue() {
   if(ttsPlaying || ttsQueue.length === 0) return;
   ttsPlaying = true;
-  const {text, onDone} = ttsQueue.shift();
+  const {text, onDone, onStart} = ttsQueue.shift();
+  let started = false;
+  const markStarted = () => {
+    if(started)return;
+    started = true;
+    onStart && onStart();
+  };
   try {
     const voice = window._ttsVoice || 'FunAudioLLM/CosyVoice2-0.5B:diana';
+    const voiceStage = companionVoiceStage();
     const res = await fetch('/api/tts', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({text, voice})
+      body: JSON.stringify({text, voice, speed: voiceStage.speed})
     });
     if(res.ok){
       const data = await res.json();
@@ -1089,11 +1279,12 @@ async function processTTSQueue() {
         ttsAudio = audio;
         audio.onended = () => { ttsAudio=null; ttsPlaying=false; onDone&&onDone(); processTTSQueue(); };
         audio.onerror = () => { ttsAudio=null; ttsPlaying=false; onDone&&onDone(); processTTSQueue(); };
-        audio.play().catch(()=>{ ttsPlaying=false; onDone&&onDone(); processTTSQueue(); });
+        audio.play().then(markStarted).catch(()=>{ markStarted(); ttsPlaying=false; onDone&&onDone(); processTTSQueue(); });
         return;
       }
     }
   } catch(e){ console.warn('TTS:', e.message); }
+  markStarted();
   ttsPlaying=false; onDone&&onDone(); processTTSQueue();
 }
 
@@ -1103,7 +1294,20 @@ async function speak(text) {
     .replace(/美元/g,'澳元').trim();
   if(!clean) return;
   if(recognition){ try{ recognition.stop(); }catch(e){} }
-  ttsQueue.push({text: clean, onDone: null});
+  pauseWakeListening();
+  ttsQueue.push({text: clean, onDone: maybeStartWakeListening});
+  processTTSQueue();
+}
+
+function speakBeforeText(text, renderText, onDone) {
+  const clean = text.replace(/<[^>]*>/g,'').replace(/\*\*([^*]+)\*\*/g,'$1').replace(/\s+/g,' ')
+    .replace(/AUD\s*([\d.]+)/g,'澳元$1').replace(/A\$([\d.]+)/g,'澳元$1').replace(/\$([\d.]+)/g,'澳元$1')
+    .replace(/美元/g,'澳元').trim();
+  const showText = () => setTimeout(()=>renderText && renderText(), TEXT_AFTER_VOICE_MS);
+  if(!clean){ renderText && renderText(); onDone && onDone(); return; }
+  if(recognition){ try{ recognition.stop(); }catch(e){} }
+  pauseWakeListening();
+  ttsQueue.push({text: clean, onDone: ()=>{ onDone&&onDone(); maybeStartWakeListening(); }, onStart: showText});
   processTTSQueue();
 }
 
@@ -1202,16 +1406,27 @@ function toggleMic(){
   }
 }
 
+function setVoiceModeUI(active){
+  const btn = document.getElementById('mic-btn');
+  const vi = document.getElementById('voice-indicator');
+  if(active){
+    btn?.classList.add('recording');
+    btn?.setAttribute('aria-label','停止连续语音对话');
+    if(vi){ vi.style.display='block'; vi.textContent='🎙️ 连续对话中...'; }
+  }else{
+    btn?.classList.remove('recording');
+    btn?.setAttribute('aria-label','连续语音对话');
+    if(vi) vi.style.display='none';
+  }
+}
+
 function startVoiceMode(){
   if(navigator.mediaDevices?.getUserMedia){
     navigator.mediaDevices.getUserMedia({audio:true}).catch(()=>{});
   }
+  pauseWakeListening();
   voiceMode = true;
-  const btn = document.getElementById('mic-btn');
-  btn.classList.add('recording');
-  btn.setAttribute('aria-label','停止连续语音对话');
-  const vi = document.getElementById('voice-indicator');
-  if(vi){ vi.style.display='block'; vi.textContent='🎙️ 连续对话中...'; }
+  setVoiceModeUI(true);
   startListeningLoop();
 }
 
@@ -1219,11 +1434,8 @@ function stopVoiceMode(){
   voiceMode = false;
   recognition?.stop();
   stopTTS();
-  const btn = document.getElementById('mic-btn');
-  btn.classList.remove('recording');
-  btn.setAttribute('aria-label','连续语音对话');
-  const vi = document.getElementById('voice-indicator');
-  if(vi) vi.style.display='none';
+  setVoiceModeUI(false);
+  maybeStartWakeListening();
 }
 
 let voicePauseTimer = null;
@@ -1321,6 +1533,139 @@ function startListeningLoop(){
 function updateVoiceStatus(text){
   const vi = document.getElementById('voice-indicator');
   if(vi) vi.textContent = text;
+}
+
+function voiceWakeEnabled(){
+  return localStorage.getItem(VOICE_WAKE_KEY)==='1';
+}
+
+function renderVoiceWakeCard(){
+  const existing=document.getElementById('voice-wake-card');
+  if(existing)existing.remove();
+  const card=document.createElement('section');
+  card.id='voice-wake-card';
+  card.className='wake-card';
+  const enabled=voiceWakeEnabled();
+  if(enabled&&wakeListening)card.classList.add('listening');
+  card.innerHTML=`
+    <div class="wake-orb">声</div>
+    <div class="wake-copy">
+      <strong>${enabled?'语音唤起已开启':'语音唤起'}</strong>
+      <span>${enabled?(wakeListening?'说“华伴、小伴、小本”就能叫我':'正在准备监听唤醒词'):'点一次授权，以后不用找按钮'}</span>
+    </div>
+    <button class="wake-toggle ${enabled?'off':''}" onclick="${enabled?'disableVoiceWake()':'enableVoiceWake()'}">${enabled?'关闭':'开启'}</button>`;
+  const quick=document.getElementById('quick-guide-card');
+  if(quick)quick.insertAdjacentElement('afterend',card);
+  else chatArea.appendChild(card);
+}
+
+async function enableVoiceWake(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){alert('请使用Safari或Chrome');return;}
+  try{
+    if(navigator.mediaDevices?.getUserMedia)await navigator.mediaDevices.getUserMedia({audio:true});
+  }catch(e){
+    addMsg('麦克风还没有授权，打开权限后我就能听到唤醒词。');
+    return;
+  }
+  localStorage.setItem(VOICE_WAKE_KEY,'1');
+  addMsg('开启语音唤起',true);
+  renderVoiceWakeCard();
+  startWakeListening();
+  await agentSay(`好呀。以后你说“华伴”“小伴”或“${agentName}”，我就出来。`,120);
+}
+
+function disableVoiceWake(){
+  localStorage.setItem(VOICE_WAKE_KEY,'0');
+  stopWakeListening(true);
+  renderVoiceWakeCard();
+}
+
+function maybeStartWakeListening(){
+  wakeSuspended=false;
+  if(voiceWakeEnabled())startWakeListening();
+}
+
+function pauseWakeListening(){
+  if(!wakeListening&&!wakeRecognition)return;
+  wakeSuspended=true;
+  stopWakeListening(false);
+}
+
+function stopWakeListening(manual=false){
+  if(manual)wakeSuspended=false;
+  wakeListening=false;
+  if(wakeRecognition){
+    try{wakeRecognition.onend=null;wakeRecognition.stop();}catch(e){}
+    wakeRecognition=null;
+  }
+  renderVoiceWakeCard();
+}
+
+function startWakeListening(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR||!voiceWakeEnabled()||wakeListening||wakeSuspended||voiceMode||isSpeaking||ttsPlaying)return;
+  wakeRecognition=new SR();
+  wakeRecognition.lang='zh-CN';
+  wakeRecognition.continuous=true;
+  wakeRecognition.interimResults=true;
+  wakeRecognition.onstart=()=>{
+    wakeListening=true;
+    renderVoiceWakeCard();
+  };
+  wakeRecognition.onresult=(e)=>{
+    let heard='';
+    for(let i=e.resultIndex;i<e.results.length;i++)heard+=e.results[i][0].transcript;
+    heard=heard.trim();
+    if(!heard||!isWakePhrase(heard))return;
+    const command=extractWakeCommand(heard);
+    stopWakeListening(false);
+    wakeSuspended=true;
+    handleWakePhrase(command);
+  };
+  wakeRecognition.onerror=(e)=>{
+    wakeListening=false;
+    renderVoiceWakeCard();
+    if(e.error==='not-allowed'||e.error==='service-not-allowed')return;
+  };
+  wakeRecognition.onend=()=>{
+    wakeListening=false;
+    renderVoiceWakeCard();
+    if(voiceWakeEnabled()&&!wakeSuspended&&!voiceMode&&!isSpeaking)setTimeout(startWakeListening,800);
+  };
+  try{wakeRecognition.start();}catch(e){}
+}
+
+function isWakePhrase(text){
+  return /(你好)?(华伴|小伴|小本|小管家)/i.test(String(text||'').replace(/\s/g,''));
+}
+
+function extractWakeCommand(text){
+  return String(text||'')
+    .replace(/\s/g,'')
+    .replace(/^(你好|喂)?(华伴|小伴|小本|小管家)[，,。.!！]*/i,'')
+    .trim();
+}
+
+async function handleWakePhrase(command){
+  pendingVoiceText='';
+  document.getElementById('chat-input').value='';
+  voiceMode=true;
+  setVoiceModeUI(true);
+  if(command){
+    updateVoiceStatus('💭 思考中...');
+    await sendVoiceMessage(command);
+    return;
+  }
+  isSpeaking=true;
+  updateVoiceStatus('✅ 已唤醒');
+  speakAndResume('我在，直接说您需要什么。',()=>addMsg('我在，直接说您需要什么。'),()=>{
+    isSpeaking=false;
+    if(voiceMode){
+      updateVoiceStatus('👂 听着...');
+      startListeningLoop();
+    }
+  });
 }
 
 // ── 谐音纠错表 ──
@@ -1453,6 +1798,14 @@ async function sendVoiceMessage(text){
     text;
   addMsg(displayText, true);
   if(text && text.trim()) aiHistory.push({role:'user',content:corrected.trim()});
+  if(detectAgentNamingIntent(corrected)){
+    await agentSay(`好呀，以后我就叫<strong>${agentName}</strong>。`,180);
+    return;
+  }
+  if(isPlatformGuideIntent(corrected)){
+    await showPlatformGuide(false);
+    return;
+  }
   if(currentRole==='passenger') extractInfo(corrected);
 
   // 方言检测
@@ -1511,12 +1864,12 @@ async function sendVoiceMessage(text){
 
     const actionMatch = reply.match(/\[ACTION:\s*(\w+)\s*(\w+)?\]/);
     const clean = reply.replace(/\[ACTION:.*?\]/,'').trim();
-    addMsg(clean);
+    if(isWeakAIReply(clean))recordAITrainingQuestion(text, 'AI 回答显得偏拒绝或没有接住用户需求：'+clean, 'weak-reply');
 
     // 语音播报，播完后重启监听
     isSpeaking = true;
     updateVoiceStatus('🔊 回答中...');
-    speakAndResume(clean, ()=>{
+    speakAndResume(clean, ()=>addMsg(clean), ()=>{
       isSpeaking = false;
       pendingVoiceText = '';
       clearVoicePauseTimer();
@@ -1532,7 +1885,8 @@ async function sendVoiceMessage(text){
     }
   } catch(e){
     typing.remove();
-    addMsg('错误：'+e.message);
+    addMsg(chatServiceErrorMessage(e));
+    recordAITrainingQuestion(text, '语音对话时 AI 服务异常：'+String(e?.message||e).slice(0,180), 'voice-error');
     isSpeaking = false;
     pendingVoiceText = '';
     clearVoicePauseTimer();
@@ -1540,15 +1894,16 @@ async function sendVoiceMessage(text){
   }
 }
 
-async function speakAndResume(text, onDone) {
+async function speakAndResume(text, renderText, onDone) {
   const clean = text.replace(/<[^>]*>/g,'').replace(/\s+/g,' ')
     .replace(/AUD\s*([\d.]+)/g,'澳元$1').replace(/A\$([\d.]+)/g,'澳元$1').replace(/\$([\d.]+)/g,'澳元$1')
     .replace(/美元/g,'澳元').trim();
-  if(!clean){ onDone && onDone(); return; }
+  const showText = () => setTimeout(()=>renderText && renderText(), TEXT_AFTER_VOICE_MS);
+  if(!clean){ renderText && renderText(); onDone && onDone(); return; }
   stopTTS();
   if(recognition){ try{ recognition.stop(); }catch(e){} }
   // 清空队列，只播这一条，播完执行onDone
-  ttsQueue = [{text: clean, onDone}];
+  ttsQueue = [{text: clean, onDone, onStart: showText}];
   processTTSQueue();
 }
 
@@ -1577,23 +1932,146 @@ function guessGender(name){
   return null;
 }
 
+function defaultAgentNameForGender(userGender=currentGender){
+  return userGender==='female'?'小墨':'小本';
+}
+
+function defaultAgentEmojiForGender(userGender=currentGender){
+  return userGender==='female'?'🧑‍✈️':'👩‍✈️';
+}
+
+function cleanAgentName(value){
+  return String(value||'').replace(/[，。！？,.!?、\s]/g,'').slice(0,8);
+}
+
+function cleanAgentTitle(value){
+  return String(value||'').replace(/[，。！？,.!?、\s]/g,'').slice(0,10);
+}
+
+function cleanAgentEmoji(value){
+  return String(value||'').trim().slice(0,4);
+}
+
+function getSavedAgentName(){
+  return cleanAgentName(localStorage.getItem(AGENT_NAME_KEY)||'');
+}
+
+function getSavedAgentTitle(){
+  return cleanAgentTitle(localStorage.getItem(AGENT_TITLE_KEY)||'');
+}
+
+function getSavedAgentEmoji(){
+  return cleanAgentEmoji(localStorage.getItem(AGENT_EMOJI_KEY)||'');
+}
+
+function updateAgentIdentityUI(){
+  const av = document.getElementById('agent-avatar');
+  const nm = document.getElementById('agent-name');
+  const profile = document.getElementById('profile-agent-name');
+  const splashLine = document.getElementById('splash-agent-line');
+  if(av) av.textContent = agentEmoji;
+  if(nm) nm.textContent = `${agentName} · ${agentTitle}`;
+  if(profile) profile.textContent = `当前：${agentEmoji} ${agentName} · ${agentTitle}`;
+  if(splashLine) splashLine.textContent = agentName+'为您服务';
+}
+
+function setAgentCustomization({name,title,emoji}){
+  const nextName=cleanAgentName(name);
+  const nextTitle=cleanAgentTitle(title);
+  const nextEmoji=cleanAgentEmoji(emoji);
+  if(nextName.length<2 || nextTitle.length<2 || !nextEmoji)return false;
+  localStorage.setItem(AGENT_NAME_KEY,nextName);
+  localStorage.setItem(AGENT_TITLE_KEY,nextTitle);
+  localStorage.setItem(AGENT_EMOJI_KEY,nextEmoji);
+  agentName=nextName;
+  agentTitle=nextTitle;
+  agentEmoji=nextEmoji;
+  updateAgentIdentityUI();
+  renderCompanionCard();
+  return true;
+}
+
+function openAgentCustomizer(){
+  document.getElementById('agent-customizer')?.remove();
+  const overlay=document.createElement('div');
+  overlay.id='agent-customizer';
+  overlay.className='install-overlay';
+  overlay.innerHTML=`
+    <div class="install-sheet">
+      <div class="install-sheet-head">
+        <div style="width:44px;height:44px;border-radius:12px;background:#f1fbf6;display:flex;align-items:center;justify-content:center;font-size:28px;">${agentEmoji}</div>
+        <div>
+          <div class="install-sheet-title">定制你的 AI 伙伴</div>
+          <div class="install-sheet-sub">名字、身份、形象都会出现在聊天里</div>
+        </div>
+      </div>
+      <div class="agent-custom-field">
+        <label for="agent-name-input">名字</label>
+        <input id="agent-name-input" value="${companionEscape(agentName)}" maxlength="8" placeholder="例如：小旅">
+      </div>
+      <div class="agent-custom-field">
+        <label for="agent-title-input">身份</label>
+        <input id="agent-title-input" value="${companionEscape(agentTitle)}" maxlength="10" placeholder="例如：出行管家">
+      </div>
+      <div class="agent-custom-field">
+        <label for="agent-emoji-input">形象</label>
+        <input id="agent-emoji-input" value="${companionEscape(agentEmoji)}" maxlength="4" placeholder="例如：🧳">
+      </div>
+      <div class="agent-preset-row">
+        <button class="agent-preset" onclick="fillAgentPreset('小旅','旅行伙伴','🧳')"><strong>🧳</strong>旅行</button>
+        <button class="agent-preset" onclick="fillAgentPreset('小伴','华人帮办','🤝')"><strong>🤝</strong>帮办</button>
+        <button class="agent-preset" onclick="fillAgentPreset('小墨','出行管家','🧑‍✈️')"><strong>🧑‍✈️</strong>出行</button>
+        <button class="agent-preset" onclick="fillAgentPreset('小云','本地向导','📍')"><strong>📍</strong>本地</button>
+      </div>
+      <button onclick="saveAgentCustomization()">保存</button>
+      <button class="agent-secondary" onclick="document.getElementById('agent-customizer')?.remove()">取消</button>
+    </div>`;
+  overlay.onclick=(event)=>{ if(event.target===overlay)overlay.remove(); };
+  document.body.appendChild(overlay);
+}
+
+function fillAgentPreset(name,title,emoji){
+  const nameInput=document.getElementById('agent-name-input');
+  const titleInput=document.getElementById('agent-title-input');
+  const emojiInput=document.getElementById('agent-emoji-input');
+  if(nameInput)nameInput.value=name;
+  if(titleInput)titleInput.value=title;
+  if(emojiInput)emojiInput.value=emoji;
+}
+
+function saveAgentCustomization(){
+  const ok=setAgentCustomization({
+    name:document.getElementById('agent-name-input')?.value,
+    title:document.getElementById('agent-title-input')?.value,
+    emoji:document.getElementById('agent-emoji-input')?.value
+  });
+  if(!ok){alert('名字和身份至少 2 个字，形象可以填一个表情');return;}
+  document.getElementById('agent-customizer')?.remove();
+  companionSay(`我是${agentName}，${agentTitle}`);
+  speak(`好的，我现在是${agentName}，${agentTitle}`);
+}
+
+function detectAgentNamingIntent(text){
+  const match=String(text||'').match(/(?:以后你叫|以后叫你|你叫|叫你|给你取名叫|你的名字叫)\s*([^\s，。！？,.!?、]{2,8})/);
+  if(!match)return false;
+  return setAgentCustomization({name:match[1],title:agentTitle,emoji:agentEmoji});
+}
+
 // 根据用户性别决定管家性别（异性）+ TTS音色
 function setAgentByUserGender(userGender){
   if(currentGender === userGender) return; // 没变就不动
   currentGender = userGender;
   localStorage.setItem('au_gender', userGender);
   if(userGender==='female'){
-    agentEmoji='🧑‍✈️'; agentName='小墨';
-    window._ttsVoice = 'FunAudioLLM/CosyVoice2-0.5B:charles'; // 男声
+    agentEmoji=getSavedAgentEmoji()||defaultAgentEmojiForGender(userGender);
+    agentName=getSavedAgentName()||defaultAgentNameForGender(userGender);
   } else {
-    agentEmoji='👩‍✈️'; agentName='小本';
-    window._ttsVoice = 'FunAudioLLM/CosyVoice2-0.5B:diana'; // 女声
+    agentEmoji=getSavedAgentEmoji()||defaultAgentEmojiForGender(userGender);
+    agentName=getSavedAgentName()||defaultAgentNameForGender(userGender);
   }
-  // 更新顶部头像
-  const av = document.getElementById('agent-avatar');
-  const nm = document.getElementById('agent-name');
-  if(av) av.textContent = agentEmoji;
-  if(nm) nm.textContent = agentName + ' · 在线';
+  window._ttsVoice = 'FunAudioLLM/CosyVoice2-0.5B:diana';
+  agentTitle=getSavedAgentTitle()||agentTitle;
+  updateAgentIdentityUI();
 }
 
 // 智能识别用户性别
@@ -1649,8 +2127,13 @@ async function supaInsert(table,data){
 }
 
 // ── 启动 ──
-window.onload=async function(){
+let appStarted=false;
+async function startApp(){
+  if(appStarted)return;
+  appStarted=true;
+  startTimeTheme();
   updateRegionUI();
+  updateAgentIdentityUI();
   detectRegion();
   // 落地读取推荐码
   const urlRef = new URLSearchParams(window.location.search).get('ref');
@@ -1712,13 +2195,23 @@ window.onload=async function(){
     // 新用户
     renderWelcomeHome();
   }
-};
+  maybeStartWakeListening();
+}
+
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded',startApp,{once:true});
+}else{
+  startApp();
+}
+window.addEventListener('load',startApp,{once:true});
 
 // ── 首次访问首页 ──
 function renderWelcomeHome(){
   currentRole='passenger';
   chatArea.innerHTML='';
   addMsg(`<strong>你好，我是${agentName}</strong><br><span style="color:#666;">在${currentRegion.city||currentRegion.country}需要出行或华人服务，直接用普通话或文字告诉我。<br>没有中间商赚差价，只让需要的人遇见可靠的人。</span>`);
+  renderQuickGuideCard();
+  renderVoiceWakeCard();
   const companion=getCompanion();
   if(addCompanionBadge(companion,currentRegion.city||currentRegion.country,'📍'))saveCompanion(companion);
   const companionCard=document.createElement('section');
@@ -1727,6 +2220,7 @@ function renderWelcomeHome(){
   companionCard.setAttribute('aria-label',`${agentName}旅行伙伴养成状态`);
   chatArea.appendChild(companionCard);
   renderCompanionCard();
+  showInstallPrompt();
   document.getElementById('chat-input').placeholder='输入你需要的帮助';
   renderMoreMenu();
   refreshHomeRegionCopy();
@@ -1737,8 +2231,45 @@ function clearWelcomeHome(){
   document.querySelector('.home-welcome')?.remove();
 }
 
+function renderQuickGuideCard(){
+  const card=document.createElement('section');
+  card.className='install-card';
+  card.id='quick-guide-card';
+  card.setAttribute('aria-label','了解华伴和使用方法');
+  card.innerHTML=`
+    <img src="assets/brand/huaban-logo-v1.png" alt="">
+    <div class="install-copy">
+      <strong>第一次来？我可以先介绍华伴</strong>
+      <span>30 秒知道怎么用、怎么预约、平台怎么保障</span>
+    </div>
+    <div class="install-actions">
+      <button class="install-primary" onclick="showPlatformGuide(true)">了解</button>
+    </div>`;
+  chatArea.appendChild(card);
+}
+
+function isPlatformGuideIntent(text){
+  return /华伴.*(是什么|介绍|怎么用|如何用|怎么玩)|这个.*(平台|app|软件).*(是什么|怎么用)|平台.*(介绍|规则|怎么用)|新手|使用方法|使用说明|不会用|怎么预约|如何预约|你能做什么|你可以做什么/i.test(String(text||''));
+}
+
+async function showPlatformGuide(fromUser=false){
+  if(fromUser)addMsg('介绍一下华伴',true);
+  const guide=`<strong>华伴是什么？</strong><br>
+华伴是一个会聊天、会办事、会成长的 AI 伙伴。现在我先当你的小管家，帮你预约接机、送机、包车，也能整理海外出行和本地生活需求。<br><br>
+<strong>怎么用？</strong><br>
+1. 直接说需求：比如“明天下午四点送我去机场”。<br>
+2. 我会帮你补齐时间、人数、行李和车型。<br>
+3. 提交后，服务者会联系你确认细节和费用。<br><br>
+<strong>平台原则</strong><br>
+没有中间商赚差价，只让需要的人遇见可靠的人。华伴提供 AI 工具、信用记录和信息连接，交易细节由你和服务者确认。<br><br>
+<strong>我会成长</strong><br>
+我现在还是小朋友，先帮你把车定好；以后会有更多本领，当好你生活中的管家、工作上的助理。`;
+  await agentSay(guide,160);
+}
+
 const MORE_MENU={
   home:[
+    {key:'intro',icon:'💬',label:'介绍'},
     {key:'ride',icon:'🚗',label:'用车',category:true},
     {key:'travel',icon:'🧳',label:'旅游',category:true},
     {key:'rental',icon:'🚙',label:'租车'},
@@ -1802,7 +2333,7 @@ function closeMorePanel(){
 
 function runMoreAction(key,label){
   closeMorePanel();
-  const activeKeys=['pickup','dropoff','charter','driver'];
+  const activeKeys=['intro','pickup','dropoff','charter','driver'];
   if(!activeKeys.includes(key)){
     showComingSoon(label);
     return;
@@ -1812,13 +2343,15 @@ function runMoreAction(key,label){
   if(key==='driver'){window.location.href='driver-app.html';return;}
   if(key==='camera'){document.getElementById('camera-input')?.click();return;}
   if(key==='image'){document.getElementById('image-input')?.click();return;}
+  if(key==='intro'){showPlatformGuide(true);return;}
   beginQuickService(serviceMap[key]||label);
 }
 
 async function showComingSoon(label){
   currentRole='passenger';
   addMsg(label,true);
-  await agentSay(`${label}功能即将推出，敬请期待。我们先把用车服务打磨好 😊`,200);
+  recordAITrainingQuestion(label, '用户点了暂未开通的能力入口', 'more-menu');
+  await agentSay(`我现在还是小朋友，先当你的小管家，帮您定个车、整理一下出行需求。以后我会有更多本领，当好你生活中的管家、工作上的助理。`,200);
 }
 
 function handleMediaPick(input,label){
@@ -2029,7 +2562,9 @@ function buildPrompt(){
 当地司机市场：${currentRegion.marketEnabled?'已开通':'筹备中；可以咨询和登记需求，但不要承诺即时派车或引用澳洲价格'}
 
 【身份】
-名字：${agentName}，${agentEmoji}
+名字：${agentName}
+身份：${agentTitle}
+形象：${agentEmoji}
 服务：接机、送机、包车出游
 平台：没有中间商赚差价，只让需要的人遇见可靠的人。平台不从单笔交易中抽佣，用户与服务者直接达成共识合约并交易，平台靠AI工具、认证展示、订阅、打赏和城市贡献网络盈利
 语气：像朋友聊天，口语化，每次只说1句话
@@ -2038,6 +2573,18 @@ function buildPrompt(){
 你也是用户正在养成的AI旅行伙伴。
 当前阶段：${companionStage.name}，经验值${companionState.xp}，亲密度${companionState.affection}/100，心情：${companionMood(companionState)}。
 可以偶尔自然表现陪伴感，但不要每句话都提等级、亲密度或养成，也不要影响用户办事效率。
+
+【能力边界表达】
+当用户提出当前还没开通的生活、工作、公共交通、出租车、Uber、拼车或其他需求时，不要生硬拒绝，不要说“我只做出行”。
+统一口径：我现在还是小朋友，先当你的小管家，帮您定个车、整理出行需求；以后我会有更多本领，当好你生活中的管家、工作上的助理。
+然后给当前能做的一步：帮用户登记用车需求、整理行程、记录生活/工作需求，或提示会后续开放。
+
+【平台介绍与新手引导】
+当用户问“华伴是什么”“这个平台怎么用”“你能做什么”“怎么预约”时，先简短介绍：
+华伴是一个会聊天、会办事、会成长的 AI 伙伴，底层连接海外华人的出行、本地生活、专业服务和城市互助网络。
+使用方式：直接用中文说需求，例如“明天下午四点送我去机场”；你帮用户补齐时间、人数、行李、车型并提交需求。
+平台原则：没有中间商赚差价，只让需要的人遇见可靠的人；华伴提供 AI 工具、信用记录和信息连接，具体服务和费用由用户与服务者确认。
+最后引导用户说出一个真实需求，优先从接机、送机、包车开始。
 
 【一句话下单——最高优先级】
 用户说"下周五下午四点送我去机场" → 立即 [ACTION: show_vehicles to_airport]
@@ -2123,6 +2670,46 @@ function buildPrompt(){
   return p;
 }
 
+const AI_TRAINING_KEY='huaban_ai_training_queue';
+
+function readAITrainingQueue(){
+  try{
+    const parsed=JSON.parse(localStorage.getItem(AI_TRAINING_KEY)||'[]');
+    return Array.isArray(parsed)?parsed:[];
+  }catch(e){
+    return [];
+  }
+}
+
+function recordAITrainingQuestion(question, context='', source='chat-error'){
+  const cleanQuestion=String(question||'').replace(/<[^>]*>/g,'').trim();
+  if(!cleanQuestion)return;
+  const items=readAITrainingQueue();
+  const recentDuplicate=items.find(item=>
+    item.question===cleanQuestion &&
+    (item.status||'open')==='open' &&
+    Date.now()-new Date(item.createdAt||0).getTime()<24*60*60*1000
+  );
+  if(recentDuplicate)return;
+  const now=new Date().toISOString();
+  items.unshift({
+    id:'train-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),
+    question:cleanQuestion,
+    context,
+    source,
+    status:'open',
+    coachAnswer:'',
+    personaNote:'',
+    createdAt:now,
+    updatedAt:now
+  });
+  localStorage.setItem(AI_TRAINING_KEY,JSON.stringify(items.slice(0,200)));
+}
+
+function isWeakAIReply(reply){
+  return /我只做|不知道|无法回答|不能帮助|不支持|暂时不能|抱歉.*(不能|无法)|超出.*范围/i.test(String(reply||''));
+}
+
 async function sendMessage(){ stopTTS();
   const input=document.getElementById('chat-input');
   const msg=input.value.trim();if(!msg)return;
@@ -2131,6 +2718,14 @@ async function sendMessage(){ stopTTS();
   closeMorePanel();
   addMsg(msg,true);
   if(msg && msg.trim()) aiHistory.push({role:'user',content:msg.trim()});
+  if(detectAgentNamingIntent(msg)){
+    await agentSay(`好呀，以后我就叫<strong>${agentName}</strong>。`,180);
+    return;
+  }
+  if(isPlatformGuideIntent(msg)){
+    await showPlatformGuide(false);
+    return;
+  }
 
   // 提取信息（仅乘客模式）
   if(currentRole==='passenger'){
@@ -2161,14 +2756,31 @@ async function sendMessage(){ stopTTS();
 
     const actionMatch=reply.match(/\[ACTION:\s*(\w+)\s*(\w+)?\]/);
     const clean=reply.replace(/\[ACTION:.*?\]/,'').trim();
-    addMsg(clean);
-    if(!voiceMode) speak(clean); // 语音模式下由sendVoiceMessage处理
+    if(isWeakAIReply(clean))recordAITrainingQuestion(msg, 'AI 回答显得偏拒绝或没有接住用户需求：'+clean, 'weak-reply');
+    if(!voiceMode) speakBeforeText(clean,()=>addMsg(clean));
+    else addMsg(clean); // 语音模式下由sendVoiceMessage处理
 
     if(actionMatch){
       await delay(800);
       handleAction(actionMatch[1],actionMatch[2]);
     }
-  }catch(e){typing.remove();addMsg('错误：'+e.message);console.error('sendMessage error:',e);}
+  }catch(e){
+    typing.remove();
+    addMsg(chatServiceErrorMessage(e));
+    recordAITrainingQuestion(msg, '文字对话时 AI 服务异常：'+String(e?.message||e).slice(0,180), 'chat-error');
+    console.error('sendMessage error:',e);
+  }
+}
+
+function chatServiceErrorMessage(error){
+  const message=String(error?.message||'');
+  if(/HTTP(404|405|501)/.test(message)){
+    return 'AI 服务暂时没有接上。你可以先用接机、送机、包车入口继续填写需求。';
+  }
+  if(/Failed to fetch|NetworkError|Load failed/i.test(message)){
+    return '网络有点不稳，我暂时连不上 AI 服务。请稍后再试。';
+  }
+  return 'AI 服务暂时繁忙，请稍后再试。';
 }
 
 function extractInfo(msg){
@@ -3494,20 +4106,85 @@ function switchToDriver(){
   window.location.href = 'driver-app.html';
 }
 
-function addToHome(){
-  speak('在Safari点击底部分享按钮，选择添加到主屏幕，就可以像App一样使用了');
-  alert('📱 添加步骤：\n1. 点击Safari底部"分享"按钮（方块加箭头）\n2. 选择"添加到主屏幕"\n3. 点击"添加"');
+function isStandaloneApp(){
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 }
 
-function switchAgentGender(){
-  const current = localStorage.getItem('au_gender')||'male';
-  const newGender = current==='female'?'male':'female';
-  localStorage.setItem('au_gender', newGender);
-  setAgentByUserGender(newGender);
-  const el = document.getElementById('profile-agent-name');
-  if(el) el.textContent = '当前：'+agentName;
-  renderCompanionCard();
-  speak('好的，已为您切换管家');
+function isIosDevice(){
+  return /iphone|ipad|ipod/i.test(navigator.userAgent);
+}
+
+function showInstallPrompt(){
+  if(isStandaloneApp() || localStorage.getItem('huaban_install_dismissed')==='1')return;
+  if(document.getElementById('install-card'))return;
+  const card=document.createElement('section');
+  card.id='install-card';
+  card.className='install-card';
+  card.setAttribute('aria-label','添加华伴到手机桌面');
+  card.innerHTML=`
+    <img src="assets/brand/huaban-logo-v1.png" alt="">
+    <div class="install-copy">
+      <strong>添加到手机桌面</strong>
+      <span>下次像 App 一样一秒打开华伴</span>
+    </div>
+    <div class="install-actions">
+      <button class="install-primary" onclick="addToHome()">添加</button>
+      <button class="install-close" onclick="hideInstallPromptForNow()" aria-label="暂时不添加">×</button>
+    </div>`;
+  chatArea.appendChild(card);
+  scrollBottom();
+}
+
+function dismissInstallPrompt(){
+  document.getElementById('install-card')?.remove();
+  document.getElementById('install-guide')?.remove();
+}
+
+function hideInstallPromptForNow(){
+  localStorage.setItem('huaban_install_dismissed','1');
+  dismissInstallPrompt();
+}
+
+async function addToHome(){
+  if(deferredInstallPrompt){
+    deferredInstallPrompt.prompt();
+    const choice=await deferredInstallPrompt.userChoice.catch(()=>null);
+    if(choice?.outcome==='accepted'){
+      localStorage.setItem('huaban_installed','1');
+      dismissInstallPrompt();
+    }
+    deferredInstallPrompt=null;
+    return;
+  }
+  showAddToHomeGuide();
+}
+
+function showAddToHomeGuide(){
+  document.getElementById('install-guide')?.remove();
+  const ios=isIosDevice();
+  const steps=ios
+    ? ['点击 Safari 底部分享按钮', '选择“添加到主屏幕”', '点击右上角“添加”']
+    : ['点击浏览器右上角菜单', '选择“安装应用”或“添加到主屏幕”', '确认添加华伴'];
+  const overlay=document.createElement('div');
+  overlay.id='install-guide';
+  overlay.className='install-overlay';
+  overlay.innerHTML=`
+    <div class="install-sheet">
+      <div class="install-sheet-head">
+        <img src="assets/brand/huaban-logo-v1.png" alt="">
+        <div>
+          <div class="install-sheet-title">把华伴放到手机桌面</div>
+          <div class="install-sheet-sub">不用下载商店 App，下次直接点图标进入</div>
+        </div>
+      </div>
+      <div class="install-steps">
+        ${steps.map((step,index)=>`<div>${index+1}. ${step}</div>`).join('')}
+      </div>
+      <button onclick="document.getElementById('install-guide')?.remove()">知道了</button>
+    </div>`;
+  overlay.onclick=(event)=>{ if(event.target===overlay)overlay.remove(); };
+  document.body.appendChild(overlay);
+  speak(ios?'点击分享按钮，选择添加到主屏幕':'点击浏览器菜单，选择安装应用或添加到主屏幕');
 }
 
 function logoutUser(){
@@ -3518,6 +4195,11 @@ function logoutUser(){
   localStorage.removeItem('au_profile');
   localStorage.removeItem('au_gender');
   localStorage.removeItem('ai_companion');
+  localStorage.removeItem(AGENT_NAME_KEY);
+  localStorage.removeItem(AGENT_TITLE_KEY);
+  localStorage.removeItem(AGENT_EMOJI_KEY);
+  localStorage.removeItem(VOICE_WAKE_KEY);
+  stopWakeListening(true);
   closeProfile();
   location.reload();
 }
