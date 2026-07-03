@@ -2252,6 +2252,7 @@ function setAgentCustomization({name,title,emoji}){
   updateAgentIdentityUI();
   renderCompanionCard();
   document.getElementById('agent-setup-card')?.remove();
+  syncAgentAdoption().catch(e=>console.warn('adoption sync failed',e));
   return true;
 }
 
@@ -2388,6 +2389,96 @@ async function supaInsert(table,data){
   });
   if(!res.ok){const e=await res.json();throw new Error(e.message||'error');}
   return res.json();
+}
+
+async function supaInsertLead(data){
+  const payload={
+    tenant_id:TENANT_ID,
+    lead_type:'user',
+    channel:'app',
+    city:currentRegion.city||'Melbourne',
+    country:currentRegion.country||'Australia',
+    status:'new',
+    stage:'public_beta',
+    ...data,
+    fields:{
+      ...(data.fields||{}),
+      region:currentRegion,
+      agent_name:agentName||'',
+      agent_title:agentTitle||'',
+      agent_avatar:isDefaultAgentEmoji()?'logo':agentEmoji,
+      companion:getCompanion()
+    }
+  };
+  try{
+    return await supaInsert('beta_leads', payload);
+  }catch(primaryError){
+    try{
+      return await supaInsert('user_leads', {
+        city:payload.city,
+        country:payload.country,
+        status:`${payload.channel||payload.need_type||'lead'}:${payload.status||'new'}`
+      });
+    }catch(secondaryError){
+      try{
+        return await supaInsert('recruitment_leads', payload);
+      }catch(fallbackError){
+        console.warn('lead sync failed', primaryError?.message||primaryError, secondaryError?.message||secondaryError, fallbackError?.message||fallbackError);
+      }
+      return null;
+    }
+  }
+}
+
+function betaContact(){
+  const p=getPassenger();
+  return p.phone||p.wechat||localStorage.getItem('huaban_beta_contact')||'';
+}
+
+function syncAgentAdoption(){
+  return supaInsertLead({
+    lead_type:'user',
+    channel:'adoption',
+    name:agentName||'未命名AI伙伴',
+    contact:betaContact(),
+    need_type:'adoption',
+    message:`用户领养 AI 伙伴：${agentName||'未命名'} · ${displayAgentTitle()} · ${displayAgentAvatarText()}`,
+    next_action:'follow_public_beta_user',
+    fields:{
+      event:'agent_adoption',
+      display_name:displayAgentName(),
+      display_title:displayAgentTitle(),
+      avatar:displayAgentAvatarText()
+    }
+  });
+}
+
+function syncWishWallPost(post){
+  const info=wishTypeInfo(post.wishType||post.type);
+  return supaInsertLead({
+    lead_type:'user',
+    channel:'wish_wall',
+    name:getPassenger().name||'华伴用户',
+    contact:post.contact||betaContact(),
+    city:post.city||currentRegion.city||'Melbourne',
+    need_type:'wish_wall_'+(post.wishType||'need_free'),
+    message:`心愿墙：${info.label}\n类别：${post.category||''}\n说明：${post.text||''}\n预算/价格：${post.budget||''}`,
+    next_action:info.zone==='paid'?'match_paid_service':'match_mutual_aid',
+    fields:{event:'wish_wall_post',post,zone:info.zone,role:info.role,label:info.label}
+  });
+}
+
+function syncUserFeedback(question, context='', source='user-feedback'){
+  return supaInsertLead({
+    lead_type:'user',
+    channel:'feedback',
+    name:getPassenger().name||'华伴用户',
+    contact:betaContact(),
+    need_type:'feedback',
+    message:`用户反馈：${question}\n上下文：${context}`,
+    next_action:'coach_ai_or_product_followup',
+    fields:{event:'user_feedback',question,context,source}
+  });
 }
 
 // ── 启动 ──
@@ -3071,7 +3162,9 @@ async function submitMutualAidPost(){
     createdAt:new Date().toISOString(),
     status:'open'
   });
+  const savedPost=posts[0];
   saveMutualAidPosts(posts);
+  syncWishWallPost(savedPost).catch(e=>console.warn('wish wall sync failed',e));
   document.getElementById('mutual-aid-modal')?.remove();
   addMsg(info.label,true);
   rewardCompanionAction('wish_wall');
@@ -3452,6 +3545,9 @@ function recordAITrainingQuestion(question, context='', source='chat-error'){
     updatedAt:now
   });
   localStorage.setItem(AI_TRAINING_KEY,JSON.stringify(items.slice(0,200)));
+  if(source==='user-feedback'){
+    syncUserFeedback(cleanQuestion, context, source).catch(e=>console.warn('feedback sync failed',e));
+  }
 }
 
 function isWeakAIReply(reply){
@@ -4610,7 +4706,8 @@ async function submitSupplierApplication(btn){
     }
   };
   try{
-    const [lead]=await supaInsert('recruitment_leads', payload);
+    const leads=await supaInsertLead(payload);
+    const lead=Array.isArray(leads)?leads[0]:null;
     saveSupplierApplication({lead_id:lead?.id,status:'new',service_type:serviceType,service_type_code:typeValue,city});
     closeSupplierApplicationSheet();
     renderSupplierEntry('new');

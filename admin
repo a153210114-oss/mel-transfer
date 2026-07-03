@@ -616,8 +616,8 @@ body {
 <div class="section" id="section-suppliers">
   <div class="topbar">
     <div>
-      <div class="page-title">供给侧审核</div>
-      <div class="page-sub">本地华人服务者 / 商家申请</div>
+      <div class="page-title">公测线索</div>
+      <div class="page-sub">领养 / 心愿墙 / 反馈 / 服务者申请</div>
     </div>
     <div class="topbar-actions">
       <select class="input" id="supplier-filter" onchange="loadSuppliers()" style="width:130px;">
@@ -632,7 +632,7 @@ body {
   <div class="content">
     <div class="card">
       <div class="card-body" style="font-size:12px;color:var(--text2);line-height:1.7;border-bottom:1px solid var(--border);padding-bottom:16px;margin-bottom:8px;">
-        审核通过后，用户端个人中心会显示“进入供给中心”。审核通过前，不能发布商品和服务。政府/行业资质由 AI 优先收集并尝试在公开网站核验，管理员通过前应人工复核关键资质。
+        公测期间先集中查看用户领养、心愿墙、反馈吐槽和服务者申请。服务者线索审核通过后，用户端个人中心会显示“进入供给中心”；审核通过前，不能发布商品和服务。
       </div>
       <div style="overflow-x:auto;">
         <table class="table">
@@ -640,7 +640,7 @@ body {
             <tr>
               <th>申请人</th>
               <th>城市</th>
-              <th>服务/商品</th>
+              <th>线索内容</th>
               <th>联系方式</th>
               <th>状态</th>
               <th>时间</th>
@@ -1326,6 +1326,9 @@ function supplierBadge(status) {
 
 function supplierServiceText(lead) {
   const fields = lead.fields || {};
+  if(lead.channel==='adoption'||lead.need_type==='adoption')return 'AI 领养';
+  if(lead.channel==='wish_wall'||String(lead.need_type||'').startsWith('wish_wall'))return '心愿墙';
+  if(lead.channel==='feedback'||lead.need_type==='feedback')return '反馈/吐槽';
   return fields.service_type || lead.need_type || (lead.message || '').split('\n')[0].replace('服务类型：','') || '-';
 }
 
@@ -1338,16 +1341,25 @@ function supplierQualificationText(lead) {
 
 async function loadSuppliers() {
   const filter = document.getElementById('supplier-filter').value;
-  let q = `recruitment_leads?lead_type=eq.supply&order=created_at.desc&limit=100`;
+  let q = `beta_leads?order=created_at.desc&limit=100`;
   if (filter) q += `&status=eq.${filter}`;
 
   const tbody = document.getElementById('suppliers-body');
   tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:30px;">加载中...</td></tr>';
 
   try {
-    const leads = await supaFetch(q);
+    let leadTable = 'beta_leads';
+    let leads = [];
+    try {
+      leads = await supaFetch(q);
+    } catch(primaryError) {
+      leadTable = 'user_leads';
+      let fallbackQ = `user_leads?order=created_at.desc&limit=100`;
+      if (filter) fallbackQ += `&status=eq.${filter}`;
+      leads = await supaFetch(fallbackQ);
+    }
     if (!leads.length) {
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:40px;">暂无供给侧申请</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:40px;">暂无公测线索</td></tr>';
       return;
     }
     tbody.innerHTML = leads.map(lead => {
@@ -1355,6 +1367,7 @@ async function loadSuppliers() {
       const service = supplierServiceText(lead);
       const qualification = supplierQualificationText(lead);
       const message = (lead.message || '').replace(/\n/g, ' · ');
+      const isSupply = lead.lead_type === 'supply';
       return `<tr>
         <td>
           <div style="font-weight:700;">${escapeHtml(lead.name || '华伴用户')}</div>
@@ -1373,8 +1386,8 @@ async function loadSuppliers() {
         <td>${supplierBadge(status)}</td>
         <td style="font-size:12px;color:var(--text3);">${fmtDateShort(lead.created_at)}</td>
         <td>
-          ${status !== 'approved' ? `<button class="action-btn success" onclick="approveSupplier('${lead.id}')">通过</button>` : ''}
-          ${status !== 'rejected' ? `<button class="action-btn danger" onclick="rejectSupplier('${lead.id}')" style="margin-left:4px;">驳回</button>` : ''}
+          ${isSupply && status !== 'approved' ? `<button class="action-btn success" onclick="approveSupplier('${lead.id}','${leadTable}')">通过</button>` : ''}
+          ${isSupply && status !== 'rejected' ? `<button class="action-btn danger" onclick="rejectSupplier('${lead.id}','${leadTable}')" style="margin-left:4px;">驳回</button>` : ''}
           <button class="action-btn" onclick="copyId('${lead.id}')" style="margin-left:4px;">复制ID</button>
         </td>
       </tr>`;
@@ -1384,9 +1397,9 @@ async function loadSuppliers() {
   }
 }
 
-async function approveSupplier(id) {
+async function approveSupplier(id, table='beta_leads') {
   if (!confirm('确认已完成必要资质核验，并通过这个供给侧申请？')) return;
-  await supaPatch(`recruitment_leads?id=eq.${id}`, {
+  await supaPatch(`${table}?id=eq.${id}`, {
     status: 'approved',
     stage: 'approved',
     next_action: 'open_supplier_hub',
@@ -1397,9 +1410,9 @@ async function approveSupplier(id) {
   loadSuppliers();
 }
 
-async function rejectSupplier(id) {
+async function rejectSupplier(id, table='beta_leads') {
   const notes = prompt('驳回原因/需要补充的资料（可选）：', '');
-  await supaPatch(`recruitment_leads?id=eq.${id}`, {
+  await supaPatch(`${table}?id=eq.${id}`, {
     status: 'rejected',
     stage: 'need_more_info',
     notes: notes || null,
