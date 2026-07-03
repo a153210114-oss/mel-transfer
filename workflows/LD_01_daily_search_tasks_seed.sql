@@ -42,6 +42,12 @@ insert into public.beta_leads (
     'task_reason','details_page_contacts_are_masked_or_login_required',
     'source_platform','今日墨尔本 meltoday.com',
     'global_scan',true,
+    'freshness_policy',jsonb_build_object(
+      'demand_days',90,
+      'supply_days',730,
+      'demand_label','需求 90 天内发布',
+      'supply_label','供给 2 年内发布'
+    ),
     'market_signal',jsonb_build_object(
       'source_city','Melbourne',
       'source_country','Australia',
@@ -76,6 +82,12 @@ insert into public.beta_leads (
     'task_reason','group_access_required',
     'source_platform','Facebook group: Melbourne VIC 墨爾本工作資訊',
     'global_scan',true,
+    'freshness_policy',jsonb_build_object(
+      'demand_days',90,
+      'supply_days',730,
+      'demand_label','需求 90 天内发布',
+      'supply_label','供给 2 年内发布'
+    ),
     'market_signal',jsonb_build_object(
       'source_city','Melbourne',
       'source_country','Australia',

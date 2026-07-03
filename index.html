@@ -2637,6 +2637,7 @@ function syncWishWallPost(post){
   const queries=post.searchQueries||buildIntelSearchQueries(post);
   const globalTargets=post.globalTargets||globalIntelTargets();
   const direction=post.direction||intelDirection(post.wishType||post.type);
+  const freshnessPolicy=post.freshnessPolicy||intelFreshnessPolicy(direction);
   return supaInsertLead({
     lead_type:'user',
     channel:'demand_supply_intel',
@@ -2654,6 +2655,7 @@ function syncWishWallPost(post){
       role:info.role,
       label:info.label,
       search_queries:queries,
+      freshness_policy:freshnessPolicy,
       global_scan:true,
       global_scan_targets:globalTargets,
       market_signal:{
@@ -2661,6 +2663,7 @@ function syncWishWallPost(post){
         source_country:currentRegion.country||'',
         category:post.category||'',
         keyword:inferIntelKeyword(post.category,post.text),
+        freshness:freshnessPolicy.label,
         scan_goal:'find_matching_demand_and_supply_in_other_countries'
       },
       source_policy:{
@@ -3415,19 +3418,38 @@ function inferIntelKeyword(category='', text=''){
   return String(category||'华人服务').replace(/ · /g,' ');
 }
 
+function intelFreshnessPolicy(direction='demand'){
+  const base={
+    demand_days:90,
+    supply_days:730,
+    demand_label:'需求 90 天内发布',
+    supply_label:'供给 2 年内发布'
+  };
+  if(direction==='supply'){
+    return {...base,kind:'supply',days:730,label:base.supply_label};
+  }
+  return {...base,kind:'demand',days:90,label:base.demand_label};
+}
+
+function intelFreshnessQueryTerm(direction='demand'){
+  return direction==='supply'?'2年内 发布':'90天内 发布';
+}
+
 function buildIntelSearchQueries(post={}){
   const city=post.city||currentRegion.city||'Melbourne';
   const country=currentRegion.country||'Australia';
   const keyword=inferIntelKeyword(post.category,post.text);
+  const direction=post.direction||intelDirection(post.wishType||post.type);
+  const freshness=intelFreshnessQueryTerm(direction);
   const localQueries=[
-    `${city} 华人 ${keyword} 微信`,
-    `${city} ${keyword} 中文 服务`,
-    `${city} ${keyword} 华人群`,
-    `${city} ${keyword} 小红书`,
-    `${city} ${keyword} Facebook 华人`,
-    `${country} ${city} ${keyword} 推荐`
+    `${city} 华人 ${keyword} 微信 ${freshness}`,
+    `${city} ${keyword} 中文 服务 ${freshness}`,
+    `${city} ${keyword} 华人群 ${freshness}`,
+    `${city} ${keyword} 小红书 ${freshness}`,
+    `${city} ${keyword} Facebook 华人 ${freshness}`,
+    `${country} ${city} ${keyword} 推荐 ${freshness}`
   ];
-  return [...localQueries,...buildGlobalIntelSearchQueries(keyword, city).slice(0,6)];
+  return [...localQueries,...buildGlobalIntelSearchQueries(keyword, city, direction).slice(0,6)];
 }
 
 function globalIntelTargets(){
@@ -3445,12 +3467,13 @@ function globalIntelTargets(){
   ];
 }
 
-function buildGlobalIntelSearchQueries(keyword, currentCity=''){
+function buildGlobalIntelSearchQueries(keyword, currentCity='', direction='demand'){
+  const freshness=intelFreshnessQueryTerm(direction);
   return globalIntelTargets()
     .filter(target=>String(target.city).toLowerCase()!==String(currentCity).toLowerCase()&&target.label!==currentCity)
     .flatMap(target=>[
-      `${target.label} 华人 ${keyword}`,
-      `${target.city} Chinese ${keyword}`
+      `${target.label} 华人 ${keyword} ${freshness}`,
+      `${target.city} Chinese ${keyword} ${freshness}`
     ]);
 }
 
@@ -3491,7 +3514,7 @@ function renderIntelQueryPreview(draft={}){
     text
   }).slice(0,6);
   return `<div style="margin-top:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:10px;">
-    <div style="font-size:12px;font-weight:900;color:rgba(255,255,255,0.72);margin-bottom:7px;">我会先生成本地 + 全球公开搜索任务</div>
+    <div style="font-size:12px;font-weight:900;color:rgba(255,255,255,0.72);margin-bottom:7px;">我会先生成本地 + 全球公开搜索任务，需求只看 90 天内</div>
     ${queries.map(q=>`<div style="font-size:11px;color:rgba(255,255,255,0.42);line-height:1.7;">• ${companionEscape(q)}</div>`).join('')}
   </div>`;
 }
@@ -3540,7 +3563,7 @@ function openMutualAidCommunity(draft={}){
         ${renderIntelQueryPreview(draft)}
         <button onclick="submitMutualAidPost()" style="width:100%;margin-top:14px;padding:13px;background:rgba(0,200,150,0.24);border:1px solid rgba(0,200,150,0.36);border-radius:12px;color:white;font:800 14px/1 inherit;cursor:pointer;">交给华伴去找线索</button>
       </div>
-      <div style="font-size:12px;color:rgba(255,255,255,0.42);line-height:1.7;margin-top:12px;">这里不展示用户发布内容。华伴会先匹配本地线索，同时扫描其他国家地区是否也有同类需求和供给。涉及金钱、证件、隐私时务必核验来源。</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.42);line-height:1.7;margin-top:12px;">这里不展示用户发布内容。华伴会先匹配本地线索，同时扫描其他国家地区是否也有同类需求和供给。需求只看 90 天内发布，供给只看 2 年内发布。涉及金钱、证件、隐私时务必核验来源。</div>
     </div>`;
   document.body.appendChild(modal);
   updateWishWallHint();
@@ -3566,7 +3589,8 @@ async function submitMutualAidPost(){
     category,city,text,budget,contact,
     source:'user_submitted',
     direction:intelDirection(wishType),
-    searchQueries:buildIntelSearchQueries({city,category,text}),
+    freshnessPolicy:intelFreshnessPolicy(intelDirection(wishType)),
+    searchQueries:buildIntelSearchQueries({city,category,text,wishType,direction:intelDirection(wishType)}),
     globalTargets:globalIntelTargets(),
     confidence:'pending_review',
     createdAt:new Date().toISOString(),
@@ -3576,7 +3600,7 @@ async function submitMutualAidPost(){
   document.getElementById('mutual-aid-modal')?.remove();
   addMsg('交给华伴去找线索',true);
   rewardCompanionAction('wish_wall');
-  await agentSay('收到，我先把它变成供需情报任务：本地先匹配，同时扫描其他国家地区有没有同类需求和供给。找到线索后，会按来源和可信度再给你匹配。',180);
+  await agentSay('收到，我先把它变成供需情报任务：本地先匹配，同时扫描其他国家地区有没有同类需求和供给。需求只看90天内，供给只看2年内，找到线索后会按来源和可信度再给你匹配。',180);
 }
 
 function updateWishWallHint(){
@@ -3584,8 +3608,8 @@ function updateWishWallHint(){
   const hint=document.getElementById('mutual-aid-hint');
   if(!hint)return;
   const text={
-    need_free:'我会找本地公开互助线索，也会扫描其他国家地区是否有同类需求和供给。',
-    need_paid:'我会优先找本地公开服务者和已入驻供给，也会扫描其他国家地区是否有同类服务网络。'
+    need_free:'我会找本地公开互助线索，也会扫描其他国家地区是否有同类需求和供给；需求只看90天内发布。',
+    need_paid:'我会优先找本地公开服务者和已入驻供给，也会扫描其他国家地区是否有同类服务网络；供给只看2年内发布。'
   };
   hint.textContent=text[type]||text.need_free;
 }

@@ -1470,7 +1470,8 @@ function supplierQualificationText(lead) {
     const direction = fields.direction === 'supply' ? '供给' : '需求';
     const queries = Array.isArray(fields.search_queries) ? fields.search_queries.slice(0,2).join(' / ') : '';
     const global = fields.global_scan ? ' · 全球扫描' : '';
-    return `${direction}${global} · 公开搜索任务${queries ? ' · '+queries : ''}`;
+    const freshness = fields.freshness_policy?.label || (fields.freshness_policy ? '需求90天 / 供给2年' : '');
+    return `${direction}${global}${freshness ? ' · '+freshness : ''} · 公开搜索任务${queries ? ' · '+queries : ''}`;
   }
   const license = fields.license || '未填写资质';
   const url = fields.public_verification_url || '';

@@ -10,6 +10,7 @@
 
 1. **本地匹配**：先看当前城市/国家有没有可用需求或供给。
 2. **全球扫描**：再看其他华人聚集国家地区是否也有同类需求和供给。
+3. **时间过滤**：需求侧只搜索和导入 90 天以内发布的信息；供给侧只搜索和导入 2 年以内发布的信息。
 
 默认全球扫描目标：
 
@@ -29,6 +30,8 @@
 - `fields.market_signal.category`: 需求/供给类别
 - `fields.market_signal.keyword`: 标准化关键词
 - `fields.market_signal.scan_goal`: `find_matching_demand_and_supply_in_other_countries`
+- `fields.freshness_policy.demand_days`: `90`
+- `fields.freshness_policy.supply_days`: `730`
 
 ## 两类结果
 
@@ -42,7 +45,7 @@
 - 类型匹配：服务类型、需求类型和当前任务一致。
 - 信息可核验：有公开来源链接、截图来源、公开联系方式、服务描述、时间或价格中的至少两项。
 - 联系方式不违规：不能是猜测、打码补全、绕过登录得到的信息。
-- 未明显过期：招聘/服务帖没有显著过期，或需要标记为“需确认是否仍有效”。
+- 未过期：需求帖必须是 90 天以内发布；供给帖必须是 2 年以内发布。超出时间窗口的结果不直接导入，只能进入日常任务或丢弃。
 
 建议字段：
 
@@ -58,6 +61,7 @@
 - `fields.verification_status`: `verified_contact_from_public_listing | public_web_needs_verification | source_verified_but_contacts_masked`
 - `fields.global_scan`: `true`
 - `fields.market_signal`: 全球市场信号摘要
+- `fields.freshness_policy`: `{"demand_days":90,"supply_days":730}`
 
 ### 2. 不符合当前需求但有价值：进入后台日常任务
 
@@ -71,6 +75,7 @@
 - 联系方式被打码、隐藏或需要点击登录后显示。
 - 页面是渠道源，不是具体供给/需求。
 - 信息太碎，暂不能给用户或服务者跟进。
+- 发布时间超出窗口，但渠道本身仍有价值。
 
 建议字段：
 
@@ -99,9 +104,18 @@
 ```text
 for each search_result:
   if matches_current_need && has_public_evidence && contact_or_source_is_valid:
-    route = direct_import
-    status = new
-    stage = ld_01_ceo_review
+    if result_is_demand && published_within_90_days:
+      route = direct_import
+      status = new
+      stage = ld_01_ceo_review
+    else if result_is_supply && published_within_730_days:
+      route = direct_import
+      status = new
+      stage = ld_01_ceo_review
+    else:
+      route = daily_task
+      status = todo
+      stage = daily_search_task
   else:
     route = daily_task
     status = todo
