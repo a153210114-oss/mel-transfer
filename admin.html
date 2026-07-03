@@ -394,6 +394,9 @@ body {
     <div class="nav-item" onclick="showSection('outreach')">
       <span class="nav-icon">📣</span> 推广任务
     </div>
+    <div class="nav-item" onclick="showSection('ops-team')">
+      <span class="nav-icon">👥</span> 运营团队
+    </div>
     <div class="nav-item" onclick="showSection('dispatch')">
       <span class="nav-icon">📡</span> 实时调度
     </div>
@@ -466,6 +469,11 @@ body {
         <div class="quick-icon">📣</div>
         <strong>推广任务</strong>
         <span>AI 生成文案，人工确认后投放</span>
+      </div>
+      <div class="admin-quick-card" onclick="showSection('ops-team')">
+        <div class="quick-icon">👥</div>
+        <strong>运营团队</strong>
+        <span>招募、任务、会议和完成率考核</span>
       </div>
       <div class="admin-quick-card" onclick="window.open('./index.html','_blank')">
         <div class="quick-icon">📱</div>
@@ -844,6 +852,94 @@ body {
   </div>
 </div>
 
+<!-- ══ 运营团队 ══ -->
+<div class="section" id="section-ops-team">
+  <div class="topbar">
+    <div>
+      <div class="page-title">运营团队</div>
+      <div class="page-sub">招募成员 / 分配任务 / 在线会议 / 完成率考核</div>
+    </div>
+    <div class="topbar-actions">
+      <select class="input" id="ops-role-filter" onchange="loadOpsTeam()" style="width:150px;">
+        <option value="">全部岗位</option>
+        <option value="outreach_support">人工客服推广</option>
+        <option value="city_operator">城市运营</option>
+        <option value="supplier_reviewer">服务者审核</option>
+        <option value="content_operator">内容运营</option>
+      </select>
+      <button class="btn btn-ghost" onclick="loadOpsTeam()">↻ 刷新</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="stats-grid" id="ops-stats">
+      <div class="stat-card">
+        <div class="icon">👥</div>
+        <div class="label">候选/试用</div>
+        <div class="value" id="ops-stat-candidates" style="color:var(--accent)">-</div>
+        <div class="delta">招募漏斗</div>
+      </div>
+      <div class="stat-card">
+        <div class="icon">✅</div>
+        <div class="label">今日任务</div>
+        <div class="value" id="ops-stat-tasks" style="color:var(--green)">-</div>
+        <div class="delta">待领取 / 执行中</div>
+      </div>
+      <div class="stat-card">
+        <div class="icon">🎥</div>
+        <div class="label">今日会议</div>
+        <div class="value" id="ops-stat-meetings" style="color:var(--gold)">-</div>
+        <div class="delta">晨会 / 复盘</div>
+      </div>
+      <div class="stat-card">
+        <div class="icon">📈</div>
+        <div class="label">完成率</div>
+        <div class="value" id="ops-stat-rate" style="color:var(--purple)">-</div>
+        <div class="delta">团队目标</div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">岗位招募</div>
+          <div class="card-action" onclick="copyOpsRecruitPost()">复制招募文案</div>
+        </div>
+        <div class="card-body" id="ops-roles-body">加载中...</div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">在线会议</div>
+          <div class="card-action" onclick="copyOpsMeetingAgenda()">复制会议议程</div>
+        </div>
+        <div class="card-body" id="ops-meetings-body">加载中...</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">今日任务与考核</div>
+        <div class="card-action">参考钉钉任务 + 腾讯会议纪要</div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>任务</th>
+              <th>岗位</th>
+              <th>工作量</th>
+              <th>完成率口径</th>
+              <th>状态</th>
+            </tr>
+          </thead>
+          <tbody id="ops-tasks-body">
+            <tr><td colspan="5" style="text-align:center;color:var(--text3);padding:40px;">加载中...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ══ 实时调度 ══ -->
 <div class="section" id="section-dispatch">
   <div class="topbar">
@@ -1058,6 +1154,7 @@ function showSection(name) {
     suppliers: loadSuppliers,
     sources: loadSourceRegistry,
     outreach: loadOutreachTasks,
+    'ops-team': loadOpsTeam,
     dispatch: loadDispatch,
     'ai-training': loadAITraining,
     finance: loadFinance
@@ -1756,6 +1853,182 @@ async function loadOutreachTasks(){
       </td>
     </tr>`;
   }).join('');
+}
+
+const OPS_ROLE_LABELS={
+  outreach_support:'人工客服推广',
+  city_operator:'城市运营',
+  supplier_reviewer:'服务者审核',
+  content_operator:'内容运营',
+  admin:'管理员'
+};
+
+function defaultOpsRoles(){
+  return [
+    {role:'outreach_support',title:'人工客服推广',description:'领取推广任务、微调文案、人工发布、回复咨询、记录反馈。',daily_target:{review_tasks:10,copy_done:5,manual_posts:3,reply_messages:10,feedback_records:3}},
+    {role:'city_operator',title:'城市运营',description:'管理城市入口库、服务者线索、推广节奏和城市复盘。',daily_target:{source_updates:2,lead_reviews:10,city_notes:1,partner_contacts:3}},
+    {role:'supplier_reviewer',title:'服务者审核',description:'审核服务者申请、公开资质链接和人工复核状态。',daily_target:{supplier_reviews:10,qualification_checks:8,rework_notes:2}},
+    {role:'content_operator',title:'内容运营',description:'把真实需求转成小红书、公众号、视频号、朋友圈文案。',daily_target:{short_copy:5,long_content:1,script_notes:1,feedback_records:2}}
+  ];
+}
+
+function defaultOpsTasks(){
+  return [
+    {title:'墨尔本公测用户推广日常',task_type:'outreach',role:'outreach_support',status:'open',target:{review_tasks:10,copy_done:5,manual_posts:3,reply_messages:10,feedback_records:3},completion_rate:0,notes:'完成后提交发布截图、咨询数量和反馈记录。'},
+    {title:'墨尔本服务者招募日常',task_type:'supplier_review',role:'supplier_reviewer',status:'open',target:{supplier_reviews:10,qualification_checks:8},completion_rate:0,notes:'律师/会计/电工等进入政府公开核验路径。'},
+    {title:'墨尔本城市入口更新',task_type:'source_update',role:'city_operator',status:'open',target:{source_updates:2,lead_reviews:10},completion_rate:0,notes:'新增或更新中文入口库和本地服务渠道。'},
+    {title:'今日推广内容产出',task_type:'content',role:'content_operator',status:'open',target:{short_copy:5,long_content:1},completion_rate:0,notes:'基于真实需求产出短文案和主题内容。'}
+  ];
+}
+
+function defaultOpsMeetings(){
+  return [
+    {title:'每日晨会',meeting_type:'daily_standup',platform:'Tencent Meeting',meeting_url:'',agenda:['昨日完成率','今日推广入口','今日服务者审核','风险和阻塞'],scheduled_at:new Date().toISOString()},
+    {title:'每日复盘',meeting_type:'daily_review',platform:'Tencent Meeting',meeting_url:'',agenda:['已发布入口','新增咨询','有效话术','产品反馈','明日计划'],scheduled_at:new Date(Date.now()+8*3600000).toISOString()},
+    {title:'每周城市会',meeting_type:'weekly_city',platform:'Tencent Meeting',meeting_url:'',agenda:['城市需求趋势','供给缺口','服务者审核问题','下周推广计划'],scheduled_at:new Date(Date.now()+5*86400000).toISOString()}
+  ];
+}
+
+function targetText(target={}){
+  const map={
+    review_tasks:'检查任务',
+    copy_done:'完成文案',
+    manual_posts:'人工发布',
+    reply_messages:'回复咨询',
+    feedback_records:'记录反馈',
+    source_updates:'更新入口',
+    lead_reviews:'整理线索',
+    city_notes:'城市复盘',
+    partner_contacts:'合作联系',
+    supplier_reviews:'审核申请',
+    qualification_checks:'资质核验',
+    rework_notes:'返工备注',
+    short_copy:'短文案',
+    long_content:'主题内容',
+    script_notes:'脚本'
+  };
+  return Object.entries(target).map(([k,v])=>`${map[k]||k} ${v}`).join(' · ');
+}
+
+function taskStatusBadge(status){
+  const map={
+    open:['badge-pending','待领取'],
+    assigned:['badge-confirmed','已分配'],
+    in_progress:['badge-inprogress','执行中'],
+    submitted:['badge-arrived','已提交'],
+    reviewed:['badge-completed','已审核'],
+    rework:['badge-pending-driver','返工'],
+    done:['badge-completed','完成']
+  };
+  const [cls,label]=map[status]||['badge-inactive',status||'未知'];
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+
+function copyOpsRecruitPost(){
+  const text=`华伴招募线上运营团队：
+1. 人工客服推广：发文案、回咨询、记反馈
+2. 城市运营：维护本地入口和服务者线索
+3. 服务者审核：核验司机/律师/会计/电工等申请
+4. 内容运营：把真实需求做成小红书/朋友圈/公众号内容
+
+要求：认真、会中文沟通、守规则、不群发骚扰。
+工作方式：后台领任务，腾讯会议晨会/复盘，按完成率考核。`;
+  navigator.clipboard?.writeText(text).then(()=>alert('已复制招募文案')).catch(()=>alert(text));
+}
+
+function copyOpsMeetingAgenda(){
+  const text=`华伴运营每日晨会：
+1. 昨日完成率
+2. 今日推广入口
+3. 今日服务者审核
+4. 今日内容任务
+5. 风险和阻塞
+6. 负责人和截止时间`;
+  navigator.clipboard?.writeText(text).then(()=>alert('已复制会议议程')).catch(()=>alert(text));
+}
+
+async function loadOpsTeam(){
+  const roleFilter=document.getElementById('ops-role-filter')?.value||'';
+  let roles=[],tasks=[],meetings=[],members=[];
+  let fallback=false;
+  try{
+    const [roleRows,taskRows,meetingRows,memberRows]=await Promise.all([
+      supaFetch('ops_roles?order=title.asc'),
+      supaFetch('ops_tasks?order=created_at.desc&limit=100'),
+      supaFetch('ops_meetings?order=scheduled_at.asc&limit=20'),
+      supaFetch('ops_team_members?order=created_at.desc&limit=100')
+    ]);
+    roles=roleRows;tasks=taskRows;meetings=meetingRows;members=memberRows;
+  }catch(e){
+    fallback=true;
+    roles=defaultOpsRoles();
+    tasks=defaultOpsTasks();
+    meetings=defaultOpsMeetings();
+    members=[
+      {name:'待招募',role:'outreach_support',status:'candidate'},
+      {name:'待招募',role:'city_operator',status:'candidate'},
+      {name:'待招募',role:'supplier_reviewer',status:'candidate'}
+    ];
+  }
+  if(roleFilter){
+    roles=roles.filter(r=>r.role===roleFilter);
+    tasks=tasks.filter(t=>(t.role||t.fields?.role||'')===roleFilter);
+  }
+  const candidates=members.filter(m=>['candidate','trial'].includes(m.status)).length;
+  const activeTasks=tasks.filter(t=>['open','assigned','in_progress'].includes(t.status)).length;
+  const todayMeetings=meetings.length;
+  const avgRate=tasks.length?Math.round(tasks.reduce((s,t)=>s+(Number(t.completion_rate)||0),0)/tasks.length):0;
+  document.getElementById('ops-stat-candidates').textContent=candidates;
+  document.getElementById('ops-stat-tasks').textContent=activeTasks;
+  document.getElementById('ops-stat-meetings').textContent=todayMeetings;
+  document.getElementById('ops-stat-rate').textContent=avgRate+'%';
+
+  const rolesBody=document.getElementById('ops-roles-body');
+  rolesBody.innerHTML=(fallback?`<div style="color:var(--gold);font-size:12px;margin-bottom:12px;">当前显示内置模板。执行 <code>workflows/ops_team_schema_seed.sql</code> 后读取数据库。</div>`:'')+
+    roles.map(role=>`
+      <div style="padding:12px 0;border-bottom:1px solid var(--border);">
+        <div style="display:flex;justify-content:space-between;gap:10px;">
+          <strong style="color:var(--text);">${escapeHtml(role.title||OPS_ROLE_LABELS[role.role]||role.role)}</strong>
+          <span class="tag">${escapeHtml(OPS_ROLE_LABELS[role.role]||role.role)}</span>
+        </div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.6;margin-top:6px;">${escapeHtml(role.description||'')}</div>
+        <div style="font-size:11px;color:var(--gold);margin-top:6px;">目标：${escapeHtml(targetText(role.daily_target||{}))}</div>
+      </div>`).join('');
+
+  const meetingsBody=document.getElementById('ops-meetings-body');
+  meetingsBody.innerHTML=meetings.map(m=>`
+    <div style="padding:12px 0;border-bottom:1px solid var(--border);">
+      <div style="display:flex;justify-content:space-between;gap:10px;">
+        <strong style="color:var(--text);">${escapeHtml(m.title||'-')}</strong>
+        <span class="badge badge-confirmed">${escapeHtml(m.platform||'Tencent Meeting')}</span>
+      </div>
+      <div style="font-size:12px;color:var(--text2);margin-top:6px;">${escapeHtml((Array.isArray(m.agenda)?m.agenda:[]).join(' / '))}</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:6px;">${fmtDate(m.scheduled_at)} ${m.meeting_url?` · ${escapeHtml(m.meeting_url)}`:''}</div>
+    </div>`).join('');
+
+  const tasksBody=document.getElementById('ops-tasks-body');
+  tasksBody.innerHTML=tasks.map(t=>{
+    const role=t.role||t.fields?.role||roleFromTaskType(t.task_type);
+    const rate=Number(t.completion_rate)||0;
+    return `<tr>
+      <td>
+        <div style="font-weight:800;color:var(--text);">${escapeHtml(t.title||'-')}</div>
+        <div style="font-size:11px;color:var(--text3);">${escapeHtml(t.notes||'')}</div>
+      </td>
+      <td><span class="tag">${escapeHtml(OPS_ROLE_LABELS[role]||role||'-')}</span></td>
+      <td style="font-size:12px;color:var(--text2);max-width:300px;">${escapeHtml(targetText(t.target||{}))}</td>
+      <td>
+        <div style="font-size:13px;color:${rate>=75?'var(--green)':'var(--gold)'};font-weight:800;">${rate}%</div>
+        <div style="font-size:11px;color:var(--text3);">75% 合格，90% 优秀</div>
+      </td>
+      <td>${taskStatusBadge(t.status)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function roleFromTaskType(type){
+  const map={outreach:'outreach_support',reply:'outreach_support',source_update:'city_operator',supplier_review:'supplier_reviewer',content:'content_operator',training:'content_operator',meeting_followup:'city_operator'};
+  return map[type]||'outreach_support';
 }
 
 async function loadSuppliers() {

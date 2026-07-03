@@ -16,6 +16,8 @@
 - `outreach_campaign_schema_seed.sql`：华伴推广任务队列表和第一批推广任务种子
 - `LD_03_outreach_campaign_workflow.md`：入口推广工作流，区分自动发布、人工确认和只观察
 - `LD_04_human_outreach_daily_sop.md`：人工客服推广日常 SOP，明确每天做什么、怎么做、工作量和完成率
+- `OPS_01_team_recruitment_and_management.md`：运营团队招募、在线会议、任务分配和考核设计
+- `ops_team_schema_seed.sql`：运营团队成员、岗位、任务、会议表和第一批模板数据
 
 ## 需要的环境变量
 
@@ -83,3 +85,4 @@ POST /webhook/huaban/user-recruit
 - LD_02 入口库负责登记网站平台、搜索引擎、商家目录和政府公开核验入口；需要登录、加群、验证码或打码联系方式的入口只能进入人工任务。
 - LD_03 推广任务只能对自有或明确授权入口自动发布；微信群、Facebook 群、论坛等默认只生成待人工确认任务，不能自动群发。
 - LD_04 人工客服每天按推广任务领取、文案微调、人工发布、回复咨询和复盘记录执行，并用完成率衡量。
+- OPS_01 通过后台招募运营团队，按岗位分配任务，使用腾讯会议/Zoom/Google Meet 链接组织晨会、复盘会和周会，并按完成率考核。
