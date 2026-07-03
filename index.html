@@ -2635,16 +2635,32 @@ function syncAgentAdoption(){
 
 function syncWishWallPost(post){
   const info=wishTypeInfo(post.wishType||post.type);
+  const queries=post.searchQueries||buildIntelSearchQueries(post);
+  const direction=post.direction||intelDirection(post.wishType||post.type);
   return supaInsertLead({
     lead_type:'user',
-    channel:'wish_wall',
+    channel:'demand_supply_intel',
     name:getPassenger().name||'华伴用户',
     contact:post.contact||betaContact(),
     city:post.city||currentRegion.city||'Melbourne',
-    need_type:'wish_wall_'+(post.wishType||'need_free'),
-    message:`心愿墙：${info.label}\n类别：${post.category||''}\n说明：${post.text||''}\n预算/价格：${post.budget||''}`,
-    next_action:info.zone==='paid'?'match_paid_service':'match_mutual_aid',
-    fields:{event:'wish_wall_post',post,zone:info.zone,role:info.role,label:info.label}
+    need_type:'intel_'+direction+'_'+(post.wishType||'need_free'),
+    message:`需求/供给情报任务：${info.label}\n方向：${direction==='supply'?'供给':'需求'}\n类别：${post.category||''}\n说明：${post.text||''}\n预算/价格：${post.budget||''}\n公开搜索词：${queries.join('｜')}`,
+    next_action:'search_public_sources_verify_and_match',
+    fields:{
+      event:'demand_supply_intel_task',
+      post,
+      zone:info.zone,
+      direction,
+      role:info.role,
+      label:info.label,
+      search_queries:queries,
+      source_policy:{
+        no_auto_registration:true,
+        public_sources_only:true,
+        store_source_url_or_screenshot:true,
+        require_human_or_user_confirmation:true
+      }
+    }
   });
 }
 
@@ -2855,7 +2871,7 @@ async function handleOnboardingFeedbackIntent(text){
   }
   if(intent==='wishwall'){
     openMutualAidCommunity(buildWishWallDraft(text));
-    await agentSay('这就是心愿墙最适合接住的需求。我先帮你放到“收费服务区”的本地帮办里，方便附近会电工维修的人来接。',120);
+    await agentSay('这类需求不能只贴公告。我先帮你变成需求情报任务，去找公开线索、服务者和附近可能能帮忙的人。',120);
     return true;
   }
   if(intent==='travel'){
@@ -2871,11 +2887,11 @@ function renderWishWallNudgeCard(){
   const card=document.createElement('section');
   card.className='install-card intro-fade-card';
   card.id='wish-wall-nudge-card';
-  card.setAttribute('aria-label','前往心愿墙');
+  card.setAttribute('aria-label','前往需求/供给情报库');
   card.innerHTML=`
     <div class="install-copy">
       <strong>如果您想获得帮助或者帮助别人</strong>
-      <span>咱去心愿墙看看呗</span>
+      <span>我来帮你找线索和靠谱的人</span>
     </div>
     <div class="install-actions">
       <button class="install-primary" onclick="openWishWallFromNudge()">去看看</button>
@@ -2916,9 +2932,9 @@ async function handleTravelNudge(type){
 
 async function openWishWallFromNudge(){
   document.getElementById('wish-wall-nudge-card')?.remove();
-  addMsg('去心愿墙看看',true);
+  addMsg('帮我找线索',true);
   openMutualAidCommunity();
-  await agentSay('好呀，心愿墙打开了。你可以求助，也可以帮别人。',120);
+  await agentSay('好呀，需求/供给情报库打开了。你把事说清楚，我来生成搜索任务和匹配线索。',120);
 }
 
 function renderFeedbackStarterCard(){
@@ -2984,7 +3000,7 @@ const FEATURE_INTENTS=[
   {key:'ride-menu',label:'用车',pattern:/打开.*用车|进入.*用车|用车.*(菜单|功能|入口)/i},
   {key:'travel-menu',label:'旅游',pattern:/打开.*旅游|进入.*旅游|旅游.*(菜单|功能|入口)/i},
   {key:'help-menu',label:'华人帮',pattern:/华人帮|打开.*帮|帮.*(菜单|功能|入口)/i},
-  {key:'mutual-aid',label:'心愿墙',pattern:/心愿墙|互助|免费帮助|志愿者|愿意支付|求助|出售.*(物品|服务)|免费服务区|收费服务区|电工|水管|维修|跳闸|断电|漏水|修理|上门检查|找人帮忙/i},
+  {key:'mutual-aid',label:'找线索',pattern:/心愿墙|情报库|找线索|找供给|互助|免费帮助|志愿者|愿意支付|求助|出售.*(物品|服务)|免费服务区|收费服务区|电工|水管|维修|跳闸|断电|漏水|修理|上门检查|找人帮忙/i},
   {key:'market',label:'市场',pattern:/打开.*市场|去.*市场|逛.*市场|二手|买东西|卖东西|商城/i},
   {key:'tour-charter',label:'包车游',pattern:/包车游|旅游包车|旅行包车/i},
   {key:'group-tour',label:'拼团',pattern:/拼团|跟团|一起玩|组团/i},
@@ -3035,7 +3051,7 @@ async function handleDirectFeatureIntent(text, options={}){
 
 const TASK_PLAN_DEFS=[
   {key:'ride',label:'安排出行',pattern:/接机|送机|去机场|从机场|包车|用车|司机|车|行程|出发|到达|航班|火车|票|订票|旅行|旅游/i},
-  {key:'wish',label:'放到心愿墙找人帮忙',pattern:/求助|帮忙|找人|有没有.*(朋友|人)|认识.*人|电工|水管|维修|跳闸|断电|漏水|搬运|跑腿|Doncaster|慕尼黑|Munich/i},
+  {key:'wish',label:'生成需求/供给情报任务',pattern:/求助|帮忙|找人|有没有.*(朋友|人)|认识.*人|电工|水管|维修|跳闸|断电|漏水|搬运|跑腿|Doncaster|慕尼黑|Munich/i},
   {key:'reminder',label:'保存日程提醒',pattern:/提醒|闹钟|日程|到点|别忘|记得|几点叫我|出发前|提前/i},
   {key:'image',label:'读图整理信息',pattern:/截图|图片|照片|拍照|相机|票据|二维码|海报/i},
   {key:'share',label:'分享给朋友',pattern:/分享|转发|发给朋友|二维码|邀请/i},
@@ -3080,7 +3096,7 @@ async function handleAgentTaskPlan(text){
   if(hasRide){
     if(/接机|从机场|落地|到达|航班/i.test(text))S.direction='from_airport';
     if(/送机|去机场|赶飞机|出发/i.test(text))S.direction='to_airport';
-    await agentSay('我先把事情拆开了：出行我继续帮你补齐时间、地址和车型；需要找人的部分先放到心愿墙；提醒也可以先保存。',120);
+    await agentSay('我先把事情拆开了：出行我继续帮你补齐时间、地址和车型；需要找人的部分我会变成情报任务去找线索；提醒也可以先保存。',120);
     return false;
   }
 
@@ -3136,8 +3152,8 @@ const BUSINESS_MODULES={
   },
   mutualAid:{
     enabled:true,
-    title:'心愿墙',
-    menu:{key:'mutual-aid',icon:'🫶',label:'心愿墙'},
+    title:'找线索',
+    menu:{key:'mutual-aid',icon:'🧭',label:'找线索'},
     action:openMutualAidCommunity
   }
 };
@@ -3311,7 +3327,7 @@ async function openFeatureByKey(key,label,options={}){
   if(key==='mutual-aid'){
     rewardCompanionAction('wish_wall');
     openMutualAidCommunity(buildWishWallDraft(options.sourceText||''));
-    await say('心愿墙打开了。这类本地维修、临时求助、愿意付费请人帮忙的事，都可以先发在这里。');
+    await say('需求/供给情报库打开了。这类本地维修、临时求助、愿意付费请人帮忙的事，我会先整理成可搜索、可核验、可匹配的任务。');
     return;
   }
   if(key==='profile'){
@@ -3395,6 +3411,47 @@ function wishTypeInfo(type){
   return WISH_TYPES[type]||WISH_TYPES.need_free;
 }
 
+function inferIntelKeyword(category='', text=''){
+  const raw=`${category} ${text}`;
+  if(/电工|跳闸|断电|电路|电/i.test(raw))return '电工';
+  if(/水管|漏水|管道/i.test(raw))return '水管维修';
+  if(/接机|送机|机场|司机|用车/i.test(raw))return '接送机 司机';
+  if(/旅游|包车|拼团|行程|票|火车|企鹅/i.test(raw))return '旅游 行程';
+  if(/翻译|口译|沟通/i.test(raw))return '翻译';
+  if(/搬运|跑腿|上门/i.test(raw))return '本地帮办';
+  return String(category||'华人服务').replace(/ · /g,' ');
+}
+
+function buildIntelSearchQueries(post={}){
+  const city=post.city||currentRegion.city||'Melbourne';
+  const country=currentRegion.country||'Australia';
+  const keyword=inferIntelKeyword(post.category,post.text);
+  return [
+    `${city} 华人 ${keyword} 微信`,
+    `${city} ${keyword} 中文 服务`,
+    `${city} ${keyword} 华人群`,
+    `${city} ${keyword} 小红书`,
+    `${city} ${keyword} Facebook 华人`,
+    `${country} ${city} ${keyword} 推荐`
+  ];
+}
+
+function intelDirection(wishType){
+  if(wishType==='offer_free'||wishType==='sell')return 'supply';
+  return 'demand';
+}
+
+function intelConfidenceLabel(item={}){
+  const source=item.source||'user_submitted';
+  const map={
+    user_submitted:'用户提交 · 待匹配',
+    public_web:'公开网页 · 待核验',
+    screenshot:'截图识别 · 待确认',
+    supplier_profile:'服务者入驻 · 较高'
+  };
+  return map[source]||'待核验';
+}
+
 function buildWishWallDraft(text=''){
   const clean=String(text||'').trim();
   if(!clean)return {};
@@ -3421,8 +3478,23 @@ function renderWishPosts(posts, zone, fallbackCity){
       </div>
       <div class="mutual-aid-text">${companionEscape(post.text||'')}</div>
       ${post.budget?`<div style="font-size:11px;color:rgba(255,255,255,0.38);margin-top:6px;">预算/价格：${companionEscape(post.budget)}</div>`:''}
+      <div style="font-size:11px;color:rgba(255,255,255,0.34);margin-top:6px;">${companionEscape(intelConfidenceLabel(post))}</div>
     </div>`;
   }).join('');
+}
+
+function renderIntelQueryPreview(draft={}){
+  const text=String(draft.text||'').trim();
+  if(!text)return '';
+  const queries=buildIntelSearchQueries({
+    city:draft.city||currentRegion.city||currentRegion.country,
+    category:draft.category||'其他互助',
+    text
+  }).slice(0,4);
+  return `<div style="margin-top:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:10px;">
+    <div style="font-size:12px;font-weight:900;color:rgba(255,255,255,0.72);margin-bottom:7px;">我会先生成这些公开搜索任务</div>
+    ${queries.map(q=>`<div style="font-size:11px;color:rgba(255,255,255,0.42);line-height:1.7;">• ${companionEscape(q)}</div>`).join('')}
+  </div>`;
 }
 
 function openMutualAidCommunity(draft={}){
@@ -3445,39 +3517,40 @@ function openMutualAidCommunity(draft={}){
       <div class="modal-handle"></div>
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px;">
         <div>
-          <div style="font-size:21px;font-weight:900;color:white;">心愿墙</div>
-          <div style="font-size:12px;color:rgba(255,255,255,0.45);margin-top:4px;">把每件事分清楚：免费互助，或愿意付费交换</div>
+          <div style="font-size:21px;font-weight:900;color:white;">需求/供给情报库</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.45);margin-top:4px;">不用自己贴公告，把事交给华伴去找人、找服务、找线索</div>
         </div>
         <button onclick="document.getElementById('mutual-aid-modal')?.remove()" style="border:0;border-radius:10px;background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.72);padding:8px 12px;font:600 13px/1 inherit;cursor:pointer;">关闭</button>
       </div>
       <div class="mutual-aid-form">
-        <label>性质</label>
+        <label>任务性质</label>
         <select id="mutual-aid-wish-type" onchange="updateWishWallHint()">
-          <option value="need_free" ${draftWishType==='need_free'?'selected':''}>我希望得到免费帮助</option>
-          <option value="need_paid" ${draftWishType==='need_paid'?'selected':''}>我愿意支付请人帮忙</option>
-          <option value="offer_free" ${draftWishType==='offer_free'?'selected':''}>我是志愿者，可以免费帮忙</option>
-          <option value="sell" ${draftWishType==='sell'?'selected':''}>我出售物品或服务</option>
+          <option value="need_free" ${draftWishType==='need_free'?'selected':''}>帮我找免费互助线索</option>
+          <option value="need_paid" ${draftWishType==='need_paid'?'selected':''}>帮我找付费服务者</option>
+          <option value="offer_free" ${draftWishType==='offer_free'?'selected':''}>我是志愿者，录入供给</option>
+          <option value="sell" ${draftWishType==='sell'?'selected':''}>我提供物品或服务，录入供给</option>
         </select>
-        <div id="mutual-aid-hint" style="font-size:11px;color:rgba(255,255,255,0.35);line-height:1.6;margin-top:6px;">免费服务区：适合临时指路、简单陪同、轻量翻译、邻里互助。</div>
+        <div id="mutual-aid-hint" style="font-size:11px;color:rgba(255,255,255,0.35);line-height:1.6;margin-top:6px;">华伴会生成公开搜索任务，记录来源和可信度；不会自动去网站注册账号。</div>
         <label>类别</label>
         <select id="mutual-aid-category">
           ${['旅游转让','拼团补位','票券/名额转让','维修上门 · 电工','维修上门','本地找人','接送陪同','翻译沟通','临时跑腿','新到本地','其他互助'].map(item=>`<option value="${item}" ${draftCategory===item?'selected':''}>${item}</option>`).join('')}
         </select>
         <label>城市</label>
         <input id="mutual-aid-city" value="${companionEscape(city)}" placeholder="所在城市">
-        <label>说明</label>
-        <textarea id="mutual-aid-text" placeholder="简单说清楚你的心愿、能提供的帮助，或出售的物品/服务。">${companionEscape(draftText)}</textarea>
+        <label>你要解决什么事</label>
+        <textarea id="mutual-aid-text" placeholder="例如：Doncaster 家里一路电跳闸，想找附近靠谱电工上门检查。">${companionEscape(draftText)}</textarea>
         <label>预算/价格</label>
         <input id="mutual-aid-budget" value="${companionEscape(draftBudget)}" placeholder="免费可留空；愿意支付或出售时填写预算/价格">
         <label>联系方式</label>
-        <input id="mutual-aid-contact" placeholder="微信 / 手机 / 邮箱，仅用于撮合联系">
-        <button onclick="submitMutualAidPost()" style="width:100%;margin-top:14px;padding:13px;background:rgba(0,200,150,0.24);border:1px solid rgba(0,200,150,0.36);border-radius:12px;color:white;font:800 14px/1 inherit;cursor:pointer;">发布到心愿墙</button>
+        <input id="mutual-aid-contact" placeholder="微信 / 手机 / 邮箱，仅用于匹配后联系">
+        ${renderIntelQueryPreview(draft)}
+        <button onclick="submitMutualAidPost()" style="width:100%;margin-top:14px;padding:13px;background:rgba(0,200,150,0.24);border:1px solid rgba(0,200,150,0.36);border-radius:12px;color:white;font:800 14px/1 inherit;cursor:pointer;">交给华伴去找线索</button>
       </div>
-      <div style="font-size:12px;color:rgba(255,255,255,0.42);line-height:1.7;margin-top:12px;">华伴只做信息撮合，不收取中间费用。免费互助和付费交易会分区展示；涉及金钱、证件、隐私时务必谨慎。</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.42);line-height:1.7;margin-top:12px;">华伴只整理公开信息、用户提交和服务者入驻资料；不会自动注册第三方网站账号。涉及金钱、证件、隐私时务必核验来源。</div>
       <div class="mutual-aid-list">
-        <div class="mutual-aid-zone-title">免费服务区</div>
+        <div class="mutual-aid-zone-title">需求线索</div>
         ${freePosts}
-        <div class="mutual-aid-zone-title">收费服务区</div>
+        <div class="mutual-aid-zone-title">供给/付费服务线索</div>
         ${paidPosts}
       </div>
     </div>`;
@@ -3504,16 +3577,20 @@ async function submitMutualAidPost(){
     zone:info.zone,
     role:info.role,
     category,city,text,budget,contact,
+    source:'user_submitted',
+    direction:intelDirection(wishType),
+    searchQueries:buildIntelSearchQueries({city,category,text}),
+    confidence:'pending_review',
     createdAt:new Date().toISOString(),
     status:'open'
   });
   const savedPost=posts[0];
   saveMutualAidPosts(posts);
-  syncWishWallPost(savedPost).catch(e=>console.warn('wish wall sync failed',e));
+  syncWishWallPost(savedPost).catch(e=>console.warn('intel task sync failed',e));
   document.getElementById('mutual-aid-modal')?.remove();
-  addMsg(info.label,true);
+  addMsg('交给华伴去找线索',true);
   rewardCompanionAction('wish_wall');
-  await agentSay('收到，我先帮你放到心愿墙里，并按免费服务区或收费服务区分好类。后面我会把合适的人和事更好地撮合起来。',180);
+  await agentSay('收到，我先把它变成需求/供给情报任务，生成公开搜索词并同步到后台。找到线索后，会按来源和可信度再给你匹配。',180);
 }
 
 function updateWishWallHint(){
@@ -3521,10 +3598,10 @@ function updateWishWallHint(){
   const hint=document.getElementById('mutual-aid-hint');
   if(!hint)return;
   const text={
-    need_free:'免费服务区：适合临时指路、简单陪同、轻量翻译、邻里互助。',
-    offer_free:'免费服务区：你愿意做志愿者，提供力所能及的免费帮助。',
-    need_paid:'收费服务区：你愿意支付费用，请人帮你完成更耗时或专业的事情。',
-    sell:'收费服务区：你可以发布可出售的物品、技能或本地服务。'
+    need_free:'我会找公开互助线索、华人社区讨论和用户提交过的类似需求。',
+    offer_free:'这会作为供给线索入库，后面可匹配给需要帮助的人。',
+    need_paid:'我会优先找公开服务者、华人服务信息和已入驻供给。',
+    sell:'这会作为供给线索入库，后面可匹配给有相同需求的人。'
   };
   hint.textContent=text[type]||text.need_free;
 }
@@ -3763,7 +3840,7 @@ function renderReminderSuggestionCard(draft={}){
 
 async function analyzeImageToWishWall(file,label){
   try{
-    await agentSay('我先帮你读一下图片，看看能不能整理成心愿墙需求。',80);
+    await agentSay('我先帮你读一下图片，看看能不能整理成需求/供给情报任务。',80);
     const dataUrl=await resizeImageForRecognition(file);
     const payload=dataUrlToPayload(dataUrl);
     if(!payload)throw new Error('图片读取失败');
@@ -3782,12 +3859,12 @@ async function analyzeImageToWishWall(file,label){
     openMutualAidCommunity(draft);
     rememberMenuKey('mutual-aid');
     renderReminderSuggestionCard(draft);
-    await agentSay('我把图片里的关键信息整理成草稿了。你看一下日期、价格和联系方式，对了就发布到心愿墙。',120);
+    await agentSay('我把图片里的关键信息整理成草稿了。你看一下日期、价格和联系方式，对了就交给我去找线索。',120);
   }catch(e){
     console.warn('image wish recognition failed',e);
     openMutualAidCommunity({wishType:'need_paid',category:'其他互助',text:`我上传了一张${label}，想请华伴帮我整理需求。请补充图片里的关键信息。`});
     rememberMenuKey('mutual-aid');
-    await agentSay('图片识别暂时没成功，我先打开心愿墙，你可以把关键信息补一下再发布。',120);
+    await agentSay('图片识别暂时没成功，我先打开情报任务面板，你可以把关键信息补一下，我再去找线索。',120);
   }
 }
 
@@ -4030,17 +4107,17 @@ function buildPrompt(){
 你有一个长期任务：像朋友聊天一样搜集用户反馈，不要像问卷。
 可以自然打开话题：“等我长大了，就是你的生活管家、工作助理、休闲陪伴。你是要自己探索功能，还是让我一一介绍呀？”
 如果用户选择自己探索：鼓励他先试，并请他遇到不顺直接告诉你。
-如果用户选择一一介绍：按介绍、取名/头像、用车、心愿墙、市场、华人帮、个人中心的顺序，每次只介绍一项，再问要不要继续。
-当介绍到心愿墙，或者用户表达想获得帮助/帮助别人时，可以俏皮地说：“如果您想获得帮助或者帮助别人，咱去心愿墙看看呗。”然后引导他进入心愿墙。
-当用户提出电工、水管、跳闸、漏水、搬运、跑腿、临时上门检查等本地生活求助时，不要拒绝；先共情并说“这就是心愿墙适合接住的需求”，引导发布到收费服务区或免费服务区。专业维修、上门服务、涉及金钱或安全的事，要提醒用户自行核验资质、价格和安全。
-在心愿墙之后再介绍出行能力：“现在我最拿手的就是接送机、包车、旅游方面的业务，如果你要出行或者想提供服务，告诉我，让我来试试。”
+如果用户选择一一介绍：按介绍、取名/头像、用车、找线索、市场、华人帮、个人中心的顺序，每次只介绍一项，再问要不要继续。
+当用户表达想获得帮助/帮助别人时，可以俏皮地说：“如果您想获得帮助或者帮助别人，我来帮你找线索和靠谱的人。”然后引导他进入需求/供给情报库。
+当用户提出电工、水管、跳闸、漏水、搬运、跑腿、临时上门检查等本地生活求助时，不要拒绝；先共情并说“这类需求不能只贴公告，我会帮你整理成可搜索、可核验、可匹配的情报任务”。专业维修、上门服务、涉及金钱或安全的事，要提醒用户自行核验资质、价格和安全。
+在找线索之后再介绍出行能力：“现在我最拿手的就是接送机、包车、旅游方面的业务，如果你要出行或者想提供服务，告诉我，让我来试试。”
 如果用户提出建议、吐槽、希望新增能力：先感谢和复述要点，再追问一个最有价值的细节，比如“你希望它在哪里出现？”或“你希望我怎么回复会更像你的小伙伴？”
 
 【Agent办事方式】
 每次先判断用户说的是“一件事”还是“一串事”。
 一件事：直接推进当前最合适的动作，不要讲大道理。
 一串事：先用一句话复述成清单，例如“我理解成三件事：读图整理、安排接送、保存提醒”，再按优先级推进。
-涉及已经预定或已经提交的行程时，不要只回答说明，要主动安排下一步：匹配司机、保存提醒、整理到心愿墙或继续追问缺少的信息。
+涉及已经预定或已经提交的行程时，不要只回答说明，要主动安排下一步：匹配司机、保存提醒、生成需求/供给情报任务或继续追问缺少的信息。
 如果用户发图片、截图、票务信息、群消息或海报，要理解图片里的真实意图，而不是只描述图片。
 
 【一句话下单——最高优先级】

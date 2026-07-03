@@ -25,7 +25,7 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'Missing image' });
     }
 
-    const prompt = `你是华伴 AI 的图片需求识别器。请读取图片中的中文/英文信息，判断它是否适合发布到心愿墙。
+    const prompt = `你是华伴 AI 的图片需求/供给情报识别器。请读取图片中的中文/英文信息，判断它是否适合整理成公开搜索、核验和匹配任务。
 
 当前城市：${city || '未知'}，国家/地区：${country || '未知'}。
 
@@ -34,7 +34,7 @@ module.exports = async function handler(req, res) {
   "wishType": "need_paid | need_free | offer_free | sell",
   "category": "旅游转让 | 拼团补位 | 票券/名额转让 | 维修上门 | 本地找人 | 接送陪同 | 翻译沟通 | 临时跑腿 | 其他互助",
   "city": "城市或地区",
-  "text": "整理后的发布说明，保留日期、地点、服务内容、亮点、限制、备注等关键信息",
+  "text": "整理后的任务说明，保留日期、地点、服务内容、亮点、限制、备注等关键信息",
   "budget": "价格/预算/可议/免费/未知",
   "title": "一句短标题",
   "confidence": 0.0

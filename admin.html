@@ -439,7 +439,7 @@ body {
       <div class="admin-quick-card" onclick="showSection('suppliers')">
         <div class="quick-icon">🧩</div>
         <strong>公测线索</strong>
-        <span>查看领养、心愿墙、反馈和服务者申请</span>
+        <span>查看领养、需求/供给情报、反馈和服务者申请</span>
       </div>
       <div class="admin-quick-card" onclick="showSection('trips')">
         <div class="quick-icon">🚗</div>
@@ -698,7 +698,7 @@ body {
   <div class="topbar">
     <div>
       <div class="page-title">公测线索</div>
-      <div class="page-sub">领养 / 心愿墙 / 反馈 / 服务者申请</div>
+      <div class="page-sub">领养 / 需求供给情报 / 反馈 / 服务者申请</div>
     </div>
     <div class="topbar-actions">
       <select class="input" id="supplier-filter" onchange="loadSuppliers()" style="width:130px;">
@@ -713,7 +713,7 @@ body {
   <div class="content">
     <div class="card">
       <div class="card-body" style="font-size:12px;color:var(--text2);line-height:1.7;border-bottom:1px solid var(--border);padding-bottom:16px;margin-bottom:8px;">
-        公测期间先集中查看用户领养、心愿墙、反馈吐槽和服务者申请。服务者线索审核通过后，用户端个人中心会显示“进入供给中心”；审核通过前，不能发布商品和服务。
+        公测期间先集中查看用户领养、需求/供给情报任务、反馈吐槽和服务者申请。服务者线索审核通过后，用户端个人中心会显示“进入供给中心”；审核通过前，不能发布商品和服务。
       </div>
       <div style="overflow-x:auto;">
         <table class="table">
@@ -1446,6 +1446,7 @@ function supplierBadge(status) {
 function supplierServiceText(lead) {
   const fields = lead.fields || {};
   if(lead.channel==='adoption'||lead.need_type==='adoption')return 'AI 领养';
+  if(lead.channel==='demand_supply_intel'||String(lead.need_type||'').startsWith('intel_'))return '需求/供给情报';
   if(lead.channel==='wish_wall'||String(lead.need_type||'').startsWith('wish_wall'))return '心愿墙';
   if(lead.channel==='feedback'||lead.need_type==='feedback')return '反馈/吐槽';
   return fields.service_type || lead.need_type || (lead.message || '').split('\n')[0].replace('服务类型：','') || '-';
@@ -1453,6 +1454,11 @@ function supplierServiceText(lead) {
 
 function supplierQualificationText(lead) {
   const fields = lead.fields || {};
+  if(lead.channel==='demand_supply_intel'||String(lead.need_type||'').startsWith('intel_')){
+    const direction = fields.direction === 'supply' ? '供给' : '需求';
+    const queries = Array.isArray(fields.search_queries) ? fields.search_queries.slice(0,2).join(' / ') : '';
+    return `${direction} · 公开搜索任务${queries ? ' · '+queries : ''}`;
+  }
   const license = fields.license || '未填写资质';
   const url = fields.public_verification_url || '';
   return url ? `${license} · ${url}` : license;
