@@ -18,6 +18,8 @@ create table if not exists public.outreach_tasks (
   landing_url text not null default 'https://www.huabanapp.com/',
   qr_asset text default '/assets/brand/huaban-qr-logo.png',
   compliance_notes text,
+  daily_target jsonb not null default '{}'::jsonb,
+  metrics jsonb not null default '{}'::jsonb,
   fields jsonb not null default '{}'::jsonb,
   scheduled_at timestamptz,
   published_at timestamptz,
@@ -33,7 +35,7 @@ create unique index if not exists outreach_tasks_title_source_unique on public.o
 
 insert into public.outreach_tasks (
   source_name, source_url, country, city, audience, channel_level, status,
-  title, copy_short, copy_long, landing_url, compliance_notes, fields
+  title, copy_short, copy_long, landing_url, compliance_notes, daily_target, metrics, fields
 ) values
 (
   '微信朋友圈/微信群人工发布',
@@ -48,6 +50,8 @@ insert into public.outreach_tasks (
   '华伴开始墨尔本公测啦。快来领养你的生活管家、工作助理、休闲陪伴的小 AI 吧。它现在先从墨尔本出行和华人互助开始练本领，你可以直接跟它说：我要用车、想找人帮忙、愿意提供服务、想吐槽建议。网址：https://www.huabanapp.com/',
   'https://www.huabanapp.com/?ref=wechat_melbourne_beta',
   '微信群不能自动群发，只能由管理员人工选择合适群并遵守群规。',
+  '{"review_tasks":5,"copy_variants":2,"manual_posts":2,"reply_messages":8,"feedback_records":2}'::jsonb,
+  '{"reviewed":0,"copy_done":0,"posted":0,"replied":0,"feedback_recorded":0}'::jsonb,
   '{"allowed_actions":["draft_copy","manual_post","record_clicks"],"forbidden_actions":["auto_join_group","auto_spam","private_message_blast"]}'::jsonb
 ),
 (
@@ -63,6 +67,8 @@ insert into public.outreach_tasks (
   '华伴 AI 正在墨尔本公测。它不是只会聊天，而是会帮海外华人整理需求、找公开线索、连接靠谱的人。现在先支持出行用车、本地帮忙、服务者入驻和反馈建议。欢迎体验：https://www.huabanapp.com/',
   'https://www.huabanapp.com/?ref=facebook_melbourne_beta',
   '不自动加群，不自动发帖；只生成给管理员审核的发布草稿。',
+  '{"review_tasks":3,"copy_variants":2,"manual_posts":1,"reply_messages":5,"feedback_records":1}'::jsonb,
+  '{"reviewed":0,"copy_done":0,"posted":0,"replied":0,"feedback_recorded":0}'::jsonb,
   '{"allowed_actions":["draft_copy","manual_post"],"forbidden_actions":["auto_join_group","scrape_private_group","auto_spam"]}'::jsonb
 ),
 (
@@ -78,6 +84,8 @@ insert into public.outreach_tasks (
   '华伴正在建立海外华人城市服务网络。如果你能提供接送机、包车、旅游、翻译、律师、会计、电工、维修、跑腿或本地帮办服务，可以申请成为服务者。华伴不抽佣，不赚差价，只帮需要的人遇见可靠的人。申请入口：https://www.huabanapp.com/',
   'https://www.huabanapp.com/?ref=supplier_recruit',
   '涉及律师、会计、电工等专业服务，必须进入资质核验和人工审核。',
+  '{"review_tasks":5,"copy_variants":2,"manual_posts":2,"reply_messages":6,"feedback_records":2}'::jsonb,
+  '{"reviewed":0,"copy_done":0,"posted":0,"replied":0,"feedback_recorded":0}'::jsonb,
   '{"allowed_actions":["draft_copy","manual_post","qualification_review"],"forbidden_actions":["promise_income","claim_official_certification_without_review"]}'::jsonb
 )
 on conflict (title, source_name) do update set
@@ -92,5 +100,7 @@ on conflict (title, source_name) do update set
   landing_url=excluded.landing_url,
   qr_asset=excluded.qr_asset,
   compliance_notes=excluded.compliance_notes,
+  daily_target=excluded.daily_target,
+  metrics=excluded.metrics,
   fields=excluded.fields,
   updated_at=now();
