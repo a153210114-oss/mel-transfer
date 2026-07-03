@@ -2,19 +2,27 @@
   "name": "华伴 AI 伙伴",
   "short_name": "华伴",
   "description": "从旅行开始，共同成长。华伴为全球华人提供出行与本地生活帮助。",
-  "start_url": "/",
+  "id": "/?source=pwa",
+  "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
   "background_color": "#f7f7f7",
   "theme_color": "#f7f7f7",
   "orientation": "portrait",
   "lang": "zh-CN",
+  "categories": ["travel", "lifestyle", "productivity"],
   "icons": [
     {
       "src": "/assets/brand/huaban-logo-v1.png",
       "sizes": "1254x1254",
       "type": "image/png",
       "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/brand/huaban-qr-logo.png",
+      "sizes": "1200x1200",
+      "type": "image/png",
+      "purpose": "any"
     }
   ]
 }
