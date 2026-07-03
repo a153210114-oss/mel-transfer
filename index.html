@@ -35,9 +35,8 @@ body{
   display:flex;align-items:center;justify-content:space-between;
   padding:14px 16px;flex-shrink:0;
 }
-.top-logo{font-size:13px;color:rgba(255,255,255,0.4);font-weight:700;}
-.brand-lockup{display:flex;align-items:center;gap:7px;min-width:0;}
-.brand-logo{width:26px;height:26px;border-radius:7px;display:block;object-fit:cover;flex-shrink:0;}
+.brand-lockup{position:relative;width:46px;height:46px;display:flex;align-items:center;justify-content:center;min-width:46px;flex-shrink:0;}
+.brand-logo{width:46px;height:46px;border-radius:12px;display:block;object-fit:cover;flex-shrink:0;}
 .splash-logo{width:82px;height:82px;border-radius:22px;display:block;object-fit:cover;box-shadow:0 10px 28px rgba(0,0,0,.12);animation:splashBounce 0.8s ease-out forwards;}
 .top-exit{
   background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);
@@ -62,6 +61,9 @@ body{
   background:rgba(0,212,255,0.08);
   border:1.5px solid rgba(0,212,255,0.15);
 }
+.msg-av.agent{border-radius:8px;background:#fff;border:0;box-shadow:0 0 0 1px rgba(0,0,0,.04);}
+.agent-avatar-img{width:100%;height:100%;display:block;border-radius:inherit;object-fit:cover;}
+.agent-avatar-emoji{display:flex;align-items:center;justify-content:center;width:100%;height:100%;line-height:1;}
 .msg.user .msg-av{background:rgba(200,160,32,0.08);border-color:rgba(200,160,32,0.15);}
 .msg-bubble{
   max-width:80%;
@@ -247,8 +249,7 @@ body{
 /* 微信式首页：熟悉、克制，以服务和对话为核心 */
 :root{--wx-green:#07c160;--wx-bg:#ededed;--wx-line:#e5e5e5;--wx-text:#191919;--wx-muted:#8a8a8a;--wx-top:#f7f7f7;--wx-panel:#f7f7f7;--wx-card:#fff;--wx-card-soft:#f7f7f7;--wx-border:#dedede;}
 body{background:var(--wx-bg);color:var(--wx-text);}
-.top-bar{height:52px;padding:0 16px;background:var(--wx-top);border-bottom:1px solid var(--wx-line);}
-.top-logo{font-size:16px;color:var(--wx-text);font-weight:600;}
+.top-bar{height:56px;padding:4px 14px;background:var(--wx-top);border-bottom:1px solid var(--wx-line);}
 .brand-logo{box-shadow:0 0 0 1px rgba(0,0,0,.04);}
 .top-bar>button{color:#4b4b4b!important;}
 .chat-area{padding:18px 12px 150px;gap:14px;}
@@ -327,6 +328,14 @@ body.theme-night .companion-badges{background:rgba(255,255,255,.08);border-top-c
 body.theme-night .companion-badge,
 body.theme-night .companion-checkin,
 body.theme-night .companion-rename{background:#242a31;color:#dceff2;border-color:#3a424c;}
+body.theme-night .agent-setup-card{background:#1d242b;border-color:#303943;box-shadow:none;}
+body.theme-night .agent-setup-title{color:#dceff2;}
+body.theme-night .agent-setup-sub{color:#9aa7af;}
+body.theme-night .agent-setup-avatar,
+body.theme-night .agent-avatar-choice,
+body.theme-night .agent-setup-input,
+body.theme-night .agent-setup-age{background:#242a31;border-color:#3a424c;color:#dceff2;}
+body.theme-night .agent-age-seconds{color:#62ddb2;}
 
 /* 浅色画布下的对话卡片：避免深色主题白字落在浅灰背景上 */
 .chat-area .choice-card,
@@ -398,6 +407,10 @@ body.theme-night .companion-rename{background:#242a31;color:#dceff2;border-color
 .region-btn{max-width:132px;border:0;background:transparent;color:#555;font-family:inherit;font-size:12px;display:flex;align-items:center;gap:3px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .region-btn span{overflow:hidden;text-overflow:ellipsis;}.region-dot{width:6px;height:6px;border-radius:50%;background:var(--wx-green);flex-shrink:0;}
 .install-card{margin:0 0 0 44px;background:#fff;border:1px solid #dedede;border-radius:6px;padding:10px 11px;display:flex;align-items:center;gap:10px;box-shadow:0 1px 2px rgba(0,0,0,.04);}
+.intro-fade-card{opacity:0;transform:translateY(6px);animation:introCardIn .28s ease forwards;}
+.intro-fade-card.fade-away{animation:introCardOut .55s ease forwards;}
+@keyframes introCardIn{to{opacity:1;transform:translateY(0)}}
+@keyframes introCardOut{to{opacity:0;transform:translateY(-5px);max-height:0;margin-top:0;margin-bottom:0;padding-top:0;padding-bottom:0;border-width:0;overflow:hidden}}
 .install-card img{width:34px;height:34px;border-radius:9px;object-fit:cover;flex-shrink:0;}
 .install-copy{flex:1;min-width:0;line-height:1.35;}
 .install-copy strong{display:block;font-size:13px;font-weight:600;color:var(--wx-text);}
@@ -413,8 +426,19 @@ body.theme-night .companion-rename{background:#242a31;color:#dceff2;border-color
 .wake-copy span{display:block;margin-top:2px;font-size:11px;color:#888;}
 .wake-toggle{border:0;border-radius:5px;background:var(--wx-green);color:#fff;font:500 12px/1 inherit;padding:8px 10px;cursor:pointer;flex-shrink:0;}
 .wake-toggle.off{background:#f1f1f1;color:#555;}
+.mutual-aid-list{display:flex;flex-direction:column;gap:8px;margin-top:12px;max-height:190px;overflow:auto;}
+.mutual-aid-item{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:10px;}
+.mutual-aid-zone-title{font-size:12px;color:rgba(255,255,255,0.54);font-weight:800;margin-top:12px;}
+.mutual-aid-meta{display:flex;justify-content:space-between;gap:8px;color:rgba(255,255,255,0.45);font-size:11px;margin-bottom:5px;}
+.mutual-aid-text{color:rgba(255,255,255,0.78);font-size:13px;line-height:1.55;}
+.mutual-aid-badge{display:inline-flex;align-items:center;border-radius:999px;padding:2px 7px;font-size:10px;font-weight:800;margin-right:5px;}
+.mutual-aid-badge.free{background:rgba(0,200,150,0.14);color:#62ddb2;}
+.mutual-aid-badge.paid{background:rgba(241,207,73,0.14);color:#f1cf49;}
+.mutual-aid-form label{display:block;font-size:12px;color:rgba(255,255,255,0.5);margin:10px 0 6px;}
+.mutual-aid-form input,.mutual-aid-form select,.mutual-aid-form textarea{width:100%;border:1px solid rgba(255,255,255,0.13);border-radius:10px;background:rgba(255,255,255,0.07);color:white;font:14px/1.4 inherit;padding:11px;outline:none;}
+.mutual-aid-form textarea{height:78px;resize:none;}
 .install-overlay{position:fixed;inset:0;z-index:3500;background:rgba(0,0,0,.48);display:flex;align-items:flex-end;justify-content:center;}
-.install-sheet{width:100%;max-width:480px;background:#fff;border-radius:18px 18px 0 0;padding:20px 18px calc(22px + env(safe-area-inset-bottom));box-shadow:0 -8px 24px rgba(0,0,0,.16);}
+.install-sheet{width:100%;max-width:480px;max-height:calc(100vh - 28px);overflow:auto;background:#fff;border-radius:18px 18px 0 0;padding:20px 18px calc(22px + env(safe-area-inset-bottom));box-shadow:0 -8px 24px rgba(0,0,0,.16);}
 .install-sheet-head{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
 .install-sheet-head img{width:44px;height:44px;border-radius:11px;object-fit:cover;}
 .install-sheet-title{font-size:17px;font-weight:700;color:var(--wx-text);}
@@ -442,9 +466,24 @@ body.theme-night .companion-rename{background:#242a31;color:#dceff2;border-color
 .agent-preset-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;}
 .agent-preset{border:1px solid #ddd;border-radius:9px;background:#fff;padding:8px 4px;font:12px/1.3 inherit;color:#333;cursor:pointer;}
 .agent-preset strong{display:block;font-size:20px;margin-bottom:4px;}
+.agent-preset strong .agent-avatar-img{width:24px;height:24px;border-radius:7px;margin:0 auto;}
 .agent-secondary{margin-top:8px!important;background:#f1f1f1!important;color:#555!important;}
+.agent-setup-card{margin:0 0 2px 44px;border-radius:14px;background:#fff;border:1px solid var(--wx-border);padding:13px;box-shadow:0 2px 10px rgba(0,0,0,.04);}
+.agent-setup-head{display:flex;align-items:center;gap:10px;margin-bottom:11px;}
+.agent-setup-avatar{width:48px;height:48px;border-radius:13px;background:#f1fbf6;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;box-shadow:0 0 0 1px rgba(0,0,0,.04);}
+.agent-setup-title{font-size:15px;font-weight:800;color:var(--wx-text);}
+.agent-setup-sub{font-size:11px;color:#888;margin-top:2px;}
+.agent-setup-grid{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;}
+.agent-setup-input{height:40px;border:1px solid #ddd;border-radius:9px;background:#f7f7f7;color:#191919;font:15px/1 inherit;padding:0 11px;outline:none;min-width:0;}
+.agent-setup-input:focus{border-color:#20b77b;background:#fff;}
+.agent-setup-save{height:40px;border:0;border-radius:9px;background:var(--wx-green);color:white;font:700 13px/1 inherit;padding:0 13px;cursor:pointer;}
+.agent-avatar-choices{display:flex;gap:7px;margin-top:10px;overflow-x:auto;padding-bottom:1px;}
+.agent-avatar-choice{width:42px;height:42px;border-radius:12px;border:1px solid #ddd;background:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;flex-shrink:0;overflow:hidden;}
+.agent-avatar-choice.active{border-color:#20b77b;box-shadow:0 0 0 2px rgba(32,183,123,.14);}
+.agent-setup-age{margin-top:10px;padding:9px 10px;border-radius:10px;background:#f7f7f7;color:#60777d;font-size:12px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.agent-age-seconds{font-variant-numeric:tabular-nums;font-weight:900;color:#20a070;}
 .companion-stage{height:66px;display:flex;align-items:center;justify-content:center;}
-.companion-avatar{border:0;background:none;font-size:50px;line-height:1;cursor:pointer;filter:drop-shadow(0 5px 3px rgba(45,75,75,.14));transform-origin:50% 100%;}
+.companion-avatar{width:58px;height:58px;border:0;border-radius:15px;background:#fff;font-size:38px;line-height:1;cursor:pointer;filter:drop-shadow(0 5px 3px rgba(45,75,75,.14));transform-origin:50% 100%;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:0;}
 .companion-avatar.play{animation:companionHop .55s ease;}
 @keyframes companionHop{0%,100%{transform:translateY(0) rotate(0)}35%{transform:translateY(-12px) rotate(-7deg)}70%{transform:translateY(-3px) rotate(7deg)}}
 .companion-speech{position:absolute;right:4px;top:13px;max-width:105px;padding:6px 8px;border-radius:10px 10px 10px 2px;background:rgba(255,255,255,.88);color:#577077;font-size:10px;line-height:1.35;opacity:0;transform:translateY(4px);transition:.2s;pointer-events:none;}
@@ -519,14 +558,13 @@ body.more-open .chat-area{padding-bottom:390px;}
 <div id="splash">
   <img class="splash-logo" src="assets/brand/huaban-logo-v1.png" alt="华伴 logo">
   <div style="font-size:20px;font-weight:900;color:white;">华伴 AI 伙伴</div>
-  <div id="splash-agent-line" style="font-size:12px;color:rgba(255,255,255,0.4);">小本为您服务</div>
+  <div id="splash-agent-line" style="font-size:12px;color:rgba(255,255,255,0.4);">等你给我取名</div>
 </div>
 
 <!-- 顶部栏 -->
 <div class="top-bar">
   <div class="brand-lockup">
     <img class="brand-logo" src="assets/brand/huaban-logo-v1.png" alt="华伴 logo">
-    <div class="top-logo">华伴</div>
   </div>
   <div id="voice-indicator" style="display:none;font-size:11px;color:rgba(255,59,48,0.9);animation:mp 0.8s ease-in-out infinite;">🔴 录音中</div>
   <button class="region-btn" id="region-btn" onclick="changeRegion()" aria-label="切换地区" title="切换地区"><i class="region-dot"></i><span id="region-label">正在定位</span>⌄</button>
@@ -714,27 +752,40 @@ const TENANT_ID='00000000-0000-0000-0000-000000000001';
 // ── 状态 ──
 let currentRole = null; // 'passenger' | 'driver'
 let currentGender = null; // 'male' | 'female'
-let agentEmoji = '👩‍✈️'; // 默认小本
-let agentName = '小本';
-let agentTitle = '出行管家';
+let agentEmoji = 'logo';
+let agentName = '';
+let agentTitle = 'AI伙伴';
 const AGENT_NAME_KEY = 'huaban_agent_name';
 const AGENT_TITLE_KEY = 'huaban_agent_title';
 const AGENT_EMOJI_KEY = 'huaban_agent_emoji';
+const AGENT_BIRTH_KEY = 'huaban_agent_birth_at';
 window._ttsVoice = 'FunAudioLLM/CosyVoice2-0.5B:diana';
 // 恢复已存性别（含currentGender同步）
 (function(){
   const g = localStorage.getItem('au_gender');
   if(g === 'female'){
     currentGender='female';
-    agentEmoji='🧑‍✈️'; agentName='小墨';
     window._ttsVoice='FunAudioLLM/CosyVoice2-0.5B:diana';
   } else if(g === 'male'){
     currentGender='male';
-    agentEmoji='👩‍✈️'; agentName='小本';
     window._ttsVoice='FunAudioLLM/CosyVoice2-0.5B:diana';
   }
+  const savedName=localStorage.getItem(AGENT_NAME_KEY)||'';
+  const savedTitle=localStorage.getItem(AGENT_TITLE_KEY)||'';
+  const savedEmoji=localStorage.getItem(AGENT_EMOJI_KEY)||'';
+  const oldDefaultName=/^(小墨|小本)$/.test(savedName);
+  const oldDefaultTitle=!savedTitle||savedTitle==='出行管家';
+  const oldDefaultEmoji=!savedEmoji||['👩‍✈️','🧑‍✈️','👨‍✈️'].includes(savedEmoji);
+  if(oldDefaultName&&oldDefaultTitle&&oldDefaultEmoji){
+    localStorage.removeItem(AGENT_NAME_KEY);
+    localStorage.removeItem(AGENT_TITLE_KEY);
+    localStorage.removeItem(AGENT_EMOJI_KEY);
+  }
+  if(oldDefaultName)localStorage.removeItem(AGENT_NAME_KEY);
+  if(savedTitle==='出行管家')localStorage.removeItem(AGENT_TITLE_KEY);
+  if(['👩‍✈️','🧑‍✈️','👨‍✈️'].includes(savedEmoji))localStorage.removeItem(AGENT_EMOJI_KEY);
 })();
-agentName = getSavedAgentName() || agentName;
+agentName = getSavedAgentName();
 agentTitle = getSavedAgentTitle() || agentTitle;
 agentEmoji = getSavedAgentEmoji() || agentEmoji;
 let aiHistory = [];
@@ -750,7 +801,6 @@ const VOICE_WAKE_KEY = 'huaban_voice_wake_enabled';
 window.addEventListener('beforeinstallprompt', (event) => {
   event.preventDefault();
   deferredInstallPrompt = event;
-  showInstallPrompt();
 });
 
 window.addEventListener('appinstalled', () => {
@@ -952,16 +1002,27 @@ const VEHICLES=[...COMFORT_VEHICLES,...LUXURY_VEHICLES];
 const chatArea=document.getElementById('chat-area');
 function scrollBottom(){setTimeout(()=>{chatArea.scrollTop=chatArea.scrollHeight;},100);}
 
+function isDefaultAgentEmoji(value=agentEmoji){
+  return ['logo','👩‍✈️','🧑‍✈️','👨‍✈️',''].includes(String(value||'').trim());
+}
+
+function agentAvatarMarkup(value=agentEmoji){
+  if(isDefaultAgentEmoji(value)){
+    return '<img class="agent-avatar-img" src="assets/brand/huaban-logo-v1.png" alt="华伴 AI 头像">';
+  }
+  return `<span class="agent-avatar-emoji">${companionEscape(value)}</span>`;
+}
+
 function addMsg(html,isUser=false){
   const div=document.createElement('div');
   div.className='msg'+(isUser?' user':'');
-  const av=isUser?(currentGender==='female'?'👩':'👤'):agentEmoji;
-  div.innerHTML=`<div class="msg-av">${av}</div><div class="msg-bubble">${html}</div>`;
+  const av=isUser?(currentGender==='female'?'👩':'👤'):agentAvatarMarkup();
+  div.innerHTML=`<div class="msg-av${isUser?'':' agent'}">${av}</div><div class="msg-bubble">${html}</div>`;
   chatArea.appendChild(div);scrollBottom();return div;
 }
 function addTyping(){
   const div=document.createElement('div');div.className='msg';
-  div.innerHTML=`<div class="msg-av">${agentEmoji}</div><div class="typing-bubble"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
+  div.innerHTML=`<div class="msg-av agent">${agentAvatarMarkup()}</div><div class="typing-bubble"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
   chatArea.appendChild(div);scrollBottom();return div;
 }
 function delay(ms){return new Promise(r=>setTimeout(r,ms));}
@@ -1034,11 +1095,12 @@ function getCompanion(){
       lastActiveDate:saved.lastActiveDate||'',
       chatDate:saved.chatDate||'',
       chatRewards:Number(saved.chatRewards)||0,
+      dailyRewards:saved.dailyRewards&&typeof saved.dailyRewards==='object'?saved.dailyRewards:{},
       badges:Array.isArray(saved.badges)?saved.badges:[],
       lastPetAt:Number(saved.lastPetAt)||0
     };
   }catch(e){
-    return {xp:0,affection:12,lastCheckIn:'',streak:0,lastActiveDate:'',chatDate:'',chatRewards:0,badges:[],lastPetAt:0};
+    return {xp:0,affection:12,lastCheckIn:'',streak:0,lastActiveDate:'',chatDate:'',chatRewards:0,dailyRewards:{},badges:[],lastPetAt:0};
   }
 }
 
@@ -1069,6 +1131,132 @@ function companionMood(state){
   return '有点害羞';
 }
 
+function agentBirthAt(){
+  let born=Number(localStorage.getItem(AGENT_BIRTH_KEY)||0);
+  if(!born){
+    born=Date.now();
+    localStorage.setItem(AGENT_BIRTH_KEY,String(born));
+  }
+  return born;
+}
+
+function agentAgeSeconds(){
+  return Math.max(1,Math.floor((Date.now()-agentBirthAt())/1000));
+}
+
+function updateAgentAgeDisplays(){
+  const state=getCompanion();
+  const level=companionLevel(state.xp);
+  document.querySelectorAll('[data-agent-age]').forEach(el=>{
+    el.textContent=`${agentAgeSeconds()}秒 · ${level.name}`;
+  });
+}
+
+function ensureAgentAgeTicker(){
+  if(window._agentAgeTicker)return;
+  updateAgentAgeDisplays();
+  window._agentAgeTicker=setInterval(updateAgentAgeDisplays,1000);
+}
+
+function hasCustomAgentIdentity(){
+  return Boolean(localStorage.getItem(AGENT_NAME_KEY)||localStorage.getItem(AGENT_EMOJI_KEY));
+}
+
+function displayAgentName(){
+  return localStorage.getItem(AGENT_NAME_KEY)?agentName:'等你取名';
+}
+
+function displayAgentTitle(){
+  return localStorage.getItem(AGENT_TITLE_KEY)?agentTitle:'AI伙伴';
+}
+
+function displayAgentAvatarText(){
+  return isDefaultAgentEmoji()?'华伴头像':agentEmoji;
+}
+
+function setupAvatarChoiceMarkup(value,label,active=false){
+  const content=value==='logo'
+    ? '<img class="agent-avatar-img" src="assets/brand/huaban-logo-v1.png" alt="华伴头像">'
+    : companionEscape(value);
+  return `<button class="agent-avatar-choice${active?' active':''}" onclick="selectSetupAvatar('${companionEscape(value)}')" aria-label="${companionEscape(label)}" title="${companionEscape(label)}">${content}</button>`;
+}
+
+const AGENT_AVATAR_CHOICES=[
+  ['logo','华伴头像'],
+  ['✨','灵感'],
+  ['🌱','成长'],
+  ['🧭','向导'],
+  ['🧳','旅行'],
+  ['🤝','帮办'],
+  ['📍','本地'],
+  ['🛫','出行'],
+  ['🚗','用车'],
+  ['🏡','生活'],
+  ['💼','工作'],
+  ['💬','陪聊'],
+  ['🪄','小魔法'],
+  ['🌈','开心'],
+  ['💡','点子'],
+  ['🫶','暖心']
+];
+
+function renderAgentSetupCard(){
+  if(document.getElementById('agent-setup-card'))return;
+  const card=document.createElement('section');
+  card.id='agent-setup-card';
+  card.className='agent-setup-card';
+  const active=isDefaultAgentEmoji()?'logo':agentEmoji;
+  card.innerHTML=`
+    <div class="agent-setup-head">
+      <div class="agent-setup-avatar" id="agent-setup-preview">${agentAvatarMarkup()}</div>
+      <div>
+        <div class="agent-setup-title">先认识一下我</div>
+        <div class="agent-setup-sub">可以语音说“你叫小爱”，也可以手动填</div>
+      </div>
+    </div>
+    <div class="agent-setup-grid">
+      <input class="agent-setup-input" id="agent-setup-name" value="${hasCustomAgentIdentity()?companionEscape(agentName):''}" maxlength="8" placeholder="给我取个名字">
+      <button class="agent-setup-save" onclick="saveAgentSetupCard()">保存</button>
+    </div>
+    <input id="agent-setup-emoji" type="hidden" value="${companionEscape(active)}">
+    <div class="agent-avatar-choices">
+      ${AGENT_AVATAR_CHOICES.map(([value,label])=>setupAvatarChoiceMarkup(value,label,value===active)).join('')}
+    </div>
+    <div class="agent-setup-age">
+      <span>年龄</span>
+      <span class="agent-age-seconds" data-agent-age>${agentAgeSeconds()}秒 · ${companionLevel(getCompanion().xp).name}</span>
+    </div>`;
+  chatArea.appendChild(card);
+  ensureAgentAgeTicker();
+  scrollBottom();
+}
+
+function selectSetupAvatar(value){
+  const normalized=value==='logo'?'logo':cleanAgentEmoji(value);
+  document.getElementById('agent-setup-emoji')?.setAttribute('value',normalized);
+  document.querySelectorAll('.agent-avatar-choice').forEach(btn=>btn.classList.remove('active'));
+  const target=[...document.querySelectorAll('.agent-avatar-choice')].find(btn=>btn.getAttribute('aria-label')&&(
+    (normalized==='logo'&&btn.getAttribute('aria-label')==='华伴头像')||btn.textContent.trim()===normalized
+  ));
+  target?.classList.add('active');
+  const preview=document.getElementById('agent-setup-preview');
+  if(preview){
+    preview.innerHTML=normalized==='logo'
+      ? '<img class="agent-avatar-img" src="assets/brand/huaban-logo-v1.png" alt="华伴头像">'
+      : `<span class="agent-avatar-emoji">${companionEscape(normalized)}</span>`;
+  }
+}
+
+async function saveAgentSetupCard(){
+  const name=document.getElementById('agent-setup-name')?.value||'';
+  const avatar=document.getElementById('agent-setup-emoji')?.value||'logo';
+  const ok=setAgentCustomization({name,title:agentTitle||'AI伙伴',emoji:avatar});
+  if(!ok){alert('先给我取一个 2 到 8 个字的名字吧');return;}
+  document.getElementById('agent-setup-card')?.remove();
+  rewardCompanionAction('customize');
+  await agentSay(`好呀，我记住了。我叫<strong>${agentName}</strong>，以后就陪你一起长大。`,120);
+}
+
 function addCompanionBadge(state,label,icon='📍'){
   if(!label)return false;
   const key=`${icon}${label}`;
@@ -1091,19 +1279,20 @@ function renderCompanionCard(){
   card.innerHTML=`
     <div class="companion-room">
       <div class="companion-head">
-        <div><div class="companion-name">${agentName} · ${agentTitle}</div><div class="companion-sub">${level.name} · 声音：${voiceStage.label} · 心情：${companionMood(state)}</div></div>
+        <div><div class="companion-name">${displayAgentName()} · ${displayAgentTitle()}</div><div class="companion-sub">年龄：<span data-agent-age>${agentAgeSeconds()}秒 · ${level.name}</span> · 声音：${voiceStage.label} · 心情：${companionMood(state)}</div></div>
         <div class="companion-actions">
           <button class="companion-rename" onclick="openAgentCustomizer()">定制</button>
           <button class="companion-checkin${checked?' done':''}" onclick="checkInCompanion()">${checked?'今天见过啦':'每日见面'}</button>
         </div>
       </div>
       <div class="companion-stage">
-        <button class="companion-avatar" id="companion-avatar" onclick="petCompanion()" aria-label="和${agentName}互动">${agentEmoji}</button>
+        <button class="companion-avatar" id="companion-avatar" onclick="petCompanion()" aria-label="和${agentName}互动">${agentAvatarMarkup()}</button>
         <span class="companion-speech" id="companion-speech">今天想去哪里？</span>
       </div>
       <div class="companion-stats"><span class="companion-level">Lv.${levelIndex+1}</span><span class="companion-progress"><i style="width:${progress}%"></i></span><span>亲密度 ${state.affection}</span></div>
     </div>
     <div class="companion-badges">${state.badges.length?state.badges.map(b=>`<span class="companion-badge">${companionEscape(b)}</span>`).join(''):'<span class="companion-badge">🌱 第一次相遇</span>'}</div>`;
+  ensureAgentAgeTicker();
 }
 
 function companionSay(text){
@@ -1128,6 +1317,36 @@ function rewardCompanion(type,xp=0,affection=0){
   state.lastActiveDate=today;
   saveCompanion(state);
   renderCompanionCard();
+}
+
+function rewardCompanionAction(type, options={}){
+  const rewards={
+    app_open:{xp:4,affection:1,daily:true,say:'今天也见面啦'},
+    guide:{xp:5,affection:1,say:'了解我，我会更懂你'},
+    try_feature:{xp:4,affection:1,say:'多试试，我长得更快'},
+    wish_wall:{xp:8,affection:2,say:'心愿收到，我又学会一点'},
+    share:{xp:16,affection:4,dailyMax:3,say:'谢谢你把我介绍给朋友，成长值双倍'},
+    install:{xp:10,affection:3,daily:true,say:'住到桌面上啦'},
+    customize:{xp:6,affection:2,say:'我更像你的伙伴了'},
+    media:{xp:3,affection:1,say:'我看到你的补充信息了'}
+  };
+  const rule={...(rewards[type]||{}),...options};
+  if(!rule.xp&&!rule.affection)return 0;
+  const state=getCompanion();
+  const today=companionToday();
+  if(!state.dailyRewards||state.dailyRewards.date!==today)state.dailyRewards={date:today};
+  const countKey=`${type}Count`;
+  if(rule.daily&&state.dailyRewards[type])return 0;
+  if(rule.dailyMax&&Number(state.dailyRewards[countKey]||0)>=rule.dailyMax)return 0;
+  if(rule.daily)state.dailyRewards[type]=true;
+  if(rule.dailyMax)state.dailyRewards[countKey]=Number(state.dailyRewards[countKey]||0)+1;
+  state.xp+=Number(rule.xp)||0;
+  state.affection=Math.min(100,state.affection+(Number(rule.affection)||0));
+  state.lastActiveDate=today;
+  saveCompanion(state);
+  renderCompanionCard();
+  if(rule.say)companionSay(`+${rule.xp||0} 成长值 · ${rule.say}`);
+  return rule.xp||0;
 }
 
 function checkInCompanion(){
@@ -1580,6 +1799,10 @@ function renderVoiceWakeCard(){
   else chatArea.appendChild(card);
 }
 
+function hideVoiceWakeCard(){
+  document.getElementById('voice-wake-card')?.remove();
+}
+
 async function enableVoiceWake(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){alert('请使用Safari或Chrome');return;}
@@ -1591,7 +1814,7 @@ async function enableVoiceWake(){
   }
   localStorage.setItem(VOICE_WAKE_KEY,'1');
   addMsg('开启语音唤起',true);
-  renderVoiceWakeCard();
+  hideVoiceWakeCard();
   startWakeListening();
   await agentSay(`好呀。以后你说“华伴”“小伴”或“${agentName}”，我就出来。`,120);
 }
@@ -1599,7 +1822,7 @@ async function enableVoiceWake(){
 function disableVoiceWake(){
   localStorage.setItem(VOICE_WAKE_KEY,'0');
   stopWakeListening(true);
-  renderVoiceWakeCard();
+  hideVoiceWakeCard();
 }
 
 function maybeStartWakeListening(){
@@ -1620,7 +1843,7 @@ function stopWakeListening(manual=false){
     try{wakeRecognition.onend=null;wakeRecognition.stop();}catch(e){}
     wakeRecognition=null;
   }
-  renderVoiceWakeCard();
+  if(document.getElementById('voice-wake-card'))renderVoiceWakeCard();
 }
 
 function startWakeListening(){
@@ -1632,7 +1855,7 @@ function startWakeListening(){
   wakeRecognition.interimResults=true;
   wakeRecognition.onstart=()=>{
     wakeListening=true;
-    renderVoiceWakeCard();
+    if(document.getElementById('voice-wake-card'))renderVoiceWakeCard();
   };
   wakeRecognition.onresult=(e)=>{
     let heard='';
@@ -1646,12 +1869,12 @@ function startWakeListening(){
   };
   wakeRecognition.onerror=(e)=>{
     wakeListening=false;
-    renderVoiceWakeCard();
+    if(document.getElementById('voice-wake-card'))renderVoiceWakeCard();
     if(e.error==='not-allowed'||e.error==='service-not-allowed')return;
   };
   wakeRecognition.onend=()=>{
     wakeListening=false;
-    renderVoiceWakeCard();
+    if(document.getElementById('voice-wake-card'))renderVoiceWakeCard();
     if(voiceWakeEnabled()&&!wakeSuspended&&!voiceMode&&!isSpeaking)setTimeout(startWakeListening,800);
   };
   try{wakeRecognition.start();}catch(e){}
@@ -1823,8 +2046,24 @@ async function sendVoiceMessage(text){
     await agentSay(`好呀，以后我就叫<strong>${agentName}</strong>。`,180);
     return;
   }
+  if(isVoiceWakeHelpIntent(corrected)){
+    showVoiceWakePrompt();
+    await agentSay('可以，点一下开启语音唤起，以后喊“华伴”或“小伴”我就出来。',120);
+    return;
+  }
+  if(isAddHomeHelpIntent(corrected)){
+    showInstallPrompt(true);
+    await agentSay('可以，点一下添加，就能把华伴放到手机桌面。',120);
+    return;
+  }
   if(isPlatformGuideIntent(corrected)){
     await showPlatformGuide(false);
+    return;
+  }
+  if(await handleOnboardingFeedbackIntent(corrected)){
+    return;
+  }
+  if(await handleDirectFeatureIntent(corrected,{alreadyRendered:true,voice:true})){
     return;
   }
   if(currentRole==='passenger') extractInfo(corrected);
@@ -1970,7 +2209,10 @@ function cleanAgentTitle(value){
 }
 
 function cleanAgentEmoji(value){
-  return String(value||'').trim().slice(0,4);
+  const clean=String(value||'').trim();
+  if(!clean)return 'logo';
+  if(clean==='logo')return 'logo';
+  return clean.slice(0,4);
 }
 
 function getSavedAgentName(){
@@ -1990,10 +2232,10 @@ function updateAgentIdentityUI(){
   const nm = document.getElementById('agent-name');
   const profile = document.getElementById('profile-agent-name');
   const splashLine = document.getElementById('splash-agent-line');
-  if(av) av.textContent = agentEmoji;
+  if(av) av.innerHTML = agentAvatarMarkup();
   if(nm) nm.textContent = `${agentName} · ${agentTitle}`;
-  if(profile) profile.textContent = `当前：${agentEmoji} ${agentName} · ${agentTitle}`;
-  if(splashLine) splashLine.textContent = agentName+'为您服务';
+  if(profile) profile.textContent = `当前：${displayAgentAvatarText()} ${displayAgentName()} · ${displayAgentTitle()}`;
+  if(splashLine) splashLine.textContent = agentName?agentName+'为您服务':'等你给我取名';
 }
 
 function setAgentCustomization({name,title,emoji}){
@@ -2009,6 +2251,7 @@ function setAgentCustomization({name,title,emoji}){
   agentEmoji=nextEmoji;
   updateAgentIdentityUI();
   renderCompanionCard();
+  document.getElementById('agent-setup-card')?.remove();
   return true;
 }
 
@@ -2017,10 +2260,15 @@ function openAgentCustomizer(){
   const overlay=document.createElement('div');
   overlay.id='agent-customizer';
   overlay.className='install-overlay';
+  const presetRows=AGENT_AVATAR_CHOICES.slice(0,12).map(([emoji,label])=>{
+    const title=emoji==='logo'?'AI伙伴':label+'伙伴';
+    const name=emoji==='logo'?'小爱':label.length<=2?'小'+label:'小伴';
+    return `<button class="agent-preset" onclick="fillAgentPreset('${companionEscape(name)}','${companionEscape(title)}','${companionEscape(emoji)}')"><strong>${emoji==='logo'?'<img class="agent-avatar-img" src="assets/brand/huaban-logo-v1.png" alt="">':companionEscape(emoji)}</strong>${companionEscape(label)}</button>`;
+  }).join('');
   overlay.innerHTML=`
     <div class="install-sheet">
       <div class="install-sheet-head">
-        <div style="width:44px;height:44px;border-radius:12px;background:#f1fbf6;display:flex;align-items:center;justify-content:center;font-size:28px;">${agentEmoji}</div>
+        <div style="width:44px;height:44px;border-radius:12px;background:#f1fbf6;display:flex;align-items:center;justify-content:center;font-size:28px;overflow:hidden;">${agentAvatarMarkup()}</div>
         <div>
           <div class="install-sheet-title">定制你的 AI 伙伴</div>
           <div class="install-sheet-sub">名字、身份、形象都会出现在聊天里</div>
@@ -2036,13 +2284,10 @@ function openAgentCustomizer(){
       </div>
       <div class="agent-custom-field">
         <label for="agent-emoji-input">形象</label>
-        <input id="agent-emoji-input" value="${companionEscape(agentEmoji)}" maxlength="4" placeholder="例如：🧳">
+        <input id="agent-emoji-input" value="${isDefaultAgentEmoji()?'':companionEscape(agentEmoji)}" maxlength="4" placeholder="留空使用华伴头像，或填一个表情">
       </div>
       <div class="agent-preset-row">
-        <button class="agent-preset" onclick="fillAgentPreset('小旅','旅行伙伴','🧳')"><strong>🧳</strong>旅行</button>
-        <button class="agent-preset" onclick="fillAgentPreset('小伴','华人帮办','🤝')"><strong>🤝</strong>帮办</button>
-        <button class="agent-preset" onclick="fillAgentPreset('小墨','出行管家','🧑‍✈️')"><strong>🧑‍✈️</strong>出行</button>
-        <button class="agent-preset" onclick="fillAgentPreset('小云','本地向导','📍')"><strong>📍</strong>本地</button>
+        ${presetRows}
       </div>
       <button onclick="saveAgentCustomization()">保存</button>
       <button class="agent-secondary" onclick="document.getElementById('agent-customizer')?.remove()">取消</button>
@@ -2057,7 +2302,7 @@ function fillAgentPreset(name,title,emoji){
   const emojiInput=document.getElementById('agent-emoji-input');
   if(nameInput)nameInput.value=name;
   if(titleInput)titleInput.value=title;
-  if(emojiInput)emojiInput.value=emoji;
+  if(emojiInput)emojiInput.value=emoji==='logo'?'':emoji;
 }
 
 function saveAgentCustomization(){
@@ -2069,13 +2314,16 @@ function saveAgentCustomization(){
   if(!ok){alert('名字和身份至少 2 个字，形象可以填一个表情');return;}
   document.getElementById('agent-customizer')?.remove();
   companionSay(`我是${agentName}，${agentTitle}`);
+  rewardCompanionAction('customize');
   speak(`好的，我现在是${agentName}，${agentTitle}`);
 }
 
 function detectAgentNamingIntent(text){
   const match=String(text||'').match(/(?:以后你叫|以后叫你|你叫|叫你|给你取名叫|你的名字叫)\s*([^\s，。！？,.!?、]{2,8})/);
   if(!match)return false;
-  return setAgentCustomization({name:match[1],title:agentTitle,emoji:agentEmoji});
+  const ok=setAgentCustomization({name:match[1],title:agentTitle||'AI伙伴',emoji:agentEmoji||'logo'});
+  if(ok)rewardCompanionAction('customize');
+  return ok;
 }
 
 // 根据用户性别决定管家性别（异性）+ TTS音色
@@ -2083,13 +2331,8 @@ function setAgentByUserGender(userGender){
   if(currentGender === userGender) return; // 没变就不动
   currentGender = userGender;
   localStorage.setItem('au_gender', userGender);
-  if(userGender==='female'){
-    agentEmoji=getSavedAgentEmoji()||defaultAgentEmojiForGender(userGender);
-    agentName=getSavedAgentName()||defaultAgentNameForGender(userGender);
-  } else {
-    agentEmoji=getSavedAgentEmoji()||defaultAgentEmojiForGender(userGender);
-    agentName=getSavedAgentName()||defaultAgentNameForGender(userGender);
-  }
+  agentEmoji=getSavedAgentEmoji()||'logo';
+  agentName=getSavedAgentName();
   window._ttsVoice = 'FunAudioLLM/CosyVoice2-0.5B:diana';
   agentTitle=getSavedAgentTitle()||agentTitle;
   updateAgentIdentityUI();
@@ -2216,6 +2459,7 @@ async function startApp(){
     // 新用户
     renderWelcomeHome();
   }
+  rewardCompanionAction('app_open');
   maybeStartWakeListening();
 }
 
@@ -2230,9 +2474,12 @@ window.addEventListener('load',startApp,{once:true});
 function renderWelcomeHome(){
   currentRole='passenger';
   chatArea.innerHTML='';
-  addMsg(`<strong>你好，我是${agentName}</strong><br><span style="color:#666;">在${currentRegion.city||currentRegion.country}需要出行或华人服务，直接用普通话或文字告诉我。<br>没有中间商赚差价，只让需要的人遇见可靠的人。</span>`);
+  addMsg(`<strong>你好，我是你的 a-i（爱）呀</strong><br><span style="color:#666;">我刚来到你身边，还在长本领。先给我取个名字、选个头像吧；以后你需要出行或华人服务，直接用普通话或文字告诉我。</span>`);
+  if(!hasCustomAgentIdentity())renderAgentSetupCard();
+  renderFeedbackStarterCard();
+  renderWishWallNudgeCard();
+  renderTravelNudgeCard();
   renderQuickGuideCard();
-  renderVoiceWakeCard();
   const companion=getCompanion();
   if(addCompanionBadge(companion,currentRegion.city||currentRegion.country,'📍'))saveCompanion(companion);
   const companionCard=document.createElement('section');
@@ -2241,7 +2488,6 @@ function renderWelcomeHome(){
   companionCard.setAttribute('aria-label',`${agentName}旅行伙伴养成状态`);
   chatArea.appendChild(companionCard);
   renderCompanionCard();
-  showInstallPrompt();
   document.getElementById('chat-input').placeholder='输入你需要的帮助';
   renderMoreMenu();
   refreshHomeRegionCopy();
@@ -2254,7 +2500,7 @@ function clearWelcomeHome(){
 
 function renderQuickGuideCard(){
   const card=document.createElement('section');
-  card.className='install-card';
+  card.className='install-card intro-fade-card';
   card.id='quick-guide-card';
   card.setAttribute('aria-label','了解华伴和使用方法');
   card.innerHTML=`
@@ -2267,14 +2513,155 @@ function renderQuickGuideCard(){
       <button class="install-primary" onclick="showPlatformGuide(true)">了解</button>
     </div>`;
   chatArea.appendChild(card);
+  autoDismissIntroCard(card, 12000);
+}
+
+function autoDismissIntroCard(card, ms=10000){
+  if(!card)return;
+  let pinned=false;
+  card.addEventListener('pointerdown',()=>{pinned=true;},{once:true});
+  setTimeout(()=>{
+    if(pinned||!card.isConnected)return;
+    card.classList.add('fade-away');
+    setTimeout(()=>card.remove(),560);
+  },ms);
 }
 
 function isPlatformGuideIntent(text){
   return /华伴.*(是什么|介绍|怎么用|如何用|怎么玩)|这个.*(平台|app|软件).*(是什么|怎么用)|平台.*(介绍|规则|怎么用)|新手|使用方法|使用说明|不会用|怎么预约|如何预约|你能做什么|你可以做什么/i.test(String(text||''));
 }
 
+function isVoiceWakeHelpIntent(text){
+  return /语音唤起|唤醒词|叫醒你|喊你出来|免按钮|不用找按钮|开启.*语音/i.test(String(text||''));
+}
+
+function isAddHomeHelpIntent(text){
+  return /添加.*(桌面|主屏幕)|放到.*桌面|安装.*华伴|桌面图标|添加到手机/i.test(String(text||''));
+}
+
+function detectOnboardingFeedbackIntent(text){
+  const clean=String(text||'').trim();
+  if(!clean)return null;
+  if(/自己.*(探索|看看|试试|玩)|我自己来|不用介绍|先看看|随便逛/i.test(clean))return 'explore';
+  if(/一一介绍|逐个介绍|你介绍|带我.*(看看|了解|使用)|教我|怎么用|介绍.*功能/i.test(clean))return 'guide';
+  if(/(想|需要|我要).*(获得帮助|求助|帮别人|帮助别人|做志愿者)|去.*心愿墙|心愿墙.*看看/i.test(clean))return 'wishwall';
+  if(/我要出行|想出行|出行.*(看看|介绍|试试)|提供服务|成为服务者|想接单/i.test(clean))return 'travel';
+  if(/建议|反馈|吐槽|不好用|希望|想要|需求|意见|可以.*改|应该.*改/i.test(clean))return 'feedback';
+  return null;
+}
+
+async function handleOnboardingFeedbackIntent(text){
+  const intent=detectOnboardingFeedbackIntent(text);
+  if(!intent)return false;
+  if(intent==='explore'){
+    rewardCompanionAction('try_feature');
+    await agentSay('好呀，你先自己探索。我会在旁边看着，哪里卡住了就喊我；你觉得哪里别扭，也直接告诉我。',120);
+    return true;
+  }
+  if(intent==='guide'){
+    await showPlatformGuide(false);
+    return true;
+  }
+  if(intent==='wishwall'){
+    openMutualAidCommunity();
+    await agentSay('走呀。如果您想获得帮助或者帮助别人，咱去心愿墙看看呗。',120);
+    return true;
+  }
+  if(intent==='travel'){
+    await agentSay('现在我最拿手的就是接送机、包车、旅游方面的业务，如果你要出行或者想提供服务，告诉我，让我来试试。',120);
+    return true;
+  }
+  recordAITrainingQuestion(text, '用户主动提出产品反馈或需求，请教官判断是否纳入产品改进', 'user-feedback');
+  await agentSay('收到，我会把这个记进训练营。你可以继续说：哪里不顺、你希望我怎么做、或者哪个功能最想先有。',120);
+  return true;
+}
+
+function renderWishWallNudgeCard(){
+  const card=document.createElement('section');
+  card.className='install-card intro-fade-card';
+  card.id='wish-wall-nudge-card';
+  card.setAttribute('aria-label','前往心愿墙');
+  card.innerHTML=`
+    <div class="install-copy">
+      <strong>如果您想获得帮助或者帮助别人</strong>
+      <span>咱去心愿墙看看呗</span>
+    </div>
+    <div class="install-actions">
+      <button class="install-primary" onclick="openWishWallFromNudge()">去看看</button>
+    </div>`;
+  chatArea.appendChild(card);
+  autoDismissIntroCard(card, 20000);
+}
+
+function renderTravelNudgeCard(){
+  const card=document.createElement('section');
+  card.className='install-card intro-fade-card';
+  card.id='travel-nudge-card';
+  card.setAttribute('aria-label','出行业务引导');
+  card.innerHTML=`
+    <div class="install-copy">
+      <strong>现在我最拿手的是出行</strong>
+      <span>接送机、包车、旅游方面的业务，如果你要出行或者想提供服务，告诉我，让我来试试。</span>
+    </div>
+    <div class="install-actions">
+      <button class="install-primary" onclick="handleTravelNudge('ride')">我要出行</button>
+      <button class="install-close" onclick="handleTravelNudge('supplier')" aria-label="提供服务">服务</button>
+    </div>`;
+  chatArea.appendChild(card);
+  autoDismissIntroCard(card, 22000);
+}
+
+async function handleTravelNudge(type){
+  document.getElementById('travel-nudge-card')?.remove();
+  if(type==='supplier'){
+    addMsg('我想提供服务',true);
+    await agentSay('太好了。你可以先从司机入驻或供给侧入口开始，后面我会帮你整理可提供的服务。',120);
+    openProfile();
+  }else{
+    addMsg('我要出行',true);
+    await agentSay('好呀，现在我最拿手的就是接送机、包车、旅游。你告诉我时间和目的，我来试试。',120);
+  }
+}
+
+async function openWishWallFromNudge(){
+  document.getElementById('wish-wall-nudge-card')?.remove();
+  addMsg('去心愿墙看看',true);
+  openMutualAidCommunity();
+  await agentSay('好呀，心愿墙打开了。你可以求助，也可以帮别人。',120);
+}
+
+function renderFeedbackStarterCard(){
+  const card=document.createElement('section');
+  card.className='install-card intro-fade-card';
+  card.id='feedback-starter-card';
+  card.setAttribute('aria-label','选择探索或介绍');
+  card.innerHTML=`
+    <div class="install-copy">
+      <strong>等我长大了，就是你的生活管家、工作助理、休闲陪伴。</strong>
+      <span>你是要自己探索功能，还是让我一一介绍呀？</span>
+    </div>
+    <div class="install-actions">
+      <button class="install-primary" onclick="handleStarterChoice('guide')">介绍</button>
+      <button class="install-close" onclick="handleStarterChoice('explore')" aria-label="自己探索">逛</button>
+    </div>`;
+  chatArea.appendChild(card);
+  autoDismissIntroCard(card, 18000);
+}
+
+async function handleStarterChoice(choice){
+  document.getElementById('feedback-starter-card')?.remove();
+  if(choice==='guide'){
+    addMsg('你一一介绍吧',true);
+    await showPlatformGuide(false);
+  }else{
+    addMsg('我先自己探索',true);
+    await handleOnboardingFeedbackIntent('我先自己探索');
+  }
+}
+
 async function showPlatformGuide(fromUser=false){
   if(fromUser)addMsg('介绍一下华伴',true);
+  rewardCompanionAction('guide');
   const guide=`<strong>华伴是什么？</strong><br>
 华伴是一个会聊天、会办事、会成长的 AI 伙伴。现在我先当你的小管家，帮你预约接机、送机、包车，也能整理海外出行和本地生活需求。<br><br>
 <strong>怎么用？</strong><br>
@@ -2286,37 +2673,152 @@ async function showPlatformGuide(fromUser=false){
 <strong>我会成长</strong><br>
 我现在还是小朋友，先帮你把车定好；以后会有更多本领，当好你生活中的管家、工作上的助理。`;
   await agentSay(guide,160);
+  showIntroActionCards();
+}
+
+function showIntroActionCards(){
+  showVoiceWakePrompt();
+  showInstallPrompt(true);
+}
+
+function showVoiceWakePrompt(){
+  if(voiceWakeEnabled())return;
+  renderVoiceWakeCard();
+  const card=document.getElementById('voice-wake-card');
+  autoDismissIntroCard(card, 16000);
+}
+
+const FEATURE_INTENTS=[
+  {key:'profile',label:'个人中心',pattern:/个人中心|我的积分|积分等级|我的等级|打开.*资料|打开.*中心/i},
+  {key:'ride-menu',label:'用车',pattern:/打开.*用车|进入.*用车|用车.*(菜单|功能|入口)/i},
+  {key:'travel-menu',label:'旅游',pattern:/打开.*旅游|进入.*旅游|旅游.*(菜单|功能|入口)/i},
+  {key:'help-menu',label:'华人帮',pattern:/华人帮|打开.*帮|帮.*(菜单|功能|入口)/i},
+  {key:'mutual-aid',label:'心愿墙',pattern:/心愿墙|互助|免费帮助|志愿者|愿意支付|求助|出售.*(物品|服务)|免费服务区|收费服务区/i},
+  {key:'market',label:'市场',pattern:/打开.*市场|去.*市场|逛.*市场|二手|买东西|卖东西|商城/i},
+  {key:'tour-charter',label:'包车游',pattern:/包车游|旅游包车|旅行包车/i},
+  {key:'group-tour',label:'拼团',pattern:/拼团|跟团|一起玩|组团/i},
+  {key:'pickup',label:'接机',pattern:/接机|机场接|从机场接|飞机到了|落地接/i},
+  {key:'dropoff',label:'送机',pattern:/送机|去机场|赶飞机|机场送/i},
+  {key:'charter',label:'包车',pattern:/包车|包个车|按小时用车/i},
+  {key:'rental',label:'租车',pattern:/租车|租辆车|自驾/i},
+  {key:'agency',label:'中介',pattern:/中介|租房|买房|房源/i},
+  {key:'translation',label:'翻译',pattern:/翻译|口译|帮我沟通/i},
+  {key:'lawyer',label:'律师',pattern:/律师|法律|合同|纠纷/i},
+  {key:'accountant',label:'会计',pattern:/会计|报税|退税|税务/i},
+  {key:'other-help',label:'其他帮办',pattern:/帮办|跑腿|代办|办事/i},
+  {key:'camera',label:'相机',pattern:/相机|拍照|拍一张|现场拍/i},
+  {key:'image',label:'图片',pattern:/图片|照片|相册|上传图|发图/i},
+  {key:'payment',label:'支付',pattern:/支付|付款|收款|付钱/i},
+  {key:'friends',label:'交友',pattern:/交友|找朋友|认识朋友|搭子/i},
+  {key:'driver',label:'司机入驻',pattern:/司机入驻|司机注册|加入司机|做司机|司机端/i},
+  {key:'customize-agent',label:'定制AI',pattern:/定制.*(ai|AI|管家|助手)|自定义.*(名字|身份|形象)|改.*(名字|身份|形象)|换.*(名字|身份|形象)|给你.*起名/i},
+  {key:'intro',label:'介绍',pattern:/介绍.*华伴|华伴.*介绍|使用方法|怎么用/i},
+];
+
+function detectDirectFeatureIntent(text){
+  const clean=String(text||'').trim();
+  if(!clean)return null;
+  const intent=FEATURE_INTENTS.find(item=>item.pattern.test(clean))||null;
+  if(!intent)return null;
+  const serviceKeys=['pickup','dropoff','charter','tour-charter','group-tour','rental','agency','translation','lawyer','accountant','other-help'];
+  if(serviceKeys.includes(intent.key)){
+    const strongExplicit=/打开|进入|看看|看一下|使用|用一下|菜单|功能|入口|帮我开|唤起/i.test(clean);
+    const explicit=strongExplicit||/我要|我想要/i.test(clean);
+    const shortName=clean.replace(/[，。！？\s]/g,'').length<=8;
+    const bookingDetail=/今天|明天|后天|大后天|下周|下个|上午|中午|下午|晚上|凌晨|\d{1,2}[点:：时号日月]|地址|出发|到达|航班|几个人|行李/i.test(clean);
+    if(!explicit&&!shortName)return null;
+    if(bookingDetail&&!strongExplicit)return null;
+  }
+  return intent;
+}
+
+async function handleDirectFeatureIntent(text, options={}){
+  const intent=detectDirectFeatureIntent(text);
+  if(!intent)return false;
+  await openFeatureByKey(intent.key,intent.label,options);
+  return true;
+}
+
+const BUSINESS_MODULES={
+  ride:{
+    enabled:true,
+    title:'用车',
+    menu:{key:'ride',icon:'🚗',label:'用车',category:true},
+    items:[
+      {key:'pickup',icon:'🛩️',label:'接机'},
+      {key:'dropoff',icon:'✈️',label:'送机'},
+      {key:'charter',icon:'🚐',label:'包车'},
+    ]
+  },
+  travel:{
+    enabled:true,
+    title:'旅游',
+    menu:{key:'travel',icon:'🧳',label:'旅游',category:true},
+    items:[
+      {key:'tour-charter',icon:'🚐',label:'包车游'},
+      {key:'group-tour',icon:'👪',label:'拼团'},
+    ]
+  },
+  help:{
+    enabled:true,
+    title:'华人帮',
+    menu:{key:'help',icon:'🤝',label:'华人帮',category:true},
+    items:[
+      {key:'agency',icon:'🏠',label:'中介'},
+      {key:'translation',icon:'🗣️',label:'翻译'},
+      {key:'lawyer',icon:'⚖️',label:'律师'},
+      {key:'accountant',icon:'🧮',label:'会计'},
+      {key:'other-help',icon:'🧰',label:'其他帮办'},
+    ]
+  },
+  market:{
+    enabled:true,
+    title:'市场',
+    menu:{key:'market',icon:'🏪',label:'市场'},
+    action:()=>{window.location.href='plaza.html';}
+  },
+  mutualAid:{
+    enabled:true,
+    title:'心愿墙',
+    menu:{key:'mutual-aid',icon:'🫶',label:'心愿墙'},
+    action:openMutualAidCommunity
+  }
+};
+
+const CORE_TOOL_ITEMS=[
+  {key:'camera',icon:'📷',label:'相机'},
+  {key:'image',icon:'🖼️',label:'图片'},
+  {key:'payment',icon:'💳',label:'支付'},
+  {key:'intro',icon:'💬',label:'介绍'},
+  {key:'profile',icon:'👤',label:'个人中心'},
+  {key:'customize-agent',icon:'🎭',label:'定制AI'},
+  {key:'friends',icon:'👥',label:'交友'},
+  {key:'driver',icon:'🧑‍✈️',label:'司机入驻',driver:true},
+];
+
+function businessModuleMenuItems(){
+  return Object.values(BUSINESS_MODULES)
+    .filter(module=>module.enabled&&module.menu)
+    .map(module=>module.menu);
+}
+
+function runBusinessModule(key){
+  const module=BUSINESS_MODULES[key];
+  if(!module||!module.enabled)return false;
+  if(module.items?.length){
+    renderMoreMenu(key);
+    return true;
+  }
+  module.action?.();
+  return true;
 }
 
 const MORE_MENU={
   home:[
-    {key:'intro',icon:'💬',label:'介绍'},
-    {key:'ride',icon:'🚗',label:'用车',category:true},
-    {key:'travel',icon:'🧳',label:'旅游',category:true},
+    ...CORE_TOOL_ITEMS.slice(0,6),
+    ...businessModuleMenuItems(),
     {key:'rental',icon:'🚙',label:'租车'},
-    {key:'camera',icon:'📷',label:'相机'},
-    {key:'image',icon:'🖼️',label:'图片'},
-    {key:'payment',icon:'💳',label:'支付'},
-    {key:'help',icon:'🤝',label:'华人帮',category:true},
-    {key:'friends',icon:'👥',label:'交友'},
-    {key:'market',icon:'🏪',label:'市场'},
-    {key:'driver',icon:'🧑‍✈️',label:'司机入驻',driver:true},
-  ],
-  ride:[
-    {key:'pickup',icon:'🛩️',label:'接机'},
-    {key:'dropoff',icon:'✈️',label:'送机'},
-    {key:'charter',icon:'🚐',label:'包车'},
-  ],
-  travel:[
-    {key:'tour-charter',icon:'🚐',label:'包车游'},
-    {key:'group-tour',icon:'👪',label:'拼团'},
-  ],
-  help:[
-    {key:'agency',icon:'🏠',label:'中介'},
-    {key:'translation',icon:'🗣️',label:'翻译'},
-    {key:'lawyer',icon:'⚖️',label:'律师'},
-    {key:'accountant',icon:'🧮',label:'会计'},
-    {key:'other-help',icon:'🧰',label:'其他帮办'},
+    ...CORE_TOOL_ITEMS.slice(6),
   ]
 };
 
@@ -2325,11 +2827,14 @@ function renderMoreMenu(category='home'){
   const title=document.getElementById('more-title');
   const back=document.getElementById('more-back');
   if(!grid||!title||!back)return;
-  const titles={home:'全部功能',ride:'用车',travel:'旅游',help:'华人帮'};
+  const module=BUSINESS_MODULES[category];
+  const menuItems=category==='home'?MORE_MENU.home:(module?.items||MORE_MENU[category]||MORE_MENU.home);
+  const titles={home:'全部功能'};
   title.textContent=titles[category]||'全部功能';
+  if(module?.title)title.textContent=module.title;
   back.style.visibility=category==='home'?'hidden':'visible';
-  grid.innerHTML=(MORE_MENU[category]||MORE_MENU.home).map(item=>`
-    <button class="more-item${item.driver?' driver':''}" onclick="${item.category&&item.key==='ride'?`renderMoreMenu('${item.key}')`:`runMoreAction('${item.key}','${item.label}')`}">
+  grid.innerHTML=menuItems.map(item=>`
+    <button class="more-item${item.driver?' driver':''}" onclick="${item.category?`renderMoreMenu('${item.key}')`:`runMoreAction('${item.key}','${item.label}')`}">
       <span class="more-item-icon">${item.icon}</span><span>${item.label}</span>
     </button>`).join('');
 }
@@ -2354,40 +2859,253 @@ function closeMorePanel(){
 
 function runMoreAction(key,label){
   closeMorePanel();
-  const activeKeys=['intro','pickup','dropoff','charter','driver'];
-  if(!activeKeys.includes(key)){
-    showComingSoon(label);
-    return;
-  }
+  if(runBusinessModule(key))return;
+  rewardCompanionAction('try_feature');
   const serviceMap={pickup:'接机',dropoff:'送机',charter:'包车','tour-charter':'旅游包车','group-tour':'旅游拼团',rental:'租车',payment:'支付',friends:'交友',agency:'中介服务',translation:'翻译',lawyer:'律师',accountant:'会计','other-help':'华人帮办'};
   if(key==='market'){window.location.href='plaza.html';return;}
   if(key==='driver'){window.location.href='driver-app.html';return;}
   if(key==='camera'){document.getElementById('camera-input')?.click();return;}
   if(key==='image'){document.getElementById('image-input')?.click();return;}
   if(key==='intro'){showPlatformGuide(true);return;}
+  if(key==='profile'){openProfile();return;}
+  if(key==='customize-agent'){openAgentCustomizer();return;}
+  const activeKeys=['pickup','dropoff','charter','tour-charter','group-tour','rental','agency','translation','lawyer','accountant','other-help'];
+  if(!activeKeys.includes(key)){
+    showComingSoon(label);
+    return;
+  }
   beginQuickService(serviceMap[key]||label);
 }
 
-async function showComingSoon(label){
+async function openFeatureByKey(key,label,options={}){
+  const alreadyRendered=options.alreadyRendered===true;
+  closeMorePanel();
+  const say=(html,ms=120)=>agentSay(html,ms);
+  const serviceMap={pickup:'接机',dropoff:'送机',charter:'包车','tour-charter':'旅游包车','group-tour':'旅游拼团',rental:'租车',agency:'中介服务',translation:'翻译',lawyer:'律师',accountant:'会计','other-help':'华人帮办'};
+  const categoryMap={'ride-menu':'ride','travel-menu':'travel','help-menu':'help'};
+
+  if(key==='intro'){
+    await showPlatformGuide(false);
+    return;
+  }
+  if(categoryMap[key]){
+    renderMoreMenu(categoryMap[key]);
+    const panel=document.getElementById('more-panel');
+    panel?.classList.add('open');
+    panel?.setAttribute('aria-hidden','false');
+    document.body.classList.add('more-open');
+    await say(`${label}功能打开了。`);
+    return;
+  }
+  if(serviceMap[key]){
+    await beginQuickService(serviceMap[key],{silent:alreadyRendered});
+    return;
+  }
+  if(key==='mutual-aid'){
+    rewardCompanionAction('wish_wall');
+    openMutualAidCommunity();
+    await say('心愿墙打开了。你可以选择免费服务区或收费服务区，把想求助、能帮忙、愿意支付或想出售的事写上去。');
+    return;
+  }
+  if(key==='profile'){
+    openProfile();
+    await say('个人中心打开了。');
+    return;
+  }
+  if(key==='market'){
+    await say('好，我带你去市场。');
+    setTimeout(()=>{window.location.href='plaza.html';},500);
+    return;
+  }
+  if(key==='driver'){
+    await say('好，我带你去司机入驻。');
+    setTimeout(()=>{window.location.href='driver-app.html';},500);
+    return;
+  }
+  if(key==='camera'||key==='image'){
+    const inputId=key==='camera'?'camera-input':'image-input';
+    const toolLabel=key==='camera'?'相机':'图片';
+    document.getElementById(inputId)?.click();
+    await say(`我帮你打开${toolLabel}。如果浏览器没有弹出，请点左下角加号里的${toolLabel}。`);
+    return;
+  }
+  if(key==='customize-agent'){
+    openAgentCustomizer();
+    await say('可以，你可以给我改名字、身份和形象。');
+    return;
+  }
+  if(key==='payment'||key==='friends'){
+    await showComingSoon(label,{silent:alreadyRendered});
+    return;
+  }
+  await showComingSoon(label,{silent:alreadyRendered});
+}
+
+async function showComingSoon(label, options={}){
   currentRole='passenger';
-  addMsg(label,true);
+  if(!options.silent)addMsg(label,true);
   recordAITrainingQuestion(label, '用户点了暂未开通的能力入口', 'more-menu');
   await agentSay(`我现在还是小朋友，先当你的小管家，帮您定个车、整理一下出行需求。以后我会有更多本领，当好你生活中的管家、工作上的助理。`,200);
+}
+
+const MUTUAL_AID_KEY='huaban_mutual_aid_posts';
+const WISH_TYPES={
+  need_free:{zone:'free',label:'希望免费帮助',role:'求助者'},
+  offer_free:{zone:'free',label:'提供免费帮助',role:'志愿者'},
+  need_paid:{zone:'paid',label:'愿意支付',role:'求助者'},
+  sell:{zone:'paid',label:'出售物品/服务',role:'服务者'}
+};
+
+function readMutualAidPosts(){
+  try{
+    const posts=JSON.parse(localStorage.getItem(MUTUAL_AID_KEY)||'[]');
+    return Array.isArray(posts)?posts:[];
+  }catch(e){
+    return [];
+  }
+}
+
+function saveMutualAidPosts(posts){
+  localStorage.setItem(MUTUAL_AID_KEY,JSON.stringify(posts.slice(0,80)));
+}
+
+function wishTypeInfo(type){
+  return WISH_TYPES[type]||WISH_TYPES.need_free;
+}
+
+function renderWishPosts(posts, zone, fallbackCity){
+  const items=posts.filter(post=>wishTypeInfo(post.wishType||post.type).zone===zone);
+  if(!items.length)return '<div style="padding:14px;text-align:center;color:rgba(255,255,255,0.32);font-size:12px;">暂无内容</div>';
+  return items.slice(0,5).map(post=>{
+    const info=wishTypeInfo(post.wishType||post.type);
+    const badgeClass=info.zone==='paid'?'paid':'free';
+    return `<div class="mutual-aid-item">
+      <div class="mutual-aid-meta">
+        <span><i class="mutual-aid-badge ${badgeClass}">${info.label}</i>${companionEscape(post.category||'其他')}</span>
+        <span>${companionEscape(post.city||fallbackCity)}</span>
+      </div>
+      <div class="mutual-aid-text">${companionEscape(post.text||'')}</div>
+      ${post.budget?`<div style="font-size:11px;color:rgba(255,255,255,0.38);margin-top:6px;">预算/价格：${companionEscape(post.budget)}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function openMutualAidCommunity(){
+  const existing=document.getElementById('mutual-aid-modal');
+  if(existing)existing.remove();
+  const posts=readMutualAidPosts();
+  const city=currentRegion.city||currentRegion.country||'本地';
+  const freePosts=renderWishPosts(posts,'free',city);
+  const paidPosts=renderWishPosts(posts,'paid',city);
+  const modal=document.createElement('div');
+  modal.id='mutual-aid-modal';
+  modal.className='modal-overlay show';
+  modal.onclick=(event)=>{if(event.target===modal)modal.remove();};
+  modal.innerHTML=`
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px;">
+        <div>
+          <div style="font-size:21px;font-weight:900;color:white;">心愿墙</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.45);margin-top:4px;">把每件事分清楚：免费互助，或愿意付费交换</div>
+        </div>
+        <button onclick="document.getElementById('mutual-aid-modal')?.remove()" style="border:0;border-radius:10px;background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.72);padding:8px 12px;font:600 13px/1 inherit;cursor:pointer;">关闭</button>
+      </div>
+      <div class="mutual-aid-form">
+        <label>性质</label>
+        <select id="mutual-aid-wish-type" onchange="updateWishWallHint()">
+          <option value="need_free">我希望得到免费帮助</option>
+          <option value="need_paid">我愿意支付请人帮忙</option>
+          <option value="offer_free">我是志愿者，可以免费帮忙</option>
+          <option value="sell">我出售物品或服务</option>
+        </select>
+        <div id="mutual-aid-hint" style="font-size:11px;color:rgba(255,255,255,0.35);line-height:1.6;margin-top:6px;">免费服务区：适合临时指路、简单陪同、轻量翻译、邻里互助。</div>
+        <label>类别</label>
+        <select id="mutual-aid-category">
+          <option value="接送陪同">接送陪同</option>
+          <option value="翻译沟通">翻译沟通</option>
+          <option value="临时跑腿">临时跑腿</option>
+          <option value="新到本地">新到本地</option>
+          <option value="其他互助">其他互助</option>
+        </select>
+        <label>城市</label>
+        <input id="mutual-aid-city" value="${companionEscape(city)}" placeholder="所在城市">
+        <label>说明</label>
+        <textarea id="mutual-aid-text" placeholder="简单说清楚你的心愿、能提供的帮助，或出售的物品/服务。"></textarea>
+        <label>预算/价格</label>
+        <input id="mutual-aid-budget" placeholder="免费可留空；愿意支付或出售时填写预算/价格">
+        <label>联系方式</label>
+        <input id="mutual-aid-contact" placeholder="微信 / 手机 / 邮箱，仅用于撮合联系">
+        <button onclick="submitMutualAidPost()" style="width:100%;margin-top:14px;padding:13px;background:rgba(0,200,150,0.24);border:1px solid rgba(0,200,150,0.36);border-radius:12px;color:white;font:800 14px/1 inherit;cursor:pointer;">发布到心愿墙</button>
+      </div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.42);line-height:1.7;margin-top:12px;">华伴只做信息撮合，不收取中间费用。免费互助和付费交易会分区展示；涉及金钱、证件、隐私时务必谨慎。</div>
+      <div class="mutual-aid-list">
+        <div class="mutual-aid-zone-title">免费服务区</div>
+        ${freePosts}
+        <div class="mutual-aid-zone-title">收费服务区</div>
+        ${paidPosts}
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+async function submitMutualAidPost(){
+  const wishType=document.getElementById('mutual-aid-wish-type')?.value||'need_free';
+  const info=wishTypeInfo(wishType);
+  const category=document.getElementById('mutual-aid-category')?.value||'其他互助';
+  const city=(document.getElementById('mutual-aid-city')?.value||'').trim();
+  const text=(document.getElementById('mutual-aid-text')?.value||'').trim();
+  const budget=(document.getElementById('mutual-aid-budget')?.value||'').trim();
+  const contact=(document.getElementById('mutual-aid-contact')?.value||'').trim();
+  if(!text||!contact){
+    alert('请填写说明和联系方式');
+    return;
+  }
+  const posts=readMutualAidPosts();
+  posts.unshift({
+    id:'aid-'+Date.now(),
+    wishType,
+    zone:info.zone,
+    role:info.role,
+    category,city,text,budget,contact,
+    createdAt:new Date().toISOString(),
+    status:'open'
+  });
+  saveMutualAidPosts(posts);
+  document.getElementById('mutual-aid-modal')?.remove();
+  addMsg(info.label,true);
+  rewardCompanionAction('wish_wall');
+  await agentSay('收到，我先帮你放到心愿墙里，并按免费服务区或收费服务区分好类。后面我会把合适的人和事更好地撮合起来。',180);
+}
+
+function updateWishWallHint(){
+  const type=document.getElementById('mutual-aid-wish-type')?.value||'need_free';
+  const hint=document.getElementById('mutual-aid-hint');
+  if(!hint)return;
+  const text={
+    need_free:'免费服务区：适合临时指路、简单陪同、轻量翻译、邻里互助。',
+    offer_free:'免费服务区：你愿意做志愿者，提供力所能及的免费帮助。',
+    need_paid:'收费服务区：你愿意支付费用，请人帮你完成更耗时或专业的事情。',
+    sell:'收费服务区：你可以发布可出售的物品、技能或本地服务。'
+  };
+  hint.textContent=text[type]||text.need_free;
 }
 
 function handleMediaPick(input,label){
   const file=input.files?.[0];
   if(!file)return;
+  rewardCompanionAction('media');
   const url=URL.createObjectURL(file);
   const msg=addMsg(`<img src="${url}" alt="${label}" style="display:block;max-width:220px;max-height:220px;border-radius:6px;object-fit:cover;"><div style="font-size:11px;color:#666;margin-top:5px;">${label}已选择</div>`,true);
   msg.querySelector('img').onload=()=>URL.revokeObjectURL(url);
   input.value='';
 }
 
-async function beginQuickService(service){
+async function beginQuickService(service, options={}){
   clearWelcomeHome();
   currentRole='passenger';
-  addMsg(service,true);
+  if(!options.silent)addMsg(service,true);
+  rewardCompanionAction('try_feature');
   if(!currentRegion.marketEnabled&&(service==='送机'||service==='接机')){
     await agentSay(`${currentRegion.city||currentRegion.country}的司机服务正在开通中。我可以先登记需求，或帮您处理当地咨询。`,250);
     return;
@@ -2607,6 +3325,15 @@ function buildPrompt(){
 平台原则：没有中间商赚差价，只让需要的人遇见可靠的人；华伴提供 AI 工具、信用记录和信息连接，具体服务和费用由用户与服务者确认。
 最后引导用户说出一个真实需求，优先从接机、送机、包车开始。
 
+【反馈采集任务】
+你有一个长期任务：像朋友聊天一样搜集用户反馈，不要像问卷。
+可以自然打开话题：“等我长大了，就是你的生活管家、工作助理、休闲陪伴。你是要自己探索功能，还是让我一一介绍呀？”
+如果用户选择自己探索：鼓励他先试，并请他遇到不顺直接告诉你。
+如果用户选择一一介绍：按介绍、取名/头像、用车、心愿墙、市场、华人帮、个人中心的顺序，每次只介绍一项，再问要不要继续。
+当介绍到心愿墙，或者用户表达想获得帮助/帮助别人时，可以俏皮地说：“如果您想获得帮助或者帮助别人，咱去心愿墙看看呗。”然后引导他进入心愿墙。
+在心愿墙之后再介绍出行能力：“现在我最拿手的就是接送机、包车、旅游方面的业务，如果你要出行或者想提供服务，告诉我，让我来试试。”
+如果用户提出建议、吐槽、希望新增能力：先感谢和复述要点，再追问一个最有价值的细节，比如“你希望它在哪里出现？”或“你希望我怎么回复会更像你的小伙伴？”
+
 【一句话下单——最高优先级】
 用户说"下周五下午四点送我去机场" → 立即 [ACTION: show_vehicles to_airport]
 用户说"9月8号上午10点从家出发去机场" → 立即 [ACTION: show_vehicles to_airport]
@@ -2743,8 +3470,24 @@ async function sendMessage(){ stopTTS();
     await agentSay(`好呀，以后我就叫<strong>${agentName}</strong>。`,180);
     return;
   }
+  if(isVoiceWakeHelpIntent(msg)){
+    showVoiceWakePrompt();
+    await agentSay('可以，点一下开启语音唤起，以后喊“华伴”或“小伴”我就出来。',120);
+    return;
+  }
+  if(isAddHomeHelpIntent(msg)){
+    showInstallPrompt(true);
+    await agentSay('可以，点一下添加，就能把华伴放到手机桌面。',120);
+    return;
+  }
   if(isPlatformGuideIntent(msg)){
     await showPlatformGuide(false);
+    return;
+  }
+  if(await handleOnboardingFeedbackIntent(msg)){
+    return;
+  }
+  if(await handleDirectFeatureIntent(msg,{alreadyRendered:true,voice:false})){
     return;
   }
 
@@ -3926,14 +4669,17 @@ async function shareRefLink(){
   try{
     if(navigator.share){
       await navigator.share(shareData);
+      rewardCompanionAction('share');
     } else {
       // 降级：复制链接
       await navigator.clipboard.writeText(link);
+      rewardCompanionAction('share');
       await agentSay('链接已复制，可以粘贴分享给朋友', 200);
     }
   }catch(e){
     if(e.name!=='AbortError'){
       await navigator.clipboard.writeText(link).catch(()=>{});
+      rewardCompanionAction('share');
       await agentSay('链接已复制', 200);
     }
   }
@@ -4147,12 +4893,13 @@ function isIosDevice(){
   return /iphone|ipad|ipod/i.test(navigator.userAgent);
 }
 
-function showInstallPrompt(){
-  if(isStandaloneApp() || localStorage.getItem('huaban_install_dismissed')==='1')return;
+function showInstallPrompt(fromIntro=false){
+  if(isStandaloneApp())return;
+  if(!fromIntro&&localStorage.getItem('huaban_install_dismissed')==='1')return;
   if(document.getElementById('install-card'))return;
   const card=document.createElement('section');
   card.id='install-card';
-  card.className='install-card';
+  card.className='install-card intro-fade-card';
   card.setAttribute('aria-label','添加华伴到手机桌面');
   card.innerHTML=`
     <img src="assets/brand/huaban-logo-v1.png" alt="">
@@ -4165,6 +4912,7 @@ function showInstallPrompt(){
       <button class="install-close" onclick="hideInstallPromptForNow()" aria-label="暂时不添加">×</button>
     </div>`;
   chatArea.appendChild(card);
+  autoDismissIntroCard(card, fromIntro?18000:12000);
   scrollBottom();
 }
 
@@ -4185,10 +4933,13 @@ async function addToHome(){
     if(choice?.outcome==='accepted'){
       localStorage.setItem('huaban_installed','1');
       dismissInstallPrompt();
+      rewardCompanionAction('install');
     }
     deferredInstallPrompt=null;
     return;
   }
+  rewardCompanionAction('install');
+  dismissInstallPrompt();
   showAddToHomeGuide();
 }
 
