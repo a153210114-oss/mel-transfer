@@ -162,7 +162,7 @@ body{
 }
 .contact-item .label{color:rgba(255,255,255,0.4);font-size:13px;font-weight:400;}
 
-/* 二维码占位 */
+/* 二维码 */
 .qr-section{
   padding:24px 20px;
   text-align:center;
@@ -175,8 +175,11 @@ body{
   border-radius:16px;
   margin:0 auto 16px;
   display:flex;align-items:center;justify-content:center;
-  font-size:13px;color:#999;
+  padding:10px;
+  box-shadow:0 12px 32px rgba(0,0,0,0.18);
 }
+.qr-box img{width:100%;height:100%;display:block;border-radius:10px;}
+.qr-slogan{font-size:16px;font-weight:900;color:white;margin-bottom:8px;}
 
 /* 添加到主屏幕指南 */
 .pwa-guide{
@@ -319,8 +322,9 @@ body{
 <!-- 二维码 -->
 <div class="qr-section">
   <div class="qr-title">扫码直接体验平台</div>
+  <div class="qr-slogan">快来领你的AI，有趣又有用。</div>
   <div class="qr-box">
-    <div>二维码<br>huabanapp.com</div>
+    <img src="https://api.qrserver.com/v1/create-qr-code/?size=320x320&margin=12&data=https%3A%2F%2Fwww.huabanapp.com%2F" alt="华伴二维码">
   </div>
   <div style="font-size:12px;color:rgba(255,255,255,0.4);">huabanapp.com</div>
 </div>
