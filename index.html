@@ -441,6 +441,10 @@ body.theme-night .agent-age-seconds{color:#62ddb2;}
 .mutual-aid-form label{display:block;font-size:12px;color:rgba(255,255,255,0.5);margin:10px 0 6px;}
 .mutual-aid-form input,.mutual-aid-form select,.mutual-aid-form textarea{width:100%;border:1px solid rgba(255,255,255,0.13);border-radius:10px;background:rgba(255,255,255,0.07);color:white;font:14px/1.4 inherit;padding:11px;outline:none;}
 .mutual-aid-form textarea{height:78px;resize:none;}
+.reminder-list{display:flex;flex-direction:column;gap:8px;margin-top:12px;max-height:210px;overflow:auto;}
+.reminder-item{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:10px;}
+.reminder-title{font-size:13px;color:rgba(255,255,255,0.86);font-weight:800;margin-bottom:5px;}
+.reminder-meta{font-size:11px;color:rgba(255,255,255,0.45);line-height:1.6;}
 .install-overlay{position:fixed;inset:0;z-index:3500;background:rgba(0,0,0,.48);display:flex;align-items:flex-end;justify-content:center;}
 .install-sheet{width:100%;max-width:480px;max-height:calc(100vh - 28px);overflow:auto;background:#fff;border-radius:18px 18px 0 0;padding:20px 18px calc(22px + env(safe-area-inset-bottom));box-shadow:0 -8px 24px rgba(0,0,0,.16);}
 .install-sheet-head{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
@@ -2544,6 +2548,7 @@ async function startApp(){
   updateAgentIdentityUI();
   detectRegion();
   trackPageVisit('home');
+  startReminderTimers();
   // 落地读取推荐码
   const urlRef = new URLSearchParams(window.location.search).get('ref');
   if(urlRef) sessionStorage.setItem('incoming_ref', urlRef);
@@ -2847,6 +2852,7 @@ const FEATURE_INTENTS=[
   {key:'friends',label:'交友',pattern:/交友|找朋友|认识朋友|搭子/i},
   {key:'region',label:'定位',pattern:/定位|切换地区|切换城市|换城市|所在城市|地区/i},
   {key:'share',label:'分享',pattern:/分享|转发|二维码|邀请|推荐朋友/i},
+  {key:'reminder',label:'提醒',pattern:/提醒|闹钟|日程|行程安排|待办|叫我|到点/i},
   {key:'driver',label:'司机入驻',pattern:/司机入驻|司机注册|加入司机|做司机|司机端/i},
   {key:'customize-agent',label:'定制AI',pattern:/定制.*(ai|AI|管家|助手)|自定义.*(名字|身份|形象)|改.*(名字|身份|形象)|换.*(名字|身份|形象)|给你.*起名/i},
   {key:'intro',label:'介绍',pattern:/介绍.*华伴|华伴.*介绍|使用方法|怎么用/i},
@@ -2930,6 +2936,7 @@ const CORE_TOOL_ITEMS=[
   {key:'profile',icon:'👤',label:'个人中心'},
   {key:'region',icon:'📍',label:'定位'},
   {key:'share',icon:'🔗',label:'分享'},
+  {key:'reminder',icon:'⏰',label:'提醒'},
   {key:'customize-agent',icon:'🎭',label:'定制AI'},
   {key:'friends',icon:'👥',label:'交友'},
   {key:'driver',icon:'🧑‍✈️',label:'司机入驻',driver:true},
@@ -3106,6 +3113,11 @@ async function openFeatureByKey(key,label,options={}){
   if(key==='share'){
     shareRefLink();
     await say('分享入口打开了。你可以把华伴发给需要的人。');
+    return;
+  }
+  if(key==='reminder'){
+    openReminderSheet(buildReminderDraft(options.sourceText||''));
+    await say('我帮你整理成提醒草稿了。你确认一下时间，保存后我会记在提醒里。');
     return;
   }
   if(key==='market'){
@@ -3303,6 +3315,152 @@ function updateWishWallHint(){
   hint.textContent=text[type]||text.need_free;
 }
 
+const REMINDER_KEY='huaban_reminders';
+const activeReminderTimers={};
+
+function readReminders(){
+  try{
+    const items=JSON.parse(localStorage.getItem(REMINDER_KEY)||'[]');
+    return Array.isArray(items)?items:[];
+  }catch(e){return [];}
+}
+
+function saveReminders(items){
+  localStorage.setItem(REMINDER_KEY,JSON.stringify(items.slice(0,80)));
+}
+
+function parseReminderDate(text){
+  const now=new Date();
+  const clean=String(text||'');
+  let d=new Date(now);
+  if(/后天/.test(clean))d.setDate(d.getDate()+2);
+  else if(/明天/.test(clean))d.setDate(d.getDate()+1);
+  else {
+    const iso=clean.match(/(20\d{2})[-/.年](\d{1,2})[-/.月](\d{1,2})/);
+    const md=clean.match(/(\d{1,2})\s*[月/.-]\s*(\d{1,2})\s*(?:日|号)?/);
+    if(iso)d=new Date(Number(iso[1]),Number(iso[2])-1,Number(iso[3]));
+    else if(md)d=new Date(now.getFullYear(),Number(md[1])-1,Number(md[2]));
+  }
+  const time=clean.match(/(\d{1,2})\s*(?::|：|点)\s*(\d{1,2})?/);
+  let h=9,m=0;
+  if(time){
+    h=Number(time[1]);
+    m=time[2]?Number(time[2]):(/半/.test(clean)?30:0);
+    if(/下午|晚上/.test(clean)&&h<12)h+=12;
+    if(/凌晨/.test(clean)&&h===12)h=0;
+  }
+  d.setHours(h,m,0,0);
+  return d;
+}
+
+function buildReminderDraft(text=''){
+  const clean=String(text||'').trim();
+  const when=parseReminderDate(clean);
+  const title=clean
+    .replace(/提醒我|帮我|记得|闹钟|日程|设置提醒|设个提醒/g,'')
+    .trim()
+    .slice(0,40) || '华伴提醒';
+  return {
+    title,
+    note:clean,
+    remindAt:when.toISOString().slice(0,16)
+  };
+}
+
+function formatReminderInputDate(iso){
+  if(!iso)return '';
+  const d=new Date(iso);
+  const off=d.getTimezoneOffset();
+  return new Date(d.getTime()-off*60000).toISOString().slice(0,16);
+}
+
+function renderReminderItems(){
+  const items=readReminders().filter(item=>item.status!=='done');
+  if(!items.length)return '<div style="padding:14px;text-align:center;color:rgba(255,255,255,0.32);font-size:12px;">暂无提醒</div>';
+  return items.slice(0,8).map(item=>`<div class="reminder-item">
+    <div class="reminder-title">${companionEscape(item.title||'提醒')}</div>
+    <div class="reminder-meta">${companionEscape(new Date(item.remindAt).toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}))}</div>
+    ${item.note?`<div class="reminder-meta">${companionEscape(item.note)}</div>`:''}
+  </div>`).join('');
+}
+
+function openReminderSheet(draft={}){
+  rememberMenuKey('reminder');
+  const existing=document.getElementById('reminder-modal');
+  if(existing)existing.remove();
+  const modal=document.createElement('div');
+  modal.id='reminder-modal';
+  modal.className='modal-overlay show';
+  modal.onclick=(event)=>{if(event.target===modal)modal.remove();};
+  const remindValue=formatReminderInputDate(draft.remindAt||new Date(Date.now()+60*60*1000).toISOString());
+  modal.innerHTML=`
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px;">
+        <div>
+          <div style="font-size:21px;font-weight:900;color:white;">提醒</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.45);margin-top:4px;">先记在华伴里，页面打开时我会提醒你</div>
+        </div>
+        <button onclick="document.getElementById('reminder-modal')?.remove()" style="border:0;border-radius:10px;background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.72);padding:8px 12px;font:600 13px/1 inherit;cursor:pointer;">关闭</button>
+      </div>
+      <div class="mutual-aid-form">
+        <label>提醒标题</label>
+        <input id="reminder-title" value="${companionEscape(draft.title||'华伴提醒')}" placeholder="例如：出发去企鹅岛">
+        <label>提醒时间</label>
+        <input id="reminder-time" type="datetime-local" value="${companionEscape(remindValue)}">
+        <label>备注</label>
+        <textarea id="reminder-note" placeholder="截图/行程里的关键信息">${companionEscape(draft.note||'')}</textarea>
+        <button onclick="saveReminderFromSheet()" style="width:100%;margin-top:14px;padding:13px;background:rgba(0,200,150,0.24);border:1px solid rgba(0,200,150,0.36);border-radius:12px;color:white;font:800 14px/1 inherit;cursor:pointer;">保存提醒</button>
+      </div>
+      <div class="reminder-list">${renderReminderItems()}</div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+async function saveReminderFromSheet(){
+  const title=(document.getElementById('reminder-title')?.value||'华伴提醒').trim();
+  const remindAt=document.getElementById('reminder-time')?.value;
+  const note=(document.getElementById('reminder-note')?.value||'').trim();
+  if(!remindAt){alert('请填写提醒时间');return;}
+  const items=readReminders();
+  const item={id:'rem-'+Date.now(),title,remindAt:new Date(remindAt).toISOString(),note,status:'open',createdAt:new Date().toISOString()};
+  items.unshift(item);
+  saveReminders(items);
+  scheduleReminder(item);
+  document.getElementById('reminder-modal')?.remove();
+  rewardCompanionAction('try_feature');
+  await agentSay('提醒我记下了。当前版本会在你打开华伴时提醒；后面我再接手机系统通知。',120);
+}
+
+function scheduleReminder(item){
+  if(!item?.id||!item.remindAt||item.status==='done')return;
+  if(activeReminderTimers[item.id])clearTimeout(activeReminderTimers[item.id]);
+  const delay=new Date(item.remindAt).getTime()-Date.now();
+  if(delay<=0){
+    showDueReminder(item);
+    return;
+  }
+  if(delay<24*60*60*1000){
+    activeReminderTimers[item.id]=setTimeout(()=>showDueReminder(item),delay);
+  }
+}
+
+function showDueReminder(item){
+  if(!item||item.status==='done')return;
+  addMsg(`<strong>提醒到啦：${companionEscape(item.title||'华伴提醒')}</strong>${item.note?`<br><span style="color:#666;">${companionEscape(item.note)}</span>`:''}`);
+  try{
+    if(Notification?.permission==='granted')new Notification(item.title||'华伴提醒',{body:item.note||'提醒时间到了'});
+  }catch(e){}
+  const items=readReminders();
+  const target=items.find(r=>r.id===item.id);
+  if(target)target.status='done';
+  saveReminders(items);
+}
+
+function startReminderTimers(){
+  readReminders().filter(item=>item.status!=='done').forEach(scheduleReminder);
+}
+
 function dataUrlToPayload(dataUrl){
   const match=String(dataUrl||'').match(/^data:(.+?);base64,(.+)$/);
   return match?{mediaType:match[1],image:match[2]}:null;
@@ -3348,6 +3506,26 @@ function normalizeImageWishDraft(draft={}){
   };
 }
 
+function renderReminderSuggestionCard(draft={}){
+  const text=[draft.text,draft.title,draft.budget].filter(Boolean).join(' ');
+  if(!/(票|行程|日期|时间|集合|出发|航班|火车|酒店|7月|8月|\d{1,2}[月/.-]\d{1,2}|明天|后天)/i.test(text))return;
+  const reminderDraft=buildReminderDraft(text);
+  const card=document.createElement('section');
+  card.className='install-card intro-fade-card';
+  card.innerHTML=`
+    <div class="install-copy">
+      <strong>要不要顺手存个提醒？</strong>
+      <span>${companionEscape(reminderDraft.title||'行程提醒')}</span>
+    </div>
+    <div class="install-actions">
+      <button class="install-primary" type="button">保存</button>
+    </div>`;
+  card.querySelector('button')?.addEventListener('click',()=>openReminderSheet(reminderDraft));
+  chatArea.appendChild(card);
+  autoDismissIntroCard(card,22000);
+  scrollBottom();
+}
+
 async function analyzeImageToWishWall(file,label){
   try{
     await agentSay('我先帮你读一下图片，看看能不能整理成心愿墙需求。',80);
@@ -3368,6 +3546,7 @@ async function analyzeImageToWishWall(file,label){
     const draft=normalizeImageWishDraft(data.draft||{});
     openMutualAidCommunity(draft);
     rememberMenuKey('mutual-aid');
+    renderReminderSuggestionCard(draft);
     await agentSay('我把图片里的关键信息整理成草稿了。你看一下日期、价格和联系方式，对了就发布到心愿墙。',120);
   }catch(e){
     console.warn('image wish recognition failed',e);
