@@ -1135,7 +1135,10 @@ async function supaPatch(path, data) {
     },
     body: JSON.stringify(data)
   });
-  return res.json();
+  const text = await res.text();
+  const payload = text ? JSON.parse(text) : null;
+  if (!res.ok) throw new Error(payload?.message || text || '更新失败');
+  return payload;
 }
 
 // Navigation
@@ -2080,23 +2083,23 @@ function roleFromTaskType(type){
 
 async function loadSuppliers() {
   const filter = document.getElementById('supplier-filter').value;
-  let q = `beta_leads?order=created_at.desc&limit=100`;
-  if (filter) q += `&status=eq.${filter}`;
+  const buildQ = table => {
+    let q = `${table}?order=created_at.desc&limit=100`;
+    if (filter) q += `&status=eq.${filter}`;
+    return q;
+  };
 
   const tbody = document.getElementById('suppliers-body');
   tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:30px;">加载中...</td></tr>';
 
   try {
-    let leadTable = 'beta_leads';
-    let leads = [];
-    try {
-      leads = await supaFetch(q);
-    } catch(primaryError) {
-      leadTable = 'user_leads';
-      let fallbackQ = `user_leads?order=created_at.desc&limit=100`;
-      if (filter) fallbackQ += `&status=eq.${filter}`;
-      leads = await supaFetch(fallbackQ);
-    }
+    const [betaRows, userRows] = await Promise.all([
+      supaFetch(buildQ('beta_leads')).then(rows=>rows.map(row=>({...row,__table:'beta_leads'}))).catch(()=>[]),
+      supaFetch(buildQ('user_leads')).then(rows=>rows.map(row=>({...row,__table:'user_leads'}))).catch(()=>[])
+    ]);
+    const leads = [...betaRows, ...userRows]
+      .sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0))
+      .slice(0,100);
     if (!leads.length) {
       tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:40px;">暂无公测线索</td></tr>';
       return;
@@ -2125,8 +2128,8 @@ async function loadSuppliers() {
         <td>${supplierBadge(status)}</td>
         <td style="font-size:12px;color:var(--text3);">${fmtDateShort(lead.created_at)}</td>
         <td>
-          ${isSupply && status !== 'approved' ? `<button class="action-btn success" onclick="approveSupplier('${lead.id}','${leadTable}')">通过</button>` : ''}
-          ${isSupply && status !== 'rejected' ? `<button class="action-btn danger" onclick="rejectSupplier('${lead.id}','${leadTable}')" style="margin-left:4px;">驳回</button>` : ''}
+          ${isSupply && status !== 'approved' ? `<button class="action-btn success" onclick="approveSupplier('${lead.id}','${lead.__table}')">通过</button>` : ''}
+          ${isSupply && status !== 'rejected' ? `<button class="action-btn danger" onclick="rejectSupplier('${lead.id}','${lead.__table}')" style="margin-left:4px;">驳回</button>` : ''}
           <button class="action-btn" onclick="copyId('${lead.id}')" style="margin-left:4px;">复制ID</button>
         </td>
       </tr>`;
@@ -2138,26 +2141,43 @@ async function loadSuppliers() {
 
 async function approveSupplier(id, table='beta_leads') {
   if (!confirm('确认已完成必要资质核验，并通过这个供给侧申请？')) return;
-  await supaPatch(`${table}?id=eq.${id}`, {
-    status: 'approved',
-    stage: 'approved',
-    next_action: 'open_supplier_hub',
-    notes: 'admin_approved_after_qualification_review',
-    updated_at: new Date().toISOString()
-  });
-  alert('✅ 已通过。用户端个人中心将开放供给中心入口。');
-  loadSuppliers();
+  try {
+    const rows = await patchLeadStatus(id, table, 'approved');
+    if (!rows.length) throw new Error('没有找到这条线索，可能已被移动或删除');
+    alert('✅ 已通过。用户端个人中心将开放供给中心入口。');
+    loadSuppliers();
+  } catch(e) {
+    alert('通过失败：' + e.message);
+  }
 }
 
 async function rejectSupplier(id, table='beta_leads') {
   const notes = prompt('驳回原因/需要补充的资料（可选）：', '');
-  await supaPatch(`${table}?id=eq.${id}`, {
-    status: 'rejected',
-    stage: 'need_more_info',
-    notes: notes || null,
-    updated_at: new Date().toISOString()
-  });
-  loadSuppliers();
+  try {
+    const rows = await patchLeadStatus(id, table, 'rejected');
+    if (!rows.length) throw new Error('没有找到这条线索，可能已被移动或删除');
+    if (notes) {
+      try { await supaPatch(`${table}?id=eq.${id}`, {notes}); } catch(e) {}
+    }
+    loadSuppliers();
+  } catch(e) {
+    alert('驳回失败：' + e.message);
+  }
+}
+
+async function patchLeadStatus(id, table, status) {
+  const tables = [table, table === 'beta_leads' ? 'user_leads' : 'beta_leads'].filter(Boolean);
+  let lastError = null;
+  for (const target of [...new Set(tables)]) {
+    try {
+      const rows = await supaPatch(`${target}?id=eq.${id}`, {status});
+      if (Array.isArray(rows) && rows.length) return rows;
+    } catch(e) {
+      lastError = e;
+    }
+  }
+  if (lastError) throw lastError;
+  return [];
 }
 
 // ── Dispatch ──
