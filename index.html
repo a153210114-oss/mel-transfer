@@ -250,6 +250,10 @@ body{
 :root{--wx-green:#07c160;--wx-bg:#ededed;--wx-line:#e5e5e5;--wx-text:#191919;--wx-muted:#8a8a8a;--wx-top:#f7f7f7;--wx-panel:#f7f7f7;--wx-card:#fff;--wx-card-soft:#f7f7f7;--wx-border:#dedede;}
 body{background:var(--wx-bg);color:var(--wx-text);}
 .top-bar{height:56px;padding:4px 14px;background:var(--wx-top);border-bottom:1px solid var(--wx-line);}
+.top-bar{justify-content:center;position:relative;}
+.top-bar .brand-lockup{margin:0 auto;}
+.ai-hidden-control{display:none!important;}
+#voice-indicator{position:absolute;right:14px;top:20px;}
 .brand-logo{box-shadow:0 0 0 1px rgba(0,0,0,.04);}
 .top-bar>button{color:#4b4b4b!important;}
 .chat-area{padding:18px 12px 150px;gap:14px;}
@@ -567,9 +571,9 @@ body.more-open .chat-area{padding-bottom:390px;}
     <img class="brand-logo" src="assets/brand/huaban-logo-v1.png" alt="华伴 logo">
   </div>
   <div id="voice-indicator" style="display:none;font-size:11px;color:rgba(255,59,48,0.9);animation:mp 0.8s ease-in-out infinite;">🔴 录音中</div>
-  <button class="region-btn" id="region-btn" onclick="changeRegion()" aria-label="切换地区" title="切换地区"><i class="region-dot"></i><span id="region-label">正在定位</span>⌄</button>
-  <button id="share-btn" onclick="shareRefLink()" aria-label="分享" title="分享" style="background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;">＋</button>
-  <button id="profile-btn" onclick="openProfile()" aria-label="个人中心" title="个人中心" style="background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;">◉</button>
+  <button class="region-btn ai-hidden-control" id="region-btn" onclick="changeRegion()" aria-label="切换地区" title="切换地区"><i class="region-dot"></i><span id="region-label">正在定位</span>⌄</button>
+  <button class="ai-hidden-control" id="share-btn" onclick="shareRefLink()" aria-label="分享" title="分享" style="background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;">＋</button>
+  <button class="ai-hidden-control" id="profile-btn" onclick="openProfile()" aria-label="个人中心" title="个人中心" style="background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;">◉</button>
   <button class="top-exit" id="exit-btn" onclick="exitToHome()">⇄ 切换</button>
 </div>
 
@@ -1565,9 +1569,11 @@ function updateComposerAction(){
   const action=document.getElementById('composer-action');
   if(!input||!action)return;
   const hasText=inputMode==='text'&&input.value.trim().length>0;
-  action.textContent=hasText?'发送':'＋';
+  const hasMenu=readDiscoveredMenuKeys().length>0;
+  action.textContent=hasText?'发送':(hasMenu?'＋':'');
   action.classList.toggle('ready',hasText);
-  action.setAttribute('aria-label',hasText?'发送消息':'展开全部功能');
+  action.style.visibility=(!hasText&&!hasMenu)?'hidden':'visible';
+  action.setAttribute('aria-label',hasText?'发送消息':'打开问过的事');
 }
 
 function handleComposerAction(){
@@ -1576,7 +1582,7 @@ function handleComposerAction(){
     closeMorePanel();
     sendMessage();
     updateComposerAction();
-  }else{
+  }else if(readDiscoveredMenuKeys().length){
     toggleMorePanel();
   }
 }
@@ -2565,22 +2571,12 @@ window.addEventListener('load',startApp,{once:true});
 function renderWelcomeHome(){
   currentRole='passenger';
   chatArea.innerHTML='';
-  addMsg(`<strong>你好，我是你的 a-i（爱）呀</strong><br><span style="color:#666;">我刚来到你身边，还在长本领。先给我取个名字、选个头像吧；以后你需要出行或华人服务，直接用普通话或文字告诉我。</span>`);
-  if(!hasCustomAgentIdentity())renderAgentSetupCard();
-  renderFeedbackStarterCard();
-  renderWishWallNudgeCard();
-  renderTravelNudgeCard();
-  renderQuickGuideCard();
+  addMsg(`<strong>你好，我是你的华伴 AI。</strong><br><span style="color:#666;">不用找功能，有事直接说。我会帮你整理需求，找到靠谱的人。</span>`);
   const companion=getCompanion();
   if(addCompanionBadge(companion,currentRegion.city||currentRegion.country,'📍'))saveCompanion(companion);
-  const companionCard=document.createElement('section');
-  companionCard.id='companion-card';
-  companionCard.className='companion-card';
-  companionCard.setAttribute('aria-label',`${agentName}旅行伙伴养成状态`);
-  chatArea.appendChild(companionCard);
-  renderCompanionCard();
   document.getElementById('chat-input').placeholder='输入你需要的帮助';
   renderMoreMenu();
+  updateComposerAction();
   refreshHomeRegionCopy();
   scrollBottom();
 }
@@ -2801,6 +2797,8 @@ const FEATURE_INTENTS=[
   {key:'image',label:'图片',pattern:/图片|照片|相册|上传图|发图/i},
   {key:'payment',label:'支付',pattern:/支付|付款|收款|付钱/i},
   {key:'friends',label:'交友',pattern:/交友|找朋友|认识朋友|搭子/i},
+  {key:'region',label:'定位',pattern:/定位|切换地区|切换城市|换城市|所在城市|地区/i},
+  {key:'share',label:'分享',pattern:/分享|转发|二维码|邀请|推荐朋友/i},
   {key:'driver',label:'司机入驻',pattern:/司机入驻|司机注册|加入司机|做司机|司机端/i},
   {key:'customize-agent',label:'定制AI',pattern:/定制.*(ai|AI|管家|助手)|自定义.*(名字|身份|形象)|改.*(名字|身份|形象)|换.*(名字|身份|形象)|给你.*起名/i},
   {key:'intro',label:'介绍',pattern:/介绍.*华伴|华伴.*介绍|使用方法|怎么用/i},
@@ -2882,6 +2880,8 @@ const CORE_TOOL_ITEMS=[
   {key:'payment',icon:'💳',label:'支付'},
   {key:'intro',icon:'💬',label:'介绍'},
   {key:'profile',icon:'👤',label:'个人中心'},
+  {key:'region',icon:'📍',label:'定位'},
+  {key:'share',icon:'🔗',label:'分享'},
   {key:'customize-agent',icon:'🎭',label:'定制AI'},
   {key:'friends',icon:'👥',label:'交友'},
   {key:'driver',icon:'🧑‍✈️',label:'司机入驻',driver:true},
@@ -2913,21 +2913,64 @@ const MORE_MENU={
   ]
 };
 
+const DISCOVERED_MENU_KEY='huaban_discovered_menu_keys';
+
+function allMenuItemsFlat(){
+  const flat=[...CORE_TOOL_ITEMS,{key:'rental',icon:'🚙',label:'租车'}];
+  Object.values(BUSINESS_MODULES).forEach(module=>{
+    if(module.menu)flat.push(module.menu);
+    if(Array.isArray(module.items))flat.push(...module.items);
+  });
+  return flat;
+}
+
+function normalizeMenuKey(key){
+  const map={'ride-menu':'ride','travel-menu':'travel','help-menu':'help'};
+  return map[key]||key;
+}
+
+function readDiscoveredMenuKeys(){
+  try{
+    const keys=JSON.parse(localStorage.getItem(DISCOVERED_MENU_KEY)||'[]');
+    return Array.isArray(keys)?keys:[];
+  }catch(e){
+    return [];
+  }
+}
+
+function rememberMenuKey(key){
+  const normalized=normalizeMenuKey(key);
+  if(!normalized)return;
+  const known=allMenuItemsFlat().some(item=>item.key===normalized);
+  if(!known)return;
+  const keys=readDiscoveredMenuKeys();
+  if(keys.includes(normalized))return;
+  keys.unshift(normalized);
+  localStorage.setItem(DISCOVERED_MENU_KEY,JSON.stringify(keys.slice(0,12)));
+  renderMoreMenu();
+  updateComposerAction();
+}
+
+function discoveredMenuItems(){
+  const byKey=new Map(allMenuItemsFlat().map(item=>[item.key,item]));
+  return readDiscoveredMenuKeys().map(key=>byKey.get(key)).filter(Boolean);
+}
+
 function renderMoreMenu(category='home'){
   const grid=document.getElementById('more-grid');
   const title=document.getElementById('more-title');
   const back=document.getElementById('more-back');
   if(!grid||!title||!back)return;
   const module=BUSINESS_MODULES[category];
-  const menuItems=category==='home'?MORE_MENU.home:(module?.items||MORE_MENU[category]||MORE_MENU.home);
-  const titles={home:'全部功能'};
+  const menuItems=category==='home'?discoveredMenuItems():(module?.items||MORE_MENU[category]||[]);
+  const titles={home:'问过的事'};
   title.textContent=titles[category]||'全部功能';
   if(module?.title)title.textContent=module.title;
   back.style.visibility=category==='home'?'hidden':'visible';
-  grid.innerHTML=menuItems.map(item=>`
+  grid.innerHTML=menuItems.length?menuItems.map(item=>`
     <button class="more-item${item.driver?' driver':''}" onclick="${item.category?`renderMoreMenu('${item.key}')`:`runMoreAction('${item.key}','${item.label}')`}">
       <span class="more-item-icon">${item.icon}</span><span>${item.label}</span>
-    </button>`).join('');
+    </button>`).join(''):`<div style="grid-column:1/-1;text-align:center;color:#888;font-size:13px;line-height:1.7;padding:18px 8px;">你问过的功能会出现在这里。<br>现在不用找菜单，有事直接说。</div>`;
 }
 
 function toggleMorePanel(){
@@ -2950,6 +2993,7 @@ function closeMorePanel(){
 
 function runMoreAction(key,label){
   closeMorePanel();
+  rememberMenuKey(key);
   if(runBusinessModule(key))return;
   rewardCompanionAction('try_feature');
   const serviceMap={pickup:'接机',dropoff:'送机',charter:'包车','tour-charter':'旅游包车','group-tour':'旅游拼团',rental:'租车',payment:'支付',friends:'交友',agency:'中介服务',translation:'翻译',lawyer:'律师',accountant:'会计','other-help':'华人帮办'};
@@ -2959,6 +3003,8 @@ function runMoreAction(key,label){
   if(key==='image'){document.getElementById('image-input')?.click();return;}
   if(key==='intro'){showPlatformGuide(true);return;}
   if(key==='profile'){openProfile();return;}
+  if(key==='region'){changeRegion();return;}
+  if(key==='share'){shareRefLink();return;}
   if(key==='customize-agent'){openAgentCustomizer();return;}
   const activeKeys=['pickup','dropoff','charter','tour-charter','group-tour','rental','agency','translation','lawyer','accountant','other-help'];
   if(!activeKeys.includes(key)){
@@ -2971,6 +3017,7 @@ function runMoreAction(key,label){
 async function openFeatureByKey(key,label,options={}){
   const alreadyRendered=options.alreadyRendered===true;
   closeMorePanel();
+  rememberMenuKey(key);
   const say=(html,ms=120)=>agentSay(html,ms);
   const serviceMap={pickup:'接机',dropoff:'送机',charter:'包车','tour-charter':'旅游包车','group-tour':'旅游拼团',rental:'租车',agency:'中介服务',translation:'翻译',lawyer:'律师',accountant:'会计','other-help':'华人帮办'};
   const categoryMap={'ride-menu':'ride','travel-menu':'travel','help-menu':'help'};
@@ -3001,6 +3048,16 @@ async function openFeatureByKey(key,label,options={}){
   if(key==='profile'){
     openProfile();
     await say('个人中心打开了。');
+    return;
+  }
+  if(key==='region'){
+    changeRegion();
+    await say('好，我帮你打开地区设置。');
+    return;
+  }
+  if(key==='share'){
+    shareRefLink();
+    await say('分享入口打开了。你可以把华伴发给需要的人。');
     return;
   }
   if(key==='market'){
