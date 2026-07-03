@@ -252,6 +252,17 @@ body{background:var(--wx-bg);color:var(--wx-text);}
 .top-bar{height:56px;padding:4px 14px;background:var(--wx-top);border-bottom:1px solid var(--wx-line);}
 .top-bar{justify-content:center;position:relative;}
 .top-bar .brand-lockup{margin:0 auto;}
+#profile-btn.companion-entry{
+  display:flex!important;position:absolute;right:10px;top:7px;height:42px;max-width:148px;
+  align-items:center;gap:6px;padding:5px 8px!important;border:1px solid #dcdcdc!important;
+  border-radius:21px!important;background:rgba(255,255,255,.86)!important;color:#333!important;
+  box-shadow:0 2px 8px rgba(0,0,0,.06);font-size:12px!important;line-height:1.15;
+}
+.companion-entry-avatar{width:28px;height:28px;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#f1fbf6;flex-shrink:0;}
+.companion-entry-avatar .agent-avatar-img{width:100%;height:100%;object-fit:cover;}
+.companion-entry-meta{display:flex;flex-direction:column;align-items:flex-start;min-width:0;}
+.companion-entry-level{font-weight:900;color:#20a070;white-space:nowrap;}
+.companion-entry-xp{font-size:10px;color:#777;white-space:nowrap;}
 .adoption-ticker{
   flex-shrink:0;height:28px;overflow:hidden;background:rgba(255,255,255,0.72);
   border-bottom:1px solid var(--wx-line);display:flex;align-items:center;
@@ -299,6 +310,8 @@ body.theme-night{
   --wx-border:#343b44;
 }
 body.theme-night .top-bar>button{color:#d7dce2!important;}
+body.theme-night #profile-btn.companion-entry{background:#242a31!important;border-color:#3a424c!important;color:#dce4ec!important;}
+body.theme-night .companion-entry-xp{color:#9aa7af;}
 body.theme-night .adoption-ticker{background:rgba(23,27,32,0.9);border-bottom-color:#2b3138;}
 body.theme-night .adoption-ticker-track{color:#aeb6bf;}
 body.theme-night .msg-av{background:#242a31;box-shadow:0 0 0 1px rgba(255,255,255,.05);}
@@ -474,6 +487,10 @@ body.theme-night .agent-age-seconds{color:#62ddb2;}
 
 /* AI 旅行伙伴养成卡 */
 .companion-card{margin:0 0 2px 44px;border-radius:14px;overflow:hidden;background:linear-gradient(145deg,#dff7ff 0%,#fff7d9 100%);border:1px solid rgba(80,130,150,.18);box-shadow:0 4px 14px rgba(35,85,100,.08);}
+.companion-card.birth-pop{animation:companionBirthPop .36s ease-out both;}
+.companion-card.float-to-top{animation:companionFloatToTop .72s ease-in forwards;transform-origin:100% 0;}
+@keyframes companionBirthPop{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes companionFloatToTop{to{opacity:0;transform:translate(150px,-150px) scale(.28);max-height:0;margin-bottom:0}}
 .companion-room{position:relative;min-height:142px;padding:16px 16px 13px;overflow:hidden;}
 .companion-room::before{content:'';position:absolute;width:94px;height:94px;border-radius:50%;right:-18px;top:-30px;background:rgba(255,255,255,.55);}
 .companion-room::after{content:'';position:absolute;left:0;right:0;bottom:0;height:35px;background:rgba(102,190,139,.16);border-radius:50% 50% 0 0/35% 35% 0 0;}
@@ -1188,6 +1205,7 @@ function updateAgentAgeDisplays(){
   document.querySelectorAll('[data-agent-age]').forEach(el=>{
     el.textContent=`${agentAgeSeconds()}秒 · ${level.name}`;
   });
+  updateCompanionEntryButton();
 }
 
 function ensureAgentAgeTicker(){
@@ -1290,9 +1308,9 @@ async function saveAgentSetupCard(){
   const avatar=document.getElementById('agent-setup-emoji')?.value||'logo';
   const ok=setAgentCustomization({name,title:agentTitle||'AI伙伴',emoji:avatar});
   if(!ok){alert('先给我取一个 2 到 8 个字的名字吧');return;}
-  document.getElementById('agent-setup-card')?.remove();
+  renderCompanionBirthCard(true);
   rewardCompanionAction('customize');
-  await agentSay(`好呀，我记住了。我叫<strong>${agentName}</strong>，以后就陪你一起长大。`,120);
+  await agentSay(`好呀，我记住了。我叫<strong>${agentName}</strong>，我会长大帮你做更多事情。`,120);
 }
 
 function addCompanionBadge(state,label,icon='📍'){
@@ -1306,7 +1324,7 @@ function addCompanionBadge(state,label,icon='📍'){
 
 function renderCompanionCard(){
   const card=document.getElementById('companion-card');
-  if(!card)return;
+  if(!card){updateCompanionEntryButton();return;}
   const state=getCompanion();
   const level=companionLevel(state.xp);
   const levelIndex=COMPANION_LEVELS.indexOf(level);
@@ -1331,6 +1349,59 @@ function renderCompanionCard(){
     </div>
     <div class="companion-badges">${state.badges.length?state.badges.map(b=>`<span class="companion-badge">${companionEscape(b)}</span>`).join(''):'<span class="companion-badge">🌱 第一次相遇</span>'}</div>`;
   ensureAgentAgeTicker();
+  updateCompanionEntryButton();
+}
+
+function renderCompanionBirthCard(floatToTop=false){
+  let card=document.getElementById('companion-card');
+  if(floatToTop)window._companionEntryHold=true;
+  if(!card){
+    card=document.createElement('section');
+    card.id='companion-card';
+    card.className='companion-card birth-pop';
+    chatArea.appendChild(card);
+  }else{
+    card.classList.remove('float-to-top');
+    card.classList.add('birth-pop');
+  }
+  renderCompanionCard();
+  scrollBottom();
+  if(floatToTop){
+    clearTimeout(window._companionFloatTimer);
+    window._companionFloatTimer=setTimeout(()=>{
+      card.classList.remove('birth-pop');
+      card.classList.add('float-to-top');
+      setTimeout(()=>{
+        card.remove();
+        window._companionEntryHold=false;
+        updateCompanionEntryButton(true);
+      },760);
+    },2400);
+  }
+}
+
+function updateCompanionEntryButton(forceShow=false){
+  const btn=document.getElementById('profile-btn');
+  if(!btn)return;
+  if(window._companionEntryHold&&!forceShow)return;
+  const shouldShow=forceShow||hasCustomAgentIdentity();
+  if(!shouldShow){
+    btn.classList.remove('companion-entry');
+    btn.innerHTML='◉';
+    return;
+  }
+  const state=getCompanion();
+  const level=companionLevel(state.xp);
+  const levelIndex=COMPANION_LEVELS.indexOf(level)+1;
+  btn.classList.add('companion-entry');
+  btn.setAttribute('aria-label','个人中心与华伴成长');
+  btn.title='个人中心与华伴成长';
+  btn.innerHTML=`
+    <span class="companion-entry-avatar">${agentAvatarMarkup()}</span>
+    <span class="companion-entry-meta">
+      <span class="companion-entry-level">Lv.${levelIndex} ${companionEscape(level.name)}</span>
+      <span class="companion-entry-xp">${state.xp} 成长值</span>
+    </span>`;
 }
 
 function companionSay(text){
