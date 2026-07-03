@@ -391,6 +391,9 @@ body {
     <div class="nav-item" onclick="showSection('sources')">
       <span class="nav-icon">🗂️</span> 中文入口库
     </div>
+    <div class="nav-item" onclick="showSection('outreach')">
+      <span class="nav-icon">📣</span> 推广任务
+    </div>
     <div class="nav-item" onclick="showSection('dispatch')">
       <span class="nav-icon">📡</span> 实时调度
     </div>
@@ -458,6 +461,11 @@ body {
         <div class="quick-icon">🗂️</div>
         <strong>中文入口库</strong>
         <span>网站、平台、搜索引擎和政府资质入口</span>
+      </div>
+      <div class="admin-quick-card" onclick="showSection('outreach')">
+        <div class="quick-icon">📣</div>
+        <strong>推广任务</strong>
+        <span>AI 生成文案，人工确认后投放</span>
       </div>
       <div class="admin-quick-card" onclick="window.open('./index.html','_blank')">
         <div class="quick-icon">📱</div>
@@ -792,6 +800,50 @@ body {
   </div>
 </div>
 
+<!-- ══ 推广任务 ══ -->
+<div class="section" id="section-outreach">
+  <div class="topbar">
+    <div>
+      <div class="page-title">推广任务</div>
+      <div class="page-sub">Agent 自动生成文案，管理员确认后投放</div>
+    </div>
+    <div class="topbar-actions">
+      <select class="input" id="outreach-filter" onchange="loadOutreachTasks()" style="width:150px;">
+        <option value="">全部状态</option>
+        <option value="needs_review">待人工确认</option>
+        <option value="scheduled">已排期</option>
+        <option value="published">已发布</option>
+        <option value="blocked">不可发布</option>
+      </select>
+      <button class="btn btn-ghost" onclick="loadOutreachTasks()">↻ 刷新</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="card">
+      <div class="card-body" style="font-size:12px;color:var(--text2);line-height:1.7;border-bottom:1px solid var(--border);padding-bottom:16px;margin-bottom:8px;">
+        Agent 可以自动挑入口、生成推广文案和落地页参数；但微信群、Facebook 群、论坛等默认需要人工确认。只有自有渠道或明确授权入口才能自动发布。
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>任务</th>
+              <th>入口</th>
+              <th>人群</th>
+              <th>文案</th>
+              <th>状态</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="outreach-body">
+            <tr><td colspan="6" style="text-align:center;color:var(--text3);padding:40px;">加载中...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ══ 实时调度 ══ -->
 <div class="section" id="section-dispatch">
   <div class="topbar">
@@ -1005,6 +1057,7 @@ function showSection(name) {
     passengers: loadPassengers,
     suppliers: loadSuppliers,
     sources: loadSourceRegistry,
+    outreach: loadOutreachTasks,
     dispatch: loadDispatch,
     'ai-training': loadAITraining,
     finance: loadFinance
@@ -1621,6 +1674,86 @@ async function loadSourceRegistry(){
       <td style="font-size:11px;color:var(--text2);max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(templates.slice(0,2).join(' / ')||'-')}</td>
       <td style="font-weight:800;color:var(--gold);">P${row.priority||3}</td>
       <td>${sourceStatusBadge(row.status)}</td>
+    </tr>`;
+  }).join('');
+}
+
+const OUTREACH_LEVEL_LABELS={
+  A_auto_authorized:'可自动发布',
+  B_manual_review:'人工确认',
+  C_observe_only:'只观察'
+};
+
+function defaultOutreachTasks(){
+  return [
+    {title:'墨尔本用户公测招募',source_name:'微信朋友圈/微信群人工发布',city:'Melbourne',country:'Australia',audience:'user',channel_level:'B_manual_review',status:'needs_review',copy_short:'快来领你的 AI，有趣又有用。华伴是你的生活帮手、工作助理和休闲陪伴。有事直接说，它会帮你整理需求，找到靠谱的人。',landing_url:'https://www.huabanapp.com/?ref=wechat_melbourne_beta',compliance_notes:'微信群不能自动群发，只能人工选择合适群并遵守群规。'},
+    {title:'墨尔本 Facebook 华人群推广',source_name:'Facebook 华人群人工发布',city:'Melbourne',country:'Australia',audience:'mixed',channel_level:'B_manual_review',status:'needs_review',copy_short:'在墨尔本有事不用到处问。把需求告诉华伴 AI，它会帮你整理、搜索公开线索、核验来源，再匹配可能靠谱的人。',landing_url:'https://www.huabanapp.com/?ref=facebook_melbourne_beta',compliance_notes:'不自动加群，不自动发帖。'},
+    {title:'海外华人服务者招募',source_name:'服务者招募人工发布',city:'Global',country:'Global',audience:'supplier',channel_level:'B_manual_review',status:'needs_review',copy_short:'如果你在海外为华人提供接送机、包车、翻译、律师、会计、电工、跑腿或本地生活服务，欢迎加入华伴城市服务网络。',landing_url:'https://www.huabanapp.com/?ref=supplier_recruit',compliance_notes:'专业服务必须进入资质核验和人工审核。'}
+  ];
+}
+
+function outreachBadge(status){
+  const map={
+    draft:['badge-inactive','草稿'],
+    needs_review:['badge-pending','待确认'],
+    scheduled:['badge-confirmed','已排期'],
+    published:['badge-completed','已发布'],
+    rejected:['badge-cancelled','已驳回'],
+    blocked:['badge-cancelled','不可发布']
+  };
+  const [cls,label]=map[status]||['badge-inactive',status||'未知'];
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+
+function copyOutreachText(index){
+  const text=window._outreachCopyTexts?.[index]||'';
+  navigator.clipboard?.writeText(text).then(()=>alert('已复制推广文案')).catch(()=>alert(text));
+}
+
+async function loadOutreachTasks(){
+  const filter=document.getElementById('outreach-filter')?.value||'';
+  const tbody=document.getElementById('outreach-body');
+  if(!tbody)return;
+  tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:30px;">加载中...</td></tr>';
+  let rows=[];
+  let fallback=false;
+  try{
+    let q='outreach_tasks?order=created_at.desc&limit=100';
+    if(filter)q+=`&status=eq.${encodeURIComponent(filter)}`;
+    rows=await supaFetch(q);
+  }catch(e){
+    fallback=true;
+    rows=defaultOutreachTasks();
+    if(filter)rows=rows.filter(row=>row.status===filter);
+  }
+  if(!rows.length){
+    tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:40px;">暂无推广任务</td></tr>';
+    return;
+  }
+  window._outreachCopyTexts=rows.map(row=>`${row.copy_long||row.copy_short}\n${row.landing_url||'https://www.huabanapp.com/'}`);
+  const banner=fallback?`<tr><td colspan="6" style="color:var(--gold);font-size:12px;padding:12px 16px;background:rgba(245,166,35,.08);">当前显示内置模板。执行 <code>workflows/outreach_campaign_schema_seed.sql</code> 后，这里会读取数据库推广任务。</td></tr>`:'';
+  tbody.innerHTML=banner+rows.map((row,index)=>{
+    const level=OUTREACH_LEVEL_LABELS[row.channel_level]||row.channel_level||'-';
+    const audience={user:'用户',supplier:'服务者',driver:'司机',professional:'专业服务者',mixed:'混合'}[row.audience]||row.audience||'-';
+    return `<tr>
+      <td>
+        <div style="font-weight:800;color:var(--text);">${escapeHtml(row.title||'-')}</div>
+        <div style="font-size:11px;color:var(--text3);">${escapeHtml(row.city||row.country||'Global')}</div>
+      </td>
+      <td>
+        <div style="font-size:13px;color:var(--text);">${escapeHtml(row.source_name||'-')}</div>
+        <div style="font-size:11px;color:var(--gold);">${escapeHtml(level)}</div>
+      </td>
+      <td><span class="tag">${escapeHtml(audience)}</span></td>
+      <td>
+        <div style="font-size:12px;color:var(--text2);max-width:360px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(row.copy_short||'')}</div>
+        <div style="font-size:11px;color:var(--text3);max-width:360px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(row.compliance_notes||'')}</div>
+      </td>
+      <td>${outreachBadge(row.status)}</td>
+      <td>
+        <button class="action-btn" onclick="copyOutreachText(${index})">复制文案</button>
+        ${row.landing_url?`<a class="action-btn" href="${escapeHtml(row.landing_url)}" target="_blank" style="margin-left:4px;text-decoration:none;">打开</a>`:''}
+      </td>
     </tr>`;
   }).join('');
 }

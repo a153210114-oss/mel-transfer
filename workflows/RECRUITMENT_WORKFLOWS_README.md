@@ -13,6 +13,8 @@
 - `LD_01_melbourne_driver_supply_review.md`：墨尔本中文司机供给人工 review 表
 - `source_registry_schema_seed.sql`：中文公开信息入口库表和第一批入口种子
 - `LD_02_source_registry_workflow.md`：入口库登记、搜索、分流和合规边界规则
+- `outreach_campaign_schema_seed.sql`：华伴推广任务队列表和第一批推广任务种子
+- `LD_03_outreach_campaign_workflow.md`：入口推广工作流，区分自动发布、人工确认和只观察
 
 ## 需要的环境变量
 
@@ -78,3 +80,4 @@ POST /webhook/huaban/user-recruit
 - 不要让 AI 自动群发私信；只能处理用户主动提交或授权的线索。
 - LD_01 搜索结果必须先分流：符合当前需求的直接进入线索库；不符合但有价值的进入 `ld_01_daily_task`，作为人工注册、人工登录核验、继续搜索或渠道补充任务。
 - LD_02 入口库负责登记网站平台、搜索引擎、商家目录和政府公开核验入口；需要登录、加群、验证码或打码联系方式的入口只能进入人工任务。
+- LD_03 推广任务只能对自有或明确授权入口自动发布；微信群、Facebook 群、论坛等默认只生成待人工确认任务，不能自动群发。
