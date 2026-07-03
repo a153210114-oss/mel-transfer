@@ -2638,6 +2638,7 @@ function syncWishWallPost(post){
   const globalTargets=post.globalTargets||globalIntelTargets();
   const direction=post.direction||intelDirection(post.wishType||post.type);
   const freshnessPolicy=post.freshnessPolicy||intelFreshnessPolicy(direction);
+  const qualificationPolicy=post.qualificationPolicy||intelQualificationPolicy(post.category,post.text,post.city||currentRegion.city,currentRegion.country);
   return supaInsertLead({
     lead_type:'user',
     channel:'demand_supply_intel',
@@ -2656,6 +2657,7 @@ function syncWishWallPost(post){
       label:info.label,
       search_queries:queries,
       freshness_policy:freshnessPolicy,
+      qualification_policy:qualificationPolicy,
       global_scan:true,
       global_scan_targets:globalTargets,
       market_signal:{
@@ -2669,6 +2671,7 @@ function syncWishWallPost(post){
       source_policy:{
         no_auto_registration:true,
         public_sources_only:true,
+        government_public_registry_priority:qualificationPolicy.required,
         store_source_url_or_screenshot:true,
         require_human_or_user_confirmation:true
       }
@@ -3443,12 +3446,34 @@ function intelFreshnessQueryTerm(direction='demand'){
   return direction==='supply'?'2年内 发布':'90天内 发布';
 }
 
+function intelQualificationPolicy(category='', text='', city='', country=''){
+  const raw=`${category} ${text}`.toLowerCase();
+  const regulated=[];
+  if(/律师|法律|合同|纠纷|诉讼|lawyer|legal|attorney|solicitor/i.test(raw))regulated.push('legal_practitioner_registry');
+  if(/会计|报税|退税|税务|做账|accountant|tax|cpa/i.test(raw))regulated.push('accountant_or_tax_agent_registry');
+  if(/电工|跳闸|断电|电路|electrician|electrical/i.test(raw))regulated.push('licensed_trade_registry');
+  if(/水管|漏水|管道|plumber/i.test(raw))regulated.push('licensed_trade_registry');
+  if(/中介|房产|租房|买房|real estate|agent/i.test(raw))regulated.push('real_estate_agent_registry');
+  const required=regulated.length>0;
+  return {
+    required,
+    priority_sources:required?['government_public_registry','industry_association_public_directory','official_business_register']:['public_source_reputation','business_register_if_available'],
+    regulated_categories:[...new Set(regulated)],
+    target_city:city||currentRegion.city||'',
+    target_country:country||currentRegion.country||'',
+    verification_goal:required?'verify_license_or_registration_before_recommendation':'collect_public_reputation_and_source_evidence',
+    human_review_required:true,
+    user_warning:'公开网站可作为资质核验证据，但不能替代人工复核和用户自行判断'
+  };
+}
+
 function buildIntelSearchQueries(post={}){
   const city=post.city||currentRegion.city||'Melbourne';
   const country=currentRegion.country||'Australia';
   const keyword=inferIntelKeyword(post.category,post.text);
   const direction=post.direction||intelDirection(post.wishType||post.type);
   const freshness=intelFreshnessQueryTerm(direction);
+  const qualification=intelQualificationPolicy(post.category,post.text,city,country);
   const localQueries=[
     `${city} 华人 ${keyword} 微信 ${freshness}`,
     `${city} ${keyword} 中文 服务 ${freshness}`,
@@ -3457,6 +3482,10 @@ function buildIntelSearchQueries(post={}){
     `${city} ${keyword} Facebook 华人 ${freshness}`,
     `${country} ${city} ${keyword} 推荐 ${freshness}`
   ];
+  if(qualification.required){
+    localQueries.push(`${country} ${city} ${keyword} government license register`);
+    localQueries.push(`${country} ${keyword} public registry qualification check`);
+  }
   return [...localQueries,...buildGlobalIntelSearchQueries(keyword, city, direction).slice(0,6)];
 }
 

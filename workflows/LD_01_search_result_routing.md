@@ -11,6 +11,7 @@
 1. **本地匹配**：先看当前城市/国家有没有可用需求或供给。
 2. **全球扫描**：再看其他华人聚集国家地区是否也有同类需求和供给。
 3. **时间过滤**：需求侧只搜索和导入 90 天以内发布的信息；供给侧只搜索和导入 2 年以内发布的信息。
+4. **资质核验**：律师、会计、电工、水管、房产中介等可能受监管服务，必须优先查政府公开网站、行业协会公开目录或官方商业登记，作为供给资质验证的一部分。
 
 默认全球扫描目标：
 
@@ -32,6 +33,8 @@
 - `fields.market_signal.scan_goal`: `find_matching_demand_and_supply_in_other_countries`
 - `fields.freshness_policy.demand_days`: `90`
 - `fields.freshness_policy.supply_days`: `730`
+- `fields.qualification_policy.required`: 是否需要政府/行业公开核验
+- `fields.qualification_policy.priority_sources`: `government_public_registry | industry_association_public_directory | official_business_register`
 
 ## 两类结果
 
@@ -46,6 +49,7 @@
 - 信息可核验：有公开来源链接、截图来源、公开联系方式、服务描述、时间或价格中的至少两项。
 - 联系方式不违规：不能是猜测、打码补全、绕过登录得到的信息。
 - 未过期：需求帖必须是 90 天以内发布；供给帖必须是 2 年以内发布。超出时间窗口的结果不直接导入，只能进入日常任务或丢弃。
+- 受监管供给已标记核验路径：若是法律、税务、持牌技工、房产等服务，必须记录政府/行业公开核验入口；没有核验入口时不能标记为高可信。
 
 建议字段：
 
@@ -62,6 +66,7 @@
 - `fields.global_scan`: `true`
 - `fields.market_signal`: 全球市场信号摘要
 - `fields.freshness_policy`: `{"demand_days":90,"supply_days":730}`
+- `fields.qualification_policy`: 资质核验策略和公开查询来源
 
 ### 2. 不符合当前需求但有价值：进入后台日常任务
 
@@ -98,6 +103,8 @@
 - 不绕过验证码、登录、打码电话或平台限制。
 - 不把 AI 猜测的电话、微信、邮箱写成真实联系方式。
 - 不把未核验线索推荐给用户。
+- 不把普通广告页、黄页或社群自称资质，当作政府/行业公开核验结果。
+- 不宣称“官方认证”“平台担保”“一定靠谱”；只能说“公开来源显示/待人工复核”。
 
 ## 标准分流伪代码
 
@@ -124,6 +131,10 @@ for each search_result:
   always:
     create_or_update_market_signal
     scan_other_countries_for_matching_demand_and_supply
+    if result_is_regulated_supply:
+      search_government_public_registry
+      record_license_registry_url_or_mark_missing
+      require_human_review_before_recommendation
 ```
 
 ## 用户可见口径

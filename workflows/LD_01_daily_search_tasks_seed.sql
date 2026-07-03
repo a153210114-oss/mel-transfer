@@ -48,6 +48,11 @@ insert into public.beta_leads (
       'demand_label','需求 90 天内发布',
       'supply_label','供给 2 年内发布'
     ),
+    'qualification_policy',jsonb_build_object(
+      'required',false,
+      'priority_sources',jsonb_build_array('public_source_reputation','business_register_if_available'),
+      'human_review_required',true
+    ),
     'market_signal',jsonb_build_object(
       'source_city','Melbourne',
       'source_country','Australia',
@@ -87,6 +92,11 @@ insert into public.beta_leads (
       'supply_days',730,
       'demand_label','需求 90 天内发布',
       'supply_label','供给 2 年内发布'
+    ),
+    'qualification_policy',jsonb_build_object(
+      'required',false,
+      'priority_sources',jsonb_build_array('public_source_reputation','business_register_if_available'),
+      'human_review_required',true
     ),
     'market_signal',jsonb_build_object(
       'source_city','Melbourne',

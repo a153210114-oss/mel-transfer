@@ -1471,7 +1471,8 @@ function supplierQualificationText(lead) {
     const queries = Array.isArray(fields.search_queries) ? fields.search_queries.slice(0,2).join(' / ') : '';
     const global = fields.global_scan ? ' · 全球扫描' : '';
     const freshness = fields.freshness_policy?.label || (fields.freshness_policy ? '需求90天 / 供给2年' : '');
-    return `${direction}${global}${freshness ? ' · '+freshness : ''} · 公开搜索任务${queries ? ' · '+queries : ''}`;
+    const gov = fields.qualification_policy?.required ? ' · 政府/行业核验优先' : '';
+    return `${direction}${global}${freshness ? ' · '+freshness : ''}${gov} · 公开搜索任务${queries ? ' · '+queries : ''}`;
   }
   const license = fields.license || '未填写资质';
   const url = fields.public_verification_url || '';
