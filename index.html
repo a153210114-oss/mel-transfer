@@ -775,11 +775,11 @@ body.more-open .chat-area{padding-bottom:390px;}
         <div style="color:rgba(255,255,255,0.3);font-size:16px;">›</div>
       </div>
 
-      <div onclick="switchToDriver()" style="display:flex;align-items:center;gap:12px;padding:14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:12px;margin-bottom:8px;cursor:pointer;">
+      <div id="profile-driver-entry" onclick="switchToDriver()" style="display:flex;align-items:center;gap:12px;padding:14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:12px;margin-bottom:8px;cursor:pointer;">
         <div style="font-size:20px;width:28px;text-align:center;">🧑‍✈️</div>
         <div style="flex:1;">
-          <div style="font-size:14px;font-weight:600;color:white;">切换为司机身份</div>
-          <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:2px;">进入司机工作台</div>
+          <div id="profile-driver-title" style="font-size:14px;font-weight:600;color:white;">司机端</div>
+          <div id="profile-driver-sub" style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:2px;">审核通过后会自动开通</div>
         </div>
         <div style="color:rgba(255,255,255,0.3);font-size:16px;">›</div>
       </div>
@@ -2303,6 +2303,45 @@ function setLocal(key,val){localStorage.setItem(key,JSON.stringify(val));}
 function getPassenger(){return getLocal('au_passenger')||{};}
 function getDriver(){return getLocal('au_driver')||{};}
 function genRef(){return Math.random().toString(36).substring(2,8).toUpperCase();}
+const DRIVER_APPROVED_NOTICE_KEY='huaban_driver_approved_notice_id';
+
+function hasApprovedDriverAccess(){
+  const d=getDriver();
+  return Boolean(d&&d.id&&d.is_active);
+}
+
+async function refreshApprovedDriverAccess(options={}){
+  const p=getPassenger();
+  if(!p.phone)return null;
+  const rows=await supaGet(`drivers?phone=eq.${encodeURIComponent(p.phone)}&tenant_id=eq.${TENANT_ID}&is_active=eq.true&select=id,full_name,phone,wechat_id,status,is_active,gender`);
+  const driver=rows&&rows[0]?rows[0]:null;
+  if(!driver)return null;
+  setLocal('au_driver',driver);
+  localStorage.setItem('driver',JSON.stringify(driver));
+  if(document.getElementById('more-panel')?.classList.contains('open'))renderMoreMenu();
+  refreshProfileDriverEntry(driver);
+  if(options.announce&&localStorage.getItem(DRIVER_APPROVED_NOTICE_KEY)!==driver.id){
+    localStorage.setItem(DRIVER_APPROVED_NOTICE_KEY,driver.id);
+    await agentSay(`好消息，${driver.full_name||'师傅'}！你的司机审核已经通过，我已把“司机端”加到功能区。点底部加号就能进入司机工作台。`,260);
+  }
+  return driver;
+}
+
+function refreshProfileDriverEntry(driver=getDriver()){
+  const entry=document.getElementById('profile-driver-entry');
+  const title=document.getElementById('profile-driver-title');
+  const sub=document.getElementById('profile-driver-sub');
+  if(!entry||!title||!sub)return;
+  if(driver&&driver.id&&driver.is_active){
+    title.textContent='进入司机端';
+    sub.textContent='审核已通过，进入司机工作台';
+    entry.style.borderColor='rgba(0,200,150,0.22)';
+  }else{
+    title.textContent='司机端';
+    sub.textContent='审核通过后会自动开通';
+    entry.style.borderColor='rgba(255,255,255,0.07)';
+  }
+}
 
 function saveAddress(addr){
   if(!addr)return;
@@ -2771,6 +2810,9 @@ async function startApp(){
   } else {
     // 新用户
     renderWelcomeHome();
+  }
+  if(currentRole!=='driver'){
+    await refreshApprovedDriverAccess({announce:true}).catch(()=>null);
   }
   rewardCompanionAction('app_open');
   maybeStartWakeListening();
@@ -3321,10 +3363,20 @@ const MORE_MENU={
   home:[...CORE_TOOL_ITEMS]
 };
 
+function coreToolMenuItems(){
+  const items=[...CORE_TOOL_ITEMS];
+  if(hasApprovedDriverAccess()){
+    const profileIndex=items.findIndex(item=>item.key==='profile');
+    const insertAt=profileIndex>=0?profileIndex+1:items.length;
+    items.splice(insertAt,0,{key:'driver',icon:'🧑‍✈️',label:'司机端',driver:true});
+  }
+  return items;
+}
+
 const DISCOVERED_MENU_KEY='huaban_discovered_menu_keys';
 
 function allMenuItemsFlat(){
-  const flat=[...CORE_TOOL_ITEMS,{key:'rental',icon:'🚙',label:'租车'}];
+  const flat=[...CORE_TOOL_ITEMS,{key:'driver',icon:'🧑‍✈️',label:'司机端',driver:true},{key:'rental',icon:'🚙',label:'租车'}];
   Object.values(BUSINESS_MODULES).forEach(module=>{
     if(module.menu)flat.push(module.menu);
     if(Array.isArray(module.items))flat.push(...module.items);
@@ -3370,7 +3422,7 @@ function renderMoreMenu(category='home'){
   const back=document.getElementById('more-back');
   if(!grid||!title||!back)return;
   const module=BUSINESS_MODULES[category];
-  const menuItems=category==='home'?MORE_MENU.home:(module?.items||MORE_MENU[category]||[]);
+  const menuItems=category==='home'?coreToolMenuItems():(module?.items||MORE_MENU[category]||[]);
   const titles={home:'功能'};
   title.textContent=titles[category]||'全部功能';
   if(module?.title)title.textContent=module.title;
@@ -5410,6 +5462,8 @@ async function openProfile(){ stopTTS();
   }
   // 推荐链接
   if(!p.ref) p.ref = genRef();
+  refreshProfileDriverEntry();
+  refreshApprovedDriverAccess({announce:true}).catch(()=>null);
   // 加载订单
   loadProfileTrips(p.phone);
   refreshSupplierEntry();
@@ -5891,10 +5945,15 @@ async function confirmCancelTrip(tripId){
   }catch(e){ alert('取消失败，请联系客服'); }
 }
 
-function switchToDriver(){
+async function switchToDriver(){
   const p = getPassenger();
   if(!p.phone){
     speak('请先登录再切换司机身份');
+    return;
+  }
+  const driver=hasApprovedDriverAccess()?getDriver():await refreshApprovedDriverAccess({announce:false}).catch(()=>null);
+  if(!driver){
+    await agentSay('司机端会在后台审核通过后自动开通。我先记着，你通过后我会提醒你，并把入口加到功能区。',180);
     return;
   }
   // 把乘客信息存入localStorage给driver-app读取
@@ -5903,6 +5962,9 @@ function switchToDriver(){
     name: p.name||'',
     wechat: p.wechat||''
   }));
+  setLocal('au_driver',driver);
+  localStorage.setItem('driver', JSON.stringify(driver));
+  localStorage.setItem('au_role','driver');
   window.location.href = 'driver-app.html';
 }
 

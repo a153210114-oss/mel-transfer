@@ -1598,6 +1598,11 @@ function buildDriverFollowupText(name='师傅') {
   return `你好，${displayName}。我是华伴公测负责人。看到你提交了司机加入信息，想确认一下：你现在是否愿意接墨尔本接送机、包车或临时用车订单？如果愿意，麻烦回复：可接单 + 常跑区域 + 车型/座位数。谢谢。`;
 }
 
+function buildDriverApprovalText(name='师傅') {
+  const displayName = name && name !== 'null' ? name : '师傅';
+  return `你好，${displayName}。你的华伴司机审核已通过，司机端已经开通。请重新打开华伴，在底部“+”功能区进入“司机端”，之后可以接收接送机、包车和临时用车订单。`;
+}
+
 async function sendDriverFollowup(id, name='', phone='', wechat='') {
   const text = buildDriverFollowupText(name);
   try { await navigator.clipboard.writeText(text); } catch(e) {}
@@ -1612,9 +1617,25 @@ async function sendDriverFollowup(id, name='', phone='', wechat='') {
   }
 }
 
+async function sendDriverApprovalNotice(driver={}) {
+  const text = buildDriverApprovalText(driver.full_name || '师傅');
+  try { await navigator.clipboard.writeText(text); } catch(e) {}
+  const cleanPhone = String(driver.phone || '').replace(/[^\d+]/g, '');
+  if (cleanPhone) {
+    window.location.href = `sms:${encodeURIComponent(cleanPhone)}?&body=${encodeURIComponent(text)}`;
+    setTimeout(() => alert('司机审核通过提醒已生成并复制。短信窗口如果没有自动打开，可以直接粘贴发送。'), 500);
+  } else if (driver.wechat_id) {
+    alert(`司机审核通过提醒已复制。这个司机留了微信：${driver.wechat_id}，请到微信粘贴发送。`);
+  } else {
+    alert('司机已激活，但没有手机号或微信，提醒话术已复制。');
+  }
+}
+
 async function activateDriver(id) {
   await supaPatch(`drivers?id=eq.${id}`, {is_active: true, status: 'offline'});
-  alert('✅ 司机已激活，可以开始接单');
+  const rows = await supaFetch(`drivers?id=eq.${id}&select=id,full_name,phone,wechat_id`);
+  const driver = rows && rows[0] ? rows[0] : {};
+  await sendDriverApprovalNotice(driver);
   loadDrivers();
 }
 
