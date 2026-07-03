@@ -1469,7 +1469,8 @@ function supplierQualificationText(lead) {
   if(lead.channel==='demand_supply_intel'||String(lead.need_type||'').startsWith('intel_')){
     const direction = fields.direction === 'supply' ? '供给' : '需求';
     const queries = Array.isArray(fields.search_queries) ? fields.search_queries.slice(0,2).join(' / ') : '';
-    return `${direction} · 公开搜索任务${queries ? ' · '+queries : ''}`;
+    const global = fields.global_scan ? ' · 全球扫描' : '';
+    return `${direction}${global} · 公开搜索任务${queries ? ' · '+queries : ''}`;
   }
   const license = fields.license || '未填写资质';
   const url = fields.public_verification_url || '';

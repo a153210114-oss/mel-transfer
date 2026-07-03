@@ -2635,6 +2635,7 @@ function syncAgentAdoption(){
 function syncWishWallPost(post){
   const info=wishTypeInfo(post.wishType||post.type);
   const queries=post.searchQueries||buildIntelSearchQueries(post);
+  const globalTargets=post.globalTargets||globalIntelTargets();
   const direction=post.direction||intelDirection(post.wishType||post.type);
   return supaInsertLead({
     lead_type:'user',
@@ -2643,8 +2644,8 @@ function syncWishWallPost(post){
     contact:post.contact||betaContact(),
     city:post.city||currentRegion.city||'Melbourne',
     need_type:'intel_'+direction+'_'+(post.wishType||'need_free'),
-    message:`需求/供给情报任务：${info.label}\n方向：${direction==='supply'?'供给':'需求'}\n类别：${post.category||''}\n说明：${post.text||''}\n预算/价格：${post.budget||''}\n公开搜索词：${queries.join('｜')}`,
-    next_action:'search_public_sources_verify_and_match',
+    message:`全球供需情报任务：${info.label}\n方向：${direction==='supply'?'供给':'需求'}\n类别：${post.category||''}\n说明：${post.text||''}\n预算/价格：${post.budget||''}\n公开搜索词：${queries.join('｜')}`,
+    next_action:'search_local_and_global_sources_verify_and_match',
     fields:{
       event:'demand_supply_intel_task',
       post,
@@ -2653,6 +2654,15 @@ function syncWishWallPost(post){
       role:info.role,
       label:info.label,
       search_queries:queries,
+      global_scan:true,
+      global_scan_targets:globalTargets,
+      market_signal:{
+        source_city:post.city||currentRegion.city||'',
+        source_country:currentRegion.country||'',
+        category:post.category||'',
+        keyword:inferIntelKeyword(post.category,post.text),
+        scan_goal:'find_matching_demand_and_supply_in_other_countries'
+      },
       source_policy:{
         no_auto_registration:true,
         public_sources_only:true,
@@ -3409,7 +3419,7 @@ function buildIntelSearchQueries(post={}){
   const city=post.city||currentRegion.city||'Melbourne';
   const country=currentRegion.country||'Australia';
   const keyword=inferIntelKeyword(post.category,post.text);
-  return [
+  const localQueries=[
     `${city} 华人 ${keyword} 微信`,
     `${city} ${keyword} 中文 服务`,
     `${city} ${keyword} 华人群`,
@@ -3417,6 +3427,31 @@ function buildIntelSearchQueries(post={}){
     `${city} ${keyword} Facebook 华人`,
     `${country} ${city} ${keyword} 推荐`
   ];
+  return [...localQueries,...buildGlobalIntelSearchQueries(keyword, city).slice(0,6)];
+}
+
+function globalIntelTargets(){
+  return [
+    {city:'Sydney',country:'Australia',label:'悉尼'},
+    {city:'Brisbane',country:'Australia',label:'布里斯班'},
+    {city:'Auckland',country:'New Zealand',label:'奥克兰'},
+    {city:'Singapore',country:'Singapore',label:'新加坡'},
+    {city:'Toronto',country:'Canada',label:'多伦多'},
+    {city:'Vancouver',country:'Canada',label:'温哥华'},
+    {city:'Los Angeles',country:'United States',label:'洛杉矶'},
+    {city:'New York',country:'United States',label:'纽约'},
+    {city:'London',country:'United Kingdom',label:'伦敦'},
+    {city:'Munich',country:'Germany',label:'慕尼黑'}
+  ];
+}
+
+function buildGlobalIntelSearchQueries(keyword, currentCity=''){
+  return globalIntelTargets()
+    .filter(target=>String(target.city).toLowerCase()!==String(currentCity).toLowerCase()&&target.label!==currentCity)
+    .flatMap(target=>[
+      `${target.label} 华人 ${keyword}`,
+      `${target.city} Chinese ${keyword}`
+    ]);
 }
 
 function intelDirection(wishType){
@@ -3454,9 +3489,9 @@ function renderIntelQueryPreview(draft={}){
     city:draft.city||currentRegion.city||currentRegion.country,
     category:draft.category||'其他互助',
     text
-  }).slice(0,4);
+  }).slice(0,6);
   return `<div style="margin-top:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:10px;">
-    <div style="font-size:12px;font-weight:900;color:rgba(255,255,255,0.72);margin-bottom:7px;">我会先生成这些公开搜索任务</div>
+    <div style="font-size:12px;font-weight:900;color:rgba(255,255,255,0.72);margin-bottom:7px;">我会先生成本地 + 全球公开搜索任务</div>
     ${queries.map(q=>`<div style="font-size:11px;color:rgba(255,255,255,0.42);line-height:1.7;">• ${companionEscape(q)}</div>`).join('')}
   </div>`;
 }
@@ -3505,7 +3540,7 @@ function openMutualAidCommunity(draft={}){
         ${renderIntelQueryPreview(draft)}
         <button onclick="submitMutualAidPost()" style="width:100%;margin-top:14px;padding:13px;background:rgba(0,200,150,0.24);border:1px solid rgba(0,200,150,0.36);border-radius:12px;color:white;font:800 14px/1 inherit;cursor:pointer;">交给华伴去找线索</button>
       </div>
-      <div style="font-size:12px;color:rgba(255,255,255,0.42);line-height:1.7;margin-top:12px;">这里不展示用户发布内容。华伴只把你的需求整理成后台任务，再从公开信息、服务者入驻资料和人工核验线索里匹配。涉及金钱、证件、隐私时务必核验来源。</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.42);line-height:1.7;margin-top:12px;">这里不展示用户发布内容。华伴会先匹配本地线索，同时扫描其他国家地区是否也有同类需求和供给。涉及金钱、证件、隐私时务必核验来源。</div>
     </div>`;
   document.body.appendChild(modal);
   updateWishWallHint();
@@ -3532,6 +3567,7 @@ async function submitMutualAidPost(){
     source:'user_submitted',
     direction:intelDirection(wishType),
     searchQueries:buildIntelSearchQueries({city,category,text}),
+    globalTargets:globalIntelTargets(),
     confidence:'pending_review',
     createdAt:new Date().toISOString(),
     status:'open'
@@ -3540,7 +3576,7 @@ async function submitMutualAidPost(){
   document.getElementById('mutual-aid-modal')?.remove();
   addMsg('交给华伴去找线索',true);
   rewardCompanionAction('wish_wall');
-  await agentSay('收到，我先把它变成需求/供给情报任务，生成公开搜索词并同步到后台。找到线索后，会按来源和可信度再给你匹配。',180);
+  await agentSay('收到，我先把它变成供需情报任务：本地先匹配，同时扫描其他国家地区有没有同类需求和供给。找到线索后，会按来源和可信度再给你匹配。',180);
 }
 
 function updateWishWallHint(){
@@ -3548,8 +3584,8 @@ function updateWishWallHint(){
   const hint=document.getElementById('mutual-aid-hint');
   if(!hint)return;
   const text={
-    need_free:'我会找公开互助线索、华人社区讨论和用户提交过的类似需求。',
-    need_paid:'我会优先找公开服务者、华人服务信息和已入驻供给。'
+    need_free:'我会找本地公开互助线索，也会扫描其他国家地区是否有同类需求和供给。',
+    need_paid:'我会优先找本地公开服务者和已入驻供给，也会扫描其他国家地区是否有同类服务网络。'
   };
   hint.textContent=text[type]||text.need_free;
 }

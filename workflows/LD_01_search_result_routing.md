@@ -1,8 +1,34 @@
 # LD_01 搜索结果分流规则
 
-适用范围：所有 Agent、人工、外部 AI 搜索到的中文站点、社群、论坛、黄页、招聘页、服务页结果。
+适用范围：所有 Agent、人工、外部 AI 搜索到的中文站点、社群、论坛、黄页、招聘页、服务页结果；也适用于用户在华伴里提出的任何商品/服务需求，以及供给侧提交的任何商品/服务能力。
 
-目标：不要把搜索结果一锅端进线索库。先判断是否符合当前需求，再决定进入哪一个后台队列。
+目标：不要把搜索结果一锅端进线索库。先判断是否符合当前需求，再决定进入哪一个后台队列。同时，每个需求和供给都要作为“全球市场信号”保存，扫描其他国家地区是否也存在同类需求和供给。
+
+## 全局原则
+
+任何用户需求、供给侧能力、公开搜索结果，都必须同时做两件事：
+
+1. **本地匹配**：先看当前城市/国家有没有可用需求或供给。
+2. **全球扫描**：再看其他华人聚集国家地区是否也有同类需求和供给。
+
+默认全球扫描目标：
+
+- 澳洲：墨尔本、悉尼、布里斯班
+- 新西兰：奥克兰
+- 新加坡
+- 加拿大：多伦多、温哥华
+- 美国：洛杉矶、纽约
+- 英国：伦敦
+- 德国：慕尼黑
+
+数据库字段建议：
+
+- `fields.global_scan`: `true`
+- `fields.global_scan_targets`: 目标城市/国家数组
+- `fields.market_signal.source_city`: 原始需求/供给城市
+- `fields.market_signal.category`: 需求/供给类别
+- `fields.market_signal.keyword`: 标准化关键词
+- `fields.market_signal.scan_goal`: `find_matching_demand_and_supply_in_other_countries`
 
 ## 两类结果
 
@@ -30,6 +56,8 @@
 - `fields.source_url`: 来源链接
 - `fields.source_platform`: 来源平台
 - `fields.verification_status`: `verified_contact_from_public_listing | public_web_needs_verification | source_verified_but_contacts_masked`
+- `fields.global_scan`: `true`
+- `fields.market_signal`: 全球市场信号摘要
 
 ### 2. 不符合当前需求但有价值：进入后台日常任务
 
@@ -56,6 +84,7 @@
 - `fields.source_platform`: 来源平台
 - `fields.blocked_by`: `masked_phone | login_required | group_access_required | unclear_fit | expired_possible`
 - `fields.original_query`: 原搜索词
+- `fields.global_scan`: `true`，如果它能帮助判断其他城市供需
 
 ## 禁止
 
@@ -77,6 +106,10 @@ for each search_result:
     route = daily_task
     status = todo
     stage = daily_search_task
+
+  always:
+    create_or_update_market_signal
+    scan_other_countries_for_matching_demand_and_supply
 ```
 
 ## 用户可见口径
@@ -88,4 +121,3 @@ for each search_result:
 后台看到的是：
 
 > 直接导入线索 / 日常搜索任务。
-

@@ -41,6 +41,14 @@ insert into public.beta_leads (
     'routing_result','daily_task',
     'task_reason','details_page_contacts_are_masked_or_login_required',
     'source_platform','今日墨尔本 meltoday.com',
+    'global_scan',true,
+    'market_signal',jsonb_build_object(
+      'source_city','Melbourne',
+      'source_country','Australia',
+      'category','司机供给',
+      'keyword','接送机 司机',
+      'scan_goal','find_matching_demand_and_supply_in_other_countries'
+    ),
     'blocked_by',jsonb_build_array('masked_phone','login_required'),
     'original_query','墨尔本 中文司机 接机 代驾',
     'allowed_actions',jsonb_build_array('manual_login_verify','continue_public_search','record_source_url','expire_check'),
@@ -67,6 +75,14 @@ insert into public.beta_leads (
     'routing_result','daily_task',
     'task_reason','group_access_required',
     'source_platform','Facebook group: Melbourne VIC 墨爾本工作資訊',
+    'global_scan',true,
+    'market_signal',jsonb_build_object(
+      'source_city','Melbourne',
+      'source_country','Australia',
+      'category','司机供给',
+      'keyword','接送机 司机',
+      'scan_goal','find_matching_demand_and_supply_in_other_countries'
+    ),
     'blocked_by',jsonb_build_array('group_access_required','login_required'),
     'original_query','Melbourne VIC 墨爾本工作資訊 司机 接机',
     'allowed_actions',jsonb_build_array('authorized_manual_search','record_public_posts_only'),
@@ -88,4 +104,3 @@ on conflict (id) do update set
   score=excluded.score,
   next_action=excluded.next_action,
   fields=excluded.fields;
-
