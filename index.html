@@ -435,6 +435,11 @@ body.theme-night .agent-age-seconds{color:#62ddb2;}
 .install-actions{display:flex;align-items:center;gap:4px;flex-shrink:0;}
 .install-primary{border:0;border-radius:5px;background:var(--wx-green);color:#fff;font:500 12px/1 inherit;padding:8px 10px;cursor:pointer;}
 .install-close{width:28px;height:28px;border:0;background:transparent;color:#999;font-size:18px;line-height:1;cursor:pointer;}
+.adopt-card{cursor:pointer;align-items:flex-start;padding:12px 12px 12px 10px;}
+.adopt-card:active{transform:scale(.99);}
+.adopt-card .install-copy strong{font-size:14px;font-weight:800;}
+.adopt-card .install-copy span{font-size:12px;white-space:normal;line-height:1.55;}
+.adopt-card .install-primary{margin-top:2px;white-space:nowrap;}
 .wake-card{margin:0 0 0 44px;background:#fff;border:1px solid #dedede;border-radius:6px;padding:12px;display:flex;align-items:center;gap:10px;box-shadow:0 1px 2px rgba(0,0,0,.04);}
 .wake-orb{width:34px;height:34px;border-radius:50%;background:#e8fff1;color:var(--wx-green);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
 .wake-card.listening .wake-orb{animation:mp 1s ease-in-out infinite;background:#d9f7e6;}
@@ -2659,7 +2664,7 @@ window.addEventListener('load',startApp,{once:true});
 function renderWelcomeHome(){
   currentRole='passenger';
   chatArea.innerHTML='';
-  addMsg(`<strong>你好，我是你的华伴 AI。</strong><br><span style="color:#666;">不用找功能，有事直接说。我会帮你整理需求，找到靠谱的人。</span>`);
+  renderAdoptWelcomeCard();
   const companion=getCompanion();
   if(addCompanionBadge(companion,currentRegion.city||currentRegion.country,'📍'))saveCompanion(companion);
   document.getElementById('chat-input').placeholder='输入你需要的帮助';
@@ -2671,6 +2676,34 @@ function renderWelcomeHome(){
 
 function clearWelcomeHome(){
   document.querySelector('.home-welcome')?.remove();
+  document.getElementById('adopt-welcome-card')?.remove();
+}
+
+function renderAdoptWelcomeCard(){
+  const card=document.createElement('section');
+  card.id='adopt-welcome-card';
+  card.className='install-card adopt-card home-welcome';
+  card.setAttribute('role','button');
+  card.setAttribute('tabindex','0');
+  card.setAttribute('aria-label','点击领养华伴 AI');
+  card.onclick=beginAgentAdoption;
+  card.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();beginAgentAdoption();}};
+  card.innerHTML=`
+    <img src="assets/brand/huaban-logo-v1.png" alt="华伴 AI">
+    <div class="install-copy">
+      <strong>你好，我是你的华伴 AI。</strong>
+      <span>不用找功能，有事直接说。我会帮你整理需求，找到靠谱的人。</span>
+    </div>
+    <div class="install-actions">
+      <button class="install-primary" type="button" onclick="event.stopPropagation();beginAgentAdoption();">点击领养</button>
+    </div>`;
+  chatArea.appendChild(card);
+}
+
+async function beginAgentAdoption(){
+  document.getElementById('adopt-welcome-card')?.remove();
+  renderAgentSetupCard();
+  await agentSay('好呀，先给我取个名字、选个头像吧。领养之后，我就陪你一起长大。',120);
 }
 
 function renderQuickGuideCard(){
