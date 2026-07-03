@@ -682,6 +682,49 @@ async function supaInsert(table, data) {
   return res.json();
 }
 
+function visitId(){
+  let id=localStorage.getItem('huaban_visit_id');
+  if(!id){
+    id=(crypto?.randomUUID?.()||('v-'+Date.now()+'-'+Math.random().toString(16).slice(2)));
+    localStorage.setItem('huaban_visit_id',id);
+  }
+  return id;
+}
+
+function sessionId(){
+  let id=sessionStorage.getItem('huaban_session_id');
+  if(!id){
+    id=(crypto?.randomUUID?.()||('s-'+Date.now()+'-'+Math.random().toString(16).slice(2)));
+    sessionStorage.setItem('huaban_session_id',id);
+  }
+  return id;
+}
+
+async function trackRecruitVisit(){
+  const params=new URLSearchParams(location.search);
+  try{
+    await supaInsert('page_events',{
+      tenant_id:TENANT_ID,
+      event_type:'page_view',
+      page:'passenger_recruit',
+      url:location.href,
+      path:location.pathname,
+      referrer:document.referrer||'',
+      visitor_id:visitId(),
+      session_id:sessionId(),
+      user_agent:navigator.userAgent||'',
+      language:navigator.language||'',
+      city:currentRegion.city||'',
+      country:currentRegion.country||'',
+      utm_source:params.get('utm_source')||'',
+      utm_medium:params.get('utm_medium')||'',
+      utm_campaign:params.get('utm_campaign')||'',
+      fields:{timezone:Intl.DateTimeFormat().resolvedOptions().timeZone||''}
+    });
+  }catch(e){console.warn('visit tracking skipped',e?.message||e);}
+}
+trackRecruitVisit();
+
 const chatEl=document.getElementById('chat');
 const qrEl=document.getElementById('qr');
 const progEl=document.getElementById('prog');

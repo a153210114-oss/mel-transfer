@@ -484,6 +484,18 @@ body {
         <div class="value" id="stat-pending-trips" style="color:var(--orange)">-</div>
         <div class="delta up" id="stat-pending-sub">需要人工跟进</div>
       </div>
+      <div class="stat-card">
+        <div class="icon">👀</div>
+        <div class="label">今日访问</div>
+        <div class="value" id="stat-today-visits" style="color:var(--purple)">-</div>
+        <div class="delta" id="stat-today-visits-sub">等待日志</div>
+      </div>
+      <div class="stat-card">
+        <div class="icon">🧭</div>
+        <div class="label">独立访客</div>
+        <div class="value" id="stat-unique-visitors" style="color:var(--green)">-</div>
+        <div class="delta" id="stat-unique-visitors-sub">按设备粗略统计</div>
+      </div>
     </div>
 
     <div class="three-col">
@@ -531,6 +543,15 @@ body {
           </div>
           <div class="card-body" id="activity-feed">
             <div style="color:var(--text3);font-size:13px;">加载中...</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">访问日志</div>
+          </div>
+          <div class="card-body" id="visit-feed">
+            <div style="color:var(--text3);font-size:13px;">等待日志...</div>
           </div>
         </div>
 
@@ -1197,8 +1218,45 @@ async function loadDashboard() {
       </div>
     `).join('') || '<div style="color:var(--text3);font-size:13px;">暂无动态</div>';
 
+    await loadVisitStats(today);
+
   } catch(e) {
     console.error(e);
+  }
+}
+
+async function loadVisitStats(today) {
+  const visitsEl = document.getElementById('stat-today-visits');
+  const visitsSubEl = document.getElementById('stat-today-visits-sub');
+  const uniqueEl = document.getElementById('stat-unique-visitors');
+  const uniqueSubEl = document.getElementById('stat-unique-visitors-sub');
+  const feedEl = document.getElementById('visit-feed');
+  try {
+    const visits = await supaFetch(`page_events?tenant_id=eq.${TENANT_ID}&event_type=eq.page_view&created_at=gte.${today}T00:00:00&order=created_at.desc&limit=100&select=page,path,referrer,visitor_id,utm_source,utm_campaign,created_at`);
+    const unique = new Set(visits.map(v => v.visitor_id).filter(Boolean));
+    visitsEl.textContent = visits.length;
+    visitsSubEl.textContent = '今天打开页面次数';
+    uniqueEl.textContent = unique.size;
+    uniqueSubEl.textContent = '今天不同设备/浏览器';
+    feedEl.innerHTML = visits.slice(0,6).map(v => {
+      let source = v.utm_source || '直接打开';
+      if (!v.utm_source && v.referrer) {
+        try { source = new URL(v.referrer).hostname; } catch(e) { source = v.referrer; }
+      }
+      return `<div class="activity-item">
+        <div class="activity-dot" style="background:var(--purple);"></div>
+        <div>
+          <div class="activity-text"><strong>${escapeHtml(v.page||v.path||'-')}</strong> · ${escapeHtml(source)}</div>
+          <div class="activity-time">${fmtDate(v.created_at)}${v.utm_campaign ? ' · '+escapeHtml(v.utm_campaign) : ''}</div>
+        </div>
+      </div>`;
+    }).join('') || '<div style="color:var(--text3);font-size:13px;">今天暂无访问</div>';
+  } catch(e) {
+    visitsEl.textContent = '-';
+    visitsSubEl.textContent = '未接入 page_events';
+    uniqueEl.textContent = '-';
+    uniqueSubEl.textContent = '执行 SQL 后开始记录';
+    feedEl.innerHTML = '<div style="color:var(--text3);font-size:13px;line-height:1.7;">访问日志表还没创建。执行 page_events SQL 后，从新访问开始统计。</div>';
   }
 }
 

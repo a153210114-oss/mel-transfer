@@ -2397,6 +2397,53 @@ async function supaInsert(table,data){
   return res.json();
 }
 
+function getVisitId(){
+  let id=localStorage.getItem('huaban_visit_id');
+  if(!id){
+    id=(crypto?.randomUUID?.()||('v-'+Date.now()+'-'+Math.random().toString(16).slice(2)));
+    localStorage.setItem('huaban_visit_id',id);
+  }
+  return id;
+}
+
+function getSessionId(){
+  let id=sessionStorage.getItem('huaban_session_id');
+  if(!id){
+    id=(crypto?.randomUUID?.()||('s-'+Date.now()+'-'+Math.random().toString(16).slice(2)));
+    sessionStorage.setItem('huaban_session_id',id);
+  }
+  return id;
+}
+
+async function trackPageVisit(page='home'){
+  const params=new URLSearchParams(location.search);
+  try{
+    await supaInsert('page_events',{
+      tenant_id:TENANT_ID,
+      event_type:'page_view',
+      page,
+      url:location.href,
+      path:location.pathname||'/',
+      referrer:document.referrer||'',
+      visitor_id:getVisitId(),
+      session_id:getSessionId(),
+      user_agent:navigator.userAgent||'',
+      language:navigator.language||'',
+      city:currentRegion.city||'',
+      country:currentRegion.country||'',
+      utm_source:params.get('utm_source')||'',
+      utm_medium:params.get('utm_medium')||'',
+      utm_campaign:params.get('utm_campaign')||'',
+      fields:{
+        screen:{w:screen.width,h:screen.height},
+        timezone:Intl.DateTimeFormat().resolvedOptions().timeZone||''
+      }
+    });
+  }catch(e){
+    console.warn('page visit tracking skipped',e?.message||e);
+  }
+}
+
 async function supaInsertLead(data){
   const payload={
     tenant_id:TENANT_ID,
@@ -2496,6 +2543,7 @@ async function startApp(){
   updateRegionUI();
   updateAgentIdentityUI();
   detectRegion();
+  trackPageVisit('home');
   // 落地读取推荐码
   const urlRef = new URLSearchParams(window.location.search).get('ref');
   if(urlRef) sessionStorage.setItem('incoming_ref', urlRef);

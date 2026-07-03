@@ -373,5 +373,38 @@ body{
   <a href="https://wa.me/61449251218" class="cta-btn gold-btn">💬 联系加入创始团队</a>
 </div>
 
+<script>
+const SUPA_URL='https://gxocvpmgfjvmmkkbswgo.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJIUzI1NiIsInJlZiI6Imd4b2N2cG1nZmp2bW1ra2Jzd2dvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyNDc4NzAsImV4cCI6MjA5NTgyMzg3MH0.ExUNuOP8YyHQmItY6cdl1Euj7nOXqQq-rQT5-7aNerE';
+const TENANT_ID='00000000-0000-0000-0000-000000000001';
+function visitId(){
+  let id=localStorage.getItem('huaban_visit_id');
+  if(!id){id=(crypto?.randomUUID?.()||('v-'+Date.now()+'-'+Math.random().toString(16).slice(2)));localStorage.setItem('huaban_visit_id',id);}
+  return id;
+}
+function sessionId(){
+  let id=sessionStorage.getItem('huaban_session_id');
+  if(!id){id=(crypto?.randomUUID?.()||('s-'+Date.now()+'-'+Math.random().toString(16).slice(2)));sessionStorage.setItem('huaban_session_id',id);}
+  return id;
+}
+async function trackRecruitVisit(){
+  const params=new URLSearchParams(location.search);
+  try{
+    await fetch(SUPA_URL+'/rest/v1/page_events',{
+      method:'POST',
+      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+      body:JSON.stringify({
+        tenant_id:TENANT_ID,event_type:'page_view',page:'partner_recruit',
+        url:location.href,path:location.pathname,referrer:document.referrer||'',
+        visitor_id:visitId(),session_id:sessionId(),user_agent:navigator.userAgent||'',language:navigator.language||'',
+        utm_source:params.get('utm_source')||'',utm_medium:params.get('utm_medium')||'',utm_campaign:params.get('utm_campaign')||'',
+        fields:{timezone:Intl.DateTimeFormat().resolvedOptions().timeZone||''}
+      })
+    });
+  }catch(e){console.warn('visit tracking skipped',e?.message||e);}
+}
+trackRecruitVisit();
+</script>
+
 </body>
 </html>
