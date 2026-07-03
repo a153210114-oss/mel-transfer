@@ -1268,7 +1268,7 @@ async function assignTrip(tripId) {
 // ── Drivers ──
 async function loadDrivers() {
   const filter = document.getElementById('driver-filter').value;
-  let q = `drivers?tenant_id=eq.${TENANT_ID}&order=created_at.desc&limit=100&select=id,full_name,phone,wechat_id,status,is_active,vehicle_type,points,created_at`;
+  let q = `drivers?tenant_id=eq.${TENANT_ID}&order=created_at.desc&limit=100&select=id,full_name,phone,wechat_id,status,is_active,created_at`;
   if (filter !== '') q += `&is_active=eq.${filter}`;
 
   const tbody = document.getElementById('drivers-body');
@@ -1303,7 +1303,7 @@ async function loadDrivers() {
             </div>
           </div>
         </td>
-        <td><span style="font-size:12px;color:var(--text2);">${d.vehicle_type||'-'}</span></td>
+        <td><span style="font-size:12px;color:var(--text2);">-</span></td>
         <td>
           ${activeBadge}
           <div style="font-size:11px;color:var(--text3);margin-top:4px;">${statusLabel}</div>
