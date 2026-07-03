@@ -470,7 +470,6 @@ body.theme-night .agent-age-seconds{color:#62ddb2;}
 .wake-copy span{display:block;margin-top:2px;font-size:11px;color:#888;}
 .wake-toggle{border:0;border-radius:5px;background:var(--wx-green);color:#fff;font:500 12px/1 inherit;padding:8px 10px;cursor:pointer;flex-shrink:0;}
 .wake-toggle.off{background:#f1f1f1;color:#555;}
-.mutual-aid-list{display:flex;flex-direction:column;gap:8px;margin-top:12px;max-height:190px;overflow:auto;}
 .mutual-aid-item{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:10px;}
 .mutual-aid-zone-title{font-size:12px;color:rgba(255,255,255,0.54);font-weight:800;margin-top:12px;}
 .mutual-aid-meta{display:flex;justify-content:space-between;gap:8px;color:rgba(255,255,255,0.45);font-size:11px;margin-bottom:5px;}
@@ -3386,26 +3385,10 @@ async function showComingSoon(label, options={}){
   await agentSay(`我现在还是小朋友，先当你的小管家，帮您定个车、整理一下出行需求。以后我会有更多本领，当好你生活中的管家、工作上的助理。`,200);
 }
 
-const MUTUAL_AID_KEY='huaban_mutual_aid_posts';
 const WISH_TYPES={
   need_free:{zone:'free',label:'希望免费帮助',role:'求助者'},
-  offer_free:{zone:'free',label:'提供免费帮助',role:'志愿者'},
-  need_paid:{zone:'paid',label:'愿意支付',role:'求助者'},
-  sell:{zone:'paid',label:'出售物品/服务',role:'服务者'}
+  need_paid:{zone:'paid',label:'愿意支付',role:'求助者'}
 };
-
-function readMutualAidPosts(){
-  try{
-    const posts=JSON.parse(localStorage.getItem(MUTUAL_AID_KEY)||'[]');
-    return Array.isArray(posts)?posts:[];
-  }catch(e){
-    return [];
-  }
-}
-
-function saveMutualAidPosts(posts){
-  localStorage.setItem(MUTUAL_AID_KEY,JSON.stringify(posts.slice(0,80)));
-}
 
 function wishTypeInfo(type){
   return WISH_TYPES[type]||WISH_TYPES.need_free;
@@ -3437,7 +3420,6 @@ function buildIntelSearchQueries(post={}){
 }
 
 function intelDirection(wishType){
-  if(wishType==='offer_free'||wishType==='sell')return 'supply';
   return 'demand';
 }
 
@@ -3465,24 +3447,6 @@ function buildWishWallDraft(text=''){
   };
 }
 
-function renderWishPosts(posts, zone, fallbackCity){
-  const items=posts.filter(post=>wishTypeInfo(post.wishType||post.type).zone===zone);
-  if(!items.length)return '<div style="padding:14px;text-align:center;color:rgba(255,255,255,0.32);font-size:12px;">暂无内容</div>';
-  return items.slice(0,5).map(post=>{
-    const info=wishTypeInfo(post.wishType||post.type);
-    const badgeClass=info.zone==='paid'?'paid':'free';
-    return `<div class="mutual-aid-item">
-      <div class="mutual-aid-meta">
-        <span><i class="mutual-aid-badge ${badgeClass}">${info.label}</i>${companionEscape(post.category||'其他')}</span>
-        <span>${companionEscape(post.city||fallbackCity)}</span>
-      </div>
-      <div class="mutual-aid-text">${companionEscape(post.text||'')}</div>
-      ${post.budget?`<div style="font-size:11px;color:rgba(255,255,255,0.38);margin-top:6px;">预算/价格：${companionEscape(post.budget)}</div>`:''}
-      <div style="font-size:11px;color:rgba(255,255,255,0.34);margin-top:6px;">${companionEscape(intelConfidenceLabel(post))}</div>
-    </div>`;
-  }).join('');
-}
-
 function renderIntelQueryPreview(draft={}){
   const text=String(draft.text||'').trim();
   if(!text)return '';
@@ -3500,14 +3464,11 @@ function renderIntelQueryPreview(draft={}){
 function openMutualAidCommunity(draft={}){
   const existing=document.getElementById('mutual-aid-modal');
   if(existing)existing.remove();
-  const posts=readMutualAidPosts();
   const city=currentRegion.city||currentRegion.country||'本地';
-  const draftWishType=draft.wishType||'need_free';
+  const draftWishType=draft.wishType==='need_paid'?'need_paid':'need_free';
   const draftCategory=draft.category||'其他互助';
   const draftText=draft.text||'';
   const draftBudget=draft.budget||'';
-  const freePosts=renderWishPosts(posts,'free',city);
-  const paidPosts=renderWishPosts(posts,'paid',city);
   const modal=document.createElement('div');
   modal.id='mutual-aid-modal';
   modal.className='modal-overlay show';
@@ -3517,8 +3478,8 @@ function openMutualAidCommunity(draft={}){
       <div class="modal-handle"></div>
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px;">
         <div>
-          <div style="font-size:21px;font-weight:900;color:white;">需求/供给情报库</div>
-          <div style="font-size:12px;color:rgba(255,255,255,0.45);margin-top:4px;">不用自己贴公告，把事交给华伴去找人、找服务、找线索</div>
+          <div style="font-size:21px;font-weight:900;color:white;">帮我找线索</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.45);margin-top:4px;">不用自己发布，把事交给华伴去找人、找服务、找线索</div>
         </div>
         <button onclick="document.getElementById('mutual-aid-modal')?.remove()" style="border:0;border-radius:10px;background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.72);padding:8px 12px;font:600 13px/1 inherit;cursor:pointer;">关闭</button>
       </div>
@@ -3527,8 +3488,6 @@ function openMutualAidCommunity(draft={}){
         <select id="mutual-aid-wish-type" onchange="updateWishWallHint()">
           <option value="need_free" ${draftWishType==='need_free'?'selected':''}>帮我找免费互助线索</option>
           <option value="need_paid" ${draftWishType==='need_paid'?'selected':''}>帮我找付费服务者</option>
-          <option value="offer_free" ${draftWishType==='offer_free'?'selected':''}>我是志愿者，录入供给</option>
-          <option value="sell" ${draftWishType==='sell'?'selected':''}>我提供物品或服务，录入供给</option>
         </select>
         <div id="mutual-aid-hint" style="font-size:11px;color:rgba(255,255,255,0.35);line-height:1.6;margin-top:6px;">华伴会生成公开搜索任务，记录来源和可信度；不会自动去网站注册账号。</div>
         <label>类别</label>
@@ -3546,13 +3505,7 @@ function openMutualAidCommunity(draft={}){
         ${renderIntelQueryPreview(draft)}
         <button onclick="submitMutualAidPost()" style="width:100%;margin-top:14px;padding:13px;background:rgba(0,200,150,0.24);border:1px solid rgba(0,200,150,0.36);border-radius:12px;color:white;font:800 14px/1 inherit;cursor:pointer;">交给华伴去找线索</button>
       </div>
-      <div style="font-size:12px;color:rgba(255,255,255,0.42);line-height:1.7;margin-top:12px;">华伴只整理公开信息、用户提交和服务者入驻资料；不会自动注册第三方网站账号。涉及金钱、证件、隐私时务必核验来源。</div>
-      <div class="mutual-aid-list">
-        <div class="mutual-aid-zone-title">需求线索</div>
-        ${freePosts}
-        <div class="mutual-aid-zone-title">供给/付费服务线索</div>
-        ${paidPosts}
-      </div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.42);line-height:1.7;margin-top:12px;">这里不展示用户发布内容。华伴只把你的需求整理成后台任务，再从公开信息、服务者入驻资料和人工核验线索里匹配。涉及金钱、证件、隐私时务必核验来源。</div>
     </div>`;
   document.body.appendChild(modal);
   updateWishWallHint();
@@ -3570,8 +3523,7 @@ async function submitMutualAidPost(){
     alert('请填写说明和联系方式');
     return;
   }
-  const posts=readMutualAidPosts();
-  posts.unshift({
+  const savedPost={
     id:'aid-'+Date.now(),
     wishType,
     zone:info.zone,
@@ -3583,9 +3535,7 @@ async function submitMutualAidPost(){
     confidence:'pending_review',
     createdAt:new Date().toISOString(),
     status:'open'
-  });
-  const savedPost=posts[0];
-  saveMutualAidPosts(posts);
+  };
   syncWishWallPost(savedPost).catch(e=>console.warn('intel task sync failed',e));
   document.getElementById('mutual-aid-modal')?.remove();
   addMsg('交给华伴去找线索',true);
@@ -3599,9 +3549,7 @@ function updateWishWallHint(){
   if(!hint)return;
   const text={
     need_free:'我会找公开互助线索、华人社区讨论和用户提交过的类似需求。',
-    offer_free:'这会作为供给线索入库，后面可匹配给需要帮助的人。',
-    need_paid:'我会优先找公开服务者、华人服务信息和已入驻供给。',
-    sell:'这会作为供给线索入库，后面可匹配给有相同需求的人。'
+    need_paid:'我会优先找公开服务者、华人服务信息和已入驻供给。'
   };
   hint.textContent=text[type]||text.need_free;
 }
@@ -3804,7 +3752,7 @@ function resizeImageForRecognition(file){
 function normalizeImageWishDraft(draft={}){
   const category=draft.category||'其他互助';
   let wishType=draft.wishType||'need_paid';
-  if(!['need_free','need_paid','offer_free','sell'].includes(wishType))wishType='need_paid';
+  if(!['need_free','need_paid'].includes(wishType))wishType='need_paid';
   const text=[
     draft.title?`标题：${draft.title}`:'',
     draft.text||'图片需求已识别，请补充说明。'
