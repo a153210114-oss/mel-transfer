@@ -388,6 +388,9 @@ body {
     <div class="nav-item" onclick="showSection('suppliers')">
       <span class="nav-icon">🧩</span> 公测线索
     </div>
+    <div class="nav-item" onclick="showSection('sources')">
+      <span class="nav-icon">🗂️</span> 中文入口库
+    </div>
     <div class="nav-item" onclick="showSection('dispatch')">
       <span class="nav-icon">📡</span> 实时调度
     </div>
@@ -450,6 +453,11 @@ body {
         <div class="quick-icon">🎓</div>
         <strong>AI 训练营</strong>
         <span>把答不好的问题教给小 AI</span>
+      </div>
+      <div class="admin-quick-card" onclick="showSection('sources')">
+        <div class="quick-icon">🗂️</div>
+        <strong>中文入口库</strong>
+        <span>网站、平台、搜索引擎和政府资质入口</span>
       </div>
       <div class="admin-quick-card" onclick="window.open('./index.html','_blank')">
         <div class="quick-icon">📱</div>
@@ -737,6 +745,53 @@ body {
   </div>
 </div>
 
+<!-- ══ 中文入口库 ══ -->
+<div class="section" id="section-sources">
+  <div class="topbar">
+    <div>
+      <div class="page-title">中文入口库</div>
+      <div class="page-sub">网站平台 / 搜索引擎 / 政府公开核验入口</div>
+    </div>
+    <div class="topbar-actions">
+      <select class="input" id="source-type-filter" onchange="loadSourceRegistry()" style="width:150px;">
+        <option value="">全部入口</option>
+        <option value="search_engine">搜索引擎</option>
+        <option value="chinese_website">中文网站</option>
+        <option value="social_platform">社交平台</option>
+        <option value="business_directory">商家目录</option>
+        <option value="government_registry">政府核验</option>
+        <option value="industry_directory">行业目录</option>
+      </select>
+      <button class="btn btn-ghost" onclick="loadSourceRegistry()">↻ 刷新</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="card">
+      <div class="card-body" style="font-size:12px;color:var(--text2);line-height:1.7;border-bottom:1px solid var(--border);padding-bottom:16px;margin-bottom:8px;">
+        这里登记华伴可以用于“全网中文供需情报”的公开入口。搜索引擎和中文网站负责发现需求/供给，政府公开网站和行业目录负责资质核验。需要登录、加群、验证码或打码联系方式的入口，只能进入人工任务。
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>入口</th>
+              <th>地区</th>
+              <th>类型</th>
+              <th>访问/边界</th>
+              <th>用途</th>
+              <th>优先级</th>
+              <th>状态</th>
+            </tr>
+          </thead>
+          <tbody id="sources-body">
+            <tr><td colspan="7" style="text-align:center;color:var(--text3);padding:40px;">加载中...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ══ 实时调度 ══ -->
 <div class="section" id="section-dispatch">
   <div class="topbar">
@@ -949,6 +1004,7 @@ function showSection(name) {
     drivers: loadDrivers,
     passengers: loadPassengers,
     suppliers: loadSuppliers,
+    sources: loadSourceRegistry,
     dispatch: loadDispatch,
     'ai-training': loadAITraining,
     finance: loadFinance
@@ -1477,6 +1533,96 @@ function supplierQualificationText(lead) {
   const license = fields.license || '未填写资质';
   const url = fields.public_verification_url || '';
   return url ? `${license} · ${url}` : license;
+}
+
+const SOURCE_TYPE_LABELS = {
+  chinese_website: '中文网站',
+  forum: '论坛',
+  social_platform: '社交平台',
+  search_engine: '搜索引擎',
+  government_registry: '政府核验',
+  industry_directory: '行业目录',
+  business_directory: '商家目录',
+  manual_channel: '人工渠道'
+};
+
+const SOURCE_STATUS_LABELS = {
+  active: ['badge-confirmed', '启用'],
+  review: ['badge-pending', '待核查'],
+  paused: ['badge-inactive', '暂停'],
+  blocked: ['badge-cancelled', '不可用']
+};
+
+function sourceStatusBadge(status){
+  const [cls,label]=SOURCE_STATUS_LABELS[status]||['badge-inactive', status||'未知'];
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+
+function defaultSourceRegistryRows(){
+  return [
+    {name:'Google Search',url:'https://www.google.com/search',country:'Global',city:'',source_type:'search_engine',signal_type:'both',access_level:'public',crawl_policy:'search_result_only',priority:1,status:'active',search_templates:['{city} 华人 {keyword} {freshness}','{city} Chinese {keyword} {freshness}'],compliance_notes:'只使用公开搜索结果和可访问页面。'},
+    {name:'Bing Search',url:'https://www.bing.com/search',country:'Global',city:'',source_type:'search_engine',signal_type:'both',access_level:'public',crawl_policy:'search_result_only',priority:2,status:'active',search_templates:['{city} 华人 {keyword}','{city} Chinese {keyword}'],compliance_notes:'作为 Google 补充入口。'},
+    {name:'今日墨尔本',url:'https://www.meltoday.com',country:'Australia',city:'Melbourne',source_type:'chinese_website',signal_type:'both',access_level:'public',crawl_policy:'public_metadata_only',priority:1,status:'active',search_templates:['墨尔本 华人 {keyword}','今日墨尔本 {keyword}'],compliance_notes:'电话打码或需登录的信息进入人工任务。'},
+    {name:'亿忆澳洲',url:'https://www.yeeyi.com',country:'Australia',city:'',source_type:'chinese_website',signal_type:'both',access_level:'public',crawl_policy:'public_metadata_only',priority:2,status:'review',search_templates:['亿忆 {city} {keyword}'],compliance_notes:'先记录公开板块和公开帖子。'},
+    {name:'来澳网',url:'https://www.go2au.net',country:'Australia',city:'',source_type:'chinese_website',signal_type:'both',access_level:'public',crawl_policy:'public_metadata_only',priority:2,status:'review',search_templates:['来澳网 {city} {keyword}'],compliance_notes:'澳洲中文服务与招聘渠道源。'},
+    {name:'Facebook 华人群搜索',url:'https://www.facebook.com/search/groups',country:'Global',city:'',source_type:'social_platform',signal_type:'both',access_level:'manual_authorized_only',crawl_policy:'manual_review_only',priority:3,status:'review',search_templates:['{city} Chinese community {keyword}'],compliance_notes:'不自动加群，不抓私密群内容。'},
+    {name:'Google Maps',url:'https://www.google.com/maps',country:'Global',city:'',source_type:'business_directory',signal_type:'supply',access_level:'public',crawl_policy:'public_metadata_only',priority:2,status:'active',search_templates:['{city} {keyword} Chinese'],compliance_notes:'评分和评论不是资质证明。'},
+    {name:'Australia ABN Lookup',url:'https://abr.business.gov.au',country:'Australia',city:'',source_type:'government_registry',signal_type:'qualification',access_level:'public',crawl_policy:'official_registry_lookup',priority:1,status:'active',search_templates:['{business_name} ABN'],compliance_notes:'澳洲官方营业主体核验入口。'},
+    {name:'Victorian Legal Services Board Register',url:'https://lsbc.vic.gov.au',country:'Australia',city:'Victoria',source_type:'government_registry',signal_type:'qualification',access_level:'public',crawl_policy:'official_registry_lookup',priority:1,status:'active',search_templates:['Victoria lawyer register {name}'],compliance_notes:'维州律师执业信息核验入口。'},
+    {name:'Illinois Attorney Registration and Disciplinary Commission',url:'https://www.iardc.org',country:'United States',city:'Illinois',source_type:'government_registry',signal_type:'qualification',access_level:'public',crawl_policy:'official_registry_lookup',priority:1,status:'active',search_templates:['Illinois lawyer lookup {name}'],compliance_notes:'芝加哥/伊利诺伊律师公开核验入口之一。'},
+    {name:'Illinois Department of Financial and Professional Regulation',url:'https://idfpr.illinois.gov',country:'United States',city:'Illinois',source_type:'government_registry',signal_type:'qualification',access_level:'public',crawl_policy:'official_registry_lookup',priority:1,status:'active',search_templates:['Illinois CPA license lookup {name}'],compliance_notes:'伊利诺伊会计等专业执照核验入口。'}
+  ];
+}
+
+async function loadSourceRegistry(){
+  const type=document.getElementById('source-type-filter')?.value||'';
+  const tbody=document.getElementById('sources-body');
+  if(!tbody)return;
+  tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:30px;">加载中...</td></tr>';
+  let rows=[];
+  let fallback=false;
+  try{
+    let q='source_registry?order=priority.asc,name.asc&limit=200';
+    if(type)q+=`&source_type=eq.${encodeURIComponent(type)}`;
+    rows=await supaFetch(q);
+  }catch(e){
+    fallback=true;
+    rows=defaultSourceRegistryRows();
+    if(type)rows=rows.filter(row=>row.source_type===type);
+  }
+  if(!rows.length){
+    tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:40px;">暂无入口</td></tr>';
+    return;
+  }
+  const banner=fallback?`<tr><td colspan="7" style="color:var(--gold);font-size:12px;padding:12px 16px;background:rgba(245,166,35,.08);">当前显示内置模板。执行 <code>workflows/source_registry_schema_seed.sql</code> 后，这里会读取数据库入口库。</td></tr>`:'';
+  tbody.innerHTML=banner+rows.map(row=>{
+    const templates=Array.isArray(row.search_templates)?row.search_templates:(Array.isArray(row.search_templates?.templates)?row.search_templates.templates:[]);
+    const typeLabel=SOURCE_TYPE_LABELS[row.source_type]||row.source_type||'-';
+    const signal={demand:'需求',supply:'供给',qualification:'资质',channel:'渠道',both:'需求/供给'}[row.signal_type]||row.signal_type||'-';
+    const access={public:'公开',login_required:'需登录',manual_authorized_only:'人工授权',blocked:'不可用'}[row.access_level]||row.access_level||'-';
+    const policy={public_metadata_only:'公开信息',manual_review_only:'人工核查',search_result_only:'搜索结果',official_registry_lookup:'官方核验',do_not_crawl:'不抓取'}[row.crawl_policy]||row.crawl_policy||'-';
+    return `<tr>
+      <td>
+        <div style="font-weight:800;color:var(--text);">${escapeHtml(row.name||'-')}</div>
+        <div style="font-size:11px;color:var(--text3);max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${row.url?`<a href="${escapeHtml(row.url)}" target="_blank" style="color:var(--accent);text-decoration:none;">${escapeHtml(row.url)}</a>`:'-'}</div>
+      </td>
+      <td>
+        <div>${escapeHtml(row.city||row.country||'Global')}</div>
+        <div style="font-size:11px;color:var(--text3);">${escapeHtml(row.country||'')}</div>
+      </td>
+      <td>
+        <span class="tag">${escapeHtml(typeLabel)}</span>
+        <div style="font-size:11px;color:var(--text3);margin-top:5px;">${escapeHtml(signal)}</div>
+      </td>
+      <td>
+        <div style="font-size:12px;color:var(--text);">${escapeHtml(access)} · ${escapeHtml(policy)}</div>
+        <div style="font-size:11px;color:var(--text3);max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(row.compliance_notes||'')}</div>
+      </td>
+      <td style="font-size:11px;color:var(--text2);max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(templates.slice(0,2).join(' / ')||'-')}</td>
+      <td style="font-weight:800;color:var(--gold);">P${row.priority||3}</td>
+      <td>${sourceStatusBadge(row.status)}</td>
+    </tr>`;
+  }).join('');
 }
 
 async function loadSuppliers() {
