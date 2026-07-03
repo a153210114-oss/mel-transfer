@@ -252,6 +252,17 @@ body{background:var(--wx-bg);color:var(--wx-text);}
 .top-bar{height:56px;padding:4px 14px;background:var(--wx-top);border-bottom:1px solid var(--wx-line);}
 .top-bar{justify-content:center;position:relative;}
 .top-bar .brand-lockup{margin:0 auto;}
+.adoption-ticker{
+  flex-shrink:0;height:28px;overflow:hidden;background:rgba(255,255,255,0.72);
+  border-bottom:1px solid var(--wx-line);display:flex;align-items:center;
+}
+.adoption-ticker-track{
+  display:flex;gap:26px;white-space:nowrap;animation:adoptionScroll 28s linear infinite;
+  color:#666;font-size:12px;line-height:1;padding-left:100%;
+}
+.adoption-ticker-track span{display:inline-flex;align-items:center;gap:5px;}
+.adoption-ticker-track i{width:5px;height:5px;border-radius:50%;background:var(--wx-green);display:inline-block;}
+@keyframes adoptionScroll{from{transform:translateX(0);}to{transform:translateX(-100%);}}
 .ai-hidden-control{display:none!important;}
 #voice-indicator{position:absolute;right:14px;top:20px;}
 .brand-logo{box-shadow:0 0 0 1px rgba(0,0,0,.04);}
@@ -288,6 +299,8 @@ body.theme-night{
   --wx-border:#343b44;
 }
 body.theme-night .top-bar>button{color:#d7dce2!important;}
+body.theme-night .adoption-ticker{background:rgba(23,27,32,0.9);border-bottom-color:#2b3138;}
+body.theme-night .adoption-ticker-track{color:#aeb6bf;}
 body.theme-night .msg-av{background:#242a31;box-shadow:0 0 0 1px rgba(255,255,255,.05);}
 body.theme-night .msg-bubble{background:#20252c;border-color:#343b44;color:var(--wx-text);}
 body.theme-night .msg.user .msg-bubble{background:#145b39;border-color:#1b7048;color:#f7fff9;}
@@ -579,6 +592,18 @@ body.more-open .chat-area{padding-bottom:390px;}
   <button class="ai-hidden-control" id="share-btn" onclick="shareRefLink()" aria-label="分享" title="分享" style="background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;">＋</button>
   <button class="ai-hidden-control" id="profile-btn" onclick="openProfile()" aria-label="个人中心" title="个人中心" style="background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;">◉</button>
   <button class="top-exit" id="exit-btn" onclick="exitToHome()">⇄ 切换</button>
+</div>
+
+<div class="adoption-ticker" aria-label="华伴领养动态">
+  <div class="adoption-ticker-track">
+    <span><i></i>用户 0402****** 领养华伴 AI 成功</span>
+    <span><i></i>用户 0449****** 成功领养华伴 AI</span>
+    <span><i></i>用户 0435****** 领养了自己的小 AI</span>
+    <span><i></i>用户 0416****** 正在体验华伴 AI</span>
+    <span><i></i>用户 0450****** 领养华伴 AI 成功</span>
+    <span><i></i>用户 0402****** 领养华伴 AI 成功</span>
+    <span><i></i>用户 0449****** 成功领养华伴 AI</span>
+  </div>
 </div>
 
 <!-- 对话区 -->
