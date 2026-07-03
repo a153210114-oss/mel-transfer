@@ -3235,7 +3235,7 @@ function openMutualAidCommunity(draft={}){
         <div id="mutual-aid-hint" style="font-size:11px;color:rgba(255,255,255,0.35);line-height:1.6;margin-top:6px;">免费服务区：适合临时指路、简单陪同、轻量翻译、邻里互助。</div>
         <label>类别</label>
         <select id="mutual-aid-category">
-          ${['维修上门 · 电工','维修上门','接送陪同','翻译沟通','临时跑腿','新到本地','其他互助'].map(item=>`<option value="${item}" ${draftCategory===item?'selected':''}>${item}</option>`).join('')}
+          ${['旅游转让','拼团补位','票券/名额转让','维修上门 · 电工','维修上门','本地找人','接送陪同','翻译沟通','临时跑腿','新到本地','其他互助'].map(item=>`<option value="${item}" ${draftCategory===item?'selected':''}>${item}</option>`).join('')}
         </select>
         <label>城市</label>
         <input id="mutual-aid-city" value="${companionEscape(city)}" placeholder="所在城市">
@@ -3303,13 +3303,88 @@ function updateWishWallHint(){
   hint.textContent=text[type]||text.need_free;
 }
 
-function handleMediaPick(input,label){
+function dataUrlToPayload(dataUrl){
+  const match=String(dataUrl||'').match(/^data:(.+?);base64,(.+)$/);
+  return match?{mediaType:match[1],image:match[2]}:null;
+}
+
+function resizeImageForRecognition(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>{
+      const img=new Image();
+      img.onload=()=>{
+        const maxSide=1400;
+        const scale=Math.min(1,maxSide/Math.max(img.width,img.height));
+        const canvas=document.createElement('canvas');
+        canvas.width=Math.max(1,Math.round(img.width*scale));
+        canvas.height=Math.max(1,Math.round(img.height*scale));
+        const ctx=canvas.getContext('2d');
+        ctx.drawImage(img,0,0,canvas.width,canvas.height);
+        resolve(canvas.toDataURL('image/jpeg',0.86));
+      };
+      img.onerror=reject;
+      img.src=reader.result;
+    };
+    reader.onerror=reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function normalizeImageWishDraft(draft={}){
+  const category=draft.category||'其他互助';
+  let wishType=draft.wishType||'need_paid';
+  if(!['need_free','need_paid','offer_free','sell'].includes(wishType))wishType='need_paid';
+  const text=[
+    draft.title?`标题：${draft.title}`:'',
+    draft.text||'图片需求已识别，请补充说明。'
+  ].filter(Boolean).join('\n');
+  return {
+    wishType,
+    category,
+    city:draft.city||currentRegion.city||currentRegion.country||'本地',
+    text,
+    budget:draft.budget||''
+  };
+}
+
+async function analyzeImageToWishWall(file,label){
+  try{
+    await agentSay('我先帮你读一下图片，看看能不能整理成心愿墙需求。',80);
+    const dataUrl=await resizeImageForRecognition(file);
+    const payload=dataUrlToPayload(dataUrl);
+    if(!payload)throw new Error('图片读取失败');
+    const res=await fetch('/api/image-wish',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        ...payload,
+        city:currentRegion.city||'',
+        country:currentRegion.country||''
+      })
+    });
+    if(!res.ok)throw new Error(await res.text());
+    const data=await res.json();
+    const draft=normalizeImageWishDraft(data.draft||{});
+    openMutualAidCommunity(draft);
+    rememberMenuKey('mutual-aid');
+    await agentSay('我把图片里的关键信息整理成草稿了。你看一下日期、价格和联系方式，对了就发布到心愿墙。',120);
+  }catch(e){
+    console.warn('image wish recognition failed',e);
+    openMutualAidCommunity({wishType:'need_paid',category:'其他互助',text:`我上传了一张${label}，想请华伴帮我整理需求。请补充图片里的关键信息。`});
+    rememberMenuKey('mutual-aid');
+    await agentSay('图片识别暂时没成功，我先打开心愿墙，你可以把关键信息补一下再发布。',120);
+  }
+}
+
+async function handleMediaPick(input,label){
   const file=input.files?.[0];
   if(!file)return;
   rewardCompanionAction('media');
   const url=URL.createObjectURL(file);
   const msg=addMsg(`<img src="${url}" alt="${label}" style="display:block;max-width:220px;max-height:220px;border-radius:6px;object-fit:cover;"><div style="font-size:11px;color:#666;margin-top:5px;">${label}已选择</div>`,true);
   msg.querySelector('img').onload=()=>URL.revokeObjectURL(url);
+  await analyzeImageToWishWall(file,label);
   input.value='';
 }
 
