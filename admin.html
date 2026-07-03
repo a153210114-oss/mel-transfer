@@ -1195,6 +1195,12 @@ function escapeHtml(value) {
   }[m]));
 }
 
+function jsString(value) {
+  return String(value ?? '').replace(/[\\'"\n\r]/g, m => ({
+    '\\':'\\\\', "'":"\\'", '"':'\\"', '\n':'\\n', '\r':'\\r'
+  }[m]));
+}
+
 const AI_TRAINING_KEY = 'huaban_ai_training_queue';
 let selectedTrainingId = null;
 
@@ -1577,12 +1583,32 @@ async function loadDrivers() {
         <td style="font-size:12px;color:var(--text3);">${fmtDateShort(d.created_at)}</td>
         <td>
           ${!d.is_active ? `<button class="action-btn success" onclick="activateDriver('${d.id}')">激活</button>` : `<button class="action-btn" onclick="deactivateDriver('${d.id}')">停用</button>`}
+          <button class="action-btn success" onclick="sendDriverFollowup('${d.id}','${jsString(d.full_name)}','${jsString(d.phone)}','${jsString(d.wechat_id)}')" style="margin-left:4px;">华伴跟进</button>
           <button class="action-btn" onclick="copyId('${d.id}')" style="margin-left:4px;">复制ID</button>
         </td>
       </tr>`;
     }).join('');
   } catch(e) {
     tbody.innerHTML = `<tr><td colspan="7" style="color:var(--red);padding:20px;">${e.message}</td></tr>`;
+  }
+}
+
+function buildDriverFollowupText(name='师傅') {
+  const displayName = name && name !== 'null' ? name : '师傅';
+  return `你好，${displayName}。我是华伴公测负责人。看到你提交了司机加入信息，想确认一下：你现在是否愿意接墨尔本接送机、包车或临时用车订单？如果愿意，麻烦回复：可接单 + 常跑区域 + 车型/座位数。谢谢。`;
+}
+
+async function sendDriverFollowup(id, name='', phone='', wechat='') {
+  const text = buildDriverFollowupText(name);
+  try { await navigator.clipboard.writeText(text); } catch(e) {}
+  const cleanPhone = String(phone || '').replace(/[^\d+]/g, '');
+  if (cleanPhone) {
+    window.location.href = `sms:${encodeURIComponent(cleanPhone)}?&body=${encodeURIComponent(text)}`;
+    setTimeout(() => alert('华伴跟进话术已生成并复制。短信窗口如果没有自动打开，可以直接粘贴发送。'), 500);
+  } else if (wechat) {
+    alert(`华伴跟进话术已复制。这个司机留了微信：${wechat}，请到微信粘贴发送。`);
+  } else {
+    alert('华伴跟进话术已复制，但这个司机没有手机号或微信。');
   }
 }
 
