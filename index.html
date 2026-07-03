@@ -2188,6 +2188,9 @@ async function sendVoiceMessage(text){
     await showPlatformGuide(false);
     return;
   }
+  if(await handleActionableIntentTools(corrected,{voice:true})){
+    return;
+  }
   if(await handleOnboardingFeedbackIntent(corrected)){
     return;
   }
@@ -2896,11 +2899,11 @@ async function handleOnboardingFeedbackIntent(text){
     openMutualAidCommunity(draft);
     const category=draft.category||'这类需求';
     if(/旅游攻略|吃喝玩乐/i.test(category)){
-      await agentSay('英国可以先按伦敦 2-3 天，再看你要不要加牛津、剑桥或爱丁堡。我先帮你开一个英国旅行推荐线索任务，去找近期公开攻略和靠谱的当地华人信息。',120);
+      await agentSay('英国可以先按伦敦 2-3 天，再看你要不要加牛津、剑桥或爱丁堡。我先去查近期攻略、当地华人推荐和交通玩法，整理一份能直接看的清单给你。',120);
     }else if(/专业服务|律师|会计/i.test(category)){
-      await agentSay('这个我来整理成专业服务线索任务，先找当地公开信息和华人服务者；律师、会计这类一定要再核验资质和来源。',120);
+      await agentSay('这个我来办：先找当地公开信息和华人服务者，再把资质核验入口、联系方式和注意事项列给你。律师、会计这类一定要再核验资质和来源。',120);
     }else{
-      await agentSay('可以，我先把这件事整理成线索任务，去找公开信息、服务者和可能能帮忙的人。',120);
+      await agentSay('可以，这件事我来办。我先去找公开信息、可联系的人和需要核验的点，整理后再给你看。',120);
     }
     return true;
   }
@@ -2962,9 +2965,9 @@ async function handleTravelNudge(type){
 
 async function openWishWallFromNudge(){
   document.getElementById('wish-wall-nudge-card')?.remove();
-  addMsg('帮我找线索',true);
+  addMsg('交给华伴处理',true);
   openMutualAidCommunity();
-  await agentSay('好呀，需求/供给情报库打开了。你把事说清楚，我来生成搜索任务和匹配线索。',120);
+  await agentSay('好呀，你把事情说清楚，我来查、筛、核验，再把能行动的结果整理给你。',120);
 }
 
 function renderFeedbackStarterCard(){
@@ -3088,6 +3091,103 @@ const TASK_PLAN_DEFS=[
   {key:'feedback',label:'收集反馈',pattern:/反馈|吐槽|建议|不好用|希望|需求/i}
 ];
 
+function isTravelPlanningIntent(text=''){
+  const clean=String(text||'');
+  if(/接机|送机|去机场|从机场|机场接|机场送|用车|司机|包车接送/i.test(clean))return false;
+  return /(想去|准备去|打算去|去).*(玩|旅游|度假)|玩几天|怎么玩|去哪玩|行程推荐|旅游路线|攻略|好吃|好玩|景点|餐厅|美食|英国|英國|伦敦|London|UK|Chicago|芝加哥/i.test(clean);
+}
+
+function buildItineraryDraft(text=''){
+  const clean=String(text||'');
+  const city=intelCityFromText(clean)||(/英国|英國|UK|United Kingdom/i.test(clean)?'London':(currentRegion.city||'London'));
+  const destination=/英国|英國|UK|United Kingdom/i.test(clean)?'英国':city;
+  const daysMatch=clean.match(/(\d{1,2})\s*(天|日|day|days)/i);
+  const days=daysMatch?Math.max(1,Math.min(10,Number(daysMatch[1]))):(/几天/.test(clean)?4:3);
+  const plans={
+    London:[
+      ['抵达伦敦','威斯敏斯特、伦敦眼、泰晤士河夜景，先轻松适应时差'],
+      ['经典伦敦','大英博物馆、考文特花园、SOHO/唐人街吃饭'],
+      ['王室与市集','白金汉宫、海德公园、哈罗德百货或 Borough Market'],
+      ['周边一日','牛津或剑桥二选一；喜欢历史就牛津，轻松拍照就剑桥'],
+      ['加一城','有时间再考虑爱丁堡或巴斯，别把行程排太满']
+    ],
+    Chicago:[
+      ['城市经典','千禧公园、云门、芝加哥河步道，晚上看 skyline'],
+      ['建筑与湖边','建筑游船、密歇根湖、海军码头'],
+      ['美食和博物馆','深盘披萨、牛排、艺术博物馆或 Field Museum']
+    ]
+  };
+  const base=plans[city]||plans.London;
+  return {
+    destination,
+    city,
+    days,
+    title:`${destination}${days}天行程草案`,
+    summary:destination==='英国'
+      ? '先以伦敦为核心，时间够再加牛津、剑桥或爱丁堡。'
+      : `先以${city}核心景点和本地美食为主，减少来回折腾。`,
+    daysPlan:Array.from({length:days},(_,i)=>base[Math.min(i,base.length-1)]),
+    originalText:clean
+  };
+}
+
+function renderItineraryCard(draft){
+  const card=document.createElement('section');
+  card.className='install-card intro-fade-card';
+  card.style.alignItems='flex-start';
+  card.innerHTML=`
+    <div class="install-copy">
+      <strong>${companionEscape(draft.title)}</strong>
+      <span style="white-space:normal;line-height:1.55;">${companionEscape(draft.summary)}</span>
+      <div style="margin-top:8px;font-size:11px;color:#666;line-height:1.7;">
+        ${draft.daysPlan.map((day,i)=>`<div><b>D${i+1} ${companionEscape(day[0])}</b>：${companionEscape(day[1])}</div>`).join('')}
+      </div>
+    </div>
+    <div class="install-actions" style="flex-direction:column;align-items:stretch;">
+      <button class="install-primary" type="button" data-itinerary-reminder>存提醒</button>
+      <button class="install-primary" type="button" data-itinerary-help style="background:#0f8f6a;">找当地人</button>
+    </div>`;
+  card.querySelector('[data-itinerary-reminder]')?.addEventListener('click',()=>{
+    openReminderSheet({
+      title:`整理${draft.destination}行程`,
+      note:`${draft.title}：${draft.summary}`,
+      remindAt:new Date(Date.now()+24*60*60*1000).toISOString()
+    });
+  });
+  card.querySelector('[data-itinerary-help]')?.addEventListener('click',()=>{
+    openMutualAidCommunity({
+      wishType:'need_paid',
+      category:'旅游攻略 · 吃喝玩乐',
+      city:draft.city,
+      text:`我想去${draft.destination}玩${draft.days}天，想找当地华人推荐吃喝玩乐、交通和注意事项。`,
+      budget:'可商量'
+    });
+  });
+  chatArea.appendChild(card);
+  scrollBottom();
+}
+
+async function handleActionableIntentTools(text, options={}){
+  const clean=String(text||'').trim();
+  if(!clean)return false;
+  if(isTravelPlanningIntent(clean)){
+    const draft=buildItineraryDraft(clean);
+    rememberMenuKey('travel');
+    renderItineraryCard(draft);
+    syncWishWallPost({
+      wishType:'need_paid',
+      category:'旅游攻略 · 吃喝玩乐',
+      city:draft.city,
+      text:clean,
+      budget:'可商量',
+      contact:betaContact()
+    }).catch(e=>console.warn('travel planning sync failed',e));
+    await agentSay(`${draft.destination}我先给你排了一个${draft.days}天草案。你可以先看路线，我也可以继续帮你找当地华人推荐、交通方式和需要提前预定的项目。`,120);
+    return true;
+  }
+  return false;
+}
+
 function detectAgentTaskPlan(text){
   const clean=String(text||'').trim();
   if(!clean)return null;
@@ -3126,7 +3226,7 @@ async function handleAgentTaskPlan(text){
   if(hasRide){
     if(/接机|从机场|落地|到达|航班/i.test(text))S.direction='from_airport';
     if(/送机|去机场|赶飞机|出发/i.test(text))S.direction='to_airport';
-    await agentSay('我先把事情拆开了：出行我继续帮你补齐时间、地址和车型；需要找人的部分我会变成情报任务去找线索；提醒也可以先保存。',120);
+    await agentSay('我先把事情拆开了：出行我继续补齐时间、地址和车型；需要找人的部分我去查可联系对象和核验点；提醒也可以先保存。',120);
     return false;
   }
 
@@ -3357,7 +3457,7 @@ async function openFeatureByKey(key,label,options={}){
   if(key==='mutual-aid'){
     rewardCompanionAction('wish_wall');
     openMutualAidCommunity(buildWishWallDraft(options.sourceText||''));
-    await say('需求/供给情报库打开了。这类本地维修、临时求助、愿意付费请人帮忙的事，我会先整理成可搜索、可核验、可匹配的任务。');
+    await say('交给华伴处理吧。这类本地维修、临时求助、愿意付费请人帮忙的事，我会去查可联系对象、来源和核验点。');
     return;
   }
   if(key==='profile'){
@@ -3611,7 +3711,7 @@ function renderIntelQueryPreview(draft={}){
     text
   }).slice(0,6);
   return `<div style="margin-top:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:10px;">
-    <div style="font-size:12px;font-weight:900;color:rgba(255,255,255,0.72);margin-bottom:7px;">我会先生成本地 + 全球公开搜索任务，需求只看 90 天内</div>
+    <div style="font-size:12px;font-weight:900;color:rgba(255,255,255,0.72);margin-bottom:7px;">我会从这些方向开始查，筛掉太旧和不可靠的信息</div>
     ${queries.map(q=>`<div style="font-size:11px;color:rgba(255,255,255,0.42);line-height:1.7;">• ${companionEscape(q)}</div>`).join('')}
   </div>`;
 }
@@ -3633,18 +3733,18 @@ function openMutualAidCommunity(draft={}){
       <div class="modal-handle"></div>
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px;">
         <div>
-          <div style="font-size:21px;font-weight:900;color:white;">帮我找线索</div>
-          <div style="font-size:12px;color:rgba(255,255,255,0.45);margin-top:4px;">不用自己发布，把事交给华伴去找人、找服务、找线索</div>
+          <div style="font-size:21px;font-weight:900;color:white;">交给华伴处理</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.45);margin-top:4px;">不用自己到处问，我来查、筛、核验，再整理给你</div>
         </div>
         <button onclick="document.getElementById('mutual-aid-modal')?.remove()" style="border:0;border-radius:10px;background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.72);padding:8px 12px;font:600 13px/1 inherit;cursor:pointer;">关闭</button>
       </div>
       <div class="mutual-aid-form">
         <label>任务性质</label>
         <select id="mutual-aid-wish-type" onchange="updateWishWallHint()">
-          <option value="need_free" ${draftWishType==='need_free'?'selected':''}>帮我找免费互助线索</option>
-          <option value="need_paid" ${draftWishType==='need_paid'?'selected':''}>帮我找付费服务者</option>
+          <option value="need_free" ${draftWishType==='need_free'?'selected':''}>希望有人免费帮忙</option>
+          <option value="need_paid" ${draftWishType==='need_paid'?'selected':''}>愿意付费请人处理</option>
         </select>
-        <div id="mutual-aid-hint" style="font-size:11px;color:rgba(255,255,255,0.35);line-height:1.6;margin-top:6px;">华伴会生成公开搜索任务，记录来源和可信度；不会自动去网站注册账号。</div>
+        <div id="mutual-aid-hint" style="font-size:11px;color:rgba(255,255,255,0.35);line-height:1.6;margin-top:6px;">华伴会先查公开信息和可联系对象，记录来源和可信度；不会冒充你去网站注册或私信别人。</div>
         <label>类别</label>
         <select id="mutual-aid-category">
           ${['旅游攻略 · 吃喝玩乐','旅游转让','拼团补位','票券/名额转让','专业服务 · 律师/会计','专业服务 · 律师','专业服务 · 会计','维修上门 · 电工','维修上门','本地找人','接送陪同','翻译沟通','临时跑腿','新到本地','其他互助'].map(item=>`<option value="${item}" ${draftCategory===item?'selected':''}>${item}</option>`).join('')}
@@ -3658,9 +3758,9 @@ function openMutualAidCommunity(draft={}){
         <label>联系方式</label>
         <input id="mutual-aid-contact" placeholder="微信 / 手机 / 邮箱，仅用于匹配后联系">
         ${renderIntelQueryPreview(draft)}
-        <button onclick="submitMutualAidPost()" style="width:100%;margin-top:14px;padding:13px;background:rgba(0,200,150,0.24);border:1px solid rgba(0,200,150,0.36);border-radius:12px;color:white;font:800 14px/1 inherit;cursor:pointer;">交给华伴去找线索</button>
+        <button onclick="submitMutualAidPost()" style="width:100%;margin-top:14px;padding:13px;background:rgba(0,200,150,0.24);border:1px solid rgba(0,200,150,0.36);border-radius:12px;color:white;font:800 14px/1 inherit;cursor:pointer;">交给华伴处理</button>
       </div>
-      <div style="font-size:12px;color:rgba(255,255,255,0.42);line-height:1.7;margin-top:12px;">这里不展示用户发布内容。华伴会先匹配本地线索，同时扫描其他国家地区是否也有同类需求和供给。需求只看 90 天内发布，供给只看 2 年内发布。涉及金钱、证件、隐私时务必核验来源。</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.42);line-height:1.7;margin-top:12px;">华伴会先查本地，再参考其他国家地区的同类经验。需求只看 90 天内，供给只看 2 年内。涉及金钱、证件、隐私时务必核验来源。</div>
     </div>`;
   document.body.appendChild(modal);
   updateWishWallHint();
@@ -3695,9 +3795,9 @@ async function submitMutualAidPost(){
   };
   syncWishWallPost(savedPost).catch(e=>console.warn('intel task sync failed',e));
   document.getElementById('mutual-aid-modal')?.remove();
-  addMsg('交给华伴去找线索',true);
+  addMsg('交给华伴处理',true);
   rewardCompanionAction('wish_wall');
-  await agentSay('收到，我先把它变成供需情报任务：本地先匹配，同时扫描其他国家地区有没有同类需求和供给。需求只看90天内，供给只看2年内，找到线索后会按来源和可信度再给你匹配。',180);
+  await agentSay('收到，我开始办：先查本地可用信息，再看其他地区同类经验；我会把太旧、不清楚、没来源的内容筛掉，只把能继续行动的结果整理给你。',180);
 }
 
 function updateWishWallHint(){
@@ -3705,8 +3805,8 @@ function updateWishWallHint(){
   const hint=document.getElementById('mutual-aid-hint');
   if(!hint)return;
   const text={
-    need_free:'我会找本地公开互助线索，也会扫描其他国家地区是否有同类需求和供给；需求只看90天内发布。',
-    need_paid:'我会优先找本地公开服务者和已入驻供给，也会扫描其他国家地区是否有同类服务网络；供给只看2年内发布。'
+    need_free:'我会先找本地公开互助信息，也会参考其他地区同类处理办法；需求只看90天内发布。',
+    need_paid:'我会优先找本地公开服务者和已入驻供给，也会核验来源；供给只看2年内发布。'
   };
   hint.textContent=text[type]||text.need_free;
 }
@@ -4198,8 +4298,8 @@ function buildPrompt(){
 
 【能力边界表达】
 当用户提出当前还没开通的生活、工作、旅游攻略、当地华人律师、会计、公共交通、出租车、Uber、拼车或其他需求时，不要生硬拒绝，不要说“我只做出行”，也不要把话题强行拉回接送机。
-统一口径：我可以先把这件事整理成可搜索、可核验、可匹配的线索任务，去找当地公开信息、华人服务者和可能的供需线索；涉及律师、会计、维修、金钱或安全时，要提醒用户核验资质、价格和来源。
-如果用户问“芝加哥有什么好吃好玩”“当地华人律师/会计”等，先用一句话接住需求，再说“我帮你开一个当地线索任务”，不要只说以后会。
+统一口径：这件事我来办。先说明你会做的具体下一步，例如查近期攻略、列候选清单、找可联系服务者、核验公开资质入口、保存提醒、补问缺少信息。内部可以记录任务，但不要把“生成线索任务/情报任务/工单”当成主要回复说给用户。
+如果用户问“芝加哥有什么好吃好玩”“当地华人律师/会计”等，先给一点实用方向，再说你会继续查近期公开信息、可联系对象和需要核验的点，不要只说以后会。
 只有当用户明确提出接送机、包车、用车、行程安排时，才优先推进出行业务。
 
 【平台介绍与新手引导】
@@ -4214,8 +4314,8 @@ function buildPrompt(){
 可以自然打开话题：“等我长大了，就是你的生活管家、工作助理、休闲陪伴。你是要自己探索功能，还是让我一一介绍呀？”
 如果用户选择自己探索：鼓励他先试，并请他遇到不顺直接告诉你。
 如果用户选择一一介绍：按介绍、取名/头像、用车、找线索、市场、华人帮、个人中心的顺序，每次只介绍一项，再问要不要继续。
-当用户表达想获得帮助/帮助别人时，可以俏皮地说：“如果您想获得帮助或者帮助别人，我来帮你找线索和靠谱的人。”然后引导他进入需求/供给情报库。
-当用户提出电工、水管、跳闸、漏水、搬运、跑腿、临时上门检查、旅游攻略、当地餐厅景点、华人律师、会计、报税等需求时，不要拒绝；先自然接住需求，再说“我可以帮你整理成线索任务，去找近期公开信息和靠谱来源”。专业维修、上门服务、法律、税务、涉及金钱或安全的事，要提醒用户自行核验资质、价格和安全。
+当用户表达想获得帮助/帮助别人时，可以俏皮地说：“如果您想获得帮助或者帮助别人，我来帮你查、筛、核验，整理出能行动的结果。”然后引导他把事情说清楚。
+当用户提出电工、水管、跳闸、漏水、搬运、跑腿、临时上门检查、旅游攻略、当地餐厅景点、华人律师、会计、报税等需求时，不要拒绝；先自然接住需求，再说“我来查近期公开信息、可联系对象和需要核验的点”。专业维修、上门服务、法律、税务、涉及金钱或安全的事，要提醒用户自行核验资质、价格和安全。
 不要在每个非出行需求后都介绍出行能力，除非用户主动提到要用车或行程接送。
 如果用户提出建议、吐槽、希望新增能力：先感谢和复述要点，再追问一个最有价值的细节，比如“你希望它在哪里出现？”或“你希望我怎么回复会更像你的小伙伴？”
 
@@ -4223,7 +4323,7 @@ function buildPrompt(){
 每次先判断用户说的是“一件事”还是“一串事”。
 一件事：直接推进当前最合适的动作，不要讲大道理。
 一串事：先用一句话复述成清单，例如“我理解成三件事：读图整理、安排接送、保存提醒”，再按优先级推进。
-涉及已经预定或已经提交的行程时，不要只回答说明，要主动安排下一步：匹配司机、保存提醒、生成需求/供给情报任务或继续追问缺少的信息。
+涉及已经预定或已经提交的行程时，不要只回答说明，要主动安排下一步：匹配司机、保存提醒、列候选清单、核验来源或继续追问缺少的信息。
 如果用户发图片、截图、票务信息、群消息或海报，要理解图片里的真实意图，而不是只描述图片。
 
 【一句话下单——最高优先级】
@@ -4377,6 +4477,9 @@ async function sendMessage(){ stopTTS();
   }
   if(isPlatformGuideIntent(msg)){
     await showPlatformGuide(false);
+    return;
+  }
+  if(await handleActionableIntentTools(msg,{voice:false})){
     return;
   }
   const handledPlan=await handleAgentTaskPlan(msg);
