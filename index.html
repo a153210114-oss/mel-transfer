@@ -2863,7 +2863,7 @@ function detectOnboardingFeedbackIntent(text){
   if(!clean)return null;
   if(/自己.*(探索|看看|试试|玩)|我自己来|不用介绍|先看看|随便逛/i.test(clean))return 'explore';
   if(/一一介绍|逐个介绍|你介绍|带我.*(看看|了解|使用)|教我|怎么用|介绍.*功能/i.test(clean))return 'guide';
-  if(/(想|需要|我要).*(获得帮助|求助|帮别人|帮助别人|做志愿者)|去.*心愿墙|心愿墙.*看看|电工|水管|维修|跳闸|断电|漏水|修理|上门检查/i.test(clean))return 'wishwall';
+  if(/(想|需要|我要).*(获得帮助|求助|帮别人|帮助别人|做志愿者)|去.*心愿墙|心愿墙.*看看|电工|水管|维修|跳闸|断电|漏水|修理|上门检查|律师|会计|报税|税务|当地.*华人|好吃|好玩|攻略|推荐/i.test(clean))return 'wishwall';
   if(/我要出行|想出行|出行.*(看看|介绍|试试)|提供服务|成为服务者|想接单/i.test(clean))return 'travel';
   if(/建议|反馈|吐槽|不好用|希望|想要|需求|意见|可以.*改|应该.*改/i.test(clean))return 'feedback';
   return null;
@@ -2882,8 +2882,16 @@ async function handleOnboardingFeedbackIntent(text){
     return true;
   }
   if(intent==='wishwall'){
-    openMutualAidCommunity(buildWishWallDraft(text));
-    await agentSay('这类需求不能只贴公告。我先帮你变成需求情报任务，去找公开线索、服务者和附近可能能帮忙的人。',120);
+    const draft=buildWishWallDraft(text);
+    openMutualAidCommunity(draft);
+    const category=draft.category||'这类需求';
+    if(/旅游攻略|吃喝玩乐/i.test(category)){
+      await agentSay('这个可以，我先帮你开一个当地吃喝玩乐线索任务，去找公开推荐和靠谱的华人本地信息。',120);
+    }else if(/专业服务|律师|会计/i.test(category)){
+      await agentSay('这个我来整理成专业服务线索任务，先找当地公开信息和华人服务者；律师、会计这类一定要再核验资质和来源。',120);
+    }else{
+      await agentSay('这类需求不能只贴公告。我先帮你变成需求情报任务，去找公开线索、服务者和附近可能能帮忙的人。',120);
+    }
     return true;
   }
   if(intent==='travel'){
@@ -3063,7 +3071,7 @@ async function handleDirectFeatureIntent(text, options={}){
 
 const TASK_PLAN_DEFS=[
   {key:'ride',label:'安排出行',pattern:/接机|送机|去机场|从机场|包车|用车|司机|车|行程|出发|到达|航班|火车|票|订票|旅行|旅游/i},
-  {key:'wish',label:'生成需求/供给情报任务',pattern:/求助|帮忙|找人|有没有.*(朋友|人)|认识.*人|电工|水管|维修|跳闸|断电|漏水|搬运|跑腿|Doncaster|慕尼黑|Munich/i},
+  {key:'wish',label:'生成需求/供给情报任务',pattern:/求助|帮忙|找人|找当地|有没有.*(朋友|人)|认识.*人|电工|水管|维修|跳闸|断电|漏水|搬运|跑腿|律师|会计|报税|税务|华人.*(律师|会计|服务)|好吃|好玩|攻略|推荐|Chicago|芝加哥|Doncaster|慕尼黑|Munich/i},
   {key:'reminder',label:'保存日程提醒',pattern:/提醒|闹钟|日程|到点|别忘|记得|几点叫我|出发前|提前/i},
   {key:'image',label:'读图整理信息',pattern:/截图|图片|照片|拍照|相机|票据|二维码|海报/i},
   {key:'share',label:'分享给朋友',pattern:/分享|转发|发给朋友|二维码|邀请/i},
@@ -3495,14 +3503,66 @@ function intelConfidenceLabel(item={}){
 function buildWishWallDraft(text=''){
   const clean=String(text||'').trim();
   if(!clean)return {};
+  const city=intelCityFromText(clean);
+  const professional=intelProfessionalCategory(clean);
+  if(professional){
+    return {
+      wishType:'need_paid',
+      category:professional,
+      city:city||currentRegion.city||currentRegion.country,
+      text:clean,
+      budget:'可商量'
+    };
+  }
+  if(/好吃|好玩|攻略|景点|餐厅|美食|度假|旅游推荐|去哪玩|Chicago|芝加哥/i.test(clean)){
+    return {
+      wishType:'need_paid',
+      category:'旅游攻略 · 吃喝玩乐',
+      city:city||currentRegion.city||currentRegion.country,
+      text:clean,
+      budget:'可商量'
+    };
+  }
   const urgentLocalHelp=/(电工|水管|维修|跳闸|断电|漏水|修理|上门检查|家里|Doncaster|Box Hill|Glen Waverley|Clayton|Melbourne)/i.test(clean);
   if(!urgentLocalHelp)return {text:clean};
   return {
     wishType:'need_paid',
     category:/(电工|跳闸|断电)/i.test(clean)?'维修上门 · 电工':'维修上门',
+    city:city||currentRegion.city||currentRegion.country,
     text:clean,
     budget:'可商量'
   };
+}
+
+function intelCityFromText(text=''){
+  const clean=String(text||'');
+  const cityMap=[
+    [/芝加哥|Chicago/i,'Chicago'],
+    [/纽约|New York/i,'New York'],
+    [/洛杉矶|Los Angeles|LA\b/i,'Los Angeles'],
+    [/旧金山|San Francisco/i,'San Francisco'],
+    [/西雅图|Seattle/i,'Seattle'],
+    [/多伦多|Toronto/i,'Toronto'],
+    [/温哥华|Vancouver/i,'Vancouver'],
+    [/伦敦|London/i,'London'],
+    [/慕尼黑|Munich/i,'Munich'],
+    [/奥克兰|Auckland/i,'Auckland'],
+    [/新加坡|Singapore/i,'Singapore'],
+    [/悉尼|Sydney/i,'Sydney'],
+    [/墨尔本|Melbourne/i,'Melbourne']
+  ];
+  const hit=cityMap.find(([pattern])=>pattern.test(clean));
+  return hit?hit[1]:'';
+}
+
+function intelProfessionalCategory(text=''){
+  const clean=String(text||'');
+  const hasLawyer=/律师|法律|合同|纠纷|诉讼/i.test(clean);
+  const hasAccountant=/会计|报税|退税|税务|做账/i.test(clean);
+  if(hasLawyer&&hasAccountant)return '专业服务 · 律师/会计';
+  if(hasLawyer)return '专业服务 · 律师';
+  if(hasAccountant)return '专业服务 · 会计';
+  return '';
 }
 
 function renderIntelQueryPreview(draft={}){
@@ -3550,7 +3610,7 @@ function openMutualAidCommunity(draft={}){
         <div id="mutual-aid-hint" style="font-size:11px;color:rgba(255,255,255,0.35);line-height:1.6;margin-top:6px;">华伴会生成公开搜索任务，记录来源和可信度；不会自动去网站注册账号。</div>
         <label>类别</label>
         <select id="mutual-aid-category">
-          ${['旅游转让','拼团补位','票券/名额转让','维修上门 · 电工','维修上门','本地找人','接送陪同','翻译沟通','临时跑腿','新到本地','其他互助'].map(item=>`<option value="${item}" ${draftCategory===item?'selected':''}>${item}</option>`).join('')}
+          ${['旅游攻略 · 吃喝玩乐','旅游转让','拼团补位','票券/名额转让','专业服务 · 律师/会计','专业服务 · 律师','专业服务 · 会计','维修上门 · 电工','维修上门','本地找人','接送陪同','翻译沟通','临时跑腿','新到本地','其他互助'].map(item=>`<option value="${item}" ${draftCategory===item?'selected':''}>${item}</option>`).join('')}
         </select>
         <label>城市</label>
         <input id="mutual-aid-city" value="${companionEscape(city)}" placeholder="所在城市">
@@ -4100,9 +4160,10 @@ function buildPrompt(){
 可以偶尔自然表现陪伴感，但不要每句话都提等级、亲密度或养成，也不要影响用户办事效率。
 
 【能力边界表达】
-当用户提出当前还没开通的生活、工作、公共交通、出租车、Uber、拼车或其他需求时，不要生硬拒绝，不要说“我只做出行”。
-统一口径：我现在还是小朋友，先当你的小管家，帮您定个车、整理出行需求；以后我会有更多本领，当好你生活中的管家、工作上的助理。
-然后给当前能做的一步：帮用户登记用车需求、整理行程、记录生活/工作需求，或提示会后续开放。
+当用户提出当前还没开通的生活、工作、旅游攻略、当地华人律师、会计、公共交通、出租车、Uber、拼车或其他需求时，不要生硬拒绝，不要说“我只做出行”，也不要把话题强行拉回接送机。
+统一口径：我可以先把这件事整理成可搜索、可核验、可匹配的线索任务，去找当地公开信息、华人服务者和可能的供需线索；涉及律师、会计、维修、金钱或安全时，要提醒用户核验资质、价格和来源。
+如果用户问“芝加哥有什么好吃好玩”“当地华人律师/会计”等，先用一句话接住需求，再说“我帮你开一个当地线索任务”，不要只说以后会。
+只有当用户明确提出接送机、包车、用车、行程安排时，才优先推进出行业务。
 
 【平台介绍与新手引导】
 当用户问“华伴是什么”“这个平台怎么用”“你能做什么”“怎么预约”时，先简短介绍：
@@ -4117,8 +4178,8 @@ function buildPrompt(){
 如果用户选择自己探索：鼓励他先试，并请他遇到不顺直接告诉你。
 如果用户选择一一介绍：按介绍、取名/头像、用车、找线索、市场、华人帮、个人中心的顺序，每次只介绍一项，再问要不要继续。
 当用户表达想获得帮助/帮助别人时，可以俏皮地说：“如果您想获得帮助或者帮助别人，我来帮你找线索和靠谱的人。”然后引导他进入需求/供给情报库。
-当用户提出电工、水管、跳闸、漏水、搬运、跑腿、临时上门检查等本地生活求助时，不要拒绝；先共情并说“这类需求不能只贴公告，我会帮你整理成可搜索、可核验、可匹配的情报任务”。专业维修、上门服务、涉及金钱或安全的事，要提醒用户自行核验资质、价格和安全。
-在找线索之后再介绍出行能力：“现在我最拿手的就是接送机、包车、旅游方面的业务，如果你要出行或者想提供服务，告诉我，让我来试试。”
+当用户提出电工、水管、跳闸、漏水、搬运、跑腿、临时上门检查、旅游攻略、当地餐厅景点、华人律师、会计、报税等需求时，不要拒绝；先共情并说“这类需求不能只贴公告，我会帮你整理成可搜索、可核验、可匹配的情报任务”。专业维修、上门服务、法律、税务、涉及金钱或安全的事，要提醒用户自行核验资质、价格和安全。
+不要在每个非出行需求后都介绍出行能力，除非用户主动提到要用车或行程接送。
 如果用户提出建议、吐槽、希望新增能力：先感谢和复述要点，再追问一个最有价值的细节，比如“你希望它在哪里出现？”或“你希望我怎么回复会更像你的小伙伴？”
 
 【Agent办事方式】
