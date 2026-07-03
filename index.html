@@ -3626,9 +3626,10 @@ function intelDirection(wishType){
 }
 
 function intelConfidenceLabel(item={}){
-  const source=item.source||'user_submitted';
+  const source=item.source||'agent_captured';
   const map={
     user_submitted:'用户提交 · 待匹配',
+    agent_captured:'AI捕捉 · 待处理',
     public_web:'公开网页 · 待核验',
     screenshot:'截图识别 · 待确认',
     supplier_profile:'服务者入驻 · 较高'
@@ -3719,42 +3720,44 @@ function renderIntelQueryPreview(draft={}){
 function openMutualAidCommunity(draft={}){
   const existing=document.getElementById('mutual-aid-modal');
   if(existing)existing.remove();
+  const draftText=String(draft.text||'').trim();
+  if(!draftText){
+    agentSay('你直接把事情告诉我就行，不用找入口、不用发帖。我会自己判断是查攻略、找人、找服务、核验资质，还是保存提醒。',120);
+    return;
+  }
+  startHiddenIntelTask(draft);
+}
+
+async function startHiddenIntelTask(draft={}){
   const city=currentRegion.city||currentRegion.country||'本地';
   const draftWishType=draft.wishType==='need_paid'?'need_paid':'need_free';
   const draftCategory=draft.category||'其他互助';
-  const draftText=draft.text||'';
+  const draftText=String(draft.text||'').trim();
   const draftBudget=draft.budget||'';
-  const modal=document.createElement('div');
-  modal.id='mutual-aid-modal';
-  modal.dataset.wishType=draftWishType;
-  modal.dataset.category=draftCategory;
-  modal.dataset.budget=draftBudget;
-  modal.className='modal-overlay show';
-  modal.onclick=(event)=>{if(event.target===modal)modal.remove();};
-  modal.innerHTML=`
-    <div class="modal-sheet">
-      <div class="modal-handle"></div>
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px;">
-        <div>
-          <div style="font-size:21px;font-weight:900;color:white;">交给华伴处理</div>
-          <div style="font-size:12px;color:rgba(255,255,255,0.45);margin-top:4px;">不用自己到处问，我来查、筛、核验，再整理给你</div>
-        </div>
-        <button onclick="document.getElementById('mutual-aid-modal')?.remove()" style="border:0;border-radius:10px;background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.72);padding:8px 12px;font:600 13px/1 inherit;cursor:pointer;">关闭</button>
-      </div>
-      <div class="mutual-aid-form">
-        <label>城市</label>
-        <input id="mutual-aid-city" value="${companionEscape(city)}" placeholder="所在城市">
-        <label>你要解决什么事</label>
-        <textarea id="mutual-aid-text" placeholder="例如：Doncaster 家里一路电跳闸，想找附近靠谱电工上门检查。">${companionEscape(draftText)}</textarea>
-        <label>补充说明</label>
-        <input id="mutual-aid-budget" value="${companionEscape(draftBudget)}" placeholder="预算、时间、人数、偏好；没有可不填">
-        <label>联系方式</label>
-        <input id="mutual-aid-contact" placeholder="微信 / 手机 / 邮箱，仅用于匹配后联系">
-        <button onclick="submitMutualAidPost()" style="width:100%;margin-top:14px;padding:13px;background:rgba(0,200,150,0.24);border:1px solid rgba(0,200,150,0.36);border-radius:12px;color:white;font:800 14px/1 inherit;cursor:pointer;">交给华伴处理</button>
-      </div>
-      <div style="font-size:12px;color:rgba(255,255,255,0.42);line-height:1.7;margin-top:12px;">你不用选择流程，我会自动判断该查攻略、找人、找服务、核验资质，还是保存提醒。</div>
-    </div>`;
-  document.body.appendChild(modal);
+  const taskCity=draft.city||city;
+  const taskCategory=draft.category||inferIntelCategory(draftText);
+  const savedPost={
+    id:'aid-'+Date.now(),
+    wishType:draftWishType,
+    zone:wishTypeInfo(draftWishType).zone,
+    role:wishTypeInfo(draftWishType).role,
+    category:taskCategory,
+    city:taskCity,
+    text:draftText,
+    budget:draftBudget,
+    contact:betaContact(),
+    source:'agent_captured',
+    direction:intelDirection(draftWishType),
+    freshnessPolicy:intelFreshnessPolicy(intelDirection(draftWishType)),
+    searchQueries:buildIntelSearchQueries({city:taskCity,category:taskCategory,text:draftText,wishType:draftWishType,direction:intelDirection(draftWishType)}),
+    globalTargets:globalIntelTargets(),
+    confidence:'pending_review',
+    createdAt:new Date().toISOString(),
+    status:'open'
+  };
+  syncWishWallPost(savedPost).catch(e=>console.warn('intel task sync failed',e));
+  rewardCompanionAction('wish_wall');
+  await agentSay('收到，这件事我接住了。我会先把需求整理成后台任务，再去找公开线索、可联系的人和需要核验的来源；如果缺少关键信息，我再回来问你。',120);
 }
 
 async function submitMutualAidPost(){
