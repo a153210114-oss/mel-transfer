@@ -1345,7 +1345,7 @@ async function loadPassengers() {
   tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:30px;">加载中...</td></tr>';
   try {
     const [contacts, trips] = await Promise.all([
-      supaFetch(`contacts?tenant_id=eq.${TENANT_ID}&order=updated_at.desc&limit=100`),
+      supaFetch(`contacts?tenant_id=eq.${TENANT_ID}&order=created_at.desc&limit=100`),
       supaFetch(`trips?tenant_id=eq.${TENANT_ID}&select=passenger_phone,created_at&order=created_at.desc`)
     ]);
 
