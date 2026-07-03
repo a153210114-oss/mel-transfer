@@ -2635,7 +2635,7 @@ function detectOnboardingFeedbackIntent(text){
   if(!clean)return null;
   if(/自己.*(探索|看看|试试|玩)|我自己来|不用介绍|先看看|随便逛/i.test(clean))return 'explore';
   if(/一一介绍|逐个介绍|你介绍|带我.*(看看|了解|使用)|教我|怎么用|介绍.*功能/i.test(clean))return 'guide';
-  if(/(想|需要|我要).*(获得帮助|求助|帮别人|帮助别人|做志愿者)|去.*心愿墙|心愿墙.*看看/i.test(clean))return 'wishwall';
+  if(/(想|需要|我要).*(获得帮助|求助|帮别人|帮助别人|做志愿者)|去.*心愿墙|心愿墙.*看看|电工|水管|维修|跳闸|断电|漏水|修理|上门检查/i.test(clean))return 'wishwall';
   if(/我要出行|想出行|出行.*(看看|介绍|试试)|提供服务|成为服务者|想接单/i.test(clean))return 'travel';
   if(/建议|反馈|吐槽|不好用|希望|想要|需求|意见|可以.*改|应该.*改/i.test(clean))return 'feedback';
   return null;
@@ -2654,8 +2654,8 @@ async function handleOnboardingFeedbackIntent(text){
     return true;
   }
   if(intent==='wishwall'){
-    openMutualAidCommunity();
-    await agentSay('走呀。如果您想获得帮助或者帮助别人，咱去心愿墙看看呗。',120);
+    openMutualAidCommunity(buildWishWallDraft(text));
+    await agentSay('这就是心愿墙最适合接住的需求。我先帮你放到“收费服务区”的本地帮办里，方便附近会电工维修的人来接。',120);
     return true;
   }
   if(intent==='travel'){
@@ -2784,7 +2784,7 @@ const FEATURE_INTENTS=[
   {key:'ride-menu',label:'用车',pattern:/打开.*用车|进入.*用车|用车.*(菜单|功能|入口)/i},
   {key:'travel-menu',label:'旅游',pattern:/打开.*旅游|进入.*旅游|旅游.*(菜单|功能|入口)/i},
   {key:'help-menu',label:'华人帮',pattern:/华人帮|打开.*帮|帮.*(菜单|功能|入口)/i},
-  {key:'mutual-aid',label:'心愿墙',pattern:/心愿墙|互助|免费帮助|志愿者|愿意支付|求助|出售.*(物品|服务)|免费服务区|收费服务区/i},
+  {key:'mutual-aid',label:'心愿墙',pattern:/心愿墙|互助|免费帮助|志愿者|愿意支付|求助|出售.*(物品|服务)|免费服务区|收费服务区|电工|水管|维修|跳闸|断电|漏水|修理|上门检查|找人帮忙/i},
   {key:'market',label:'市场',pattern:/打开.*市场|去.*市场|逛.*市场|二手|买东西|卖东西|商城/i},
   {key:'tour-charter',label:'包车游',pattern:/包车游|旅游包车|旅行包车/i},
   {key:'group-tour',label:'拼团',pattern:/拼团|跟团|一起玩|组团/i},
@@ -2826,7 +2826,7 @@ function detectDirectFeatureIntent(text){
 async function handleDirectFeatureIntent(text, options={}){
   const intent=detectDirectFeatureIntent(text);
   if(!intent)return false;
-  await openFeatureByKey(intent.key,intent.label,options);
+  await openFeatureByKey(intent.key,intent.label,{...options,sourceText:text});
   return true;
 }
 
@@ -2994,8 +2994,8 @@ async function openFeatureByKey(key,label,options={}){
   }
   if(key==='mutual-aid'){
     rewardCompanionAction('wish_wall');
-    openMutualAidCommunity();
-    await say('心愿墙打开了。你可以选择免费服务区或收费服务区，把想求助、能帮忙、愿意支付或想出售的事写上去。');
+    openMutualAidCommunity(buildWishWallDraft(options.sourceText||''));
+    await say('心愿墙打开了。这类本地维修、临时求助、愿意付费请人帮忙的事，都可以先发在这里。');
     return;
   }
   if(key==='profile'){
@@ -3064,6 +3064,19 @@ function wishTypeInfo(type){
   return WISH_TYPES[type]||WISH_TYPES.need_free;
 }
 
+function buildWishWallDraft(text=''){
+  const clean=String(text||'').trim();
+  if(!clean)return {};
+  const urgentLocalHelp=/(电工|水管|维修|跳闸|断电|漏水|修理|上门检查|家里|Doncaster|Box Hill|Glen Waverley|Clayton|Melbourne)/i.test(clean);
+  if(!urgentLocalHelp)return {text:clean};
+  return {
+    wishType:'need_paid',
+    category:/(电工|跳闸|断电)/i.test(clean)?'维修上门 · 电工':'维修上门',
+    text:clean,
+    budget:'可商量'
+  };
+}
+
 function renderWishPosts(posts, zone, fallbackCity){
   const items=posts.filter(post=>wishTypeInfo(post.wishType||post.type).zone===zone);
   if(!items.length)return '<div style="padding:14px;text-align:center;color:rgba(255,255,255,0.32);font-size:12px;">暂无内容</div>';
@@ -3081,11 +3094,15 @@ function renderWishPosts(posts, zone, fallbackCity){
   }).join('');
 }
 
-function openMutualAidCommunity(){
+function openMutualAidCommunity(draft={}){
   const existing=document.getElementById('mutual-aid-modal');
   if(existing)existing.remove();
   const posts=readMutualAidPosts();
   const city=currentRegion.city||currentRegion.country||'本地';
+  const draftWishType=draft.wishType||'need_free';
+  const draftCategory=draft.category||'其他互助';
+  const draftText=draft.text||'';
+  const draftBudget=draft.budget||'';
   const freePosts=renderWishPosts(posts,'free',city);
   const paidPosts=renderWishPosts(posts,'paid',city);
   const modal=document.createElement('div');
@@ -3105,26 +3122,22 @@ function openMutualAidCommunity(){
       <div class="mutual-aid-form">
         <label>性质</label>
         <select id="mutual-aid-wish-type" onchange="updateWishWallHint()">
-          <option value="need_free">我希望得到免费帮助</option>
-          <option value="need_paid">我愿意支付请人帮忙</option>
-          <option value="offer_free">我是志愿者，可以免费帮忙</option>
-          <option value="sell">我出售物品或服务</option>
+          <option value="need_free" ${draftWishType==='need_free'?'selected':''}>我希望得到免费帮助</option>
+          <option value="need_paid" ${draftWishType==='need_paid'?'selected':''}>我愿意支付请人帮忙</option>
+          <option value="offer_free" ${draftWishType==='offer_free'?'selected':''}>我是志愿者，可以免费帮忙</option>
+          <option value="sell" ${draftWishType==='sell'?'selected':''}>我出售物品或服务</option>
         </select>
         <div id="mutual-aid-hint" style="font-size:11px;color:rgba(255,255,255,0.35);line-height:1.6;margin-top:6px;">免费服务区：适合临时指路、简单陪同、轻量翻译、邻里互助。</div>
         <label>类别</label>
         <select id="mutual-aid-category">
-          <option value="接送陪同">接送陪同</option>
-          <option value="翻译沟通">翻译沟通</option>
-          <option value="临时跑腿">临时跑腿</option>
-          <option value="新到本地">新到本地</option>
-          <option value="其他互助">其他互助</option>
+          ${['维修上门 · 电工','维修上门','接送陪同','翻译沟通','临时跑腿','新到本地','其他互助'].map(item=>`<option value="${item}" ${draftCategory===item?'selected':''}>${item}</option>`).join('')}
         </select>
         <label>城市</label>
         <input id="mutual-aid-city" value="${companionEscape(city)}" placeholder="所在城市">
         <label>说明</label>
-        <textarea id="mutual-aid-text" placeholder="简单说清楚你的心愿、能提供的帮助，或出售的物品/服务。"></textarea>
+        <textarea id="mutual-aid-text" placeholder="简单说清楚你的心愿、能提供的帮助，或出售的物品/服务。">${companionEscape(draftText)}</textarea>
         <label>预算/价格</label>
-        <input id="mutual-aid-budget" placeholder="免费可留空；愿意支付或出售时填写预算/价格">
+        <input id="mutual-aid-budget" value="${companionEscape(draftBudget)}" placeholder="免费可留空；愿意支付或出售时填写预算/价格">
         <label>联系方式</label>
         <input id="mutual-aid-contact" placeholder="微信 / 手机 / 邮箱，仅用于撮合联系">
         <button onclick="submitMutualAidPost()" style="width:100%;margin-top:14px;padding:13px;background:rgba(0,200,150,0.24);border:1px solid rgba(0,200,150,0.36);border-radius:12px;color:white;font:800 14px/1 inherit;cursor:pointer;">发布到心愿墙</button>
@@ -3138,6 +3151,7 @@ function openMutualAidCommunity(){
       </div>
     </div>`;
   document.body.appendChild(modal);
+  updateWishWallHint();
 }
 
 async function submitMutualAidPost(){
@@ -3424,6 +3438,7 @@ function buildPrompt(){
 如果用户选择自己探索：鼓励他先试，并请他遇到不顺直接告诉你。
 如果用户选择一一介绍：按介绍、取名/头像、用车、心愿墙、市场、华人帮、个人中心的顺序，每次只介绍一项，再问要不要继续。
 当介绍到心愿墙，或者用户表达想获得帮助/帮助别人时，可以俏皮地说：“如果您想获得帮助或者帮助别人，咱去心愿墙看看呗。”然后引导他进入心愿墙。
+当用户提出电工、水管、跳闸、漏水、搬运、跑腿、临时上门检查等本地生活求助时，不要拒绝；先共情并说“这就是心愿墙适合接住的需求”，引导发布到收费服务区或免费服务区。专业维修、上门服务、涉及金钱或安全的事，要提醒用户自行核验资质、价格和安全。
 在心愿墙之后再介绍出行能力：“现在我最拿手的就是接送机、包车、旅游方面的业务，如果你要出行或者想提供服务，告诉我，让我来试试。”
 如果用户提出建议、吐槽、希望新增能力：先感谢和复述要点，再追问一个最有价值的细节，比如“你希望它在哪里出现？”或“你希望我怎么回复会更像你的小伙伴？”
 
