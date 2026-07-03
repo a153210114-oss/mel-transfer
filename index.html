@@ -1691,11 +1691,10 @@ function updateComposerAction(){
   const action=document.getElementById('composer-action');
   if(!input||!action)return;
   const hasText=inputMode==='text'&&input.value.trim().length>0;
-  const hasMenu=readDiscoveredMenuKeys().length>0;
-  action.textContent=hasText?'发送':(hasMenu?'＋':'');
+  action.textContent=hasText?'发送':'＋';
   action.classList.toggle('ready',hasText);
-  action.style.visibility=(!hasText&&!hasMenu)?'hidden':'visible';
-  action.setAttribute('aria-label',hasText?'发送消息':'打开问过的事');
+  action.style.visibility='visible';
+  action.setAttribute('aria-label',hasText?'发送消息':'打开功能');
 }
 
 function handleComposerAction(){
@@ -1704,7 +1703,7 @@ function handleComposerAction(){
     closeMorePanel();
     sendMessage();
     updateComposerAction();
-  }else if(readDiscoveredMenuKeys().length){
+  }else{
     toggleMorePanel();
   }
 }
@@ -3288,17 +3287,17 @@ const BUSINESS_MODULES={
 };
 
 const CORE_TOOL_ITEMS=[
+  {key:'voice',icon:'🎙️',label:'语音'},
   {key:'camera',icon:'📷',label:'相机'},
   {key:'image',icon:'🖼️',label:'图片'},
-  {key:'payment',icon:'💳',label:'支付'},
+  {key:'reminder',icon:'⏰',label:'提醒'},
   {key:'intro',icon:'💬',label:'介绍'},
   {key:'profile',icon:'👤',label:'个人中心'},
-  {key:'region',icon:'📍',label:'定位'},
   {key:'share',icon:'🔗',label:'分享'},
-  {key:'reminder',icon:'⏰',label:'提醒'},
+  {key:'install',icon:'📱',label:'桌面'},
+  {key:'region',icon:'📍',label:'定位'},
   {key:'customize-agent',icon:'🎭',label:'定制AI'},
-  {key:'friends',icon:'👥',label:'交友'},
-  {key:'driver',icon:'🧑‍✈️',label:'司机入驻',driver:true},
+  {key:'payment',icon:'💳',label:'支付'},
 ];
 
 function businessModuleMenuItems(){
@@ -3319,12 +3318,7 @@ function runBusinessModule(key){
 }
 
 const MORE_MENU={
-  home:[
-    ...CORE_TOOL_ITEMS.slice(0,6),
-    ...businessModuleMenuItems(),
-    {key:'rental',icon:'🚙',label:'租车'},
-    ...CORE_TOOL_ITEMS.slice(6),
-  ]
+  home:[...CORE_TOOL_ITEMS]
 };
 
 const DISCOVERED_MENU_KEY='huaban_discovered_menu_keys';
@@ -3376,15 +3370,15 @@ function renderMoreMenu(category='home'){
   const back=document.getElementById('more-back');
   if(!grid||!title||!back)return;
   const module=BUSINESS_MODULES[category];
-  const menuItems=category==='home'?discoveredMenuItems():(module?.items||MORE_MENU[category]||[]);
-  const titles={home:'问过的事'};
+  const menuItems=category==='home'?MORE_MENU.home:(module?.items||MORE_MENU[category]||[]);
+  const titles={home:'功能'};
   title.textContent=titles[category]||'全部功能';
   if(module?.title)title.textContent=module.title;
   back.style.visibility=category==='home'?'hidden':'visible';
   grid.innerHTML=menuItems.length?menuItems.map(item=>`
     <button class="more-item${item.driver?' driver':''}" onclick="${item.category?`renderMoreMenu('${item.key}')`:`runMoreAction('${item.key}','${item.label}')`}">
       <span class="more-item-icon">${item.icon}</span><span>${item.label}</span>
-    </button>`).join(''):`<div style="grid-column:1/-1;text-align:center;color:#888;font-size:13px;line-height:1.7;padding:18px 8px;">你问过的功能会出现在这里。<br>现在不用找菜单，有事直接说。</div>`;
+    </button>`).join(''):`<div style="grid-column:1/-1;text-align:center;color:#888;font-size:13px;line-height:1.7;padding:18px 8px;">暂无可用功能</div>`;
 }
 
 function toggleMorePanel(){
@@ -3411,6 +3405,7 @@ function runMoreAction(key,label){
   if(runBusinessModule(key))return;
   rewardCompanionAction('try_feature');
   const serviceMap={pickup:'接机',dropoff:'送机',charter:'包车','tour-charter':'旅游包车','group-tour':'旅游拼团',rental:'租车',payment:'支付',friends:'交友',agency:'中介服务',translation:'翻译',lawyer:'律师',accountant:'会计','other-help':'华人帮办'};
+  if(key==='voice'){toggleMic();return;}
   if(key==='market'){window.location.href='plaza.html';return;}
   if(key==='driver'){window.location.href='driver-app.html';return;}
   if(key==='camera'){document.getElementById('camera-input')?.click();return;}
@@ -3419,6 +3414,7 @@ function runMoreAction(key,label){
   if(key==='profile'){openProfile();return;}
   if(key==='region'){changeRegion();return;}
   if(key==='share'){shareRefLink();return;}
+  if(key==='install'){showInstallPrompt(true);return;}
   if(key==='customize-agent'){openAgentCustomizer();return;}
   const activeKeys=['pickup','dropoff','charter','tour-charter','group-tour','rental','agency','translation','lawyer','accountant','other-help'];
   if(!activeKeys.includes(key)){
@@ -3472,6 +3468,16 @@ async function openFeatureByKey(key,label,options={}){
   if(key==='share'){
     shareRefLink();
     await say('分享入口打开了。你可以把华伴发给需要的人。');
+    return;
+  }
+  if(key==='voice'){
+    toggleMic();
+    await say('语音对话打开了。');
+    return;
+  }
+  if(key==='install'){
+    showInstallPrompt(true);
+    await say('我把添加到桌面的入口打开了。');
     return;
   }
   if(key==='reminder'){
