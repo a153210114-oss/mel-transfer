@@ -7,6 +7,10 @@
 - `AI_RECRUIT_SUPPLY_AGENT.md`：供应侧客服策略说明
 - `AI_RECRUIT_USER_AGENT.md`：用户侧客服策略说明
 - `recruitment_leads_schema.sql`：Supabase 招募线索表
+- `LD_01_search_result_routing.md`：搜索结果分流规则，区分直接入库和后台日常任务
+- `LD_01_daily_search_tasks_seed.sql`：不符合当前需求但有价值的后台日常搜索任务模板
+- `LD_01_melbourne_driver_supply_seed.sql`：墨尔本中文司机供给线索种子
+- `LD_01_melbourne_driver_supply_review.md`：墨尔本中文司机供给人工 review 表
 
 ## 需要的环境变量
 
@@ -70,4 +74,4 @@ POST /webhook/huaban/user-recruit
 - 工作流草案已是有效 JSON，但导入 n8n 后仍需根据你的 n8n 版本检查节点参数。
 - Supabase 表需要先执行 `recruitment_leads_schema.sql`。
 - 不要让 AI 自动群发私信；只能处理用户主动提交或授权的线索。
-
+- LD_01 搜索结果必须先分流：符合当前需求的直接进入线索库；不符合但有价值的进入 `ld_01_daily_task`，作为人工注册、人工登录核验、继续搜索或渠道补充任务。

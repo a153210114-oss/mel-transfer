@@ -1446,6 +1446,7 @@ function supplierBadge(status) {
 function supplierServiceText(lead) {
   const fields = lead.fields || {};
   if(lead.channel==='adoption'||lead.need_type==='adoption')return 'AI 领养';
+  if(lead.channel==='ld_01_daily_task'||lead.stage==='daily_search_task')return '日常搜索任务';
   if(lead.channel==='driver_supply_intel'||String(lead.need_type||'').startsWith('driver_supply_'))return '司机供给线索';
   if(lead.channel==='demand_supply_intel'||String(lead.need_type||'').startsWith('intel_'))return '需求/供给情报';
   if(lead.channel==='wish_wall'||String(lead.need_type||'').startsWith('wish_wall'))return '心愿墙';
@@ -1455,6 +1456,11 @@ function supplierServiceText(lead) {
 
 function supplierQualificationText(lead) {
   const fields = lead.fields || {};
+  if(lead.channel==='ld_01_daily_task'||lead.stage==='daily_search_task'){
+    const blocked = Array.isArray(fields.blocked_by) ? fields.blocked_by.join(' / ') : (fields.blocked_by || '待判断');
+    const reason = fields.task_reason || '继续人工搜索/核验';
+    return `${reason} · ${blocked}`;
+  }
   if(lead.channel==='driver_supply_intel'||String(lead.need_type||'').startsWith('driver_supply_')){
     const status = fields.verification_status || '待核验';
     const source = fields.source_platform || (Array.isArray(fields.source_platforms) ? fields.source_platforms.slice(0,2).join(' / ') : '');
