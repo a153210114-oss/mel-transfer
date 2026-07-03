@@ -251,13 +251,21 @@ body{
 body{background:var(--wx-bg);color:var(--wx-text);}
 .top-bar{height:56px;padding:4px 14px;background:var(--wx-top);border-bottom:1px solid var(--wx-line);}
 .top-bar{justify-content:center;position:relative;}
-.top-bar .brand-lockup{margin:0 auto;}
+.top-bar .brand-lockup{margin:0 auto;transition:transform .55s ease,left .55s ease,margin .55s ease;}
+body.companion-docked .top-bar .brand-lockup{position:absolute;left:12px;margin:0;transform:scale(.92);}
 #profile-btn.companion-entry{
   display:flex!important;position:absolute;right:10px;top:7px;height:42px;max-width:148px;
   align-items:center;gap:6px;padding:5px 8px!important;border:1px solid #dcdcdc!important;
   border-radius:21px!important;background:rgba(255,255,255,.86)!important;color:#333!important;
   box-shadow:0 2px 8px rgba(0,0,0,.06);font-size:12px!important;line-height:1.15;
 }
+#profile-btn.companion-entry.nudge{animation:companionEntryBounce .82s ease-in-out infinite;}
+#profile-btn.companion-entry.nudge::after{
+  content:'点我点我快点我呀';position:absolute;right:2px;top:48px;z-index:5;
+  background:#fff;color:#20a070;border:1px solid #dcdcdc;border-radius:12px 12px 2px 12px;
+  padding:6px 9px;font-size:11px;font-weight:900;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.12);
+}
+@keyframes companionEntryBounce{0%,100%{transform:translateY(0)}45%{transform:translateY(-7px)}70%{transform:translateY(2px)}}
 .companion-entry-avatar{width:28px;height:28px;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#f1fbf6;flex-shrink:0;}
 .companion-entry-avatar .agent-avatar-img{width:100%;height:100%;object-fit:cover;}
 .companion-entry-meta{display:flex;flex-direction:column;align-items:flex-start;min-width:0;}
@@ -311,6 +319,7 @@ body.theme-night{
 }
 body.theme-night .top-bar>button{color:#d7dce2!important;}
 body.theme-night #profile-btn.companion-entry{background:#242a31!important;border-color:#3a424c!important;color:#dce4ec!important;}
+body.theme-night #profile-btn.companion-entry.nudge::after{background:#242a31;border-color:#3a424c;color:#62ddb2;}
 body.theme-night .companion-entry-xp{color:#9aa7af;}
 body.theme-night .adoption-ticker{background:rgba(23,27,32,0.9);border-bottom-color:#2b3138;}
 body.theme-night .adoption-ticker-track{color:#aeb6bf;}
@@ -1374,19 +1383,20 @@ function renderCompanionBirthCard(floatToTop=false){
       setTimeout(()=>{
         card.remove();
         window._companionEntryHold=false;
-        updateCompanionEntryButton(true);
+        updateCompanionEntryButton(true,{nudge:true});
       },760);
     },2400);
   }
 }
 
-function updateCompanionEntryButton(forceShow=false){
+function updateCompanionEntryButton(forceShow=false, options={}){
   const btn=document.getElementById('profile-btn');
   if(!btn)return;
   if(window._companionEntryHold&&!forceShow)return;
   const shouldShow=forceShow||hasCustomAgentIdentity();
+  document.body.classList.toggle('companion-docked',shouldShow);
   if(!shouldShow){
-    btn.classList.remove('companion-entry');
+    btn.classList.remove('companion-entry','nudge');
     btn.innerHTML='◉';
     return;
   }
@@ -1394,6 +1404,7 @@ function updateCompanionEntryButton(forceShow=false){
   const level=companionLevel(state.xp);
   const levelIndex=COMPANION_LEVELS.indexOf(level)+1;
   btn.classList.add('companion-entry');
+  if(options.nudge)btn.classList.add('nudge');
   btn.setAttribute('aria-label','个人中心与华伴成长');
   btn.title='个人中心与华伴成长';
   btn.innerHTML=`
@@ -2347,6 +2358,7 @@ function updateAgentIdentityUI(){
   if(nm) nm.textContent = `${agentName} · ${agentTitle}`;
   if(profile) profile.textContent = `当前：${displayAgentAvatarText()} ${displayAgentName()} · ${displayAgentTitle()}`;
   if(splashLine) splashLine.textContent = agentName?agentName+'为您服务':'等你给我取名';
+  updateCompanionEntryButton();
 }
 
 function setAgentCustomization({name,title,emoji}){
@@ -5077,6 +5089,7 @@ function showResumeOrderCard(t){
 
 // ── 个人中心 ──
 async function openProfile(){ stopTTS();
+  document.getElementById('profile-btn')?.classList.remove('nudge');
   const panel = document.getElementById('profile-panel');
   panel.classList.add('open');
   const p = getPassenger();
