@@ -2315,7 +2315,16 @@ async function refreshApprovedDriverAccess(options={}){
   if(!p.phone)return null;
   const rows=await supaGet(`drivers?phone=eq.${encodeURIComponent(p.phone)}&tenant_id=eq.${TENANT_ID}&is_active=eq.true&select=id,full_name,phone,wechat_id,status,is_active,gender`);
   const driver=rows&&rows[0]?rows[0]:null;
-  if(!driver)return null;
+  if(!driver){
+    const cached=getDriver();
+    if(cached&&cached.phone===p.phone){
+      localStorage.removeItem('au_driver');
+      localStorage.removeItem('driver');
+    }
+    if(document.getElementById('more-panel')?.classList.contains('open'))renderMoreMenu();
+    refreshProfileDriverEntry(null);
+    return null;
+  }
   setLocal('au_driver',driver);
   localStorage.setItem('driver',JSON.stringify(driver));
   if(document.getElementById('more-panel')?.classList.contains('open'))renderMoreMenu();
@@ -2333,13 +2342,12 @@ function refreshProfileDriverEntry(driver=getDriver()){
   const sub=document.getElementById('profile-driver-sub');
   if(!entry||!title||!sub)return;
   if(driver&&driver.id&&driver.is_active){
+    entry.style.display='flex';
     title.textContent='进入司机端';
     sub.textContent='审核已通过，进入司机工作台';
     entry.style.borderColor='rgba(0,200,150,0.22)';
   }else{
-    title.textContent='司机端';
-    sub.textContent='审核通过后会自动开通';
-    entry.style.borderColor='rgba(255,255,255,0.07)';
+    entry.style.display='none';
   }
 }
 
@@ -3459,7 +3467,7 @@ function runMoreAction(key,label){
   const serviceMap={pickup:'接机',dropoff:'送机',charter:'包车','tour-charter':'旅游包车','group-tour':'旅游拼团',rental:'租车',payment:'支付',friends:'交友',agency:'中介服务',translation:'翻译',lawyer:'律师',accountant:'会计','other-help':'华人帮办'};
   if(key==='voice'){toggleMic();return;}
   if(key==='market'){window.location.href='plaza.html';return;}
-  if(key==='driver'){window.location.href='driver-app.html';return;}
+  if(key==='driver'){switchToDriver();return;}
   if(key==='camera'){document.getElementById('camera-input')?.click();return;}
   if(key==='image'){document.getElementById('image-input')?.click();return;}
   if(key==='intro'){showPlatformGuide(true);return;}
@@ -3543,8 +3551,13 @@ async function openFeatureByKey(key,label,options={}){
     return;
   }
   if(key==='driver'){
-    await say('好，我带你去司机入驻。');
-    setTimeout(()=>{window.location.href='driver-app.html';},500);
+    const driver=hasApprovedDriverAccess()?getDriver():await refreshApprovedDriverAccess({announce:false}).catch(()=>null);
+    if(!driver){
+      await say('你还没有开通司机端。后台审核通过后，我会自动把司机端加到功能区。');
+      return;
+    }
+    await say('好，我带你去司机端。');
+    setTimeout(()=>{switchToDriver();},500);
     return;
   }
   if(key==='camera'||key==='image'){
