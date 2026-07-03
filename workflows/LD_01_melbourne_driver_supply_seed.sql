@@ -1,0 +1,240 @@
+-- LD_01 Melbourne Chinese driver supply leads seed
+-- Source: manual research shared on 2026-07-04.
+-- Purpose: put public/partially verified driver supply leads into CEO review.
+-- Safety:
+-- - Do not auto-register third-party sites.
+-- - Do not treat masked phone numbers as verified contacts.
+-- - Contact only manually reviewed leads.
+
+insert into public.beta_leads (
+  id,
+  tenant_id,
+  lead_type,
+  channel,
+  name,
+  contact,
+  city,
+  country,
+  status,
+  stage,
+  need_type,
+  message,
+  score,
+  next_action,
+  fields
+) values
+(
+  '10000000-0000-4000-8000-000000000101',
+  '00000000-0000-0000-0000-000000000001',
+  'supply',
+  'driver_supply_intel',
+  'Bob / 奥迪Q7接送',
+  'phone:0433140288',
+  'Melbourne',
+  'Australia',
+  'new',
+  'ld_01_ceo_review',
+  'driver_supply_verified_contact',
+  '墨尔本中文司机供给线索：全新奥迪Q7豪华7座四驱SUV接送。公开标题中带完整电话，可人工联系核验。',
+  'A',
+  'manual_contact_and_qualification_check',
+  jsonb_build_object(
+    'event','ld_01_driver_supply_seed',
+    'lead_library','melbourne_driver_supply_20260704',
+    'verification_status','verified_contact_from_public_listing_title',
+    'source_platform','今日墨尔本 meltoday.com',
+    'service_types',jsonb_build_array('机场接送','包车','豪华7座'),
+    'vehicle','Audi Q7 7-seat SUV',
+    'public_contact','0433140288',
+    'compliance_note','公开标题中出现完整电话；仍需人工确认身份、资质、车辆和保险。'
+  )
+),
+(
+  '10000000-0000-4000-8000-000000000102',
+  '00000000-0000-0000-0000-000000000001',
+  'supply',
+  'driver_supply_intel',
+  'BMC 孙先生 / 百斯特墨尔本专车',
+  'phone:0458566666; wechat:692878923',
+  'Melbourne',
+  'Australia',
+  'new',
+  'ld_01_ceo_review',
+  'driver_supply_verified_contact',
+  '墨尔本中文司机/车队供给线索：7-8座商务车、本地注册用车公司、安全准时；疑似百斯特墨尔本专车。',
+  'A',
+  'manual_contact_and_qualification_check',
+  jsonb_build_object(
+    'event','ld_01_driver_supply_seed',
+    'lead_library','melbourne_driver_supply_20260704',
+    'verification_status','verified_contact_from_public_listing',
+    'source_platform','今日墨尔本 meltoday.com',
+    'service_types',jsonb_build_array('机场接送','包车','商务车'),
+    'public_contact','0458566666',
+    'wechat','692878923',
+    'compliance_note','公开资料有电话和微信；需人工确认营业主体、保险、司机资质和合作意愿。'
+  )
+),
+(
+  '10000000-0000-4000-8000-000000000103',
+  '00000000-0000-0000-0000-000000000001',
+  'supply',
+  'driver_supply_intel',
+  'pauljiang / 15年老司机',
+  'wechat:pauljiang258',
+  'Melbourne',
+  'Australia',
+  'new',
+  'ld_01_ceo_review',
+  'driver_supply_verified_contact',
+  '墨尔本中文司机供给线索：15年老司机，微信公开可联系。',
+  'A',
+  'manual_contact_and_qualification_check',
+  jsonb_build_object(
+    'event','ld_01_driver_supply_seed',
+    'lead_library','melbourne_driver_supply_20260704',
+    'verification_status','verified_wechat_from_public_listing',
+    'source_platform','今日墨尔本 meltoday.com',
+    'service_types',jsonb_build_array('机场接送','包车','旅游'),
+    'wechat','pauljiang258',
+    'compliance_note','公开资料有微信；需人工确认车辆、保险、可服务范围和价格。'
+  )
+),
+(
+  '10000000-0000-4000-8000-000000000104',
+  '00000000-0000-0000-0000-000000000001',
+  'supply',
+  'driver_supply_intel',
+  'FIT Travel Australia',
+  'source:https://www.fittravel.com.au/sc/product/48-car-rental-mel/',
+  'Melbourne',
+  'Australia',
+  'new',
+  'ld_01_ceo_review',
+  'driver_supply_company_source',
+  '澳洲/新西兰华人包车老字号，公开资料称运营15年以上、约20-60辆车、30+国语粤语英语导游；潜在竞品或合作对象。',
+  'B',
+  'research_company_partnership_or_competitor',
+  jsonb_build_object(
+    'event','ld_01_driver_supply_seed',
+    'lead_library','melbourne_driver_supply_20260704',
+    'verification_status','public_company_page',
+    'source_platform','company_website',
+    'source_url','https://www.fittravel.com.au/sc/product/48-car-rental-mel/',
+    'service_types',jsonb_build_array('包车','导游','旅游'),
+    'compliance_note','公司级线索，先做竞品/合作研究，不直接当个体司机招募。'
+  )
+),
+(
+  '10000000-0000-4000-8000-000000000105',
+  '00000000-0000-0000-0000-000000000001',
+  'supply',
+  'driver_supply_intel',
+  'Allcarbooking 墨尔本豪华专车',
+  'source:public_web_search',
+  'Melbourne',
+  'Australia',
+  'new',
+  'ld_01_ceo_review',
+  'driver_supply_company_source',
+  '墨尔本豪华专车/机场接送/旅游/商务线索；需进一步核验公开联系方式和合作可能。',
+  'B',
+  'research_company_contact',
+  jsonb_build_object(
+    'event','ld_01_driver_supply_seed',
+    'lead_library','melbourne_driver_supply_20260704',
+    'verification_status','public_web_needs_verification',
+    'source_platform','public_web_search',
+    'service_types',jsonb_build_array('豪华专车','机场接送','旅游','商务'),
+    'compliance_note','未在本批资料中确认联系方式；需公开页面核验。'
+  )
+),
+(
+  '10000000-0000-4000-8000-000000000106',
+  '00000000-0000-0000-0000-000000000001',
+  'supply',
+  'driver_supply_intel',
+  '8pig 个体司机挂靠渠道',
+  'source:8pig listing',
+  'Melbourne',
+  'Australia',
+  'new',
+  'ld_01_ceo_review',
+  'driver_supply_channel_source',
+  '8pig平台有个体司机挂靠接单，价格样例：豪华5座约¥330、8座奔驰约¥478起；适合作为司机供给侧抓取渠道。',
+  'B',
+  'add_to_ld_01_source_matrix',
+  jsonb_build_object(
+    'event','ld_01_driver_supply_seed',
+    'lead_library','melbourne_driver_supply_20260704',
+    'verification_status','channel_source_needs_crawl',
+    'source_platform','8pig',
+    'service_types',jsonb_build_array('机场接送','个体司机','豪华车'),
+    'compliance_note','作为渠道源，不直接联系；后续只抓公开可访问信息。'
+  )
+),
+(
+  '10000000-0000-4000-8000-000000000107',
+  '00000000-0000-0000-0000-000000000001',
+  'supply',
+  'driver_supply_intel',
+  '今日墨尔本接机/代驾板块',
+  'source:meltoday.com',
+  'Melbourne',
+  'Australia',
+  'new',
+  'ld_01_source_matrix',
+  'driver_supply_channel_source',
+  '今日墨尔本接机/代驾板块可正常抓取部分列表；详情页电话默认打码，需人工登录核验显示电话。',
+  'A',
+  'add_to_ld_01_source_matrix',
+  jsonb_build_object(
+    'event','ld_01_driver_supply_seed',
+    'lead_library','melbourne_driver_supply_20260704',
+    'verification_status','source_verified_but_contacts_masked',
+    'source_platform','今日墨尔本 meltoday.com',
+    'public_access','listing_page_accessible',
+    'blocked_fields',jsonb_build_array('masked_phone_in_detail_pages'),
+    'compliance_note','不要自动注册或绕过登录；只记录公开列表，登录显示电话需人工账号和人工核验。'
+  )
+),
+(
+  '10000000-0000-4000-8000-000000000108',
+  '00000000-0000-0000-0000-000000000001',
+  'supply',
+  'driver_supply_intel',
+  'LD_01 中文司机供给渠道矩阵',
+  'source:go2au.net; yeeyi.com; bbkz.com; oursteps.com.au; Facebook group',
+  'Melbourne',
+  'Australia',
+  'new',
+  'ld_01_source_matrix',
+  'driver_supply_channel_source',
+  '候选抓取渠道：来澳网go2au、yeeyi澳洲版、背包客栈墨尔本工作机会、新足迹招工找工、Facebook群Melbourne VIC 墨爾本工作資訊。',
+  'B',
+  'add_to_ld_01_source_matrix',
+  jsonb_build_object(
+    'event','ld_01_driver_supply_seed',
+    'lead_library','melbourne_driver_supply_20260704',
+    'verification_status','channel_candidates',
+    'source_platforms',jsonb_build_array('go2au.net','yeeyi.com','bbkz.com','oursteps.com.au','Facebook group: Melbourne VIC 墨爾本工作資訊'),
+    'service_types',jsonb_build_array('招聘','司机','接送机','包车','求职'),
+    'compliance_note','后续只抓公开页面；Facebook等需要官方/授权方式，不能自动加群或自动注册。'
+  )
+)
+on conflict (id) do update set
+  tenant_id=excluded.tenant_id,
+  lead_type=excluded.lead_type,
+  channel=excluded.channel,
+  name=excluded.name,
+  contact=excluded.contact,
+  city=excluded.city,
+  country=excluded.country,
+  status=excluded.status,
+  stage=excluded.stage,
+  need_type=excluded.need_type,
+  message=excluded.message,
+  score=excluded.score,
+  next_action=excluded.next_action,
+  fields=excluded.fields;
+
