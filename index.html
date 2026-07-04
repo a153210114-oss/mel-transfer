@@ -777,7 +777,7 @@ body.more-open .chat-area{padding-bottom:390px;}
       <div class="profile-section-title">🧩 供给侧入口</div>
       <div id="supplier-entry-card" style="background:linear-gradient(135deg,rgba(0,200,150,0.10),rgba(0,150,199,0.06));border:1px solid rgba(0,200,150,0.22);border-radius:14px;padding:16px;">
         <div style="font-size:13px;color:rgba(255,255,255,0.55);line-height:1.7;">如果你在当地，也可以申请成为华伴供给方，提供接送机、包车、旅游、翻译、租车、本地帮办、商品销售、餐饮或配送。</div>
-        <button onclick="openCityFranchiseConsult()" style="width:100%;margin-top:12px;padding:12px;background:rgba(0,150,199,0.22);border:1px solid rgba(0,150,199,0.38);border-radius:12px;color:white;font-size:14px;font-weight:900;cursor:pointer;font-family:inherit;">城市加盟咨询</button>
+        <button onclick="openCityFranchiseConsult()" style="width:100%;margin-top:12px;padding:12px;background:rgba(0,150,199,0.22);border:1px solid rgba(0,150,199,0.38);border-radius:12px;color:white;font-size:14px;font-weight:900;cursor:pointer;font-family:inherit;">城市合伙人招募</button>
         <button onclick="startSupplierApplication()" style="width:100%;margin-top:8px;padding:12px;background:rgba(0,200,150,0.18);border:1px solid rgba(0,200,150,0.30);border-radius:12px;color:white;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">提交审核</button>
       </div>
     </div>
@@ -5876,7 +5876,7 @@ function renderSupplierEntry(status){
         <div style="font-size:12px;color:rgba(255,255,255,0.55);line-height:1.6;margin-top:4px;">${desc}</div>
       </div>
     </div>
-    <button onclick="openCityFranchiseConsult()" style="width:100%;margin-top:12px;padding:12px;background:rgba(0,150,199,0.22);border:1px solid rgba(0,150,199,0.38);border-radius:12px;color:white;font-size:14px;font-weight:900;cursor:pointer;font-family:inherit;">城市加盟咨询</button>
+    <button onclick="openCityFranchiseConsult()" style="width:100%;margin-top:12px;padding:12px;background:rgba(0,150,199,0.22);border:1px solid rgba(0,150,199,0.38);border-radius:12px;color:white;font-size:14px;font-weight:900;cursor:pointer;font-family:inherit;">城市合伙人招募</button>
     <button onclick="startSupplierApplication()" style="width:100%;margin-top:8px;padding:12px;background:rgba(0,200,150,0.18);border:1px solid rgba(0,200,150,0.30);border-radius:12px;color:white;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">${status==='rejected'?'重新提交审核':'提交审核'}</button>`;
 }
 
@@ -5932,8 +5932,8 @@ function openCityFranchiseConsult(){
       <div class="modal-handle"></div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
         <div>
-          <div style="font-size:18px;font-weight:900;color:white;">城市加盟咨询</div>
-          <div style="font-size:12px;color:rgba(255,255,255,0.48);margin-top:4px;">适合其他国家/城市的推广、运营、资源合作</div>
+          <div style="font-size:18px;font-weight:900;color:white;">城市合伙人招募</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.48);margin-top:4px;">适合其他国家/城市的加盟推广、运营、资源合作</div>
         </div>
         <button onclick="document.getElementById('city-franchise-modal')?.remove()" style="border:0;border-radius:10px;background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.72);padding:8px 12px;font:600 13px/1 inherit;cursor:pointer;">关闭</button>
       </div>
@@ -5955,7 +5955,7 @@ function openCityFranchiseConsult(){
         <label>联系方式</label>
         <input id="franchise-contact" value="${companionEscape(p.phone||betaContact()||'')}" placeholder="微信 / 手机 / 邮箱">
       </div>
-      <button onclick="submitCityFranchiseConsult(this)" style="width:100%;margin-top:14px;padding:14px;background:rgba(0,150,199,0.28);border:1px solid rgba(0,150,199,0.42);border-radius:12px;color:white;font-size:14px;font-weight:900;font-family:inherit;cursor:pointer;">提交咨询</button>
+      <button onclick="submitCityFranchiseConsult(this)" style="width:100%;margin-top:14px;padding:14px;background:rgba(0,150,199,0.28);border:1px solid rgba(0,150,199,0.42);border-radius:12px;color:white;font-size:14px;font-weight:900;font-family:inherit;cursor:pointer;">提交招募意向</button>
     </div>`;
   document.body.appendChild(overlay);
 }
@@ -5979,30 +5979,32 @@ async function submitCityFranchiseConsult(btn){
   }[role]||role;
   const payload={
     lead_type:'partner',
-    channel:'city_franchise_consult',
+    channel:'city_partner_recruitment',
     name:getPassenger().name||'华伴用户',
     contact,
     city,
     country,
     need_type:'city_franchise',
-    message:`城市加盟咨询\n国家/地区：${country}\n城市：${city}\n合作方向：${roleLabel}\n资源：${resource||'待补充'}\n联系方式：${contact}`,
-    stage:'new_city_partner_consult',
+    message:`城市合伙人招募意向\n国家/地区：${country}\n城市：${city}\n合作方向：${roleLabel}\n资源：${resource||'待补充'}\n联系方式：${contact}`,
+    stage:'new_city_partner_candidate',
     status:'new',
     next_action:'contact_and_assess_city_launch_potential',
     fields:{
-      event:'city_franchise_consult',
+      event:'city_partner_recruitment',
       country,
       city,
       cooperation_role:role,
       cooperation_role_label:roleLabel,
       resources:resource,
-      source:'profile_center'
+      source:'profile_center',
+      recruitment_status:'candidate',
+      recruitment_pipeline:'city_partner'
     }
   };
   supaInsertLead(payload).catch(e=>console.warn('city franchise sync failed',e));
   document.getElementById('city-franchise-modal')?.remove();
   rewardCompanionAction('try_feature');
-  await agentSay('收到，城市加盟咨询我记下了。接下来会先看这个城市的华人需求、供给资源和推广入口，再联系你聊合作方式。',150);
+  await agentSay('收到，城市合伙人招募意向我记下了。接下来会先看这个城市的华人需求、供给资源和推广入口，再联系你聊加盟推广和合作方式。',150);
 }
 
 function showSupplierApplicationSheet(){

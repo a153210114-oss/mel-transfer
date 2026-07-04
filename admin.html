@@ -1809,7 +1809,7 @@ function supplierServiceText(lead) {
   const fields = lead.fields || {};
   if(lead.channel==='adoption'||lead.need_type==='adoption')return 'AI 领养';
   if(lead.channel==='agent_work_order'||String(lead.need_type||'').startsWith('work_order_'))return 'AI确认工单';
-  if(lead.channel==='city_franchise_consult'||lead.need_type==='city_franchise')return '城市加盟咨询';
+  if(lead.channel==='city_partner_recruitment'||lead.channel==='city_franchise_consult'||lead.need_type==='city_franchise')return '城市合伙人招募';
   if(lead.channel==='ld_01_daily_task'||lead.stage==='daily_search_task')return '日常搜索任务';
   if(lead.channel==='driver_supply_intel'||String(lead.need_type||'').startsWith('driver_supply_'))return '司机供给线索';
   if(lead.channel==='demand_supply_intel'||String(lead.need_type||'').startsWith('intel_'))return '需求/供给情报';
@@ -1823,8 +1823,8 @@ function supplierQualificationText(lead) {
   if(lead.channel==='agent_work_order'||String(lead.need_type||'').startsWith('work_order_')){
     return fields.next_step || lead.stage || '待后台分派';
   }
-  if(lead.channel==='city_franchise_consult'||lead.need_type==='city_franchise'){
-    return `${fields.cooperation_role_label || '城市合作'} · ${fields.resources || '资源待补充'}`;
+  if(lead.channel==='city_partner_recruitment'||lead.channel==='city_franchise_consult'||lead.need_type==='city_franchise'){
+    return `${fields.recruitment_status || 'candidate'} · ${fields.cooperation_role_label || '城市合作'} · ${fields.resources || '资源待补充'}`;
   }
   if(lead.channel==='ld_01_daily_task'||lead.stage==='daily_search_task'){
     const blocked = Array.isArray(fields.blocked_by) ? fields.blocked_by.join(' / ') : (fields.blocked_by || '待判断');
@@ -1856,7 +1856,7 @@ function supplierLeadType(lead={}) {
   if (channel === 'adoption' || needType === 'adoption') return 'adoption';
   if (channel === 'feedback' || needType === 'feedback') return 'feedback';
   if (channel === 'agent_work_order' || needType.startsWith('work_order_')) return 'intel';
-  if (channel === 'city_franchise_consult' || needType === 'city_franchise') return 'intel';
+  if (channel === 'city_partner_recruitment' || channel === 'city_franchise_consult' || needType === 'city_franchise') return 'intel';
   if (channel === 'ld_01_daily_task' || lead.stage === 'daily_search_task') return 'daily';
   if (channel === 'driver_supply_intel' || needType.startsWith('driver_supply_')) return 'driver';
   if (channel === 'demand_supply_intel' || needType.startsWith('intel_')) return 'intel';
@@ -2102,6 +2102,7 @@ async function loadOutreachTasks(){
 const OPS_ROLE_LABELS={
   outreach_support:'人工客服推广',
   city_operator:'城市运营',
+  city_partner_recruiter:'合伙人招募',
   supplier_reviewer:'服务者审核',
   content_operator:'内容运营',
   admin:'管理员'
@@ -2110,6 +2111,7 @@ const OPS_ROLE_LABELS={
 function defaultOpsRoles(){
   return [
     {role:'outreach_support',title:'人工客服推广',description:'领取推广任务、微调文案、人工发布、回复咨询、记录反馈。',daily_target:{review_tasks:10,copy_done:5,manual_posts:3,reply_messages:10,feedback_records:3}},
+    {role:'city_partner_recruiter',title:'合伙人招募',description:'跟进其他国家/城市加盟咨询，评估本地资源、推广能力和城市启动计划。',daily_target:{partner_contacts:5,city_notes:2,qualification_checks:3,meeting_followups:2}},
     {role:'city_operator',title:'城市运营',description:'管理城市入口库、服务者线索、推广节奏和城市复盘。',daily_target:{source_updates:2,lead_reviews:10,city_notes:1,partner_contacts:3}},
     {role:'supplier_reviewer',title:'服务者审核',description:'审核服务者申请、公开资质链接和人工复核状态。',daily_target:{supplier_reviews:10,qualification_checks:8,rework_notes:2}},
     {role:'content_operator',title:'内容运营',description:'把真实需求转成小红书、公众号、视频号、朋友圈文案。',daily_target:{short_copy:5,long_content:1,script_notes:1,feedback_records:2}}
@@ -2119,6 +2121,7 @@ function defaultOpsRoles(){
 function defaultOpsTasks(){
   return [
     {title:'墨尔本公测用户推广日常',task_type:'outreach',role:'outreach_support',status:'open',target:{review_tasks:10,copy_done:5,manual_posts:3,reply_messages:10,feedback_records:3},completion_rate:0,notes:'完成后提交发布截图、咨询数量和反馈记录。'},
+    {title:'全球城市合伙人招募',task_type:'partner_recruitment',role:'city_partner_recruiter',status:'open',target:{partner_contacts:5,city_notes:2,meeting_followups:2},completion_rate:0,notes:'跟进城市加盟咨询，确认国家/城市、推广资源、供给网络和启动意向。'},
     {title:'墨尔本服务者招募日常',task_type:'supplier_review',role:'supplier_reviewer',status:'open',target:{supplier_reviews:10,qualification_checks:8},completion_rate:0,notes:'律师/会计/电工等进入政府公开核验路径。'},
     {title:'墨尔本城市入口更新',task_type:'source_update',role:'city_operator',status:'open',target:{source_updates:2,lead_reviews:10},completion_rate:0,notes:'新增或更新中文入口库和本地服务渠道。'},
     {title:'今日推广内容产出',task_type:'content',role:'content_operator',status:'open',target:{short_copy:5,long_content:1},completion_rate:0,notes:'基于真实需求产出短文案和主题内容。'}
@@ -2144,6 +2147,7 @@ function targetText(target={}){
     lead_reviews:'整理线索',
     city_notes:'城市复盘',
     partner_contacts:'合作联系',
+    meeting_followups:'会议跟进',
     supplier_reviews:'审核申请',
     qualification_checks:'资质核验',
     rework_notes:'返工备注',
@@ -2271,7 +2275,7 @@ async function loadOpsTeam(){
 }
 
 function roleFromTaskType(type){
-  const map={outreach:'outreach_support',reply:'outreach_support',source_update:'city_operator',supplier_review:'supplier_reviewer',content:'content_operator',training:'content_operator',meeting_followup:'city_operator'};
+  const map={outreach:'outreach_support',reply:'outreach_support',source_update:'city_operator',partner_recruitment:'city_partner_recruiter',supplier_review:'supplier_reviewer',content:'content_operator',training:'content_operator',meeting_followup:'city_operator'};
   return map[type]||'outreach_support';
 }
 
