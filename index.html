@@ -776,7 +776,7 @@ body.more-open .chat-area{padding-bottom:390px;}
     <div class="profile-section" style="margin-top:20px;">
       <div class="profile-section-title">🧩 供给侧入口</div>
       <div id="supplier-entry-card" style="background:linear-gradient(135deg,rgba(0,200,150,0.10),rgba(0,150,199,0.06));border:1px solid rgba(0,200,150,0.22);border-radius:14px;padding:16px;">
-        <div style="font-size:13px;color:rgba(255,255,255,0.55);line-height:1.7;">如果你在当地，也可以申请成为华伴服务者，提供接送机、包车、旅游、翻译、租车、本地帮办或商品服务。</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.55);line-height:1.7;">如果你在当地，也可以申请成为华伴供给方，提供接送机、包车、旅游、翻译、租车、本地帮办、商品销售、餐饮或配送。</div>
         <button onclick="startSupplierApplication()" style="width:100%;margin-top:12px;padding:12px;background:rgba(0,200,150,0.22);border:1px solid rgba(0,200,150,0.36);border-radius:12px;color:white;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">申请成为服务者</button>
       </div>
     </div>
@@ -2830,7 +2830,7 @@ function syncUserFeedback(question, context='', source='user-feedback'){
 function detectSupplyIntent(text=''){
   const clean=String(text||'').trim();
   if(!clean)return null;
-  const hasSupplyVerb=/我(是|做|会|能|可以|可|有|提供|接|卖|出租|带|教|修|帮|代办)|本人|我们(做|提供|可以|有|接|卖)|可接单|想接单|想提供|成为服务者|加入华伴|入驻/i.test(clean);
+  const hasSupplyVerb=/我(是|做|会|能|可以|可|有|提供|接|卖|出租|带|教|修|帮|代办|开店|开餐馆|送外卖)|本人|我们(做|提供|可以|有|接|卖|开店|开餐馆|送)|可接单|想接单|想提供|成为服务者|加入华伴|入驻/i.test(clean);
   const notSupply=/我想找|我要找|帮我找|有没有|哪里有|推荐|需要.*(找|请)|想买|想租|求/i.test(clean);
   if(!hasSupplyVerb||notSupply)return null;
   const type=inferSupplierTypeFromText(clean);
@@ -2853,7 +2853,9 @@ function inferSupplierTypeFromText(text=''){
     {pattern:/会计|报税|退税|税务|做账|bookkeeping/i,value:'accounting',label:'会计/税务服务',category:'专业服务'},
     {pattern:/电工|水管|维修|修理|清洁|园艺|搬家|搬运|跑腿|上门/i,value:'local_service',label:'本地生活服务',category:'本地帮办'},
     {pattern:/民宿|住宿|房源|租房|中介|房产/i,value:'housing',label:'住宿/房产服务',category:'房产住宿'},
-    {pattern:/卖|出售|二手|代购|商品|货|食品|餐|蛋糕|外卖|团购/i,value:'goods',label:'商品/餐食/代购',category:'商品服务'},
+    {pattern:/中餐馆|餐馆|餐厅|饭店|私厨|盒饭|便当|点餐|餐食|蛋糕|奶茶|外卖店|做餐|做饭/i,value:'restaurant',label:'餐饮/中餐馆供给',category:'餐饮商家'},
+    {pattern:/外卖员|送外卖|配送|送餐|同城送|跑腿配送|可送|帮送/i,value:'delivery',label:'外卖/同城配送',category:'配送供给'},
+    {pattern:/卖|出售|二手|代购|商品|货|食品|团购|批发|零售/i,value:'goods',label:'商品销售/代购',category:'商品销售'},
     {pattern:/摄影|拍照|视频|剪辑|设计|网站|装修|培训|教|课程|补习/i,value:'creative',label:'技能/创意/培训',category:'技能服务'}
   ];
   return matches.find(item=>item.pattern.test(clean))||null;
@@ -2893,7 +2895,7 @@ async function handleSupplyIntent(text, options={}){
   };
   supaInsertLead(payload).catch(e=>console.warn('supply lead sync failed',e));
   rewardCompanionAction('try_feature');
-  await agentSay(`太好了，我先帮你整理成“${supply.serviceType}”供给线索。以后有人需要这类服务，我可以帮你把生意介绍给更多人；如果你愿意，下一步补一下联系方式、服务区域和资质，我就能帮你进入审核。`,150);
+  await agentSay(`太好了，我先帮你整理成“${supply.serviceType}”供给线索。以后有人需要这类商品、服务或配送，我可以帮你把生意介绍给更多人；如果你愿意，下一步补一下联系方式、服务区域和资质，我就能帮你进入审核。`,150);
   return true;
 }
 
@@ -4643,15 +4645,16 @@ function buildPrompt(){
 身份：${agentTitle}
 形象：${agentEmoji}
 服务：接机、送机、包车出游
-平台：没有中间商赚差价，只让需要的人遇见可靠的人。平台不从单笔交易中抽佣，用户与服务者直接达成共识合约并交易，平台靠AI工具、认证展示、订阅、打赏和城市贡献网络盈利
+平台：没有中间商赚差价，只让需要的人遇见可靠的人。平台不从单笔交易中抽佣，用户与供给方直接达成共识合约并交易，平台靠AI工具、认证展示、订阅、打赏和城市贡献网络盈利
 语气：像朋友聊天，口语化，每次只说1句话
 
 【用户角色原则】
-每个用户都不是固定的“需求方”或“供给方”，而是两者兼具：此刻可能需要帮助，下一刻也可能提供商品、服务、经验、人脉或本地资源。
+每个用户都不是固定的“需求方”或“供给方”，而是两者兼具：此刻可能需要帮助，下一刻也可能提供商品、服务、餐饮、配送、经验、人脉或本地资源。
 当用户说“我需要、帮我找、有没有、推荐、想去、想买、想办事”时，先按需求方推进具体动作。
 当用户说“我是、我会、我能、我有、我提供、我卖、我可以帮、我认识、我有资源”时，立刻识别为供给方线索，告诉他“我可以帮你把生意/资源介绍给更多需要的人”。
 同一轮对话里如果同时出现需求和能力，要同时整理：一边帮他办当前需求，一边把他能提供的部分沉淀到供给画像里。
 不要把用户贴死标签；要把用户理解成“既会求助，也能互助/做生意”的海外华人网络节点。
+商品销售、餐馆、外卖员、跑腿配送和普通用户也可以被连接起来：用户说想买、想吃、想送、想找配送，要整理需求；用户说自己开店、卖货、做餐、能送，要整理供给；需要时把餐馆/商家、配送者和用户需求组合成一条可成交的链路。
 
 【陪伴成长状态】
 你也是用户正在养成的AI旅行伙伴。
@@ -4668,7 +4671,7 @@ function buildPrompt(){
 当用户问“华伴是什么”“这个平台怎么用”“你能做什么”“怎么预约”时，先简短介绍：
 华伴是一个会聊天、会办事、会成长的 AI 伙伴，底层连接海外华人的出行、本地生活、专业服务和城市互助网络。
 使用方式：直接用中文说需求，例如“明天下午四点送我去机场”；你帮用户补齐时间、人数、行李、车型并提交需求。
-平台原则：没有中间商赚差价，只让需要的人遇见可靠的人；华伴提供 AI 工具、信用记录和信息连接，具体服务和费用由用户与服务者确认。
+平台原则：没有中间商赚差价，只让需要的人遇见可靠的人；华伴提供 AI 工具、信用记录和信息连接，具体商品、服务、配送、费用和履约由双方确认。
 最后引导用户说出一个真实需求，优先从接机、送机、包车开始。
 
 【反馈采集任务】
@@ -4677,9 +4680,9 @@ function buildPrompt(){
 如果用户选择自己探索：鼓励他先试，并请他遇到不顺直接告诉你。
 如果用户选择一一介绍：按介绍、取名/头像、用车、找线索、市场、华人帮、个人中心的顺序，每次只介绍一项，再问要不要继续。
 当用户表达想获得帮助/帮助别人时，可以俏皮地说：“如果您想获得帮助或者帮助别人，我来帮你查、筛、核验，整理出能行动的结果。”然后引导他把事情说清楚。
-当用户提出电工、水管、跳闸、漏水、搬运、跑腿、临时上门检查、旅游攻略、当地餐厅景点、华人律师、会计、报税等需求时，不要拒绝；先自然接住需求，再说“我来查近期公开信息、可联系对象和需要核验的点”。专业维修、上门服务、法律、税务、涉及金钱或安全的事，要提醒用户自行核验资质、价格和安全。
+当用户提出电工、水管、跳闸、漏水、搬运、跑腿、临时上门检查、旅游攻略、当地餐厅景点、中餐馆、外卖配送、买东西、华人律师、会计、报税等需求时，不要拒绝；先自然接住需求，再说“我来查近期公开信息、可联系对象和需要核验的点”。专业维修、上门服务、法律、税务、食品、配送、涉及金钱或安全的事，要提醒用户自行核验资质、价格、卫生和安全。
 当用户提出交友、搭子、同城活动、找群或建群时，不要把华伴说成开放社交平台；先说你会按真实需求做同城撮合，适合时再建议临时小群，并提醒不要公开隐私、钱款和证件信息。
-当用户表达自己能提供商品或服务，例如“我是司机/会计/电工”“我能接送机”“我卖东西”“我可以提供服务”，要主动说可以帮他整理到供给侧，审核后把生意介绍给更多需要的人；不要把它当成普通闲聊。
+当用户表达自己能提供商品或服务，例如“我是司机/会计/电工”“我开中餐馆”“我能送外卖”“我能接送机”“我卖东西”“我可以提供服务”，要主动说可以帮他整理到供给侧，审核后把生意介绍给更多需要的人；不要把它当成普通闲聊。
 当用户只是顺口提到自己懂某件事、有某个资源、认识某类人，也要温和捕捉为潜在供给，不要打断当前任务；可以说“这个我也记一下，以后可能帮你介绍给需要的人”。
 不要在每个非出行需求后都介绍出行能力，除非用户主动提到要用车或行程接送。
 如果用户提出建议、吐槽、希望新增能力：先感谢和复述要点，再追问一个最有价值的细节，比如“你希望它在哪里出现？”或“你希望我怎么回复会更像你的小伙伴？”
@@ -5882,9 +5885,11 @@ const SUPPLIER_TYPES=[
   {value:'local_help',label:'本地帮办：接待 / 跑腿 / 陪同'},
   {value:'professional',label:'专业服务：翻译 / 律师 / 会计'},
   {value:'agency',label:'中介服务：房产 / 留学 / 移民 / 招聘'},
-  {value:'goods',label:'商品/市场：本地商品 / 二手交易'},
+  {value:'goods',label:'商品销售：本地商品 / 二手交易 / 代购'},
+  {value:'restaurant',label:'餐饮商家：中餐馆 / 私厨 / 餐食'},
+  {value:'delivery',label:'配送供给：外卖员 / 跑腿 / 同城配送'},
   {value:'community',label:'交友/社群：活动 / 兴趣小组'},
-  {value:'other',label:'其他可靠服务'}
+  {value:'other',label:'其他可靠供给'}
 ];
 
 async function refreshSupplierEntry(){
@@ -5927,10 +5932,10 @@ function showSupplierApplicationSheet(){
       <select id="supplier-type-select" style="width:100%;padding:13px 12px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.13);border-radius:12px;color:white;font-size:14px;font-family:inherit;outline:none;margin-bottom:12px;">
         ${SUPPLIER_TYPES.map(t=>`<option value="${t.value}" style="color:#111;">${t.label}</option>`).join('')}
       </select>
-      <label style="display:block;font-size:12px;color:rgba(255,255,255,0.45);margin:0 0 6px;">服务城市</label>
+      <label style="display:block;font-size:12px;color:rgba(255,255,255,0.45);margin:0 0 6px;">服务/销售城市</label>
       <input id="supplier-city-input" value="${currentRegion.city||''}" placeholder="例如：Melbourne / Sydney / Singapore" style="width:100%;padding:13px 12px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.13);border-radius:12px;color:white;font-size:14px;font-family:inherit;outline:none;margin-bottom:12px;">
-      <label style="display:block;font-size:12px;color:rgba(255,255,255,0.45);margin:0 0 6px;">服务说明 / 资质经验</label>
-      <textarea id="supplier-intro-input" placeholder="例如：5年本地接送机经验，可提供7座车；或持证翻译，可中英陪同。" style="width:100%;height:78px;padding:12px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.13);border-radius:12px;color:white;font-size:14px;font-family:inherit;outline:none;resize:none;margin-bottom:12px;"></textarea>
+      <label style="display:block;font-size:12px;color:rgba(255,255,255,0.45);margin:0 0 6px;">供给说明 / 资质经验</label>
+      <textarea id="supplier-intro-input" placeholder="例如：5年本地接送机经验；开中餐馆可接团餐；可做同城外卖配送；或出售本地商品。" style="width:100%;height:78px;padding:12px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.13);border-radius:12px;color:white;font-size:14px;font-family:inherit;outline:none;resize:none;margin-bottom:12px;"></textarea>
       <label style="display:block;font-size:12px;color:rgba(255,255,255,0.45);margin:0 0 6px;">政府/行业资质（如适用）</label>
       <input id="supplier-license-input" placeholder="资质编号、注册名或执照名称；无资质可填：无" style="width:100%;padding:13px 12px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.13);border-radius:12px;color:white;font-size:14px;font-family:inherit;outline:none;margin-bottom:12px;">
       <label style="display:block;font-size:12px;color:rgba(255,255,255,0.45);margin:0 0 6px;">公开核验网址（如适用）</label>
