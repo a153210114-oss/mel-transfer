@@ -3168,13 +3168,6 @@ async function startApp(){
   maybeStartWakeListening();
 }
 
-if(document.readyState==='loading'){
-  document.addEventListener('DOMContentLoaded',startApp,{once:true});
-}else{
-  startApp();
-}
-window.addEventListener('load',startApp,{once:true});
-
 // ── 首次访问首页 ──
 function renderWelcomeHome(){
   currentRole='passenger';
@@ -3730,7 +3723,7 @@ const BUSINESS_MODULES={
     enabled:true,
     title:'合伙人招募',
     menu:{key:'partner',icon:'🤝',label:'合伙人'},
-    action:openCityFranchiseConsult
+    action:()=>openCityFranchiseConsult()
   }
 };
 
@@ -7513,6 +7506,13 @@ function getGPSLocation() {
     } catch(e) {}
   });
 }
+
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded',startApp,{once:true});
+}else{
+  startApp();
+}
+window.addEventListener('load',startApp,{once:true});
 
 </script>
 </body>
