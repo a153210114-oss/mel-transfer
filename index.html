@@ -2844,6 +2844,7 @@ function inferSupplierTypeFromText(text=''){
     {pattern:/会计|报税|退税|税务|做账|bookkeeping/i,value:'accounting',label:'会计/税务服务',category:'专业服务'},
     {pattern:/电工|水管|维修|修理|清洁|园艺|搬家|搬运|跑腿|上门/i,value:'local_service',label:'本地生活服务',category:'本地帮办'},
     {pattern:/民宿|住宿|房源|租房|中介|房产/i,value:'housing',label:'住宿/房产服务',category:'房产住宿'},
+    {pattern:/电商|网店|线上店|微店|小店|团购群|商家入驻|店铺|开店|带货/i,value:'ecommerce',label:'电商商家/店铺供给',category:'电商商家'},
     {pattern:/中餐馆|餐馆|餐厅|饭店|私厨|盒饭|便当|点餐|餐食|蛋糕|奶茶|外卖店|做餐|做饭/i,value:'restaurant',label:'餐饮/中餐馆供给',category:'餐饮商家'},
     {pattern:/外卖员|送外卖|配送|送餐|同城送|跑腿配送|可送|帮送/i,value:'delivery',label:'外卖/同城配送',category:'配送供给'},
     {pattern:/卖|出售|二手|代购|商品|货|食品|团购|批发|零售/i,value:'goods',label:'商品销售/代购',category:'商品销售'},
@@ -3220,6 +3221,7 @@ function showVoiceWakePrompt(){
 const FEATURE_INTENTS=[
   {key:'profile',label:'个人中心',pattern:/个人中心|我的积分|积分等级|我的等级|打开.*资料|打开.*中心/i},
   {key:'ride-menu',label:'用车',pattern:/打开.*用车|进入.*用车|用车.*(菜单|功能|入口)/i},
+  {key:'delivery',label:'外卖配送',pattern:/外卖|送餐|配送|点餐|中餐|餐馆|餐厅|盒饭|便当|奶茶|买菜|送东西/i},
   {key:'travel-menu',label:'旅游',pattern:/打开.*旅游|进入.*旅游|旅游.*(菜单|功能|入口)/i},
   {key:'help-menu',label:'华人帮',pattern:/华人帮|打开.*帮|帮.*(菜单|功能|入口)/i},
   {key:'mutual-aid',label:'找线索',pattern:/心愿墙|情报库|找线索|找供给|互助|免费帮助|志愿者|愿意支付|求助|出售.*(物品|服务)|免费服务区|收费服务区|电工|水管|维修|跳闸|断电|漏水|修理|上门检查|找人帮忙/i},
@@ -3273,6 +3275,7 @@ async function handleDirectFeatureIntent(text, options={}){
 
 const TASK_PLAN_DEFS=[
   {key:'ride',label:'安排出行',pattern:/接机|送机|去机场|从机场|包车|用车|司机|车|行程|出发|到达|航班|火车|票|订票|旅行|旅游/i},
+  {key:'delivery',label:'安排外卖配送',pattern:/外卖|送餐|配送|点餐|中餐|餐馆|餐厅|盒饭|便当|奶茶|买菜|送东西|同城送/i},
   {key:'wish',label:'生成需求/供给情报任务',pattern:/求助|帮忙|找人|找当地|有没有.*(朋友|人)|认识.*人|同城|搭子|建群|微信群|找群|一起.*(玩|走|去|吃|活动|出行)|电工|水管|维修|跳闸|断电|漏水|搬运|跑腿|律师|会计|报税|税务|华人.*(律师|会计|服务)|好吃|好玩|攻略|推荐|玩几天|去哪玩|怎么玩|旅游路线|行程推荐|英国|英國|伦敦|London|UK|Chicago|芝加哥|Doncaster|慕尼黑|Munich/i},
   {key:'reminder',label:'保存日程提醒',pattern:/提醒|闹钟|日程|到点|别忘|记得|几点叫我|出发前|提前/i},
   {key:'image',label:'读图整理信息',pattern:/截图|图片|照片|拍照|相机|票据|二维码|海报/i},
@@ -3419,7 +3422,9 @@ async function handleAgentTaskPlan(text){
     return false;
   }
 
-  if(tasks.some(task=>task.key==='wish')){
+  if(tasks.some(task=>task.key==='delivery')){
+    await startDeliveryOrder(text);
+  }else if(tasks.some(task=>task.key==='wish')){
     openMutualAidCommunity(buildWishWallDraft(text));
   }else if(tasks.some(task=>task.key==='reminder')){
     openReminderSheet(buildReminderDraft(text));
@@ -3469,6 +3474,12 @@ const BUSINESS_MODULES={
     menu:{key:'market',icon:'🏪',label:'市场'},
     action:()=>{window.location.href='plaza.html';}
   },
+  delivery:{
+    enabled:true,
+    title:'外卖配送',
+    menu:{key:'delivery',icon:'🍱',label:'外卖'},
+    action:()=>openDeliveryPlatformHub()
+  },
   mutualAid:{
     enabled:true,
     title:'找线索',
@@ -3478,6 +3489,8 @@ const BUSINESS_MODULES={
 };
 
 const CORE_TOOL_ITEMS=[
+  {key:'ride',icon:'🚗',label:'出行',category:true},
+  {key:'delivery',icon:'🍱',label:'外卖'},
   {key:'voice',icon:'🎙️',label:'语音'},
   {key:'camera',icon:'📷',label:'相机'},
   {key:'image',icon:'🖼️',label:'图片'},
@@ -3945,6 +3958,70 @@ function openMutualAidCommunity(draft={}){
   startHiddenIntelTask(draft);
 }
 
+function isDeliveryDemand(text=''){
+  const clean=String(text||'');
+  if(/打开|进入|看看|入口|菜单|功能/i.test(clean))return false;
+  return /外卖|送餐|配送|点餐|中餐|餐馆|餐厅|盒饭|便当|奶茶|买菜|送东西|同城送|跑腿送/i.test(clean);
+}
+
+function openDeliveryPlatformHub(sourceText=''){
+  const text=String(sourceText||'').trim();
+  if(text&&isDeliveryDemand(text)){
+    startDeliveryOrder(text);
+    return;
+  }
+  const existing=document.getElementById('delivery-platform-modal');
+  if(existing)existing.remove();
+  const overlay=document.createElement('div');
+  overlay.id='delivery-platform-modal';
+  overlay.className='modal-overlay show';
+  overlay.onclick=e=>{if(e.target===overlay)overlay.remove();};
+  overlay.innerHTML=`
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div style="font-size:18px;font-weight:900;color:white;margin-bottom:6px;">外卖配送</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.48);line-height:1.6;margin-bottom:14px;">先把用户、商家和外卖员三端跑通。</div>
+      <div style="display:grid;gap:10px;">
+        <button onclick="document.getElementById('delivery-platform-modal')?.remove();startDeliveryOrder('想点中餐外卖')" style="text-align:left;padding:14px;border-radius:12px;border:1px solid rgba(0,150,199,0.32);background:rgba(0,150,199,0.16);color:white;font:inherit;cursor:pointer;">
+          <strong>👤 用户端</strong><br><span style="font-size:12px;color:rgba(255,255,255,0.55);">点餐、买东西、找同城配送</span>
+        </button>
+        <button onclick="document.getElementById('delivery-platform-modal')?.remove();startSupplierApplication('restaurant')" style="text-align:left;padding:14px;border-radius:12px;border:1px solid rgba(0,200,150,0.30);background:rgba(0,200,150,0.14);color:white;font:inherit;cursor:pointer;">
+          <strong>🏪 商家端</strong><br><span style="font-size:12px;color:rgba(255,255,255,0.55);">中餐馆、私厨、电商店铺、商品供给</span>
+        </button>
+        <button onclick="document.getElementById('delivery-platform-modal')?.remove();startSupplierApplication('delivery')" style="text-align:left;padding:14px;border-radius:12px;border:1px solid rgba(245,166,35,0.30);background:rgba(245,166,35,0.12);color:white;font:inherit;cursor:pointer;">
+          <strong>🛵 外卖员端</strong><br><span style="font-size:12px;color:rgba(255,255,255,0.55);">接配送、跑腿、同城送单</span>
+        </button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+async function startDeliveryOrder(text=''){
+  const clean=String(text||'想点中餐外卖').trim();
+  const post={
+    id:'delivery-'+Date.now(),
+    wishType:'need_paid',
+    zone:'paid',
+    role:'用户端',
+    category:'外卖配送',
+    city:intelCityFromText(clean)||currentRegion.city||currentRegion.country,
+    text:clean,
+    budget:'待确认',
+    contact:betaContact(),
+    source:'delivery_customer',
+    flow:'delivery_order',
+    direction:'demand',
+    freshnessPolicy:intelFreshnessPolicy('demand'),
+    searchQueries:buildIntelSearchQueries({city:currentRegion.city||currentRegion.country,category:'外卖配送',text:clean,wishType:'need_paid',direction:'demand'}),
+    globalTargets:[],
+    confidence:'pending_confirmation',
+    createdAt:new Date().toISOString(),
+    status:'open'
+  };
+  await agentSay('收到',80);
+  renderWorkOrderConfirmCard(post);
+}
+
 async function openLocalPeopleIntent(sourceText=''){
   const text=String(sourceText||'').trim();
   if(!text){
@@ -4001,6 +4078,7 @@ async function startHiddenIntelTask(draft={}){
 
 function workOrderNextAction(post={}){
   const category=`${post.category||''} ${post.text||''}`;
+  if(post.flow==='delivery_order'||/外卖|送餐|配送|点餐|中餐|餐馆|餐厅|盒饭|便当|奶茶/i.test(category))return '匹配餐饮商家、商品供给和外卖配送资源';
   if(/同城|搭子|找群|建群|活动/i.test(category))return '查找同城匹配对象，必要时建议临时小群';
   if(/律师|会计|电工|水管|维修|报税|税务/i.test(category))return '查找可联系服务者，并优先核验资质来源';
   if(/旅游|攻略|好吃|好玩|行程|景点/i.test(category))return '整理近期攻略、交通和可联系本地人线索';
@@ -4079,22 +4157,24 @@ function readWorkOrderCard(id){
 
 async function syncWorkOrder(post={}){
   const wo=post.workOrder||inferWorkOrderFields(post);
+  const isDelivery=post.flow==='delivery_order';
   return supaInsertLead({
     lead_type:'user',
-    channel:'agent_work_order',
+    channel:isDelivery?'delivery_order':'agent_work_order',
     name:getPassenger().name||'华伴用户',
     contact:post.contact||betaContact(),
     city:post.city||currentRegion.city||'Melbourne',
     country:currentRegion.country||'',
-    need_type:'work_order_'+(post.category||'general').replace(/\s+/g,'_').slice(0,28),
-    message:`AI确认工单\n时间：${wo.time}\n地点：${wo.place}\n任务：${wo.task}\n金额：${wo.amount}\n备注：${wo.remark}\n成交状态：${wo.deal_status}`,
-    next_action:'review_and_dispatch_to_matching_flow',
+    need_type:(isDelivery?'delivery_order_':'work_order_')+(post.category||'general').replace(/\s+/g,'_').slice(0,28),
+    message:`${isDelivery?'外卖配送确认单':'AI确认工单'}\n时间：${wo.time}\n地点：${wo.place}\n任务：${wo.task}\n金额：${wo.amount}\n备注：${wo.remark}\n成交状态：${wo.deal_status}`,
+    next_action:isDelivery?'match_restaurant_goods_and_delivery':'review_and_dispatch_to_matching_flow',
     status:'new',
     stage:'user_confirmed_work_order',
     fields:{
-      event:'agent_work_order_confirmed',
+      event:isDelivery?'delivery_order_confirmed':'agent_work_order_confirmed',
       post,
       work_order:wo,
+      flow:post.flow||'work_order',
       next_step:workOrderNextAction(post),
       confirmed_by_user:true,
       confirmed_by_provider:false,
@@ -4666,7 +4746,7 @@ function buildPrompt(){
 名字：${agentName}
 身份：${agentTitle}
 形象：${agentEmoji}
-服务：接机、送机、包车出游
+服务：第一阶段优先做好出行和外卖配送。出行包括接机、送机、包车出游；外卖配送包括用户点餐/买东西、商家入驻、外卖员接单。
 平台：没有中间商赚差价，只让需要的人遇见可靠的人。平台不从单笔交易中抽佣，用户与供给方直接达成共识合约并交易，平台靠AI工具、认证展示、订阅、打赏和城市贡献网络盈利
 语气：像朋友聊天，口语化，每次只说1句话
 
@@ -4677,6 +4757,7 @@ function buildPrompt(){
 同一轮对话里如果同时出现需求和能力，要同时整理：一边帮他办当前需求，一边把他能提供的部分沉淀到供给画像里。
 不要把用户贴死标签；要把用户理解成“既会求助，也能互助/做生意”的海外华人网络节点。
 商品销售、餐馆、外卖员、跑腿配送和普通用户也可以被连接起来：用户说想买、想吃、想送、想找配送，要整理需求；用户说自己开店、卖货、做餐、能送，要整理供给；需要时把餐馆/商家、配送者和用户需求组合成一条可成交的链路。
+当前产品优先级：先让出行和外卖配送成型。其他生活服务、专业服务、互助和合伙人招募可以接住并记录，但不要喧宾夺主。
 
 【陪伴成长状态】
 你也是用户正在养成的AI旅行伙伴。
@@ -4687,14 +4768,14 @@ function buildPrompt(){
 当用户提出当前还没开通的生活、工作、旅游攻略、当地华人律师、会计、公共交通、出租车、Uber、拼车或其他需求时，不要生硬拒绝，不要说“我只做出行”，也不要把话题强行拉回接送机。
 统一口径：先用两个字左右接住，例如“收到”“好呀”。随后默默执行动作，例如查近期攻略、列候选清单、找可联系对象、核验公开资质入口、保存提醒或生成确认卡。信息不明确时只问一个最关键的补充问题；信息差不多够了，就给用户可修改的确认卡。内部可以记录任务，但不要把“生成线索任务/情报任务/工单/后台整理”当成主要回复说给用户。
 如果用户问“芝加哥有什么好吃好玩”“当地华人律师/会计”等，先给一点实用方向，再说你会继续查近期公开信息、可联系对象和需要核验的点，不要只说以后会。
-只有当用户明确提出接送机、包车、用车、行程安排时，才优先推进出行业务。
+只有当用户明确提出接送机、包车、用车、行程安排时，才优先推进出行业务；当用户提出点餐、外卖、餐馆、买东西、配送时，优先推进外卖配送三端。
 
 【平台介绍与新手引导】
 当用户问“华伴是什么”“这个平台怎么用”“你能做什么”“怎么预约”时，先简短介绍：
 华伴是一个会聊天、会办事、会成长的 AI 伙伴，底层连接海外华人的出行、本地生活、专业服务和城市互助网络。
 使用方式：直接用中文说需求，例如“明天下午四点送我去机场”；你帮用户补齐时间、人数、行李、车型并提交需求。
 平台原则：没有中间商赚差价，只让需要的人遇见可靠的人；华伴提供 AI 工具、信用记录和信息连接，具体商品、服务、配送、费用和履约由双方确认。
-最后引导用户说出一个真实需求，优先从接机、送机、包车开始。
+最后引导用户说出一个真实需求，优先从接机、送机、包车或外卖配送开始。
 
 【反馈采集任务】
 你有一个长期任务：像朋友聊天一样搜集用户反馈，不要像问卷。
@@ -4880,6 +4961,10 @@ async function sendMessage(){ stopTTS();
     return;
   }
   if(await handleSupplyIntent(msg,{voice:false})){
+    return;
+  }
+  if(isDeliveryDemand(msg)){
+    await startDeliveryOrder(msg);
     return;
   }
   if(await handleDirectFeatureIntent(msg,{alreadyRendered:true,voice:false})){
@@ -5909,6 +5994,7 @@ const SUPPLIER_TYPES=[
   {value:'professional',label:'专业服务：翻译 / 律师 / 会计'},
   {value:'agency',label:'中介服务：房产 / 留学 / 移民 / 招聘'},
   {value:'goods',label:'商品销售：本地商品 / 二手交易 / 代购'},
+  {value:'ecommerce',label:'电商商家：网店 / 团购 / 商品供给'},
   {value:'restaurant',label:'餐饮商家：中餐馆 / 私厨 / 餐食'},
   {value:'delivery',label:'配送供给：外卖员 / 跑腿 / 同城配送'},
   {value:'community',label:'交友/社群：活动 / 兴趣小组'},
@@ -5931,14 +6017,14 @@ async function refreshSupplierEntry(){
   }catch(e){}
 }
 
-async function startSupplierApplication(){
+async function startSupplierApplication(defaultType=''){
   const p=getPassenger();
   if(!p.phone){
     await agentSay('先留一个联系方式，我才能帮你提交服务者申请。',200);
     speak('请先在首页输入你的需求或完成一次联系方式登记，再回来提交服务者申请。');
     return;
   }
-  showSupplierApplicationSheet();
+  showSupplierApplicationSheet(defaultType);
 }
 
 function openCityFranchiseConsult(){
@@ -6028,7 +6114,7 @@ async function submitCityFranchiseConsult(btn){
   await agentSay('收到，城市合伙人招募意向我记下了。接下来会先看这个城市的华人需求、供给资源和推广入口，再联系你聊加盟推广和合作方式。',150);
 }
 
-function showSupplierApplicationSheet(){
+function showSupplierApplicationSheet(defaultType=''){
   document.getElementById('supplier-apply-modal')?.remove();
   const overlay=document.createElement('div');
   overlay.id='supplier-apply-modal';
@@ -6061,6 +6147,10 @@ function showSupplierApplicationSheet(){
     </div>`;
   overlay.onclick=(e)=>{if(e.target===overlay)closeSupplierApplicationSheet();};
   document.body.appendChild(overlay);
+  if(defaultType&&SUPPLIER_TYPES.some(t=>t.value===defaultType)){
+    const select=document.getElementById('supplier-type-select');
+    if(select)select.value=defaultType;
+  }
 }
 
 function closeSupplierApplicationSheet(){
