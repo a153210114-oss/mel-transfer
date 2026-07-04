@@ -3146,7 +3146,7 @@ async function handleTravelNudge(type){
   document.getElementById('travel-nudge-card')?.remove();
   if(type==='supplier'){
     addMsg('我想提供服务',true);
-    await agentSay('太好了。你直接告诉我能提供什么、在哪个城市、怎么联系，我会在后台帮你整理成供给线索。',120);
+    await agentSay('收到',120);
     openProfile();
   }else{
     addMsg('我要出行',true);
@@ -3995,8 +3995,8 @@ async function startHiddenIntelTask(draft={}){
     status:'open'
   };
   rewardCompanionAction('wish_wall');
+  await agentSay('收到',80);
   renderWorkOrderConfirmCard(savedPost);
-  await agentSay('我先把你的需求整理成一张工单草稿。你确认一下，没问题我就推送到后台去找线索、找服务和核验来源。',120);
 }
 
 function workOrderNextAction(post={}){
@@ -4025,6 +4025,14 @@ function inferWorkOrderFields(post={}){
   };
 }
 
+function workOrderInputRow(label,field,value,textarea=false){
+  const safe=companionEscape(value||'');
+  const input=textarea
+    ? `<textarea data-wo-field="${field}" style="width:100%;min-height:68px;border:1px solid rgba(255,255,255,0.13);border-radius:10px;background:rgba(255,255,255,0.07);color:white;font:14px/1.45 inherit;padding:10px;outline:none;resize:vertical;">${safe}</textarea>`
+    : `<input data-wo-field="${field}" value="${safe}" style="width:100%;border:1px solid rgba(255,255,255,0.13);border-radius:10px;background:rgba(255,255,255,0.07);color:white;font:14px/1.45 inherit;padding:10px;outline:none;">`;
+  return `<div class="confirm-row"><span class="confirm-label">${label}</span><span class="confirm-value">${input}</span></div>`;
+}
+
 function renderWorkOrderConfirmCard(post={}){
   const id='wo-'+Date.now()+'-'+Math.random().toString(36).slice(2,7);
   post.workOrder=inferWorkOrderFields(post);
@@ -4034,12 +4042,13 @@ function renderWorkOrderConfirmCard(post={}){
   card.className='confirm-card';
   card.id=id;
   card.innerHTML=`
-    <div style="font-size:14px;font-weight:900;color:white;margin-bottom:12px;">🧾 工单草稿</div>
-    <div class="confirm-row"><span class="confirm-label">时间</span><span class="confirm-value">${companionEscape(wo.time)}</span></div>
-    <div class="confirm-row"><span class="confirm-label">地点</span><span class="confirm-value">${companionEscape(wo.place)}</span></div>
-    <div class="confirm-row"><span class="confirm-label">任务</span><span class="confirm-value">${companionEscape(wo.task).slice(0,140)}</span></div>
-    <div class="confirm-row"><span class="confirm-label">金额</span><span class="confirm-value">${companionEscape(wo.amount)}</span></div>
-    <div class="confirm-row"><span class="confirm-label">备注</span><span class="confirm-value">${companionEscape(wo.remark)}</span></div>
+    <div style="font-size:14px;font-weight:900;color:white;margin-bottom:6px;">🧾 确认卡</div>
+    <div style="font-size:12px;color:rgba(255,255,255,0.45);line-height:1.5;margin-bottom:12px;">可以直接修改，确认后我再推送。</div>
+    ${workOrderInputRow('时间','time',wo.time)}
+    ${workOrderInputRow('地点','place',wo.place)}
+    ${workOrderInputRow('任务','task',wo.task,true)}
+    ${workOrderInputRow('金额','amount',wo.amount)}
+    ${workOrderInputRow('备注','remark',wo.remark,true)}
     <div class="confirm-row"><span class="confirm-label">状态</span><span class="confirm-value">等待确认</span></div>
     <div class="confirm-btns">
       <button class="confirm-btn secondary" onclick="cancelWorkOrder('${id}')">再想想</button>
@@ -4047,6 +4056,25 @@ function renderWorkOrderConfirmCard(post={}){
     </div>`;
   chatArea.appendChild(card);
   scrollBottom();
+}
+
+function readWorkOrderCard(id){
+  const card=document.getElementById(id);
+  if(!card)return null;
+  const data={};
+  card.querySelectorAll('[data-wo-field]').forEach(el=>{
+    data[el.dataset.woField]=(el.value||'').trim();
+  });
+  return {
+    time:data.time||'待确认',
+    place:data.place||'待确认',
+    task:data.task||'待确认',
+    amount:data.amount||'待确认',
+    remark:data.remark||'',
+    user_confirmed:false,
+    provider_confirmed:false,
+    deal_status:'等待确认'
+  };
 }
 
 async function syncWorkOrder(post={}){
@@ -4088,6 +4116,9 @@ async function syncWorkOrder(post={}){
 async function confirmWorkOrder(id){
   const post=PENDING_WORK_ORDERS[id];
   if(!post)return;
+  post.workOrder=readWorkOrderCard(id)||post.workOrder||inferWorkOrderFields(post);
+  post.text=post.workOrder.task||post.text;
+  post.budget=post.workOrder.amount||post.budget;
   const card=document.getElementById(id);
   card?.remove();
   delete PENDING_WORK_ORDERS[id];
@@ -4642,7 +4673,7 @@ function buildPrompt(){
 【用户角色原则】
 每个用户都不是固定的“需求方”或“供给方”，而是两者兼具：此刻可能需要帮助，下一刻也可能提供商品、服务、餐饮、配送、经验、人脉或本地资源。
 当用户说“我需要、帮我找、有没有、推荐、想去、想买、想办事”时，先按需求方推进具体动作。
-当用户说“我是、我会、我能、我有、我提供、我卖、我可以帮、我认识、我有资源”时，立刻识别为供给方线索，告诉他“我可以帮你把生意/资源介绍给更多需要的人”。
+当用户说“我是、我会、我能、我有、我提供、我卖、我可以帮、我认识、我有资源”时，立刻识别为供给方线索。对用户只说“收到”或“好呀”这类短句，后台默默沉淀供给画像。
 同一轮对话里如果同时出现需求和能力，要同时整理：一边帮他办当前需求，一边把他能提供的部分沉淀到供给画像里。
 不要把用户贴死标签；要把用户理解成“既会求助，也能互助/做生意”的海外华人网络节点。
 商品销售、餐馆、外卖员、跑腿配送和普通用户也可以被连接起来：用户说想买、想吃、想送、想找配送，要整理需求；用户说自己开店、卖货、做餐、能送，要整理供给；需要时把餐馆/商家、配送者和用户需求组合成一条可成交的链路。
@@ -4654,7 +4685,7 @@ function buildPrompt(){
 
 【能力边界表达】
 当用户提出当前还没开通的生活、工作、旅游攻略、当地华人律师、会计、公共交通、出租车、Uber、拼车或其他需求时，不要生硬拒绝，不要说“我只做出行”，也不要把话题强行拉回接送机。
-统一口径：这件事我来办。先说明你会做的具体下一步，例如查近期攻略、列候选清单、找可联系服务者、核验公开资质入口、保存提醒、补问缺少信息。内部可以记录任务，但不要把“生成线索任务/情报任务/工单”当成主要回复说给用户。
+统一口径：先用两个字左右接住，例如“收到”“好呀”。随后默默执行动作，例如查近期攻略、列候选清单、找可联系对象、核验公开资质入口、保存提醒或生成确认卡。信息不明确时只问一个最关键的补充问题；信息差不多够了，就给用户可修改的确认卡。内部可以记录任务，但不要把“生成线索任务/情报任务/工单/后台整理”当成主要回复说给用户。
 如果用户问“芝加哥有什么好吃好玩”“当地华人律师/会计”等，先给一点实用方向，再说你会继续查近期公开信息、可联系对象和需要核验的点，不要只说以后会。
 只有当用户明确提出接送机、包车、用车、行程安排时，才优先推进出行业务。
 
