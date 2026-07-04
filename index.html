@@ -3097,7 +3097,7 @@ const FEATURE_INTENTS=[
   {key:'camera',label:'相机',pattern:/相机|拍照|拍一张|现场拍/i},
   {key:'image',label:'图片',pattern:/图片|照片|相册|上传图|发图/i},
   {key:'payment',label:'支付',pattern:/支付|付款|收款|付钱/i},
-  {key:'friends',label:'交友',pattern:/交友|找朋友|认识朋友|搭子/i},
+  {key:'local-people',label:'找同城人',pattern:/交友|找朋友|认识朋友|搭子|同城|建群|微信群|找群|一起.*(玩|走|去|吃|活动|出行)|拼团|拼车/i},
   {key:'region',label:'定位',pattern:/定位|切换地区|切换城市|换城市|所在城市|地区/i},
   {key:'share',label:'分享',pattern:/分享|转发|二维码|邀请|推荐朋友/i},
   {key:'reminder',label:'提醒',pattern:/提醒|闹钟|日程|行程安排|待办|叫我|到点/i},
@@ -3132,7 +3132,7 @@ async function handleDirectFeatureIntent(text, options={}){
 
 const TASK_PLAN_DEFS=[
   {key:'ride',label:'安排出行',pattern:/接机|送机|去机场|从机场|包车|用车|司机|车|行程|出发|到达|航班|火车|票|订票|旅行|旅游/i},
-  {key:'wish',label:'生成需求/供给情报任务',pattern:/求助|帮忙|找人|找当地|有没有.*(朋友|人)|认识.*人|电工|水管|维修|跳闸|断电|漏水|搬运|跑腿|律师|会计|报税|税务|华人.*(律师|会计|服务)|好吃|好玩|攻略|推荐|玩几天|去哪玩|怎么玩|旅游路线|行程推荐|英国|英國|伦敦|London|UK|Chicago|芝加哥|Doncaster|慕尼黑|Munich/i},
+  {key:'wish',label:'生成需求/供给情报任务',pattern:/求助|帮忙|找人|找当地|有没有.*(朋友|人)|认识.*人|同城|搭子|建群|微信群|找群|一起.*(玩|走|去|吃|活动|出行)|电工|水管|维修|跳闸|断电|漏水|搬运|跑腿|律师|会计|报税|税务|华人.*(律师|会计|服务)|好吃|好玩|攻略|推荐|玩几天|去哪玩|怎么玩|旅游路线|行程推荐|英国|英國|伦敦|London|UK|Chicago|芝加哥|Doncaster|慕尼黑|Munich/i},
   {key:'reminder',label:'保存日程提醒',pattern:/提醒|闹钟|日程|到点|别忘|记得|几点叫我|出发前|提前/i},
   {key:'image',label:'读图整理信息',pattern:/截图|图片|照片|拍照|相机|票据|二维码|海报/i},
   {key:'share',label:'分享给朋友',pattern:/分享|转发|发给朋友|二维码|邀请/i},
@@ -3341,6 +3341,7 @@ const CORE_TOOL_ITEMS=[
   {key:'camera',icon:'📷',label:'相机'},
   {key:'image',icon:'🖼️',label:'图片'},
   {key:'reminder',icon:'⏰',label:'提醒'},
+  {key:'local-people',icon:'👥',label:'找同城人'},
   {key:'intro',icon:'💬',label:'介绍'},
   {key:'profile',icon:'👤',label:'个人中心'},
   {key:'share',icon:'🔗',label:'分享'},
@@ -3471,6 +3472,7 @@ function runMoreAction(key,label){
   if(key==='camera'){document.getElementById('camera-input')?.click();return;}
   if(key==='image'){document.getElementById('image-input')?.click();return;}
   if(key==='intro'){showPlatformGuide(true);return;}
+  if(key==='local-people'){openLocalPeopleIntent();return;}
   if(key==='profile'){openProfile();return;}
   if(key==='region'){changeRegion();return;}
   if(key==='share'){shareRefLink();return;}
@@ -3518,6 +3520,10 @@ async function openFeatureByKey(key,label,options={}){
   if(key==='profile'){
     openProfile();
     await say('个人中心打开了。');
+    return;
+  }
+  if(key==='local-people'){
+    openLocalPeopleIntent(options.sourceText||'');
     return;
   }
   if(key==='region'){
@@ -3798,6 +3804,21 @@ function openMutualAidCommunity(draft={}){
   startHiddenIntelTask(draft);
 }
 
+async function openLocalPeopleIntent(sourceText=''){
+  const text=String(sourceText||'').trim();
+  if(!text){
+    await agentSay('可以，我来帮你找同城人。你直接说想找哪类人：比如同行搭子、同城互助、兴趣小群，或者“有没有人一起去某个活动”。我会先看需求是否真实匹配，再决定要不要撮合或建临时小群。',120);
+    return;
+  }
+  await startHiddenIntelTask({
+    wishType:'need_free',
+    category:'同城撮合 · 搭子/互助/小群',
+    city:intelCityFromText(text)||currentRegion.city||currentRegion.country,
+    text,
+    budget:'免费撮合；涉及费用需双方自行确认'
+  });
+}
+
 async function startHiddenIntelTask(draft={}){
   const city=currentRegion.city||currentRegion.country||'本地';
   const draftWishType=draft.wishType==='need_paid'?'need_paid':'need_free';
@@ -3868,6 +3889,7 @@ async function submitMutualAidPost(){
 function inferIntelCategory(text=''){
   const clean=String(text||'');
   return intelProfessionalCategory(clean)
+    || (/同城|搭子|交友|找朋友|认识朋友|微信群|找群|建群|一起.*(玩|走|去|吃|活动|出行)|拼团|拼车/i.test(clean)?'同城撮合 · 搭子/互助/小群':'')
     || (/好吃|好玩|攻略|景点|餐厅|美食|度假|旅游|行程|英国|英國|伦敦|London|UK|Chicago|芝加哥/i.test(clean)?'旅游攻略 · 吃喝玩乐':'')
     || (/(电工|跳闸|断电)/i.test(clean)?'维修上门 · 电工':'')
     || (/(水管|漏水|维修|修理|上门检查)/i.test(clean)?'维修上门':'')
@@ -4390,6 +4412,7 @@ function buildPrompt(){
 如果用户选择一一介绍：按介绍、取名/头像、用车、找线索、市场、华人帮、个人中心的顺序，每次只介绍一项，再问要不要继续。
 当用户表达想获得帮助/帮助别人时，可以俏皮地说：“如果您想获得帮助或者帮助别人，我来帮你查、筛、核验，整理出能行动的结果。”然后引导他把事情说清楚。
 当用户提出电工、水管、跳闸、漏水、搬运、跑腿、临时上门检查、旅游攻略、当地餐厅景点、华人律师、会计、报税等需求时，不要拒绝；先自然接住需求，再说“我来查近期公开信息、可联系对象和需要核验的点”。专业维修、上门服务、法律、税务、涉及金钱或安全的事，要提醒用户自行核验资质、价格和安全。
+当用户提出交友、搭子、同城活动、找群或建群时，不要把华伴说成开放社交平台；先说你会按真实需求做同城撮合，适合时再建议临时小群，并提醒不要公开隐私、钱款和证件信息。
 不要在每个非出行需求后都介绍出行能力，除非用户主动提到要用车或行程接送。
 如果用户提出建议、吐槽、希望新增能力：先感谢和复述要点，再追问一个最有价值的细节，比如“你希望它在哪里出现？”或“你希望我怎么回复会更像你的小伙伴？”
 
