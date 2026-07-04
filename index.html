@@ -2893,6 +2893,57 @@ async function handleSupplyIntent(text, options={}){
 
 // ── 启动 ──
 let appStarted=false;
+const APP_RELEASE={
+  version:'2026.07.04-plugin-trial-delivery',
+  title:'华伴更新了',
+  summary:'出行和外卖配送先成型，商业功能按插件免费试用。',
+  items:[
+    '外卖配送新增用户端、商家端、外卖员端',
+    '电商商家入驻接入现有审核接口',
+    '商业插件支持先免费试用，后续再订阅',
+    '确认卡可以修改后再推送',
+    '闲聊陪伴保留，不会一开口就派工'
+  ],
+  primary:{label:'试试外卖',action:'delivery'},
+  secondary:{label:'知道了'}
+};
+const RELEASE_NOTICE_KEY='huaban_seen_release_version';
+
+function showReleaseNotice(force=false){
+  if(!APP_RELEASE?.version)return;
+  if(!force&&localStorage.getItem(RELEASE_NOTICE_KEY)===APP_RELEASE.version)return;
+  localStorage.setItem(RELEASE_NOTICE_KEY,APP_RELEASE.version);
+  const card=document.createElement('section');
+  card.className='install-card intro-fade-card';
+  card.setAttribute('aria-label','华伴更新公告');
+  card.innerHTML=`
+    <div class="install-copy">
+      <strong>${companionEscape(APP_RELEASE.title)}</strong>
+      <span>${companionEscape(APP_RELEASE.summary)}</span>
+      <span style="margin-top:8px;display:block;">${APP_RELEASE.items.map(item=>`• ${companionEscape(item)}`).join('<br>')}</span>
+    </div>
+    <div class="install-actions">
+      <button class="install-primary" onclick="openReleasePrimaryAction()">${companionEscape(APP_RELEASE.primary?.label||'试试')}</button>
+      <button class="install-close" onclick="this.closest('.install-card')?.remove()">${companionEscape(APP_RELEASE.secondary?.label||'知道了')}</button>
+    </div>`;
+  chatArea.appendChild(card);
+  scrollBottom();
+}
+
+function openReleasePrimaryAction(){
+  document.querySelector('[aria-label="华伴更新公告"]')?.remove();
+  if(APP_RELEASE.primary?.action==='delivery'){
+    rememberMenuKey('delivery');
+    openDeliveryPlatformHub();
+    return;
+  }
+  if(APP_RELEASE.primary?.action==='ride'){
+    rememberMenuKey('ride');
+    renderMoreMenu('ride');
+    document.getElementById('more-panel')?.classList.add('open');
+  }
+}
+
 async function startApp(){
   if(appStarted)return;
   appStarted=true;
@@ -2967,6 +3018,7 @@ async function startApp(){
     await refreshApprovedDriverAccess({announce:true}).catch(()=>null);
   }
   rewardCompanionAction('app_open');
+  if(currentRole!=='driver')setTimeout(()=>showReleaseNotice(false),700);
   maybeStartWakeListening();
 }
 
