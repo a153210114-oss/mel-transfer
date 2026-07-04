@@ -412,6 +412,9 @@ body {
     <div class="nav-item" onclick="showSection('outreach')">
       <span class="nav-icon">📣</span> 推广任务
     </div>
+    <div class="nav-item" onclick="showSection('ticker')">
+      <span class="nav-icon">🔁</span> 滚动屏管理
+    </div>
     <div class="nav-item" onclick="showSection('ops-team')">
       <span class="nav-icon">👥</span> 运营团队
     </div>
@@ -492,6 +495,11 @@ body {
         <div class="quick-icon">📣</div>
         <strong>推广任务</strong>
         <span>AI 生成文案，人工确认后投放</span>
+      </div>
+      <div class="admin-quick-card" onclick="showSection('ticker')">
+        <div class="quick-icon">🔁</div>
+        <strong>滚动屏管理</strong>
+        <span>管理首页介绍滚动屏和领养动态默认文案</span>
       </div>
       <div class="admin-quick-card" onclick="showSection('ops-team')">
         <div class="quick-icon">👥</div>
@@ -959,6 +967,44 @@ body {
   </div>
 </div>
 
+<!-- ══ 滚动屏管理 ══ -->
+<div class="section" id="section-ticker">
+  <div class="topbar">
+    <div>
+      <div class="page-title">滚动屏管理</div>
+      <div class="page-sub">首页 AI 介绍 / 领养动态默认文案</div>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn btn-primary" onclick="saveTickerSettings()">保存</button>
+      <button class="btn btn-ghost" onclick="resetTickerSettings()">恢复默认</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="two-col">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">AI 介绍滚动屏</div>
+          <span class="tag">一行一条</span>
+        </div>
+        <div class="card-body">
+          <div style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:10px;">格式建议：痛点 → 用户能得到的结果。不要写后台流程、规则和动作。</div>
+          <textarea class="input textarea" id="ticker-intro-lines" style="min-height:220px;"></textarea>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">领养动态默认文案</div>
+          <span class="tag">真实领养会自动追加</span>
+        </div>
+        <div class="card-body">
+          <div style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:10px;">这里管理没有真实数据前的默认滚动文案。真实领养用户会接在后面。</div>
+          <textarea class="input textarea" id="ticker-adoption-lines" style="min-height:220px;"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ══ 运营团队 ══ -->
 <div class="section" id="section-ops-team">
   <div class="topbar">
@@ -1265,12 +1311,79 @@ function showSection(name) {
     suppliers: loadSuppliers,
     sources: loadSourceRegistry,
     outreach: loadOutreachTasks,
+    ticker: loadTickerSettings,
     'ops-team': loadOpsTeam,
     dispatch: loadDispatch,
     'ai-training': loadAITraining,
     finance: loadFinance
   };
   if (actions[name]) actions[name]();
+}
+
+// ── Ticker Settings ──
+const TICKER_SETTINGS_KEY='huaban_ticker_settings';
+const DEFAULT_TICKER_SETTINGS={
+  introLines:[
+    '找人太难 → 我帮你找靠谱的人',
+    '服务真假难辨 → 我帮你看到靠谱选择',
+    '有生意没人知道 → 我帮你介绍给更多需要的人',
+    '不想翻菜单 → 有事直接跟我说',
+    '人在海外不熟路 → 我帮你接住本地生活需求',
+    '临时需要帮忙 → 我帮你找到可用选择'
+  ],
+  adoptionLines:[
+    '用户 0402****** 领养华伴 AI 成功',
+    '用户 0449****** 成功领养华伴 AI',
+    '用户 0435****** 领养了自己的小 AI',
+    '用户 0416****** 正在体验华伴 AI',
+    '用户 0450****** 领养华伴 AI 成功',
+    '用户 0402****** 领养华伴 AI 成功',
+    '用户 0449****** 成功领养华伴 AI'
+  ]
+};
+
+function readTickerSettings(){
+  try{
+    const saved=JSON.parse(localStorage.getItem(TICKER_SETTINGS_KEY)||'{}');
+    return {
+      introLines:Array.isArray(saved.introLines)?saved.introLines:DEFAULT_TICKER_SETTINGS.introLines,
+      adoptionLines:Array.isArray(saved.adoptionLines)?saved.adoptionLines:DEFAULT_TICKER_SETTINGS.adoptionLines
+    };
+  }catch(e){
+    return DEFAULT_TICKER_SETTINGS;
+  }
+}
+
+function loadTickerSettings(){
+  const settings=readTickerSettings();
+  const intro=document.getElementById('ticker-intro-lines');
+  const adoption=document.getElementById('ticker-adoption-lines');
+  if(intro)intro.value=settings.introLines.join('\n');
+  if(adoption)adoption.value=settings.adoptionLines.join('\n');
+}
+
+function tickerLinesFromTextarea(id){
+  return (document.getElementById(id)?.value||'')
+    .split('\n')
+    .map(line=>line.trim())
+    .filter(Boolean)
+    .slice(0,24);
+}
+
+function saveTickerSettings(){
+  const settings={
+    introLines:tickerLinesFromTextarea('ticker-intro-lines'),
+    adoptionLines:tickerLinesFromTextarea('ticker-adoption-lines'),
+    updated_at:new Date().toISOString()
+  };
+  localStorage.setItem(TICKER_SETTINGS_KEY,JSON.stringify(settings));
+  alert('已保存。刷新前台后生效。');
+}
+
+function resetTickerSettings(){
+  if(!confirm('确认恢复滚动屏默认文案？'))return;
+  localStorage.setItem(TICKER_SETTINGS_KEY,JSON.stringify(DEFAULT_TICKER_SETTINGS));
+  loadTickerSettings();
 }
 
 // Status badge helper

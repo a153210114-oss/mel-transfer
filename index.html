@@ -650,7 +650,7 @@ body.more-open .chat-area{padding-bottom:390px;}
 </div>
 
 <div class="ai-intro-ticker" aria-label="华伴 AI 自我介绍">
-  <div class="ai-intro-ticker-track">
+  <div class="ai-intro-ticker-track" id="ai-intro-ticker-track">
     <span><b>找人太难</b> <em>我帮你找靠谱的人</em></span>
     <span><b>服务真假难辨</b> <em>我帮你看到靠谱选择</em></span>
     <span><b>有生意没人知道</b> <em>我帮你介绍给更多需要的人</em></span>
@@ -2740,6 +2740,44 @@ function adoptionTickerLabel(row={}){
   return `${safe} 领养华伴 AI 成功`;
 }
 
+const TICKER_SETTINGS_KEY='huaban_ticker_settings';
+
+function readTickerSettings(){
+  try{
+    const data=JSON.parse(localStorage.getItem(TICKER_SETTINGS_KEY)||'{}');
+    return data&&typeof data==='object'?data:{};
+  }catch(e){
+    return {};
+  }
+}
+
+function renderIntroTickerFromSettings(){
+  const track=document.getElementById('ai-intro-ticker-track');
+  if(!track)return;
+  const settings=readTickerSettings();
+  const lines=Array.isArray(settings.introLines)?settings.introLines.filter(Boolean):[];
+  if(!lines.length)return;
+  const html=lines.map(line=>{
+    const parts=String(line).split(/→|：|:/).map(x=>x.trim()).filter(Boolean);
+    const pain=parts[0]||line;
+    const result=parts.slice(1).join(' ')||'告诉华伴就行';
+    return `<span><b>${companionEscape(pain)}</b> <em>${companionEscape(result)}</em></span>`;
+  }).join('');
+  track.innerHTML=html+html;
+}
+
+function renderDefaultAdoptionTicker(){
+  const track=document.getElementById('adoption-ticker-track');
+  if(!track)return;
+  const settings=readTickerSettings();
+  const lines=Array.isArray(settings.adoptionLines)?settings.adoptionLines.filter(Boolean):[];
+  if(!lines.length)return;
+  const html=lines.map(text=>`<span><i></i>${companionEscape(text)}</span>`).join('');
+  track.innerHTML=html;
+  track.dataset.virtualHtml=html;
+  delete track.dataset.loadedReal;
+}
+
 async function loadRealAdoptionTicker(){
   const track=document.getElementById('adoption-ticker-track');
   if(!track)return;
@@ -2978,6 +3016,8 @@ async function startApp(){
   updateAgentIdentityUI();
   detectRegion();
   trackPageVisit('home');
+  renderIntroTickerFromSettings();
+  renderDefaultAdoptionTicker();
   loadRealAdoptionTicker();
   startReminderTimers();
   // 落地读取推荐码
