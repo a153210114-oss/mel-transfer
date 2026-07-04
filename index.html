@@ -601,7 +601,7 @@ body.theme-night .mic-btn.recording .wave-icon i{background:#31d683;}
 .send-btn{width:40px;min-width:40px;display:flex;align-items:center;justify-content:center;line-height:1;}
 .input-bar.voice-input .chat-input{display:none;}
 .input-bar.voice-input .hold-talk{display:block;}
-.more-panel{display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:59px;width:100%;max-width:480px;background:#f7f7f7;border-top:1px solid #d6d6d6;padding:14px 14px calc(18px + env(safe-area-inset-bottom));z-index:100;box-shadow:0 -8px 22px rgba(0,0,0,.06);}
+.more-panel{display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:59px;width:100%;max-width:480px;background:#f7f7f7;border-top:1px solid #d6d6d6;padding:14px 14px calc(18px + env(safe-area-inset-bottom));z-index:180;box-shadow:0 -8px 22px rgba(0,0,0,.06);}
 .more-panel.open{display:block;}
 .more-panel-head{height:28px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;color:#666;font-size:13px;}
 .more-back{border:0;background:none;color:#576b95;font-size:13px;font-family:inherit;padding:4px;cursor:pointer;}
@@ -1733,7 +1733,7 @@ function handleComposerAction(){
     sendMessage();
     updateComposerAction();
   }else{
-    toggleMorePanel();
+    openMorePanel();
   }
 }
 
@@ -3058,8 +3058,7 @@ function openReleasePrimaryAction(){
   }
   if(APP_RELEASE.primary?.action==='ride'){
     rememberMenuKey('ride');
-    renderMoreMenu('ride');
-    document.getElementById('more-panel')?.classList.add('open');
+    openMorePanel('ride');
   }
 }
 
@@ -3877,16 +3876,25 @@ function toggleMorePanel(){
   const panel=document.getElementById('more-panel');
   if(!panel)return;
   const open=!panel.classList.contains('open');
-  if(open)renderMoreMenu();
-  panel.classList.toggle('open',open);
-  panel.setAttribute('aria-hidden',String(!open));
-  document.body.classList.toggle('more-open',open);
-  if(open)scrollBottom();
+  if(open)openMorePanel();
+  else closeMorePanel();
+}
+
+function openMorePanel(category='home'){
+  const panel=document.getElementById('more-panel');
+  if(!panel)return;
+  renderMoreMenu(category);
+  panel.classList.add('open');
+  panel.style.display='block';
+  panel.setAttribute('aria-hidden','false');
+  document.body.classList.add('more-open');
+  scrollBottom();
 }
 
 function closeMorePanel(){
   const panel=document.getElementById('more-panel');
   panel?.classList.remove('open');
+  if(panel)panel.style.display='';
   panel?.setAttribute('aria-hidden','true');
   document.body.classList.remove('more-open');
 }
@@ -3936,11 +3944,7 @@ async function openFeatureByKey(key,label,options={}){
     return;
   }
   if(categoryMap[key]){
-    renderMoreMenu(categoryMap[key]);
-    const panel=document.getElementById('more-panel');
-    panel?.classList.add('open');
-    panel?.setAttribute('aria-hidden','false');
-    document.body.classList.add('more-open');
+    openMorePanel(categoryMap[key]);
     await say(`${label}功能打开了。`);
     return;
   }
