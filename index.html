@@ -254,6 +254,12 @@ body{background:var(--wx-bg);color:var(--wx-text);}
 .top-bar{justify-content:center;position:relative;}
 .top-bar .brand-lockup{margin:0 auto;transition:transform .55s ease,left .55s ease,margin .55s ease;}
 body.companion-docked .top-bar .brand-lockup{position:absolute;left:12px;margin:0;transform:scale(.92);}
+.brand-positioning{
+  position:absolute;left:72px;right:160px;top:50%;transform:translateY(-50%);
+  color:#1f2d3a;font-size:13px;font-weight:900;letter-spacing:.04em;
+  text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.88;
+}
+body:not(.companion-docked) .brand-positioning{left:50%;right:auto;transform:translate(-50%,-50%);margin-left:56px;max-width:160px;}
 #profile-btn.companion-entry{
   display:flex!important;position:absolute;right:10px;top:7px;height:42px;max-width:148px;
   align-items:center;gap:6px;padding:5px 8px!important;border:1px solid #dcdcdc!important;
@@ -330,6 +336,7 @@ body.theme-night{
   --wx-border:#343b44;
 }
 body.theme-night .top-bar>button{color:#d7dce2!important;}
+body.theme-night .brand-positioning{color:#edf3f8;opacity:.82;}
 body.theme-night #profile-btn.companion-entry{background:#242a31!important;border-color:#3a424c!important;color:#dce4ec!important;}
 body.theme-night #profile-btn.companion-entry.nudge::after{background:#242a31;border-color:#3a424c;color:#62ddb2;}
 body.theme-night .companion-entry-xp{color:#9aa7af;}
@@ -605,6 +612,7 @@ body.theme-night .mic-btn.recording .wave-icon i{background:#31d683;}
 .media-input{display:none;}
 body.more-open .chat-area{padding-bottom:390px;}
 @media(max-width:360px){.more-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:360px){.brand-positioning{font-size:12px;right:145px;left:66px;letter-spacing:0}body:not(.companion-docked) .brand-positioning{max-width:132px;margin-left:50px;}}
 @media(max-width:360px){.install-card,.wake-card{margin-left:0}.install-copy span{white-space:normal}}
 @media(min-width:481px){body{margin-top:0;height:100vh;border:0;box-shadow:none}.input-bar{bottom:0}.more-panel{bottom:59px}}
 </style>
@@ -633,6 +641,7 @@ body.more-open .chat-area{padding-bottom:390px;}
   <div class="brand-lockup">
     <img class="brand-logo" src="assets/brand/huaban-logo-v1.png" alt="华伴 logo">
   </div>
+  <div class="brand-positioning">生活事业好帮手</div>
   <div id="voice-indicator" style="display:none;font-size:11px;color:rgba(255,59,48,0.9);animation:mp 0.8s ease-in-out infinite;">🔴 录音中</div>
   <button class="region-btn ai-hidden-control" id="region-btn" onclick="changeRegion()" aria-label="切换地区" title="切换地区"><i class="region-dot"></i><span id="region-label">正在定位</span>⌄</button>
   <button class="ai-hidden-control" id="share-btn" onclick="shareRefLink()" aria-label="分享" title="分享" style="background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;">＋</button>
