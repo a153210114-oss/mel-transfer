@@ -2825,7 +2825,7 @@ function syncUserFeedback(question, context='', source='user-feedback'){
 function detectSupplyIntent(text=''){
   const clean=String(text||'').trim();
   if(!clean)return null;
-  const hasSupplyVerb=/我(是|做|会|能|可以|可|有|提供|接|卖|出租|带|教|修|帮|代办|开店|开餐馆|送外卖)|本人|我们(做|提供|可以|有|接|卖|开店|开餐馆|送)|可接单|想接单|想提供|成为服务者|加入华伴|入驻/i.test(clean);
+  const hasSupplyVerb=/我(是|做|会|能|可以|可|有|提供|接|卖|出租|带|教|修|帮|代办|开店|开餐馆|送外卖)|本人|我们(做|提供|可以|有|接|卖|开店|开餐馆|送)|可接单|想接单|想提供|成为服务者|加入华伴|入驻|进驻|商家入驻|商户入驻|我要入驻|我要进驻/i.test(clean);
   const notSupply=/我想找|我要找|帮我找|有没有|哪里有|推荐|需要.*(找|请)|想买|想租|求/i.test(clean);
   if(!hasSupplyVerb||notSupply)return null;
   const type=inferSupplierTypeFromText(clean);
@@ -2854,14 +2854,18 @@ function inferSupplierTypeFromText(text=''){
     {pattern:/卖|出售|二手|代购|商品|货|食品|团购|批发|零售/i,value:'goods',label:'商品销售/代购',category:'商品销售'},
     {pattern:/摄影|拍照|视频|剪辑|设计|网站|装修|培训|教|课程|补习/i,value:'creative',label:'技能/创意/培训',category:'技能服务'}
   ];
-  return matches.find(item=>item.pattern.test(clean))||null;
+  return matches.find(item=>item.pattern.test(clean))||
+    (/入驻|进驻|接单|加入华伴|成为服务者|提供服务|商家|商户/i.test(clean)
+      ? {value:'supplier_onboarding',label:'商户/服务者入驻意向',category:'入驻申请'}
+      : null);
 }
 
 async function handleSupplyIntent(text, options={}){
   const supply=detectSupplyIntent(text);
   if(!supply)return false;
   const p=getPassenger();
-  const message=`AI聊天识别供给侧：${supply.serviceType}\n城市：${supply.city}\n用户原话：${supply.text}\n联系方式：${betaContact()||'待补充'}`;
+  const isOnboarding=/入驻|进驻|加入华伴|成为服务者|接单|商家|商户/i.test(supply.text);
+  const message=`AI聊天识别供给侧：${supply.serviceType}\n城市：${supply.city}\n用户原话：${supply.text}\n联系方式：${betaContact()||'待补充'}\n推送：${isOnboarding?'用户有入驻意愿，优先跟进':'普通供给线索'}`;
   const payload={
     lead_type:'supply',
     channel:'agent_chat_supply',
@@ -2871,9 +2875,9 @@ async function handleSupplyIntent(text, options={}){
     country:currentRegion.country||'',
     message,
     need_type:supply.typeValue,
-    stage:'ai_detected_supply',
+    stage:isOnboarding?'supplier_onboarding_push':'ai_detected_supply',
     status:'new',
-    next_action:'review_supplier_contact_and_invite_to_supplier_hub',
+    next_action:isOnboarding?'push_to_admin_and_invite_supplier_to_complete_profile':'review_supplier_contact_and_invite_to_supplier_hub',
     fields:{
       source:'agent_chat',
       service_type:supply.serviceType,
@@ -2882,6 +2886,16 @@ async function handleSupplyIntent(text, options={}){
       intro:supply.text,
       needs_contact:!betaContact(),
       detected_by:'supply_intent',
+      push_required:isOnboarding,
+      push_reason:isOnboarding?'user_expressed_supplier_onboarding_intent':'supply_intent_detected',
+      admin_priority:isOnboarding?'high':'normal',
+      manual_followup_required:isOnboarding,
+      manual_followup_status:isOnboarding?'pending':'optional',
+      manual_followup_owner:'运营人工跟进',
+      manual_followup_goal:'确认入驻类型、联系方式、服务范围和资质材料',
+      monetization_model:'seller_subscription',
+      seller_subscriber_candidate:true,
+      merchant_slogan:'去中心化，不抽佣',
       user_role_model:{
         current_role:'supply',
         also_potential_demand:true,
@@ -2891,7 +2905,9 @@ async function handleSupplyIntent(text, options={}){
   };
   supaInsertLead(payload).catch(e=>console.warn('supply lead sync failed',e));
   rewardCompanionAction('try_feature');
-  await agentSay(`太好了，我先帮你整理成“${supply.serviceType}”供给线索。以后有人需要这类商品、服务或配送，我可以帮你把生意介绍给更多人；如果你愿意，下一步补一下联系方式、服务区域和资质，我就能帮你进入审核。`,150);
+  await agentSay(isOnboarding
+    ? `收到，我马上把你的入驻意向推给后台。华伴是去中心化、不抽佣，我会帮你把生意介绍给更多真正需要的人。`
+    : `太好了，我先帮你整理成“${supply.serviceType}”供给线索。以后有人需要这类商品、服务或配送，我可以帮你把生意介绍给更多人；如果你愿意，下一步补一下联系方式、服务区域和资质，我就能帮你进入审核。`,150);
   return true;
 }
 
@@ -3575,7 +3591,8 @@ const PLUGIN_MONETIZATION={
     subscriptionLabel:'订阅使用',
     subscriptionPayer:'seller',
     sellerSubscriber:true,
-    principle:'用户需要时立即给免费试用；用得上，再进入收费订阅。'
+    merchantSlogan:'去中心化，不抽佣',
+    principle:'用户需要时立即给免费试用；用得上，再进入收费订阅。卖方订阅不是抽佣，口号是：去中心化，不抽佣。'
   },
   utility:{
     trial:false,
@@ -4889,6 +4906,7 @@ function buildPrompt(){
 商业化功能都是插件：出行、外卖配送、电商商家、专业服务、市场、城市合伙人等都按插件接入。默认不把一堆功能摊给用户；用户要，就给，立刻打开对应插件、确认卡或流程。
 商业化路径：用户需要某个插件时，先给免费试用，不要一上来讲收费。用户试用后确实有连续需求，再自然提示订阅。订阅是为了持续使用插件能力，不是阻止用户第一次办事。
 卖方订阅原则：任何通过华伴获得收款机会的卖方，将来都是订阅者，包括司机、商家、餐馆、外卖员、电商卖家、专业服务者和城市运营方。用户端尽量轻，收款方承担持续商业化。
+商户推广口号：去中心化，不抽佣。对商户强调华伴不是抽佣平台，而是帮他们连接真实需求、展示资质、沉淀口碑和获得持续生意的 AI 工具网络。
 平台：没有中间商赚差价，只让需要的人遇见可靠的人。平台不从单笔交易中抽佣，用户与供给方直接达成共识合约并交易，平台靠AI工具、认证展示、订阅、打赏和城市贡献网络盈利
 语气：像朋友聊天，口语化，每次只说1句话
 
@@ -4903,6 +4921,7 @@ function buildPrompt(){
 插件原则：不要主动罗列所有商业插件，不要让页面像功能超市。用户明确要某个能力时，不解释架构，直接给对应能力；用户只是闲聊时，不塞插件。
 试用原则：用户要，就给免费试用；试用中少讲商业模式，先让用户感受到能解决问题。等用户重复使用、要更多额度、要持续接单或运营城市时，再进入订阅/付费说明。
 卖方原则：只要用户表达自己要接单、卖货、提供服务、收款或经营城市，就按未来订阅者画像沉淀；首次仍可试用/审核，不要立刻强行收费。
+对卖方话术：先讲“去中心化，不抽佣”，再讲“我帮你把生意介绍给更多真正需要的人”。不要一上来讲收费。
 
 【陪伴成长状态】
 你也是用户正在养成的AI旅行伙伴。
@@ -6347,7 +6366,11 @@ async function submitSupplierApplication(btn){
       passenger_ref:p.ref||'',
       monetization_model:'seller_subscription',
       seller_subscriber_candidate:true,
-      subscription_trigger:'after_free_trial_or_approved_selling'
+      subscription_trigger:'after_free_trial_or_approved_selling',
+      manual_followup_required:true,
+      manual_followup_status:'pending',
+      manual_followup_owner:'运营人工跟进',
+      manual_followup_goal:'确认入驻类型、联系方式、服务范围和资质材料'
     }
   };
   try{

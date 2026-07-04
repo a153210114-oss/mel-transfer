@@ -1854,6 +1854,16 @@ function supplierQualificationText(lead) {
   return url ? `${license} · ${url}${monetization}` : `${license}${monetization}`;
 }
 
+function supplierFollowupText(lead) {
+  const fields = lead.fields || {};
+  if (!fields.manual_followup_required && !fields.push_required) return '';
+  const priority = fields.admin_priority === 'high' ? '高优先级' : '人工跟进';
+  const statusMap = {pending:'待联系', contacted:'已跟进', optional:'可跟进'};
+  const status = statusMap[fields.manual_followup_status] || fields.manual_followup_status || '待联系';
+  const goal = fields.manual_followup_goal || '确认联系方式、服务范围和资质材料';
+  return `${priority} · ${status} · ${goal}`;
+}
+
 function supplierLeadType(lead={}) {
   const channel = String(lead.channel || '');
   const needType = String(lead.need_type || '');
@@ -2042,8 +2052,8 @@ function rewritePromoCopy(){
   const templates={
     wechat:`华伴开始公测啦。\n\n它不是普通问答 AI，而是一个能帮你办事的小伙伴：\n${body}\n\n你只管说需求，华伴在背后帮你整理、找线索、找服务、找同城人。\n\n公测入口：${url}\n欢迎试用，也欢迎狠狠吐槽。`,
     moments:`快来领你的华伴 AI。\n\n${painPoints.slice(0,3).map(line=>line.replace('→','，')).join('\n')}\n\n前台只有 AI，后台是一座城市服务网络。\n${url}`,
-    supplier:`如果你在海外提供商品、餐饮、配送或服务，华伴可以帮你被更多需要的人看见。\n\n${body}\n\n适合：接送机、包车、翻译、会计、律师、电工、维修、跑腿、中餐馆、外卖配送、本地服务、商品售卖。\n\n你告诉华伴你能提供什么，它会先整理到供给侧，审核后再推荐给有真实需求的人；餐馆、外卖员和用户也可以被连接起来。\n${url}`,
-    driver:`墨尔本司机/车队看这里。\n\n${body}\n\n如果你能接送机、包车、旅游用车或临时用车，华伴可以帮你连接更多真实需求。\n\n你告诉华伴车型、区域和联系方式，通过审核后就能开通司机端。\n${url}`,
+    supplier:`去中心化，不抽佣。\n\n如果你在海外提供商品、餐饮、配送或服务，华伴可以帮你被更多需要的人看见。\n\n${body}\n\n适合：接送机、包车、翻译、会计、律师、电工、维修、跑腿、中餐馆、外卖配送、本地服务、商品售卖。\n\n你告诉华伴你能提供什么，它会先整理到供给侧，审核后再推荐给有真实需求的人；餐馆、外卖员和用户也可以被连接起来。\n${url}`,
+    driver:`去中心化，不抽佣。\n\n墨尔本司机/车队看这里。\n\n${body}\n\n如果你能接送机、包车、旅游用车或临时用车，华伴可以帮你连接更多真实需求。\n\n你告诉华伴车型、区域和联系方式，通过审核后就能开通司机端。\n${url}`,
     slogan:`快来领你的华伴 AI，有趣又有用。\n你只管说，华伴替你找人、找服务、找机会。\n${url}`
   };
   document.getElementById('promo-rewrite-output').value=templates[tone]||templates.wechat;
@@ -2314,6 +2324,7 @@ async function loadSuppliers() {
       const status = lead.status || 'new';
       const service = supplierServiceText(lead);
       const qualification = supplierQualificationText(lead);
+      const followup = supplierFollowupText(lead);
       const message = (lead.message || '').replace(/\n/g, ' · ');
       const isSupply = lead.lead_type === 'supply';
       return `<tr>
@@ -2328,6 +2339,7 @@ async function loadSuppliers() {
         <td>
           <div style="font-weight:700;color:var(--accent);">${escapeHtml(service)}</div>
           <div style="font-size:11px;color:var(--gold);max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">资质：${escapeHtml(qualification)}</div>
+          ${followup ? `<div style="font-size:11px;color:var(--green);max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">跟进：${escapeHtml(followup)}</div>` : ''}
           <div style="font-size:11px;color:var(--text3);max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(message)}</div>
         </td>
         <td style="font-family:monospace;font-size:12px;">${escapeHtml(lead.contact || '-')}</td>
@@ -2336,6 +2348,7 @@ async function loadSuppliers() {
         <td>
           ${isSupply && status !== 'approved' ? `<button class="action-btn success" onclick="approveSupplier('${lead.id}','${lead.__table}')">通过</button>` : ''}
           ${isSupply && status !== 'rejected' ? `<button class="action-btn danger" onclick="rejectSupplier('${lead.id}','${lead.__table}')" style="margin-left:4px;">驳回</button>` : ''}
+          ${followup ? `<button class="action-btn" onclick="markSupplierFollowed('${lead.id}','${lead.__table}')" style="margin-left:4px;">已跟进</button>` : ''}
           <button class="action-btn" onclick="copyId('${lead.id}')" style="margin-left:4px;">复制ID</button>
         </td>
       </tr>`;
@@ -2343,6 +2356,30 @@ async function loadSuppliers() {
   } catch(e) {
     tbody.innerHTML = `<tr><td colspan="7" style="color:var(--red);padding:20px;">${escapeHtml(e.message)}</td></tr>`;
   }
+}
+
+async function markSupplierFollowed(id, table='beta_leads') {
+  const tables = [table, table === 'beta_leads' ? 'user_leads' : 'beta_leads'].filter(Boolean);
+  let lastError = null;
+  for (const target of [...new Set(tables)]) {
+    try {
+      const rows = await supaFetch(`${target}?id=eq.${id}&select=fields`);
+      if (!Array.isArray(rows) || !rows.length) continue;
+      const fields = rows[0].fields || {};
+      const nextFields = {
+        ...fields,
+        manual_followup_status:'contacted',
+        manual_followup_at:new Date().toISOString()
+      };
+      await supaPatch(`${target}?id=eq.${id}`, {fields:nextFields});
+      alert('已标记人工跟进。');
+      loadSuppliers();
+      return;
+    } catch(e) {
+      lastError = e;
+    }
+  }
+  alert('标记失败：' + (lastError?.message || '没有找到这条线索'));
 }
 
 async function approveSupplier(id, table='beta_leads') {
