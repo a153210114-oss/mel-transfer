@@ -1850,7 +1850,8 @@ function supplierQualificationText(lead) {
   }
   const license = fields.license || '未填写资质';
   const url = fields.public_verification_url || '';
-  return url ? `${license} · ${url}` : license;
+  const monetization = fields.seller_subscriber_candidate ? ' · 卖方订阅候选' : '';
+  return url ? `${license} · ${url}${monetization}` : `${license}${monetization}`;
 }
 
 function supplierLeadType(lead={}) {

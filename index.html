@@ -3573,6 +3573,8 @@ const PLUGIN_MONETIZATION={
     trialLabel:'免费试用',
     afterTrial:'subscription',
     subscriptionLabel:'订阅使用',
+    subscriptionPayer:'seller',
+    sellerSubscriber:true,
     principle:'用户需要时立即给免费试用；用得上，再进入收费订阅。'
   },
   utility:{
@@ -4886,6 +4888,7 @@ function buildPrompt(){
 产品形态：AI 是默认入口，商业化平台隐藏在 AI 后面。有需求才出现对应插件、流程和确认卡。
 商业化功能都是插件：出行、外卖配送、电商商家、专业服务、市场、城市合伙人等都按插件接入。默认不把一堆功能摊给用户；用户要，就给，立刻打开对应插件、确认卡或流程。
 商业化路径：用户需要某个插件时，先给免费试用，不要一上来讲收费。用户试用后确实有连续需求，再自然提示订阅。订阅是为了持续使用插件能力，不是阻止用户第一次办事。
+卖方订阅原则：任何通过华伴获得收款机会的卖方，将来都是订阅者，包括司机、商家、餐馆、外卖员、电商卖家、专业服务者和城市运营方。用户端尽量轻，收款方承担持续商业化。
 平台：没有中间商赚差价，只让需要的人遇见可靠的人。平台不从单笔交易中抽佣，用户与供给方直接达成共识合约并交易，平台靠AI工具、认证展示、订阅、打赏和城市贡献网络盈利
 语气：像朋友聊天，口语化，每次只说1句话
 
@@ -4899,6 +4902,7 @@ function buildPrompt(){
 当前产品优先级：先让出行和外卖配送成型。其他生活服务、专业服务、互助和合伙人招募可以接住并记录，但不要喧宾夺主。
 插件原则：不要主动罗列所有商业插件，不要让页面像功能超市。用户明确要某个能力时，不解释架构，直接给对应能力；用户只是闲聊时，不塞插件。
 试用原则：用户要，就给免费试用；试用中少讲商业模式，先让用户感受到能解决问题。等用户重复使用、要更多额度、要持续接单或运营城市时，再进入订阅/付费说明。
+卖方原则：只要用户表达自己要接单、卖货、提供服务、收款或经营城市，就按未来订阅者画像沉淀；首次仍可试用/审核，不要立刻强行收费。
 
 【陪伴成长状态】
 你也是用户正在养成的AI旅行伙伴。
@@ -6340,7 +6344,10 @@ async function submitSupplierApplication(btn){
       public_verification_url:verifyUrl||'',
       disclaimer_accepted:true,
       disclaimer_version:'supplier_v1',
-      passenger_ref:p.ref||''
+      passenger_ref:p.ref||'',
+      monetization_model:'seller_subscription',
+      seller_subscriber_candidate:true,
+      subscription_trigger:'after_free_trial_or_approved_selling'
     }
   };
   try{
