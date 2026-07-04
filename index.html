@@ -3962,6 +3962,8 @@ async function openLocalPeopleIntent(sourceText=''){
   });
 }
 
+const PENDING_WORK_ORDERS={};
+
 async function startHiddenIntelTask(draft={}){
   const city=currentRegion.city||currentRegion.country||'本地';
   const draftWishType=draft.wishType==='need_paid'?'need_paid':'need_free';
@@ -3989,9 +3991,108 @@ async function startHiddenIntelTask(draft={}){
     createdAt:new Date().toISOString(),
     status:'open'
   };
-  syncWishWallPost(savedPost).catch(e=>console.warn('intel task sync failed',e));
   rewardCompanionAction('wish_wall');
-  await agentSay('收到，这件事我接住了。我会先把需求整理成后台任务，再去找公开线索、可联系的人和需要核验的来源；如果缺少关键信息，我再回来问你。',120);
+  renderWorkOrderConfirmCard(savedPost);
+  await agentSay('我先把你的需求整理成一张工单草稿。你确认一下，没问题我就推送到后台去找线索、找服务和核验来源。',120);
+}
+
+function workOrderNextAction(post={}){
+  const category=`${post.category||''} ${post.text||''}`;
+  if(/同城|搭子|找群|建群|活动/i.test(category))return '查找同城匹配对象，必要时建议临时小群';
+  if(/律师|会计|电工|水管|维修|报税|税务/i.test(category))return '查找可联系服务者，并优先核验资质来源';
+  if(/旅游|攻略|好吃|好玩|行程|景点/i.test(category))return '整理近期攻略、交通和可联系本地人线索';
+  return '整理公开线索、可联系对象和需要补充的信息';
+}
+
+function inferWorkOrderFields(post={}){
+  const text=String(post.text||'');
+  const amountText=String(post.budget||'');
+  const timeMatch=text.match(/(今天|明天|后天|大后天|本周|下周|周[一二三四五六日天]|星期[一二三四五六日天]|\d{1,2}[月\/.-]\d{1,2}[日号]?|\d{1,2}[点:：时]\d{0,2}|上午|中午|下午|晚上|凌晨)/i);
+  const amountMatch=(amountText||text).match(/(免费|可商量|预算[^，。；\n]*|价格[^，。；\n]*|报价[^，。；\n]*|\$ ?\d+(?:\.\d+)?|\d+\s*(?:刀|澳币|澳元|元|块|人民币))/i);
+  const placeMatch=text.match(/(Doncaster|Box Hill|Glen Waverley|Clayton|Melbourne|墨尔本|悉尼|伦敦|芝加哥|慕尼黑|机场|家里|学校|公司|市区|东南区|东区|西区|北区)/i);
+  return {
+    time: timeMatch ? timeMatch[0] : '待确认',
+    place: placeMatch ? placeMatch[0] : (post.city||currentRegion.city||'待确认'),
+    task: post.category ? `${post.category}：${text}` : text,
+    amount: amountMatch ? amountMatch[0] : (post.wishType==='need_free'?'免费/互助':'待确认'),
+    remark: amountText && !amountMatch ? amountText : workOrderNextAction(post),
+    user_confirmed: false,
+    provider_confirmed: false,
+    deal_status: '等待确认'
+  };
+}
+
+function renderWorkOrderConfirmCard(post={}){
+  const id='wo-'+Date.now()+'-'+Math.random().toString(36).slice(2,7);
+  post.workOrder=inferWorkOrderFields(post);
+  PENDING_WORK_ORDERS[id]=post;
+  const wo=post.workOrder;
+  const card=document.createElement('section');
+  card.className='confirm-card';
+  card.id=id;
+  card.innerHTML=`
+    <div style="font-size:14px;font-weight:900;color:white;margin-bottom:12px;">🧾 工单草稿</div>
+    <div class="confirm-row"><span class="confirm-label">时间</span><span class="confirm-value">${companionEscape(wo.time)}</span></div>
+    <div class="confirm-row"><span class="confirm-label">地点</span><span class="confirm-value">${companionEscape(wo.place)}</span></div>
+    <div class="confirm-row"><span class="confirm-label">任务</span><span class="confirm-value">${companionEscape(wo.task).slice(0,140)}</span></div>
+    <div class="confirm-row"><span class="confirm-label">金额</span><span class="confirm-value">${companionEscape(wo.amount)}</span></div>
+    <div class="confirm-row"><span class="confirm-label">备注</span><span class="confirm-value">${companionEscape(wo.remark)}</span></div>
+    <div class="confirm-row"><span class="confirm-label">状态</span><span class="confirm-value">等待确认</span></div>
+    <div class="confirm-btns">
+      <button class="confirm-btn secondary" onclick="cancelWorkOrder('${id}')">再想想</button>
+      <button class="confirm-btn primary" onclick="confirmWorkOrder('${id}')">确认推送</button>
+    </div>`;
+  chatArea.appendChild(card);
+  scrollBottom();
+}
+
+async function syncWorkOrder(post={}){
+  const wo=post.workOrder||inferWorkOrderFields(post);
+  return supaInsertLead({
+    lead_type:'user',
+    channel:'agent_work_order',
+    name:getPassenger().name||'华伴用户',
+    contact:post.contact||betaContact(),
+    city:post.city||currentRegion.city||'Melbourne',
+    country:currentRegion.country||'',
+    need_type:'work_order_'+(post.category||'general').replace(/\s+/g,'_').slice(0,28),
+    message:`AI确认工单\n时间：${wo.time}\n地点：${wo.place}\n任务：${wo.task}\n金额：${wo.amount}\n备注：${wo.remark}\n成交状态：${wo.deal_status}`,
+    next_action:'review_and_dispatch_to_matching_flow',
+    status:'new',
+    stage:'user_confirmed_work_order',
+    fields:{
+      event:'agent_work_order_confirmed',
+      post,
+      work_order:wo,
+      next_step:workOrderNextAction(post),
+      confirmed_by_user:true,
+      confirmed_by_provider:false,
+      deal_status:'waiting_confirmation',
+      dispatch_policy:{
+        push_after_confirmation:true,
+        human_review_required:true,
+        public_sources_only:true
+      }
+    }
+  });
+}
+
+async function confirmWorkOrder(id){
+  const post=PENDING_WORK_ORDERS[id];
+  if(!post)return;
+  const card=document.getElementById(id);
+  card?.remove();
+  delete PENDING_WORK_ORDERS[id];
+  addMsg('确认推送',true);
+  syncWorkOrder(post).catch(e=>console.warn('work order sync failed',e));
+  syncWishWallPost({...post,source:'work_order_confirmed'}).catch(e=>console.warn('intel task sync failed',e));
+  await agentSay('收到，工单已确认并推送。接下来我会继续确认时间、地点、任务和金额；状态先记为等待确认。如果缺信息，我再回来问你。',140);
+}
+
+async function cancelWorkOrder(id){
+  document.getElementById(id)?.remove();
+  delete PENDING_WORK_ORDERS[id];
+  await agentSay('好，我先不推送。你可以继续补充一句，我再帮你重新整理。',120);
 }
 
 async function submitMutualAidPost(){
