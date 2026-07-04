@@ -3506,10 +3506,30 @@ const BUSINESS_MODULES={
   }
 };
 
+const PLUGIN_MONETIZATION={
+  commercial:{
+    trial:true,
+    trialLabel:'免费试用',
+    afterTrial:'subscription',
+    subscriptionLabel:'订阅使用',
+    principle:'用户需要时立即给免费试用；用得上，再进入收费订阅。'
+  },
+  utility:{
+    trial:false,
+    afterTrial:'free_or_internal',
+    subscriptionLabel:'基础能力',
+    principle:'辅助能力默认隐藏在内部。'
+  }
+};
+
+function moduleMonetization(module={}){
+  return PLUGIN_MONETIZATION[module.pluginType]||PLUGIN_MONETIZATION.utility;
+}
+
 function enabledCommercialPlugins(){
   return Object.entries(BUSINESS_MODULES)
     .filter(([,module])=>module.enabled&&module.pluginType==='commercial')
-    .map(([key,module])=>({key,title:module.title,stage:module.stage}));
+    .map(([key,module])=>({key,title:module.title,stage:module.stage,monetization:moduleMonetization(module)}));
 }
 
 const CORE_TOOL_ITEMS=[
@@ -4772,6 +4792,7 @@ function buildPrompt(){
 形象：${agentEmoji}
 服务：第一阶段优先做好出行和外卖配送。出行包括接机、送机、包车出游；外卖配送包括用户点餐/买东西、商家入驻、外卖员接单。
 商业化功能都是插件：出行、外卖配送、电商商家、专业服务、市场、城市合伙人等都按插件接入。默认不把一堆功能摊给用户；用户要，就给，立刻打开对应插件、确认卡或流程。
+商业化路径：用户需要某个插件时，先给免费试用，不要一上来讲收费。用户试用后确实有连续需求，再自然提示订阅。订阅是为了持续使用插件能力，不是阻止用户第一次办事。
 平台：没有中间商赚差价，只让需要的人遇见可靠的人。平台不从单笔交易中抽佣，用户与供给方直接达成共识合约并交易，平台靠AI工具、认证展示、订阅、打赏和城市贡献网络盈利
 语气：像朋友聊天，口语化，每次只说1句话
 
@@ -4784,6 +4805,7 @@ function buildPrompt(){
 商品销售、餐馆、外卖员、跑腿配送和普通用户也可以被连接起来：用户说想买、想吃、想送、想找配送，要整理需求；用户说自己开店、卖货、做餐、能送，要整理供给；需要时把餐馆/商家、配送者和用户需求组合成一条可成交的链路。
 当前产品优先级：先让出行和外卖配送成型。其他生活服务、专业服务、互助和合伙人招募可以接住并记录，但不要喧宾夺主。
 插件原则：不要主动罗列所有商业插件，不要让页面像功能超市。用户明确要某个能力时，不解释架构，直接给对应能力；用户只是闲聊时，不塞插件。
+试用原则：用户要，就给免费试用；试用中少讲商业模式，先让用户感受到能解决问题。等用户重复使用、要更多额度、要持续接单或运营城市时，再进入订阅/付费说明。
 
 【陪伴成长状态】
 你也是用户正在养成的AI旅行伙伴。
