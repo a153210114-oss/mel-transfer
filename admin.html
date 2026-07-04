@@ -722,9 +722,19 @@ body {
   <div class="topbar">
     <div>
       <div class="page-title">公测线索</div>
-      <div class="page-sub">领养 / 需求供给情报 / 反馈 / 服务者申请</div>
+      <div class="page-sub">服务者申请 / 司机线索 / 需求情报 / 反馈</div>
     </div>
     <div class="topbar-actions">
+      <select class="input" id="supplier-type-filter" onchange="loadSuppliers()" style="width:150px;">
+        <option value="actionable" selected>待处理线索</option>
+        <option value="supplier">服务者申请</option>
+        <option value="driver">司机线索</option>
+        <option value="intel">需求情报</option>
+        <option value="daily">日常任务</option>
+        <option value="feedback">反馈吐槽</option>
+        <option value="adoption">AI领养</option>
+        <option value="">全部类型</option>
+      </select>
       <select class="input" id="supplier-filter" onchange="loadSuppliers()" style="width:130px;">
         <option value="">全部状态</option>
         <option value="new">待审核</option>
@@ -737,7 +747,7 @@ body {
   <div class="content">
     <div class="card">
       <div class="card-body" style="font-size:12px;color:var(--text2);line-height:1.7;border-bottom:1px solid var(--border);padding-bottom:16px;margin-bottom:8px;">
-        公测期间先集中查看用户领养、需求/供给情报任务、反馈吐槽和服务者申请。服务者线索审核通过后，用户端个人中心会显示“进入供给中心”；审核通过前，不能发布商品和服务。
+        默认只显示需要处理的线索。AI 领养记录可在类型筛选里单独查看；服务者线索审核通过后，用户端个人中心会显示“进入供给中心”。
       </div>
       <div style="overflow-x:auto;">
         <table class="table">
@@ -1788,6 +1798,26 @@ function supplierQualificationText(lead) {
   return url ? `${license} · ${url}` : license;
 }
 
+function supplierLeadType(lead={}) {
+  const channel = String(lead.channel || '');
+  const needType = String(lead.need_type || '');
+  const leadType = String(lead.lead_type || '');
+  if (channel === 'adoption' || needType === 'adoption') return 'adoption';
+  if (channel === 'feedback' || needType === 'feedback') return 'feedback';
+  if (channel === 'ld_01_daily_task' || lead.stage === 'daily_search_task') return 'daily';
+  if (channel === 'driver_supply_intel' || needType.startsWith('driver_supply_')) return 'driver';
+  if (channel === 'demand_supply_intel' || needType.startsWith('intel_')) return 'intel';
+  if (leadType === 'supply') return 'supplier';
+  return 'other';
+}
+
+function supplierLeadVisibleByType(lead={}, filter='actionable') {
+  const type = supplierLeadType(lead);
+  if (!filter) return true;
+  if (filter === 'actionable') return type !== 'adoption';
+  return type === filter;
+}
+
 const SOURCE_TYPE_LABELS = {
   chinese_website: '中文网站',
   forum: '论坛',
@@ -2136,6 +2166,7 @@ function roleFromTaskType(type){
 
 async function loadSuppliers() {
   const filter = document.getElementById('supplier-filter').value;
+  const typeFilter = document.getElementById('supplier-type-filter')?.value || 'actionable';
   const buildQ = table => {
     let q = `${table}?order=created_at.desc&limit=100`;
     if (filter) q += `&status=eq.${filter}`;
@@ -2151,6 +2182,7 @@ async function loadSuppliers() {
       supaFetch(buildQ('user_leads')).then(rows=>rows.map(row=>({...row,__table:'user_leads'}))).catch(()=>[])
     ]);
     const leads = [...betaRows, ...userRows]
+      .filter(lead => supplierLeadVisibleByType(lead, typeFilter))
       .sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0))
       .slice(0,100);
     if (!leads.length) {
