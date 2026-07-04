@@ -2224,6 +2224,10 @@ async function sendVoiceMessage(text){
   if(await handleSupplyIntent(corrected,{voice:true})){
     return;
   }
+  if(isDeliveryDemand(corrected)){
+    renderPluginConfirmCard({key:'delivery',label:'外卖配送',sourceText:corrected,voice:true});
+    return;
+  }
   if(await handleDirectFeatureIntent(corrected,{alreadyRendered:true,voice:true})){
     return;
   }
@@ -3321,6 +3325,11 @@ function detectDirectFeatureIntent(text){
 async function handleDirectFeatureIntent(text, options={}){
   const intent=detectDirectFeatureIntent(text);
   if(!intent)return false;
+  const commercialKeys=['ride-menu','travel-menu','help-menu','market','delivery','pickup','dropoff','charter','tour-charter','group-tour','rental','agency','translation','lawyer','accountant','other-help'];
+  if(commercialKeys.includes(intent.key)&&!options.confirmed){
+    renderPluginConfirmCard({key:intent.key,label:intent.label,sourceText:text,voice:options.voice});
+    return true;
+  }
   await openFeatureByKey(intent.key,intent.label,{...options,sourceText:text});
   return true;
 }
@@ -3475,7 +3484,7 @@ async function handleAgentTaskPlan(text){
   }
 
   if(tasks.some(task=>task.key==='delivery')){
-    await startDeliveryOrder(text);
+    renderPluginConfirmCard({key:'delivery',label:'外卖配送',sourceText:text});
   }else if(tasks.some(task=>task.key==='wish')){
     openMutualAidCommunity(buildWishWallDraft(text));
   }else if(tasks.some(task=>task.key==='reminder')){
@@ -3616,6 +3625,34 @@ function runBusinessModule(key){
   return true;
 }
 
+function renderPluginConfirmCard({key,label,sourceText='',voice=false}={}){
+  const id='plugin-confirm-'+Date.now()+'-'+Math.random().toString(36).slice(2,7);
+  const title=label||BUSINESS_MODULES[key]?.title||'这个功能';
+  const card=document.createElement('section');
+  card.className='confirm-card';
+  card.id=id;
+  card.innerHTML=`
+    <div style="font-size:14px;font-weight:900;color:white;margin-bottom:6px;">确认一下</div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.68);line-height:1.65;">要打开「${companionEscape(title)}」吗？</div>
+    ${sourceText?`<div style="font-size:12px;color:rgba(255,255,255,0.42);line-height:1.5;margin-top:8px;">${companionEscape(sourceText).slice(0,80)}</div>`:''}
+    <div class="confirm-btns">
+      <button class="confirm-btn secondary" onclick="document.getElementById('${id}')?.remove()">先不要</button>
+      <button class="confirm-btn primary" onclick="confirmPluginTrigger('${id}','${companionEscape(key||'')}','${companionEscape(title)}')">打开</button>
+    </div>`;
+  card.dataset.sourceText=sourceText||'';
+  card.dataset.voice=voice?'1':'0';
+  chatArea.appendChild(card);
+  scrollBottom();
+}
+
+async function confirmPluginTrigger(id,key,label){
+  const card=document.getElementById(id);
+  const sourceText=card?.dataset.sourceText||'';
+  const voice=card?.dataset.voice==='1';
+  card?.remove();
+  await openFeatureByKey(key,label,{sourceText,voice,confirmed:true});
+}
+
 const MORE_MENU={
   home:[...CORE_TOOL_ITEMS]
 };
@@ -3742,6 +3779,11 @@ async function openFeatureByKey(key,label,options={}){
   const serviceMap={pickup:'接机',dropoff:'送机',charter:'包车','tour-charter':'旅游包车','group-tour':'旅游拼团',rental:'租车',agency:'中介服务',translation:'翻译',lawyer:'律师',accountant:'会计','other-help':'华人帮办'};
   const categoryMap={'ride-menu':'ride','travel-menu':'travel','help-menu':'help'};
 
+  if(key==='delivery'&&options.confirmed&&options.sourceText&&isDeliveryDemand(options.sourceText)){
+    await startDeliveryOrder(options.sourceText);
+    return;
+  }
+  if(runBusinessModule(key))return;
   if(key==='intro'){
     await showPlatformGuide(false);
     return;
@@ -5070,7 +5112,7 @@ async function sendMessage(){ stopTTS();
     return;
   }
   if(isDeliveryDemand(msg)){
-    await startDeliveryOrder(msg);
+    renderPluginConfirmCard({key:'delivery',label:'外卖配送',sourceText:msg,voice:false});
     return;
   }
   if(await handleDirectFeatureIntent(msg,{alreadyRendered:true,voice:false})){
