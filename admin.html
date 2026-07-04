@@ -274,6 +274,21 @@ body {
   resize: vertical;
   line-height: 1.6;
 }
+.promo-rewrite-grid{
+  display:grid;
+  grid-template-columns:minmax(260px,.95fr) minmax(300px,1.05fr);
+  gap:14px;
+  border-bottom:1px solid var(--border);
+  padding-bottom:16px;
+  margin-bottom:12px;
+}
+.promo-rewrite-output{
+  min-height:188px;
+  white-space:pre-wrap;
+  font-size:13px;
+  line-height:1.7;
+}
+@media(max-width:720px){.promo-rewrite-grid{grid-template-columns:1fr;}}
 .training-layout {
   display: grid;
   grid-template-columns: minmax(320px, 0.9fr) minmax(420px, 1.1fr);
@@ -833,11 +848,39 @@ body {
         <option value="published">已发布</option>
         <option value="blocked">不可发布</option>
       </select>
+      <button class="btn" onclick="focusPromoRewrite()">✍️ 推广改写</button>
       <button class="btn btn-ghost" onclick="loadOutreachTasks()">↻ 刷新</button>
     </div>
   </div>
   <div class="content">
     <div class="card">
+      <div class="promo-rewrite-grid" id="promo-rewrite-panel">
+        <div>
+          <div style="font-size:13px;font-weight:800;color:var(--text);margin-bottom:8px;">推广原文</div>
+          <textarea class="input textarea" id="promo-rewrite-source" style="min-height:188px;">找人太难 → 华伴帮你找靠谱的人
+服务真假难辨 → 华伴帮你整理来源和核验点
+有生意没人知道 → 华伴帮你介绍给更多需要的人
+不想翻菜单 → 有事直接跟华伴说
+人在海外不熟路 → 华伴帮你接住本地生活需求</textarea>
+          <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+            <select class="input" id="promo-rewrite-tone" style="flex:1;min-width:150px;">
+              <option value="wechat">微信群公测</option>
+              <option value="moments">朋友圈短版</option>
+              <option value="supplier">服务者招募</option>
+              <option value="driver">司机招募</option>
+              <option value="slogan">一句话广告</option>
+            </select>
+            <button class="btn" onclick="rewritePromoCopy()">生成</button>
+          </div>
+        </div>
+        <div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;">
+            <div style="font-size:13px;font-weight:800;color:var(--text);">改写结果</div>
+            <button class="action-btn" onclick="copyPromoRewrite()">复制</button>
+          </div>
+          <textarea class="input textarea promo-rewrite-output" id="promo-rewrite-output" readonly placeholder="点击生成后，这里会出现可直接发送的推广文案。"></textarea>
+        </div>
+      </div>
       <div class="card-body" style="font-size:12px;color:var(--text2);line-height:1.7;border-bottom:1px solid var(--border);padding-bottom:16px;margin-bottom:8px;">
         Agent 可以自动挑入口、生成推广文案和落地页参数；但微信群、Facebook 群、论坛等默认需要人工确认。只有自有渠道或明确授权入口才能自动发布。
       </div>
@@ -1940,6 +1983,62 @@ function copyOutreachText(index){
   navigator.clipboard?.writeText(text).then(()=>alert('已复制推广文案')).catch(()=>alert(text));
 }
 
+function focusPromoRewrite(){
+  showSection('outreach');
+  setTimeout(()=>{
+    document.getElementById('promo-rewrite-panel')?.scrollIntoView({behavior:'smooth',block:'start'});
+    document.getElementById('promo-rewrite-source')?.focus();
+  },80);
+}
+
+function rewriteOutreachCopy(index){
+  const row=window._outreachRows?.[index];
+  if(!row)return;
+  const text=row.copy_long||row.copy_short||'';
+  document.getElementById('promo-rewrite-source').value=text;
+  const tone=document.getElementById('promo-rewrite-tone');
+  if(tone)tone.value=row.audience==='supplier'?'supplier':row.audience==='driver'?'driver':'wechat';
+  focusPromoRewrite();
+  setTimeout(rewritePromoCopy,120);
+}
+
+function normalizePromoLines(text=''){
+  return String(text||'')
+    .split(/\n+/)
+    .map(line=>line.replace(/\s*[-—>→：:]\s*/,' → ').trim())
+    .filter(Boolean);
+}
+
+function rewritePromoCopy(){
+  const source=document.getElementById('promo-rewrite-source')?.value||'';
+  const tone=document.getElementById('promo-rewrite-tone')?.value||'wechat';
+  const lines=normalizePromoLines(source);
+  const painPoints=lines.length?lines:[
+    '找人太难 → 华伴帮你找靠谱的人',
+    '服务真假难辨 → 华伴帮你整理来源和核验点',
+    '有生意没人知道 → 华伴帮你介绍给更多需要的人'
+  ];
+  const url='https://www.huabanapp.com/';
+  const body=painPoints.map(line=>{
+    const [pain,sell]=line.split('→').map(x=>x?.trim()).filter(Boolean);
+    return pain&&sell?`- ${pain}：${sell}`:`- ${line}`;
+  }).join('\n');
+  const templates={
+    wechat:`华伴开始公测啦。\n\n它不是普通问答 AI，而是一个能帮你办事的小伙伴：\n${body}\n\n你只管说需求，华伴在背后帮你整理、找线索、找服务、找同城人。\n\n公测入口：${url}\n欢迎试用，也欢迎狠狠吐槽。`,
+    moments:`快来领你的华伴 AI。\n\n${painPoints.slice(0,3).map(line=>line.replace('→','，')).join('\n')}\n\n前台只有 AI，后台是一座城市服务网络。\n${url}`,
+    supplier:`如果你在海外提供商品或服务，华伴可以帮你被更多需要的人看见。\n\n${body}\n\n适合：接送机、包车、翻译、会计、律师、电工、维修、跑腿、本地服务、商品售卖。\n\n你告诉华伴你能提供什么，它会先整理到供给侧，审核后再推荐给有真实需求的人。\n${url}`,
+    driver:`墨尔本司机/车队看这里。\n\n${body}\n\n如果你能接送机、包车、旅游用车或临时用车，华伴可以帮你连接更多真实需求。\n\n你告诉华伴车型、区域和联系方式，通过审核后就能开通司机端。\n${url}`,
+    slogan:`快来领你的华伴 AI，有趣又有用。\n你只管说，华伴替你找人、找服务、找机会。\n${url}`
+  };
+  document.getElementById('promo-rewrite-output').value=templates[tone]||templates.wechat;
+}
+
+function copyPromoRewrite(){
+  const text=document.getElementById('promo-rewrite-output')?.value||'';
+  if(!text){alert('请先生成推广文案');return;}
+  navigator.clipboard?.writeText(text).then(()=>alert('已复制改写文案')).catch(()=>alert(text));
+}
+
 async function loadOutreachTasks(){
   const filter=document.getElementById('outreach-filter')?.value||'';
   const tbody=document.getElementById('outreach-body');
@@ -1960,6 +2059,7 @@ async function loadOutreachTasks(){
     tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:40px;">暂无推广任务</td></tr>';
     return;
   }
+  window._outreachRows=rows;
   window._outreachCopyTexts=rows.map(row=>`${row.copy_long||row.copy_short}\n${row.landing_url||'https://www.huabanapp.com/'}`);
   const banner=fallback?`<tr><td colspan="6" style="color:var(--gold);font-size:12px;padding:12px 16px;background:rgba(245,166,35,.08);">当前显示内置模板。执行 <code>workflows/outreach_campaign_schema_seed.sql</code> 后，这里会读取数据库推广任务。</td></tr>`:'';
   tbody.innerHTML=banner+rows.map((row,index)=>{
@@ -1982,6 +2082,7 @@ async function loadOutreachTasks(){
       <td>${outreachBadge(row.status)}</td>
       <td>
         <button class="action-btn" onclick="copyOutreachText(${index})">复制文案</button>
+        <button class="action-btn" onclick="rewriteOutreachCopy(${index})" style="margin-left:4px;">改写</button>
         ${row.landing_url?`<a class="action-btn" href="${escapeHtml(row.landing_url)}" target="_blank" style="margin-left:4px;text-decoration:none;">打开</a>`:''}
       </td>
     </tr>`;
