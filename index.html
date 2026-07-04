@@ -690,7 +690,7 @@ body.more-open .chat-area{padding-bottom:390px;}
       <path d="M9 21h6"></path>
     </svg>
   </button>
-  <input class="chat-input" id="chat-input" placeholder="输入你需要的帮助" oninput="updateComposerAction()" onkeydown="if(event.key==='Enter'){sendMessage();updateComposerAction();}">
+  <input class="chat-input" id="chat-input" placeholder="和华伴聊聊" oninput="updateComposerAction()" onkeydown="if(event.key==='Enter'){sendMessage();updateComposerAction();}">
   <button class="hold-talk" id="hold-talk" onpointerdown="startPushToTalk(event)" onpointerup="stopPushToTalk(event)" onpointercancel="stopPushToTalk(event)" onpointerleave="stopPushToTalk(event)">按住说话</button>
   <button class="send-btn" id="composer-action" onclick="handleComposerAction()" aria-label="展开全部功能">＋</button>
 </div>
@@ -4865,6 +4865,7 @@ function buildPrompt(){
 可以偶尔自然表现陪伴感，但不要每句话都提等级、亲密度或养成，也不要影响用户办事效率。
 
 【闲聊与陪伴】
+闲聊是默认功能。默认状态不是问用户要办什么事，而是先陪用户自然说话。
 闲聊是必须保留的能力。用户只是问候、开玩笑、表达情绪、说累了、吐槽、分享日常、试探你是谁，先像朋友一样自然回应，不要触发工具、不要生成确认卡、不要把话题硬转到出行或外卖。
 闲聊回复可以温暖、俏皮、简短，但要有陪伴感。用户没提出明确要办的事时，不要假装已经开始办事。
 当闲聊里逐渐出现明确需求、地点、时间、商品、服务、出行或配送意图，再切换到办事模式。
