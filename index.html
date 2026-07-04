@@ -2883,7 +2883,12 @@ async function handleSupplyIntent(text, options={}){
       category:supply.category,
       intro:supply.text,
       needs_contact:!betaContact(),
-      detected_by:'supply_intent'
+      detected_by:'supply_intent',
+      user_role_model:{
+        current_role:'supply',
+        also_potential_demand:true,
+        principle:'every_user_can_be_both_demand_and_supply'
+      }
     }
   };
   supaInsertLead(payload).catch(e=>console.warn('supply lead sync failed',e));
@@ -3988,6 +3993,11 @@ async function startHiddenIntelTask(draft={}){
     searchQueries:buildIntelSearchQueries({city:taskCity,category:taskCategory,text:draftText,wishType:draftWishType,direction:intelDirection(draftWishType)}),
     globalTargets:globalIntelTargets(),
     confidence:'pending_review',
+    userRoleModel:{
+      currentRole:'demand',
+      alsoPotentialSupply:true,
+      principle:'every_user_can_be_both_demand_and_supply'
+    },
     createdAt:new Date().toISOString(),
     status:'open'
   };
@@ -4068,6 +4078,11 @@ async function syncWorkOrder(post={}){
       confirmed_by_user:true,
       confirmed_by_provider:false,
       deal_status:'waiting_confirmation',
+      user_role_model:{
+        current_role:'demand',
+        also_potential_supply:true,
+        principle:'every_user_can_be_both_demand_and_supply'
+      },
       dispatch_policy:{
         push_after_confirmation:true,
         human_review_required:true,
@@ -4631,6 +4646,13 @@ function buildPrompt(){
 平台：没有中间商赚差价，只让需要的人遇见可靠的人。平台不从单笔交易中抽佣，用户与服务者直接达成共识合约并交易，平台靠AI工具、认证展示、订阅、打赏和城市贡献网络盈利
 语气：像朋友聊天，口语化，每次只说1句话
 
+【用户角色原则】
+每个用户都不是固定的“需求方”或“供给方”，而是两者兼具：此刻可能需要帮助，下一刻也可能提供商品、服务、经验、人脉或本地资源。
+当用户说“我需要、帮我找、有没有、推荐、想去、想买、想办事”时，先按需求方推进具体动作。
+当用户说“我是、我会、我能、我有、我提供、我卖、我可以帮、我认识、我有资源”时，立刻识别为供给方线索，告诉他“我可以帮你把生意/资源介绍给更多需要的人”。
+同一轮对话里如果同时出现需求和能力，要同时整理：一边帮他办当前需求，一边把他能提供的部分沉淀到供给画像里。
+不要把用户贴死标签；要把用户理解成“既会求助，也能互助/做生意”的海外华人网络节点。
+
 【陪伴成长状态】
 你也是用户正在养成的AI旅行伙伴。
 当前阶段：${companionStage.name}，经验值${companionState.xp}，亲密度${companionState.affection}/100，心情：${companionMood(companionState)}。
@@ -4658,6 +4680,7 @@ function buildPrompt(){
 当用户提出电工、水管、跳闸、漏水、搬运、跑腿、临时上门检查、旅游攻略、当地餐厅景点、华人律师、会计、报税等需求时，不要拒绝；先自然接住需求，再说“我来查近期公开信息、可联系对象和需要核验的点”。专业维修、上门服务、法律、税务、涉及金钱或安全的事，要提醒用户自行核验资质、价格和安全。
 当用户提出交友、搭子、同城活动、找群或建群时，不要把华伴说成开放社交平台；先说你会按真实需求做同城撮合，适合时再建议临时小群，并提醒不要公开隐私、钱款和证件信息。
 当用户表达自己能提供商品或服务，例如“我是司机/会计/电工”“我能接送机”“我卖东西”“我可以提供服务”，要主动说可以帮他整理到供给侧，审核后把生意介绍给更多需要的人；不要把它当成普通闲聊。
+当用户只是顺口提到自己懂某件事、有某个资源、认识某类人，也要温和捕捉为潜在供给，不要打断当前任务；可以说“这个我也记一下，以后可能帮你介绍给需要的人”。
 不要在每个非出行需求后都介绍出行能力，除非用户主动提到要用车或行程接送。
 如果用户提出建议、吐槽、希望新增能力：先感谢和复述要点，再追问一个最有价值的细节，比如“你希望它在哪里出现？”或“你希望我怎么回复会更像你的小伙伴？”
 
