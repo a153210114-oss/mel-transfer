@@ -283,6 +283,17 @@ body.companion-docked .top-bar .brand-lockup{position:absolute;left:12px;margin:
 .adoption-ticker-track span{display:inline-flex;align-items:center;gap:5px;}
 .adoption-ticker-track i{width:5px;height:5px;border-radius:50%;background:var(--wx-green);display:inline-block;}
 @keyframes adoptionScroll{from{transform:translateX(0);}to{transform:translateX(-100%);}}
+.ai-intro-ticker{
+  flex-shrink:0;height:38px;overflow:hidden;background:rgba(255,255,255,0.86);
+  border-bottom:1px solid var(--wx-line);display:flex;align-items:center;
+}
+.ai-intro-ticker-track{
+  display:flex;gap:34px;white-space:nowrap;animation:adoptionScroll 42s linear infinite;
+  color:#4e5965;font-size:12px;line-height:1;padding-left:100%;
+}
+.ai-intro-ticker-track span{display:inline-flex;align-items:center;gap:7px;}
+.ai-intro-ticker-track b{color:#1b1b1b;font-weight:800;}
+.ai-intro-ticker-track em{font-style:normal;color:var(--wx-green);font-weight:800;}
 .ai-hidden-control{display:none!important;}
 #voice-indicator{position:absolute;right:14px;top:20px;}
 .brand-logo{box-shadow:0 0 0 1px rgba(0,0,0,.04);}
@@ -324,6 +335,10 @@ body.theme-night #profile-btn.companion-entry.nudge::after{background:#242a31;bo
 body.theme-night .companion-entry-xp{color:#9aa7af;}
 body.theme-night .adoption-ticker{background:rgba(23,27,32,0.9);border-bottom-color:#2b3138;}
 body.theme-night .adoption-ticker-track{color:#aeb6bf;}
+body.theme-night .ai-intro-ticker{background:rgba(23,27,32,0.92);border-bottom-color:#2b3138;}
+body.theme-night .ai-intro-ticker-track{color:#aeb6bf;}
+body.theme-night .ai-intro-ticker-track b{color:#edf3f8;}
+body.theme-night .ai-intro-ticker-track em{color:#62ddb2;}
 body.theme-night .msg-av{background:#242a31;box-shadow:0 0 0 1px rgba(255,255,255,.05);}
 body.theme-night .msg-bubble{background:#20252c;border-color:#343b44;color:var(--wx-text);}
 body.theme-night .msg.user .msg-bubble{background:#145b39;border-color:#1b7048;color:#f7fff9;}
@@ -623,6 +638,19 @@ body.more-open .chat-area{padding-bottom:390px;}
   <button class="ai-hidden-control" id="share-btn" onclick="shareRefLink()" aria-label="分享" title="分享" style="background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;">＋</button>
   <button class="ai-hidden-control" id="profile-btn" onclick="openProfile()" aria-label="个人中心" title="个人中心" style="background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;">◉</button>
   <button class="top-exit" id="exit-btn" onclick="exitToHome()">⇄ 切换</button>
+</div>
+
+<div class="ai-intro-ticker" aria-label="华伴 AI 自我介绍">
+  <div class="ai-intro-ticker-track">
+    <span><b>找人太难</b> <em>我帮你找靠谱的人</em></span>
+    <span><b>服务真假难辨</b> <em>我帮你整理来源和核验点</em></span>
+    <span><b>有生意没人知道</b> <em>我帮你介绍给更多需要的人</em></span>
+    <span><b>不想翻菜单</b> <em>有事直接跟我说</em></span>
+    <span><b>人在海外不熟路</b> <em>我帮你接住本地生活需求</em></span>
+    <span><b>临时需要帮忙</b> <em>我帮你找线索、找服务、找同城人</em></span>
+    <span><b>找人太难</b> <em>我帮你找靠谱的人</em></span>
+    <span><b>服务真假难辨</b> <em>我帮你整理来源和核验点</em></span>
+  </div>
 </div>
 
 <div class="adoption-ticker" aria-label="华伴领养动态">
@@ -3118,16 +3146,14 @@ async function handleStarterChoice(choice){
 async function showPlatformGuide(fromUser=false){
   if(fromUser)addMsg('介绍一下华伴',true);
   rewardCompanionAction('guide');
-  const guide=`<strong>华伴是什么？</strong><br>
-华伴是一个会聊天、会办事、会成长的 AI 伙伴。现在我先当你的小管家，帮你预约接机、送机、包车，也能整理海外出行和本地生活需求。<br><br>
-<strong>怎么用？</strong><br>
-1. 直接说需求：比如“明天下午四点送我去机场”。<br>
-2. 我会帮你补齐时间、人数、行李和车型。<br>
-3. 提交后，服务者会联系你确认细节和费用。<br><br>
-<strong>平台原则</strong><br>
-没有中间商赚差价，只让需要的人遇见可靠的人。华伴提供 AI 工具、信用记录和信息连接，交易细节由你和服务者确认。<br><br>
-<strong>我会成长</strong><br>
-我现在还是小朋友，先帮你把车定好；以后会有更多本领，当好你生活中的管家、工作上的助理。`;
+  const guide=`<strong>我是华伴 AI。</strong><br>
+不用研究平台怎么用，有事直接说。<br><br>
+<strong>找人太难：</strong>我帮你找靠谱的人。<br>
+<strong>服务真假难辨：</strong>我帮你整理来源、口碑和核验点。<br>
+<strong>人在海外不熟路：</strong>我帮你接住出行、本地生活和专业服务需求。<br>
+<strong>有生意没人知道：</strong>我帮你整理到供给侧，把服务介绍给更多需要的人。<br>
+<strong>不想翻菜单：</strong>你只管说，我在背后找线索、找服务、找同城人。<br><br>
+前台只有我，后台是一座城市服务网络。`;
   await agentSay(guide,160);
   showIntroActionCards();
 }
