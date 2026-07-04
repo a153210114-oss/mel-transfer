@@ -284,18 +284,18 @@ body:not(.companion-docked) .brand-positioning{left:50%;right:auto;transform:tra
 }
 .adoption-ticker-track{
   display:flex;gap:26px;white-space:nowrap;animation:adoptionScroll 28s linear infinite;
-  color:#666;font-size:12px;line-height:1;padding-left:100%;
+  color:#666;font-size:12px;line-height:1;
 }
 .adoption-ticker-track span{display:inline-flex;align-items:center;gap:5px;}
 .adoption-ticker-track i{width:5px;height:5px;border-radius:50%;background:var(--wx-green);display:inline-block;}
-@keyframes adoptionScroll{from{transform:translateX(0);}to{transform:translateX(-100%);}}
+@keyframes adoptionScroll{from{transform:translateX(0);}to{transform:translateX(-50%);}}
 .ai-intro-ticker{
   flex-shrink:0;height:38px;overflow:hidden;background:rgba(255,255,255,0.86);
   border-bottom:1px solid var(--wx-line);display:flex;align-items:center;
 }
 .ai-intro-ticker-track{
   display:flex;gap:34px;white-space:nowrap;animation:adoptionScroll 42s linear infinite;
-  color:#4e5965;font-size:12px;line-height:1;padding-left:100%;
+  color:#4e5965;font-size:12px;line-height:1;
 }
 .ai-intro-ticker-track span{display:inline-flex;align-items:center;gap:7px;}
 .ai-intro-ticker-track b{color:#1b1b1b;font-weight:800;}
@@ -2771,13 +2771,14 @@ function renderIntroTickerFromSettings(){
   if(!track)return;
   const settings=readTickerSettings();
   const lines=Array.isArray(settings.introLines)?settings.introLines.filter(Boolean):[];
-  if(!lines.length)return;
-  const html=lines.map(line=>{
+  const defaultHtml=track.dataset.baseHtml||track.innerHTML;
+  track.dataset.baseHtml=defaultHtml;
+  const html=lines.length?lines.map(line=>{
     const parts=String(line).split(/→|：|:/).map(x=>x.trim()).filter(Boolean);
     const pain=parts[0]||line;
     const result=parts.slice(1).join(' ')||'告诉华伴就行';
     return `<span><b>${companionEscape(pain)}</b> <em>${companionEscape(result)}</em></span>`;
-  }).join('');
+  }).join(''):defaultHtml;
   track.innerHTML=html+html;
 }
 
@@ -2786,9 +2787,10 @@ function renderDefaultAdoptionTicker(){
   if(!track)return;
   const settings=readTickerSettings();
   const lines=Array.isArray(settings.adoptionLines)?settings.adoptionLines.filter(Boolean):[];
-  if(!lines.length)return;
-  const html=lines.map(text=>`<span><i></i>${companionEscape(text)}</span>`).join('');
-  track.innerHTML=html;
+  const defaultHtml=track.dataset.baseHtml||track.innerHTML;
+  track.dataset.baseHtml=defaultHtml;
+  const html=lines.length?lines.map(text=>`<span><i></i>${companionEscape(text)}</span>`).join(''):defaultHtml;
+  track.innerHTML=html+html;
   track.dataset.virtualHtml=html;
   delete track.dataset.loadedReal;
 }
@@ -2814,7 +2816,8 @@ async function loadRealAdoptionTicker(){
     }).filter(Boolean).slice(0,18);
     if(!realItems.length)return;
     const realHtml=realItems.map(text=>`<span><i></i>${companionEscape(text)}</span>`).join('');
-    track.innerHTML=base+realHtml;
+    const fullHtml=base+realHtml;
+    track.innerHTML=fullHtml+fullHtml;
     track.dataset.loadedReal=String(realItems.length);
   }catch(e){
     console.warn('real adoption ticker skipped',e?.message||e);
