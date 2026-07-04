@@ -450,6 +450,91 @@ body.theme-night .agent-age-seconds{color:#62ddb2;}
 .chat-area .confirm-card button[style*="background:rgba(255,255,255"]{
   background:#f3f3f3!important;border-color:#d8d8d8!important;color:#444!important;
 }
+.chat-area .work-order-card{
+  background:#fff!important;
+  border:1px solid #d8d8d8!important;
+  border-radius:14px;
+  padding:16px;
+  color:#191919!important;
+}
+.chat-area .work-order-card *{box-sizing:border-box;}
+.chat-area .work-order-card .work-order-title{
+  color:#191919!important;
+  font-size:15px;
+  font-weight:900;
+  margin-bottom:6px;
+}
+.chat-area .work-order-card .work-order-sub{
+  color:#666!important;
+  font-size:12px;
+  line-height:1.55;
+  margin-bottom:12px;
+}
+.chat-area .work-order-row{
+  display:block;
+  padding:9px 0;
+  border-bottom:1px solid #ececec;
+}
+.chat-area .work-order-row .confirm-label{
+  display:block;
+  width:auto;
+  color:#555!important;
+  font-size:12px;
+  font-weight:800;
+  margin:0 0 6px;
+}
+.chat-area .work-order-row .confirm-value{
+  display:block;
+  width:100%;
+}
+.chat-area .work-order-card input,
+.chat-area .work-order-card textarea,
+.chat-area .work-order-card select{
+  display:block;
+  width:100%!important;
+  color:#191919!important;
+  -webkit-text-fill-color:#191919!important;
+  background:#f7f7f7!important;
+  border:1px solid #d4d4d4!important;
+  border-radius:9px!important;
+  font:14px/1.45 inherit!important;
+  padding:10px 11px!important;
+  outline:none!important;
+  box-shadow:none!important;
+  caret-color:#191919!important;
+}
+.chat-area .work-order-card textarea{
+  min-height:74px!important;
+  resize:vertical;
+}
+.chat-area .work-order-card input:focus,
+.chat-area .work-order-card textarea:focus,
+.chat-area .work-order-card select:focus{
+  background:#fff!important;
+  border-color:#07c160!important;
+}
+.chat-area .work-order-card .confirm-btns{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:14px;
+}
+.chat-area .work-order-card .confirm-btn{
+  min-height:44px;
+  border-radius:9px;
+  font-size:14px;
+  font-weight:800;
+}
+.chat-area .work-order-card .confirm-btn.secondary{
+  background:#f3f3f3!important;
+  color:#333!important;
+  border:1px solid #d8d8d8!important;
+}
+.chat-area .work-order-card .confirm-btn.primary{
+  background:#07c160!important;
+  color:#fff!important;
+  border:1px solid #07c160!important;
+}
 
 .home-welcome{width:100%;padding:4px 0 16px;}
 .home-greeting{padding:4px 4px 18px;}
@@ -4499,7 +4584,7 @@ function workOrderInputRow(label,field,value,textarea=false){
   const input=textarea
     ? `<textarea data-wo-field="${field}" style="width:100%;min-height:68px;border:1px solid rgba(255,255,255,0.13);border-radius:10px;background:rgba(255,255,255,0.07);color:white;font:14px/1.45 inherit;padding:10px;outline:none;resize:vertical;">${safe}</textarea>`
     : `<input data-wo-field="${field}" value="${safe}" style="width:100%;border:1px solid rgba(255,255,255,0.13);border-radius:10px;background:rgba(255,255,255,0.07);color:white;font:14px/1.45 inherit;padding:10px;outline:none;">`;
-  return `<div class="confirm-row"><span class="confirm-label">${label}</span><span class="confirm-value">${input}</span></div>`;
+  return `<div class="confirm-row work-order-row"><span class="confirm-label">${label}</span><span class="confirm-value">${input}</span></div>`;
 }
 
 function renderDeliveryOrderConfirmCard(post={}){
@@ -4514,11 +4599,11 @@ function renderDeliveryOrderConfirmCard(post={}){
   PENDING_WORK_ORDERS[id]=post;
   const wo=post.workOrder;
   const card=document.createElement('section');
-  card.className='confirm-card';
+  card.className='confirm-card work-order-card delivery-order-card';
   card.id=id;
   card.innerHTML=`
-    <div style="font-size:14px;font-weight:900;color:white;margin-bottom:6px;">🍱 外卖确认单</div>
-    <div style="font-size:12px;color:rgba(255,255,255,0.45);line-height:1.5;margin-bottom:12px;">你改一下信息，确认后我开始帮你安排。</div>
+    <div class="work-order-title">🍱 外卖确认单</div>
+    <div class="work-order-sub">你改一下信息，确认后我开始帮你安排。</div>
     ${workOrderInputRow('送达时间','time',wo.time)}
     ${workOrderInputRow('送到哪里','place',wo.place)}
     ${workOrderInputRow('想吃/想买','task',wo.task,true)}
@@ -4538,11 +4623,11 @@ function renderWorkOrderConfirmCard(post={}){
   PENDING_WORK_ORDERS[id]=post;
   const wo=post.workOrder;
   const card=document.createElement('section');
-  card.className='confirm-card';
+  card.className='confirm-card work-order-card';
   card.id=id;
   card.innerHTML=`
-    <div style="font-size:14px;font-weight:900;color:white;margin-bottom:6px;">🧾 确认卡</div>
-    <div style="font-size:12px;color:rgba(255,255,255,0.45);line-height:1.5;margin-bottom:12px;">可以直接修改，确认后我开始帮你办。</div>
+    <div class="work-order-title">🧾 确认卡</div>
+    <div class="work-order-sub">可以直接修改，确认后我开始帮你办。</div>
     ${workOrderInputRow('时间','time',wo.time)}
     ${workOrderInputRow('地点','place',wo.place)}
     ${workOrderInputRow('任务','task',wo.task,true)}
