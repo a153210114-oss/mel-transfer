@@ -772,16 +772,6 @@ body.more-open .chat-area{padding-bottom:390px;}
       </div>
     </div>
 
-    <!-- 供给侧入口 -->
-    <div class="profile-section" style="margin-top:20px;">
-      <div class="profile-section-title">🧩 供给侧入口</div>
-      <div id="supplier-entry-card" style="background:linear-gradient(135deg,rgba(0,200,150,0.10),rgba(0,150,199,0.06));border:1px solid rgba(0,200,150,0.22);border-radius:14px;padding:16px;">
-        <div style="font-size:13px;color:rgba(255,255,255,0.55);line-height:1.7;">如果你在当地，也可以申请成为华伴供给方，提供接送机、包车、旅游、翻译、租车、本地帮办、商品销售、餐饮或配送。</div>
-        <button onclick="openCityFranchiseConsult()" style="width:100%;margin-top:12px;padding:12px;background:rgba(0,150,199,0.22);border:1px solid rgba(0,150,199,0.38);border-radius:12px;color:white;font-size:14px;font-weight:900;cursor:pointer;font-family:inherit;">城市合伙人招募</button>
-        <button onclick="startSupplierApplication()" style="width:100%;margin-top:8px;padding:12px;background:rgba(0,200,150,0.18);border:1px solid rgba(0,200,150,0.30);border-radius:12px;color:white;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">提交审核</button>
-      </div>
-    </div>
-
     <!-- 功能项 -->
     <div class="profile-section" style="margin-top:20px;">
       <div style="font-size:11px;color:rgba(255,255,255,0.35);font-weight:700;letter-spacing:1px;margin-bottom:12px;">设置</div>
@@ -3156,7 +3146,7 @@ async function handleTravelNudge(type){
   document.getElementById('travel-nudge-card')?.remove();
   if(type==='supplier'){
     addMsg('我想提供服务',true);
-    await agentSay('太好了。你可以先从司机入驻或供给侧入口开始，后面我会帮你整理可提供的服务。',120);
+    await agentSay('太好了。你直接告诉我能提供什么、在哪个城市、怎么联系，我会在后台帮你整理成供给线索。',120);
     openProfile();
   }else{
     addMsg('我要出行',true);
