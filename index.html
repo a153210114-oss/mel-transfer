@@ -663,7 +663,7 @@ body.more-open .chat-area{padding-bottom:390px;}
 </div>
 
 <div class="adoption-ticker" aria-label="华伴领养动态">
-  <div class="adoption-ticker-track">
+  <div class="adoption-ticker-track" id="adoption-ticker-track">
     <span><i></i>用户 0402****** 领养华伴 AI 成功</span>
     <span><i></i>用户 0449****** 成功领养华伴 AI</span>
     <span><i></i>用户 0435****** 领养了自己的小 AI</span>
@@ -2728,6 +2728,45 @@ function syncAgentAdoption(){
   });
 }
 
+function maskTickerContact(value=''){
+  const raw=String(value||'').trim();
+  const digits=raw.replace(/\D/g,'');
+  if(digits.length>=8)return digits.slice(0,4)+'******';
+  if(raw.length>=2)return raw.slice(0,1)+'**';
+  return '新用户';
+}
+
+function adoptionTickerLabel(row={}){
+  const fields=row.fields||{};
+  const display=fields.display_name||row.name||row.contact||'';
+  const safe=display&&display!=='华伴用户'&&display!=='未命名AI伙伴'
+    ? String(display).slice(0,8)
+    : '用户 '+maskTickerContact(row.contact||'');
+  return `${safe} 领养华伴 AI 成功`;
+}
+
+async function loadRealAdoptionTicker(){
+  const track=document.getElementById('adoption-ticker-track');
+  if(!track||track.dataset.loadedReal==='1')return;
+  const base=track.innerHTML;
+  try{
+    const [betaRows,userRows]=await Promise.all([
+      supaGet('beta_leads?channel=eq.adoption&order=created_at.desc&limit=12&select=name,contact,fields,created_at').catch(()=>[]),
+      supaGet('user_leads?status=like.adoption*&order=created_at.desc&limit=12&select=city,country,status,created_at').catch(()=>[])
+    ]);
+    const realItems=[
+      ...betaRows.map(adoptionTickerLabel),
+      ...userRows.map(row=>`${row.city||'海外'}用户 领养华伴 AI 成功`)
+    ].filter(Boolean).slice(0,12);
+    if(!realItems.length)return;
+    const realHtml=realItems.map(text=>`<span><i></i>${companionEscape(text)}</span>`).join('');
+    track.innerHTML=base+realHtml;
+    track.dataset.loadedReal='1';
+  }catch(e){
+    console.warn('real adoption ticker skipped',e?.message||e);
+  }
+}
+
 function syncWishWallPost(post){
   const info=wishTypeInfo(post.wishType||post.type);
   const queries=post.searchQueries||buildIntelSearchQueries(post);
@@ -2863,6 +2902,7 @@ async function startApp(){
   updateAgentIdentityUI();
   detectRegion();
   trackPageVisit('home');
+  loadRealAdoptionTicker();
   startReminderTimers();
   // 落地读取推荐码
   const urlRef = new URLSearchParams(window.location.search).get('ref');
