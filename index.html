@@ -1668,6 +1668,7 @@ async function processTTSQueue() {
     });
     if(res.ok){
       const data = await res.json();
+      trackTokenUsage(data.huaban_usage,{feature:'tts',source:'voice_output'}).catch(()=>{});
       if(data.audio){
         const audio = new Audio('data:audio/mp3;base64,' + data.audio);
         ttsAudio = audio;
@@ -2248,6 +2249,7 @@ async function sendVoiceMessage(text){
     });
     if(!res.ok){const t=await res.text();throw new Error('HTTP'+res.status+': '+t.slice(0,200));}
     const data = await res.json();
+    trackTokenUsage(data.huaban_usage,{feature:'voice_chat',source:'voice_input'}).catch(()=>{});
     const reply = data.content?.[0]?.text || data.error || '请再说一遍';
     aiHistory.push({role:'assistant', content:reply});
     if(aiHistory.length>20) aiHistory=aiHistory.slice(-20);
@@ -2658,6 +2660,41 @@ async function trackPageVisit(page='home'){
     });
   }catch(e){
     console.warn('page visit tracking skipped',e?.message||e);
+  }
+}
+
+async function trackTokenUsage(usage={},meta={}){
+  if(!usage || typeof usage!=='object')return;
+  const inputTokens=Number(usage.input_tokens)||0;
+  const outputTokens=Number(usage.output_tokens)||0;
+  const textChars=Number(usage.text_chars)||0;
+  const totalTokens=Number(usage.total_tokens)||(inputTokens+outputTokens);
+  if(!totalTokens && !textChars)return;
+  try{
+    await supaInsert('token_usage',{
+      tenant_id:TENANT_ID,
+      provider:usage.provider||'',
+      model:usage.model||'',
+      endpoint:usage.endpoint||meta.endpoint||'',
+      feature:meta.feature||'',
+      input_tokens:inputTokens,
+      output_tokens:outputTokens,
+      total_tokens:totalTokens,
+      text_chars:textChars,
+      request_id:usage.request_id||'',
+      visitor_id:getVisitId(),
+      session_id:getSessionId(),
+      city:currentRegion.city||'',
+      country:currentRegion.country||'',
+      fields:{
+        source:meta.source||'',
+        role:currentRole||'',
+        agent_name:agentName||'华伴 AI',
+        timezone:Intl.DateTimeFormat().resolvedOptions().timeZone||''
+      }
+    });
+  }catch(e){
+    console.warn('token usage tracking skipped',e?.message||e);
   }
 }
 
@@ -4856,6 +4893,7 @@ async function analyzeImageToWishWall(file,label){
     });
     if(!res.ok)throw new Error(await res.text());
     const data=await res.json();
+    trackTokenUsage(data.huaban_usage,{feature:'image_wish',source:'image_upload'}).catch(()=>{});
     const draft=normalizeImageWishDraft(data.draft||{});
     openMutualAidCommunity(draft);
     rememberMenuKey('mutual-aid');
@@ -5355,6 +5393,7 @@ async function sendMessage(){ stopTTS();
       body:JSON.stringify({system:prompt,messages:cleanHistory,region:{city:currentRegion.city,country:currentRegion.country,countryCode:currentRegion.countryCode,currency:currentRegion.currency}})});
     if(!res.ok){const t=await res.text();throw new Error('HTTP'+res.status+': '+t.slice(0,200));}
     const data=await res.json();
+    trackTokenUsage(data.huaban_usage,{feature:'text_chat',source:'text_input'}).catch(()=>{});
     const reply=data.content?.[0]?.text||data.error||'请再说一遍';
     window._lastAIReply=reply; // debug
     console.log('AI回复：',reply);

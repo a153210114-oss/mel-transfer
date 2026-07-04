@@ -46,8 +46,9 @@ module.exports = async function handler(req, res) {
 - 如果看不清，text 里说明“图片部分信息不清楚，请补充...”。
 - 不要编造图片中没有的联系电话。`;
 
+    const model = 'claude-haiku-4-5-20251001';
     const response = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model,
       max_tokens: 700,
       messages: [{
         role: 'user',
@@ -68,7 +69,19 @@ module.exports = async function handler(req, res) {
     const text = response.content?.map(part => part.text || '').join('\n') || '';
     const draft = safeJson(text);
     if (!draft) return res.status(502).json({ error: 'Could not parse image result' });
-    res.status(200).json({ draft });
+    const usage = response.usage || {};
+    res.status(200).json({
+      draft,
+      huaban_usage: {
+        provider: 'anthropic',
+        model,
+        endpoint: 'image-wish',
+        request_id: response.id || '',
+        input_tokens: Number(usage.input_tokens) || 0,
+        output_tokens: Number(usage.output_tokens) || 0,
+        total_tokens: (Number(usage.input_tokens) || 0) + (Number(usage.output_tokens) || 0)
+      }
+    });
   } catch (error) {
     console.error('Image wish API error:', error);
     res.status(500).json({ error: 'Image recognition temporarily unavailable' });

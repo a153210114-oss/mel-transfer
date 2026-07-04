@@ -94,14 +94,27 @@ module.exports = async function handler(req, res) {
     // 注入实时数据到system prompt
     const enrichedSystem = await enrichSystemPrompt(system || '', messages, region || {});
 
+    const model = 'claude-haiku-4-5-20251001';
     const response = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model,
       max_tokens: 600,
       system: enrichedSystem,
       messages: messages.slice(-12) // 保留最近12条
     });
 
-    res.status(200).json(response);
+    const usage = response.usage || {};
+    res.status(200).json({
+      ...response,
+      huaban_usage: {
+        provider: 'anthropic',
+        model,
+        endpoint: 'chat',
+        request_id: response.id || '',
+        input_tokens: Number(usage.input_tokens) || 0,
+        output_tokens: Number(usage.output_tokens) || 0,
+        total_tokens: (Number(usage.input_tokens) || 0) + (Number(usage.output_tokens) || 0)
+      }
+    });
   } catch (error) {
     console.error('Chat API error:', error);
     res.status(500).json({ error: 'Chat service temporarily unavailable' });

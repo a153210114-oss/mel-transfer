@@ -67,7 +67,20 @@ module.exports = async function handler(req, res) {
     const audioBuffer = await response.arrayBuffer();
     const audio = Buffer.from(audioBuffer).toString('base64');
 
-    return res.status(200).json({ audio, format: 'mp3' });
+    return res.status(200).json({
+      audio,
+      format: 'mp3',
+      huaban_usage: {
+        provider: 'siliconflow',
+        model: MODEL,
+        endpoint: 'tts',
+        request_id: '',
+        input_tokens: 0,
+        output_tokens: 0,
+        total_tokens: 0,
+        text_chars: clean.length
+      }
+    });
   } catch (error) {
     console.error('TTS handler error:', error);
     return res.status(500).json({ error: 'Internal server error' });

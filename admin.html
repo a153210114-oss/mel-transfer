@@ -428,6 +428,9 @@ body {
 
   <div class="nav-section">
     <div class="nav-label">财务</div>
+    <div class="nav-item" onclick="showSection('token-usage')">
+      <span class="nav-icon">🧮</span> Token监控
+    </div>
     <div class="nav-item" onclick="showSection('finance')">
       <span class="nav-icon">💰</span> 收入统计
     </div>
@@ -500,6 +503,11 @@ body {
         <div class="quick-icon">🔁</div>
         <strong>滚动屏管理</strong>
         <span>管理首页介绍滚动屏和领养动态默认文案</span>
+      </div>
+      <div class="admin-quick-card" onclick="showSection('token-usage')">
+        <div class="quick-icon">🧮</div>
+        <strong>Token监控</strong>
+        <span>查看 AI 对话、图片识别和语音输出调用量</span>
       </div>
       <div class="admin-quick-card" onclick="showSection('ops-team')">
         <div class="quick-icon">👥</div>
@@ -1207,6 +1215,67 @@ body {
   </div>
 </div>
 
+<!-- ══ Token监控 ══ -->
+<div class="section" id="section-token-usage">
+  <div class="topbar">
+    <div>
+      <div class="page-title">Token监控</div>
+      <div class="page-sub">AI 对话、图片识别和语音输出用量</div>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn btn-ghost" onclick="loadTokenUsage()">↻ 刷新</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);">
+      <div class="stat-card">
+        <div class="label">今日调用</div>
+        <div class="value" id="token-today-requests" style="color:var(--accent)">-</div>
+        <div class="delta">含语音输出</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">今日Token</div>
+        <div class="value" id="token-today-total" style="color:var(--gold)">-</div>
+        <div class="delta">聊天与图片识别</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">语音字数</div>
+        <div class="value" id="token-tts-chars" style="color:var(--green)">-</div>
+        <div class="delta">TTS 按字数监控</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">历史Token</div>
+        <div class="value" id="token-all-total" style="color:var(--purple)">-</div>
+        <div class="delta" id="token-all-sub">最近记录估算</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">最近调用</div>
+        <div class="card-action">前台无感记录</div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>时间</th>
+              <th>功能</th>
+              <th>模型/服务</th>
+              <th>输入</th>
+              <th>输出</th>
+              <th>合计</th>
+              <th>地区</th>
+            </tr>
+          </thead>
+          <tbody id="token-usage-body">
+            <tr><td colspan="7" style="text-align:center;color:var(--text3);padding:40px;">加载中...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ══ 收入统计 ══ -->
 <div class="section" id="section-finance">
   <div class="topbar">
@@ -1332,6 +1401,7 @@ function showSection(name) {
     'ops-team': loadOpsTeam,
     dispatch: loadDispatch,
     'ai-training': loadAITraining,
+    'token-usage': loadTokenUsage,
     finance: loadFinance
   };
   if (actions[name]) actions[name]();
@@ -1466,6 +1536,14 @@ function fmtDate(iso) {
 function fmtDateShort(iso) {
   if (!iso) return '-';
   return new Date(iso).toLocaleDateString('zh-CN', {month:'2-digit',day:'2-digit'});
+}
+
+function localDateKey(value = new Date()) {
+  const d = value instanceof Date ? value : new Date(value);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 }
 
 function escapeHtml(value) {
@@ -2807,6 +2885,60 @@ async function loadDispatch() {
   }
 }
 
+async function loadTokenUsage() {
+  const body = document.getElementById('token-usage-body');
+  if (body) body.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:40px;">加载中...</td></tr>';
+  try {
+    const rows = await supaFetch('token_usage?order=created_at.desc&limit=500');
+    const todayKey = localDateKey();
+    const todayRows = rows.filter(r => localDateKey(r.created_at) === todayKey);
+    const sum = (list, key) => list.reduce((n, row) => n + (Number(row[key]) || 0), 0);
+    const todayTokens = sum(todayRows, 'total_tokens');
+    const allTokens = sum(rows, 'total_tokens');
+    const ttsChars = sum(todayRows, 'text_chars');
+
+    document.getElementById('token-today-requests').textContent = todayRows.length.toLocaleString('zh-CN');
+    document.getElementById('token-today-total').textContent = todayTokens.toLocaleString('zh-CN');
+    document.getElementById('token-tts-chars').textContent = ttsChars.toLocaleString('zh-CN');
+    document.getElementById('token-all-total').textContent = allTokens.toLocaleString('zh-CN');
+    document.getElementById('token-all-sub').textContent = `最近 ${rows.length.toLocaleString('zh-CN')} 条记录`;
+
+    const featureLabel = {
+      text_chat: '文字聊天',
+      voice_chat: '语音聊天',
+      image_wish: '图片识别',
+      tts: '语音输出'
+    };
+    body.innerHTML = rows.length ? rows.slice(0, 80).map(row => {
+      const provider = [row.provider, row.model].filter(Boolean).join(' · ') || '-';
+      const feature = featureLabel[row.feature] || row.feature || row.endpoint || '-';
+      const input = Number(row.input_tokens) || 0;
+      const output = Number(row.output_tokens) || 0;
+      const total = Number(row.total_tokens) || 0;
+      const chars = Number(row.text_chars) || 0;
+      return `<tr>
+        <td>${fmtDate(row.created_at)}</td>
+        <td><span class="tag">${escapeHtml(feature)}</span></td>
+        <td style="font-size:12px;color:var(--text2);max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(provider)}</td>
+        <td style="font-family:monospace;color:var(--text2);">${input.toLocaleString('zh-CN')}${chars ? `<div style="font-size:11px;color:var(--text3);">${chars.toLocaleString('zh-CN')}字</div>` : ''}</td>
+        <td style="font-family:monospace;color:var(--text2);">${output.toLocaleString('zh-CN')}</td>
+        <td style="font-family:monospace;color:var(--gold);font-weight:800;">${total.toLocaleString('zh-CN')}</td>
+        <td>
+          <div style="font-size:12px;color:var(--text);">${escapeHtml(row.city || '-')}</div>
+          <div style="font-size:11px;color:var(--text3);">${escapeHtml(row.country || '')}</div>
+        </td>
+      </tr>`;
+    }).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:40px;">暂无 Token 记录</td></tr>';
+  } catch(e) {
+    console.error(e);
+    ['token-today-requests','token-today-total','token-tts-chars','token-all-total'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = '-';
+    });
+    if (body) body.innerHTML = '<tr><td colspan="7" style="color:var(--orange);padding:24px;line-height:1.7;">还没有 Token 监控表。请先执行 workflows/token_usage_schema.sql，执行后前台会自动开始记录。</td></tr>';
+  }
+}
+
 // ── Finance ──
 async function loadFinance() {
   try {
@@ -2864,6 +2996,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (active === 'section-dashboard') loadDashboard();
     if (active === 'section-dispatch') loadDispatch();
     if (active === 'section-suppliers') loadSuppliers();
+    if (active === 'section-token-usage') loadTokenUsage();
   }, 60000);
 });
 </script>
