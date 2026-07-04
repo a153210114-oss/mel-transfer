@@ -2193,6 +2193,9 @@ async function sendVoiceMessage(text){
   if(await handleOnboardingFeedbackIntent(corrected)){
     return;
   }
+  if(await handleSupplyIntent(corrected,{voice:true})){
+    return;
+  }
   if(await handleDirectFeatureIntent(corrected,{alreadyRendered:true,voice:true})){
     return;
   }
@@ -2746,6 +2749,71 @@ function syncUserFeedback(question, context='', source='user-feedback'){
     next_action:'coach_ai_or_product_followup',
     fields:{event:'user_feedback',question,context,source}
   });
+}
+
+function detectSupplyIntent(text=''){
+  const clean=String(text||'').trim();
+  if(!clean)return null;
+  const hasSupplyVerb=/我(是|做|会|能|可以|可|有|提供|接|卖|出租|带|教|修|帮|代办)|本人|我们(做|提供|可以|有|接|卖)|可接单|想接单|想提供|成为服务者|加入华伴|入驻/i.test(clean);
+  const notSupply=/我想找|我要找|帮我找|有没有|哪里有|推荐|需要.*(找|请)|想买|想租|求/i.test(clean);
+  if(!hasSupplyVerb||notSupply)return null;
+  const type=inferSupplierTypeFromText(clean);
+  if(!type)return null;
+  return {
+    typeValue:type.value,
+    serviceType:type.label,
+    category:type.category,
+    city:intelCityFromText(clean)||currentRegion.city||currentRegion.country,
+    text:clean
+  };
+}
+
+function inferSupplierTypeFromText(text=''){
+  const clean=String(text||'');
+  const matches=[
+    {pattern:/接送机|接机|送机|包车|司机|开车|带客|旅游车|商务车|7座|七座|车队|机场/i,value:'ride',label:'出行/司机服务',category:'司机供给'},
+    {pattern:/翻译|口译|陪同翻译|中英|粤语/i,value:'translation',label:'翻译/陪同',category:'专业服务'},
+    {pattern:/律师|法律|合同|移民/i,value:'lawyer',label:'律师/法律服务',category:'专业服务'},
+    {pattern:/会计|报税|退税|税务|做账|bookkeeping/i,value:'accounting',label:'会计/税务服务',category:'专业服务'},
+    {pattern:/电工|水管|维修|修理|清洁|园艺|搬家|搬运|跑腿|上门/i,value:'local_service',label:'本地生活服务',category:'本地帮办'},
+    {pattern:/民宿|住宿|房源|租房|中介|房产/i,value:'housing',label:'住宿/房产服务',category:'房产住宿'},
+    {pattern:/卖|出售|二手|代购|商品|货|食品|餐|蛋糕|外卖|团购/i,value:'goods',label:'商品/餐食/代购',category:'商品服务'},
+    {pattern:/摄影|拍照|视频|剪辑|设计|网站|装修|培训|教|课程|补习/i,value:'creative',label:'技能/创意/培训',category:'技能服务'}
+  ];
+  return matches.find(item=>item.pattern.test(clean))||null;
+}
+
+async function handleSupplyIntent(text, options={}){
+  const supply=detectSupplyIntent(text);
+  if(!supply)return false;
+  const p=getPassenger();
+  const message=`AI聊天识别供给侧：${supply.serviceType}\n城市：${supply.city}\n用户原话：${supply.text}\n联系方式：${betaContact()||'待补充'}`;
+  const payload={
+    lead_type:'supply',
+    channel:'agent_chat_supply',
+    name:p.name||'华伴用户',
+    contact:betaContact(),
+    city:supply.city,
+    country:currentRegion.country||'',
+    message,
+    need_type:supply.typeValue,
+    stage:'ai_detected_supply',
+    status:'new',
+    next_action:'review_supplier_contact_and_invite_to_supplier_hub',
+    fields:{
+      source:'agent_chat',
+      service_type:supply.serviceType,
+      service_type_code:supply.typeValue,
+      category:supply.category,
+      intro:supply.text,
+      needs_contact:!betaContact(),
+      detected_by:'supply_intent'
+    }
+  };
+  supaInsertLead(payload).catch(e=>console.warn('supply lead sync failed',e));
+  rewardCompanionAction('try_feature');
+  await agentSay(`太好了，我先帮你整理成“${supply.serviceType}”供给线索。以后有人需要这类服务，我可以帮你把生意介绍给更多人；如果你愿意，下一步补一下联系方式、服务区域和资质，我就能帮你进入审核。`,150);
+  return true;
 }
 
 // ── 启动 ──
@@ -4413,6 +4481,7 @@ function buildPrompt(){
 当用户表达想获得帮助/帮助别人时，可以俏皮地说：“如果您想获得帮助或者帮助别人，我来帮你查、筛、核验，整理出能行动的结果。”然后引导他把事情说清楚。
 当用户提出电工、水管、跳闸、漏水、搬运、跑腿、临时上门检查、旅游攻略、当地餐厅景点、华人律师、会计、报税等需求时，不要拒绝；先自然接住需求，再说“我来查近期公开信息、可联系对象和需要核验的点”。专业维修、上门服务、法律、税务、涉及金钱或安全的事，要提醒用户自行核验资质、价格和安全。
 当用户提出交友、搭子、同城活动、找群或建群时，不要把华伴说成开放社交平台；先说你会按真实需求做同城撮合，适合时再建议临时小群，并提醒不要公开隐私、钱款和证件信息。
+当用户表达自己能提供商品或服务，例如“我是司机/会计/电工”“我能接送机”“我卖东西”“我可以提供服务”，要主动说可以帮他整理到供给侧，审核后把生意介绍给更多需要的人；不要把它当成普通闲聊。
 不要在每个非出行需求后都介绍出行能力，除非用户主动提到要用车或行程接送。
 如果用户提出建议、吐槽、希望新增能力：先感谢和复述要点，再追问一个最有价值的细节，比如“你希望它在哪里出现？”或“你希望我怎么回复会更像你的小伙伴？”
 
@@ -4584,6 +4653,9 @@ async function sendMessage(){ stopTTS();
     return;
   }
   if(await handleOnboardingFeedbackIntent(msg)){
+    return;
+  }
+  if(await handleSupplyIntent(msg,{voice:false})){
     return;
   }
   if(await handleDirectFeatureIntent(msg,{alreadyRendered:true,voice:false})){
