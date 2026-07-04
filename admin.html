@@ -1541,20 +1541,24 @@ async function assignTrip(tripId) {
 // ── Drivers ──
 async function loadDrivers() {
   const filter = document.getElementById('driver-filter').value;
-  let q = `drivers?tenant_id=eq.${TENANT_ID}&order=created_at.desc&limit=100&select=id,full_name,phone,wechat_id,status,is_active,created_at`;
-  if (filter !== '') q += `&is_active=eq.${filter}`;
 
   const tbody = document.getElementById('drivers-body');
   tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:30px;">加载中...</td></tr>';
 
   try {
-    const [drivers, trips] = await Promise.all([
-      supaFetch(q),
-      supaFetch(`trips?tenant_id=eq.${TENANT_ID}&status=eq.completed&select=driver_id`)
+    const [driverRows, trips] = await Promise.all([
+      fetchDriversForAdmin(),
+      supaFetch(`trips?tenant_id=eq.${TENANT_ID}&status=eq.completed&select=driver_id`).catch(()=>[])
     ]);
 
     const tripCount = {};
     trips.forEach(t => { if(t.driver_id) tripCount[t.driver_id] = (tripCount[t.driver_id]||0)+1; });
+    const drivers = driverRows.filter(d => {
+      const active = driverIsActive(d);
+      if (filter === 'true') return active;
+      if (filter === 'false') return !active;
+      return true;
+    });
 
     if (!drivers.length) {
       tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:40px;">暂无司机</td></tr>';
@@ -1562,7 +1566,8 @@ async function loadDrivers() {
     }
 
     tbody.innerHTML = drivers.map(d => {
-      const activeBadge = d.is_active
+      const active = driverIsActive(d);
+      const activeBadge = active
         ? '<span class="badge badge-active">✓ 已激活</span>'
         : '<span class="badge badge-pending-driver">⏳ 待审核</span>';
       const statusLabel = {at_depot:'🟢 候单',on_trip:'🚗 行程中',offline:'⚫ 离线'}[d.status] || d.status;
@@ -1585,7 +1590,7 @@ async function loadDrivers() {
         <td style="color:var(--purple);font-weight:700;">${d.points||0}</td>
         <td style="font-size:12px;color:var(--text3);">${fmtDateShort(d.created_at)}</td>
         <td>
-          ${!d.is_active ? `<button class="action-btn success" onclick="activateDriver('${d.id}')">激活</button>` : `<button class="action-btn" onclick="deactivateDriver('${d.id}')">停用</button>`}
+          ${!active ? `<button class="action-btn success" onclick="activateDriver('${d.id}')">激活</button>` : `<button class="action-btn" onclick="deactivateDriver('${d.id}')">停用</button>`}
           <button class="action-btn success" onclick="sendDriverFollowup('${d.id}','${jsString(d.full_name)}','${jsString(d.phone)}','${jsString(d.wechat_id)}')" style="margin-left:4px;">华伴跟进</button>
           <button class="action-btn" onclick="copyId('${d.id}')" style="margin-left:4px;">复制ID</button>
         </td>
@@ -1594,6 +1599,30 @@ async function loadDrivers() {
   } catch(e) {
     tbody.innerHTML = `<tr><td colspan="7" style="color:var(--red);padding:20px;">${e.message}</td></tr>`;
   }
+}
+
+async function fetchDriversForAdmin() {
+  const queries = [
+    `drivers?tenant_id=eq.${TENANT_ID}&order=created_at.desc&limit=100&select=id,full_name,phone,wechat_id,status,is_active,created_at,points`,
+    `drivers?tenant_id=eq.${TENANT_ID}&order=created_at.desc&limit=100&select=id,full_name,phone,status,is_active,created_at`,
+    `drivers?tenant_id=eq.${TENANT_ID}&order=created_at.desc&limit=100&select=id,full_name,phone,status,created_at`,
+    `drivers?order=created_at.desc&limit=100&select=id,full_name,phone,status,created_at`
+  ];
+  let lastError = null;
+  for (const q of queries) {
+    try {
+      return await supaFetch(q);
+    } catch(e) {
+      lastError = e;
+    }
+  }
+  throw lastError || new Error('司机列表读取失败');
+}
+
+function driverIsActive(driver={}) {
+  if (driver.is_active === true) return true;
+  if (driver.is_active === false) return false;
+  return ['active','approved','offline','at_depot','on_trip'].includes(String(driver.status||'').toLowerCase());
 }
 
 function buildDriverFollowupText(name='师傅') {
@@ -1635,17 +1664,41 @@ async function sendDriverApprovalNotice(driver={}) {
 }
 
 async function activateDriver(id) {
-  await supaPatch(`drivers?id=eq.${id}`, {is_active: true, status: 'offline'});
-  const rows = await supaFetch(`drivers?id=eq.${id}&select=id,full_name,phone,wechat_id`);
-  const driver = rows && rows[0] ? rows[0] : {};
-  await sendDriverApprovalNotice(driver);
-  loadDrivers();
+  try {
+    await patchDriverActivation(id, true);
+    const rows = await supaFetch(`drivers?id=eq.${id}&select=id,full_name,phone,wechat_id`).catch(()=>[]);
+    const driver = rows && rows[0] ? rows[0] : {};
+    await sendDriverApprovalNotice(driver);
+    loadDrivers();
+  } catch(e) {
+    alert('激活失败：' + e.message);
+  }
 }
 
 async function deactivateDriver(id) {
   if (!confirm('确认停用此司机？')) return;
-  await supaPatch(`drivers?id=eq.${id}`, {is_active: false});
-  loadDrivers();
+  try {
+    await patchDriverActivation(id, false);
+    loadDrivers();
+  } catch(e) {
+    alert('停用失败：' + e.message);
+  }
+}
+
+async function patchDriverActivation(id, active) {
+  const payloads = active
+    ? [{is_active:true,status:'offline'}, {status:'approved'}]
+    : [{is_active:false}, {status:'pending'}];
+  let lastError = null;
+  for (const payload of payloads) {
+    try {
+      const rows = await supaPatch(`drivers?id=eq.${id}`, payload);
+      if (Array.isArray(rows) && rows.length) return rows;
+    } catch(e) {
+      lastError = e;
+    }
+  }
+  throw lastError || new Error('司机状态更新失败');
 }
 
 function copyId(id) {
