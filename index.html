@@ -2742,21 +2742,27 @@ function adoptionTickerLabel(row={}){
 
 async function loadRealAdoptionTicker(){
   const track=document.getElementById('adoption-ticker-track');
-  if(!track||track.dataset.loadedReal==='1')return;
-  const base=track.innerHTML;
+  if(!track)return;
+  const base=track.dataset.virtualHtml||track.innerHTML;
+  track.dataset.virtualHtml=base;
   try{
-    const [betaRows,userRows]=await Promise.all([
-      supaGet('beta_leads?channel=eq.adoption&order=created_at.desc&limit=12&select=name,contact,fields,created_at').catch(()=>[]),
-      supaGet('user_leads?status=like.adoption*&order=created_at.desc&limit=12&select=city,country,status,created_at').catch(()=>[])
+    const [betaRows,userRows,legacyRows]=await Promise.all([
+      supaGet('beta_leads?channel=eq.adoption&order=created_at.desc&limit=30&select=name,contact,fields,created_at').catch(()=>[]),
+      supaGet('user_leads?channel=eq.adoption&order=created_at.desc&limit=30&select=name,contact,fields,created_at,city,country').catch(()=>[]),
+      supaGet('user_leads?status=like.adoption*&order=created_at.desc&limit=12&select=name,contact,fields,created_at,city,country,status').catch(()=>[])
     ]);
-    const realItems=[
-      ...betaRows.map(adoptionTickerLabel),
-      ...userRows.map(row=>`${row.city||'海外'}用户 领养华伴 AI 成功`)
-    ].filter(Boolean).slice(0,12);
+    const seen=new Set();
+    const realItems=[...betaRows,...userRows,...legacyRows].map(row=>{
+      const fields=row.fields||{};
+      const key=String(row.contact||fields.display_name||row.name||row.created_at||'').trim();
+      if(!key||seen.has(key))return '';
+      seen.add(key);
+      return adoptionTickerLabel(row);
+    }).filter(Boolean).slice(0,18);
     if(!realItems.length)return;
     const realHtml=realItems.map(text=>`<span><i></i>${companionEscape(text)}</span>`).join('');
     track.innerHTML=base+realHtml;
-    track.dataset.loadedReal='1';
+    track.dataset.loadedReal=String(realItems.length);
   }catch(e){
     console.warn('real adoption ticker skipped',e?.message||e);
   }
