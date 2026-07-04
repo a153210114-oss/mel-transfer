@@ -2741,13 +2741,28 @@ function adoptionTickerLabel(row={}){
 }
 
 const TICKER_SETTINGS_KEY='huaban_ticker_settings';
+let tickerSettingsCache=null;
 
 function readTickerSettings(){
+  if(tickerSettingsCache)return tickerSettingsCache;
   try{
     const data=JSON.parse(localStorage.getItem(TICKER_SETTINGS_KEY)||'{}');
     return data&&typeof data==='object'?data:{};
   }catch(e){
     return {};
+  }
+}
+
+async function loadRemoteTickerSettings(){
+  try{
+    const rows=await supaGet('beta_leads?channel=eq.ticker_settings&order=created_at.desc&limit=1&select=fields,created_at');
+    const settings=rows?.[0]?.fields?.settings;
+    if(settings&&typeof settings==='object'){
+      tickerSettingsCache=settings;
+      localStorage.setItem(TICKER_SETTINGS_KEY,JSON.stringify(settings));
+    }
+  }catch(e){
+    console.warn('ticker settings fallback local',e?.message||e);
   }
 }
 
@@ -3016,6 +3031,7 @@ async function startApp(){
   updateAgentIdentityUI();
   detectRegion();
   trackPageVisit('home');
+  await loadRemoteTickerSettings();
   renderIntroTickerFromSettings();
   renderDefaultAdoptionTicker();
   loadRealAdoptionTicker();

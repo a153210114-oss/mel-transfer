@@ -1294,6 +1294,23 @@ async function supaPatch(path, data) {
   return payload;
 }
 
+async function supaInsert(table, data) {
+  const res = await fetch(SUPA_URL + '/rest/v1/' + table, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPA_KEY,
+      'Authorization': 'Bearer ' + SUPA_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    },
+    body: JSON.stringify(data)
+  });
+  const text = await res.text();
+  const payload = text ? JSON.parse(text) : null;
+  if (!res.ok) throw new Error(payload?.message || text || '保存失败');
+  return payload;
+}
+
 // Navigation
 function showSection(name) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
@@ -1342,6 +1359,18 @@ const DEFAULT_TICKER_SETTINGS={
   ]
 };
 
+async function readRemoteTickerSettings(){
+  try{
+    const rows=await supaFetch('beta_leads?channel=eq.ticker_settings&order=created_at.desc&limit=1&select=fields,created_at');
+    const settings=rows?.[0]?.fields?.settings;
+    if(settings&&typeof settings==='object'){
+      localStorage.setItem(TICKER_SETTINGS_KEY,JSON.stringify(settings));
+      return settings;
+    }
+  }catch(e){}
+  return null;
+}
+
 function readTickerSettings(){
   try{
     const saved=JSON.parse(localStorage.getItem(TICKER_SETTINGS_KEY)||'{}');
@@ -1354,8 +1383,8 @@ function readTickerSettings(){
   }
 }
 
-function loadTickerSettings(){
-  const settings=readTickerSettings();
+async function loadTickerSettings(){
+  const settings=(await readRemoteTickerSettings())||readTickerSettings();
   const intro=document.getElementById('ticker-intro-lines');
   const adoption=document.getElementById('ticker-adoption-lines');
   if(intro)intro.value=settings.introLines.join('\n');
@@ -1370,20 +1399,46 @@ function tickerLinesFromTextarea(id){
     .slice(0,24);
 }
 
-function saveTickerSettings(){
+async function saveTickerSettings(){
   const settings={
     introLines:tickerLinesFromTextarea('ticker-intro-lines'),
     adoptionLines:tickerLinesFromTextarea('ticker-adoption-lines'),
     updated_at:new Date().toISOString()
   };
   localStorage.setItem(TICKER_SETTINGS_KEY,JSON.stringify(settings));
-  alert('已保存。刷新前台后生效。');
+  await supaInsert('beta_leads',{
+    tenant_id:TENANT_ID,
+    lead_type:'config',
+    channel:'ticker_settings',
+    name:'滚动屏配置',
+    city:'Global',
+    country:'Global',
+    need_type:'ticker_settings',
+    status:'active',
+    stage:'admin_saved',
+    message:'首页滚动屏配置',
+    fields:{settings}
+  });
+  alert('已保存。重新打开前台后生效。');
 }
 
-function resetTickerSettings(){
+async function resetTickerSettings(){
   if(!confirm('确认恢复滚动屏默认文案？'))return;
   localStorage.setItem(TICKER_SETTINGS_KEY,JSON.stringify(DEFAULT_TICKER_SETTINGS));
   loadTickerSettings();
+  await supaInsert('beta_leads',{
+    tenant_id:TENANT_ID,
+    lead_type:'config',
+    channel:'ticker_settings',
+    name:'滚动屏配置',
+    city:'Global',
+    country:'Global',
+    need_type:'ticker_settings',
+    status:'active',
+    stage:'admin_reset',
+    message:'首页滚动屏配置恢复默认',
+    fields:{settings:{...DEFAULT_TICKER_SETTINGS,updated_at:new Date().toISOString()}}
+  });
 }
 
 // Status badge helper
