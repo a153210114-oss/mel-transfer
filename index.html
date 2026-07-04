@@ -598,7 +598,7 @@ body.theme-night .mic-btn.recording .wave-icon i{background:#31d683;}
   padding-right:max(10px, env(safe-area-inset-right));
 }
 .chat-input,.hold-talk{min-width:0;}
-.send-btn{width:40px;min-width:40px;display:flex;align-items:center;justify-content:center;line-height:1;}
+.send-btn{width:40px;min-width:40px;display:flex;align-items:center;justify-content:center;line-height:1;position:relative;z-index:240;pointer-events:auto;}
 .input-bar.voice-input .chat-input{display:none;}
 .input-bar.voice-input .hold-talk{display:block;}
 .more-panel{display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:59px;width:100%;max-width:480px;background:#f7f7f7;border-top:1px solid #d6d6d6;padding:14px 14px calc(18px + env(safe-area-inset-bottom));z-index:180;box-shadow:0 -8px 22px rgba(0,0,0,.06);}
@@ -692,7 +692,7 @@ body.more-open .chat-area{padding-bottom:390px;}
   </button>
   <input class="chat-input" id="chat-input" placeholder="和华伴聊聊" oninput="updateComposerAction()" onkeydown="if(event.key==='Enter'){sendMessage();updateComposerAction();}">
   <button class="hold-talk" id="hold-talk" onpointerdown="startPushToTalk(event)" onpointerup="stopPushToTalk(event)" onpointercancel="stopPushToTalk(event)" onpointerleave="stopPushToTalk(event)">按住说话</button>
-  <button class="send-btn" id="composer-action" onclick="handleComposerAction()" aria-label="展开全部功能">＋</button>
+  <button class="send-btn" id="composer-action" onclick="return handleComposerAction(event)" aria-label="展开全部功能">＋</button>
 </div>
 
 <!-- ＋ 微信式全部功能面板 -->
@@ -1726,7 +1726,14 @@ function updateComposerAction(){
   action.setAttribute('aria-label',hasText?'发送消息':'打开功能');
 }
 
-function handleComposerAction(){
+let composerActionLock=0;
+
+function handleComposerAction(event){
+  event?.preventDefault?.();
+  event?.stopPropagation?.();
+  const now=Date.now();
+  if(now-composerActionLock<260)return false;
+  composerActionLock=now;
   const input=document.getElementById('chat-input');
   if(inputMode==='text'&&input?.value.trim()){
     closeMorePanel();
@@ -1735,6 +1742,15 @@ function handleComposerAction(){
   }else{
     openMorePanel();
   }
+  return false;
+}
+
+function wireComposerActionButton(){
+  const action=document.getElementById('composer-action');
+  if(!action||action.dataset.wired==='1')return;
+  action.dataset.wired='1';
+  action.addEventListener('touchend',handleComposerAction,{passive:false});
+  action.addEventListener('pointerup',handleComposerAction);
 }
 
 function toggleInputMode(){
@@ -3138,6 +3154,8 @@ async function startApp(){
   if(currentRole!=='driver'){
     await refreshApprovedDriverAccess({announce:true}).catch(()=>null);
   }
+  wireComposerActionButton();
+  updateComposerAction();
   rewardCompanionAction('app_open');
   if(currentRole!=='driver')setTimeout(()=>showReleaseNotice(false),700);
   maybeStartWakeListening();
@@ -3160,6 +3178,7 @@ function renderWelcomeHome(){
   document.getElementById('chat-input').placeholder='输入你需要的帮助';
   renderMoreMenu();
   updateComposerAction();
+  wireComposerActionButton();
   refreshHomeRegionCopy();
   scrollBottom();
 }
@@ -3860,16 +3879,32 @@ function renderMoreMenu(category='home'){
   const title=document.getElementById('more-title');
   const back=document.getElementById('more-back');
   if(!grid||!title||!back)return;
-  const module=BUSINESS_MODULES[category];
-  const menuItems=category==='home'?coreToolMenuItems():(module?.items||MORE_MENU[category]||[]);
-  const titles={home:'功能'};
-  title.textContent=titles[category]||'全部功能';
-  if(module?.title)title.textContent=module.title;
-  back.style.visibility=category==='home'?'hidden':'visible';
-  grid.innerHTML=menuItems.length?menuItems.map(item=>`
-    <button class="more-item${item.driver?' driver':''}" onclick="${item.category?`renderMoreMenu('${item.key}')`:`runMoreAction('${item.key}','${item.label}')`}">
-      <span class="more-item-icon">${item.icon}</span><span>${item.label}</span>
-    </button>`).join(''):`<div style="grid-column:1/-1;text-align:center;color:#888;font-size:13px;line-height:1.7;padding:18px 8px;">暂无可用功能</div>`;
+  try{
+    const module=BUSINESS_MODULES[category];
+    const menuItems=category==='home'?coreToolMenuItems():(module?.items||MORE_MENU[category]||[]);
+    const titles={home:'功能'};
+    title.textContent=titles[category]||'全部功能';
+    if(module?.title)title.textContent=module.title;
+    back.style.visibility=category==='home'?'hidden':'visible';
+    grid.innerHTML=menuItems.length?menuItems.map(item=>`
+      <button class="more-item${item.driver?' driver':''}" onclick="${item.category?`renderMoreMenu('${item.key}')`:`runMoreAction('${item.key}','${item.label}')`}">
+        <span class="more-item-icon">${item.icon}</span><span>${item.label}</span>
+      </button>`).join(''):`<div style="grid-column:1/-1;text-align:center;color:#888;font-size:13px;line-height:1.7;padding:18px 8px;">暂无可用功能</div>`;
+  }catch(e){
+    console.warn('render menu failed',e);
+    title.textContent='功能';
+    back.style.visibility='hidden';
+    grid.innerHTML=[
+      ['voice','🎙️','语音'],
+      ['camera','📷','相机'],
+      ['image','🖼️','图片'],
+      ['reminder','⏰','提醒'],
+      ['share','🔗','分享'],
+      ['profile','👤','个人中心'],
+      ['partner','🤝','合伙人'],
+      ['intro','💬','介绍']
+    ].map(item=>`<button class="more-item" onclick="runMoreAction('${item[0]}','${item[2]}')"><span class="more-item-icon">${item[1]}</span><span>${item[2]}</span></button>`).join('');
+  }
 }
 
 function toggleMorePanel(){
@@ -3883,6 +3918,8 @@ function toggleMorePanel(){
 function openMorePanel(category='home'){
   const panel=document.getElementById('more-panel');
   if(!panel)return;
+  document.getElementById('chat-input')?.blur();
+  document.getElementById('hold-talk')?.blur();
   renderMoreMenu(category);
   panel.classList.add('open');
   panel.style.display='block';
