@@ -777,7 +777,8 @@ body.more-open .chat-area{padding-bottom:390px;}
       <div class="profile-section-title">🧩 供给侧入口</div>
       <div id="supplier-entry-card" style="background:linear-gradient(135deg,rgba(0,200,150,0.10),rgba(0,150,199,0.06));border:1px solid rgba(0,200,150,0.22);border-radius:14px;padding:16px;">
         <div style="font-size:13px;color:rgba(255,255,255,0.55);line-height:1.7;">如果你在当地，也可以申请成为华伴供给方，提供接送机、包车、旅游、翻译、租车、本地帮办、商品销售、餐饮或配送。</div>
-        <button onclick="startSupplierApplication()" style="width:100%;margin-top:12px;padding:12px;background:rgba(0,200,150,0.22);border:1px solid rgba(0,200,150,0.36);border-radius:12px;color:white;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">申请成为服务者</button>
+        <button onclick="openCityFranchiseConsult()" style="width:100%;margin-top:12px;padding:12px;background:rgba(0,150,199,0.22);border:1px solid rgba(0,150,199,0.38);border-radius:12px;color:white;font-size:14px;font-weight:900;cursor:pointer;font-family:inherit;">城市加盟咨询</button>
+        <button onclick="startSupplierApplication()" style="width:100%;margin-top:8px;padding:12px;background:rgba(0,200,150,0.18);border:1px solid rgba(0,200,150,0.30);border-radius:12px;color:white;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">提交审核</button>
       </div>
     </div>
 
@@ -5875,7 +5876,8 @@ function renderSupplierEntry(status){
         <div style="font-size:12px;color:rgba(255,255,255,0.55);line-height:1.6;margin-top:4px;">${desc}</div>
       </div>
     </div>
-    <button onclick="startSupplierApplication()" style="width:100%;margin-top:12px;padding:12px;background:rgba(0,200,150,0.22);border:1px solid rgba(0,200,150,0.36);border-radius:12px;color:white;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">${status==='rejected'?'重新提交申请':'申请成为服务者'}</button>`;
+    <button onclick="openCityFranchiseConsult()" style="width:100%;margin-top:12px;padding:12px;background:rgba(0,150,199,0.22);border:1px solid rgba(0,150,199,0.38);border-radius:12px;color:white;font-size:14px;font-weight:900;cursor:pointer;font-family:inherit;">城市加盟咨询</button>
+    <button onclick="startSupplierApplication()" style="width:100%;margin-top:8px;padding:12px;background:rgba(0,200,150,0.18);border:1px solid rgba(0,200,150,0.30);border-radius:12px;color:white;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">${status==='rejected'?'重新提交审核':'提交审核'}</button>`;
 }
 
 const SUPPLIER_TYPES=[
@@ -5916,6 +5918,91 @@ async function startSupplierApplication(){
     return;
   }
   showSupplierApplicationSheet();
+}
+
+function openCityFranchiseConsult(){
+  document.getElementById('city-franchise-modal')?.remove();
+  const p=getPassenger();
+  const overlay=document.createElement('div');
+  overlay.id='city-franchise-modal';
+  overlay.className='modal-overlay show';
+  overlay.onclick=(event)=>{if(event.target===overlay)overlay.remove();};
+  overlay.innerHTML=`
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div>
+          <div style="font-size:18px;font-weight:900;color:white;">城市加盟咨询</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.48);margin-top:4px;">适合其他国家/城市的推广、运营、资源合作</div>
+        </div>
+        <button onclick="document.getElementById('city-franchise-modal')?.remove()" style="border:0;border-radius:10px;background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.72);padding:8px 12px;font:600 13px/1 inherit;cursor:pointer;">关闭</button>
+      </div>
+      <div class="mutual-aid-form">
+        <label>国家/地区</label>
+        <input id="franchise-country" value="${companionEscape(currentRegion.country||'')}" placeholder="例如：英国 / 美国 / 新西兰">
+        <label>城市</label>
+        <input id="franchise-city" value="${companionEscape(currentRegion.city||'')}" placeholder="例如：伦敦 / 芝加哥 / 奥克兰">
+        <label>你能提供什么资源</label>
+        <textarea id="franchise-resource" placeholder="例如：当地微信群资源、华人商家资源、司机/餐馆/外卖员资源、内容推广、城市运营经验"></textarea>
+        <label>想怎么合作</label>
+        <select id="franchise-role">
+          <option value="city_partner">城市合伙人/加盟推广</option>
+          <option value="outreach_operator">本地推广运营</option>
+          <option value="merchant_network">商家/餐饮/配送资源合作</option>
+          <option value="driver_network">司机/用车资源合作</option>
+          <option value="other">其他合作</option>
+        </select>
+        <label>联系方式</label>
+        <input id="franchise-contact" value="${companionEscape(p.phone||betaContact()||'')}" placeholder="微信 / 手机 / 邮箱">
+      </div>
+      <button onclick="submitCityFranchiseConsult(this)" style="width:100%;margin-top:14px;padding:14px;background:rgba(0,150,199,0.28);border:1px solid rgba(0,150,199,0.42);border-radius:12px;color:white;font-size:14px;font-weight:900;font-family:inherit;cursor:pointer;">提交咨询</button>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+async function submitCityFranchiseConsult(btn){
+  const country=(document.getElementById('franchise-country')?.value||'').trim();
+  const city=(document.getElementById('franchise-city')?.value||'').trim();
+  const resource=(document.getElementById('franchise-resource')?.value||'').trim();
+  const role=(document.getElementById('franchise-role')?.value||'city_partner').trim();
+  const contact=(document.getElementById('franchise-contact')?.value||'').trim();
+  if(!country||!city){alert('请填写国家和城市');return;}
+  if(!contact){alert('请留下联系方式');return;}
+  btn.disabled=true;
+  btn.textContent='提交中...';
+  const roleLabel={
+    city_partner:'城市合伙人/加盟推广',
+    outreach_operator:'本地推广运营',
+    merchant_network:'商家/餐饮/配送资源合作',
+    driver_network:'司机/用车资源合作',
+    other:'其他合作'
+  }[role]||role;
+  const payload={
+    lead_type:'partner',
+    channel:'city_franchise_consult',
+    name:getPassenger().name||'华伴用户',
+    contact,
+    city,
+    country,
+    need_type:'city_franchise',
+    message:`城市加盟咨询\n国家/地区：${country}\n城市：${city}\n合作方向：${roleLabel}\n资源：${resource||'待补充'}\n联系方式：${contact}`,
+    stage:'new_city_partner_consult',
+    status:'new',
+    next_action:'contact_and_assess_city_launch_potential',
+    fields:{
+      event:'city_franchise_consult',
+      country,
+      city,
+      cooperation_role:role,
+      cooperation_role_label:roleLabel,
+      resources:resource,
+      source:'profile_center'
+    }
+  };
+  supaInsertLead(payload).catch(e=>console.warn('city franchise sync failed',e));
+  document.getElementById('city-franchise-modal')?.remove();
+  rewardCompanionAction('try_feature');
+  await agentSay('收到，城市加盟咨询我记下了。接下来会先看这个城市的华人需求、供给资源和推广入口，再联系你聊合作方式。',150);
 }
 
 function showSupplierApplicationSheet(){

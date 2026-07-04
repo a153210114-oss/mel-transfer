@@ -1809,6 +1809,7 @@ function supplierServiceText(lead) {
   const fields = lead.fields || {};
   if(lead.channel==='adoption'||lead.need_type==='adoption')return 'AI 领养';
   if(lead.channel==='agent_work_order'||String(lead.need_type||'').startsWith('work_order_'))return 'AI确认工单';
+  if(lead.channel==='city_franchise_consult'||lead.need_type==='city_franchise')return '城市加盟咨询';
   if(lead.channel==='ld_01_daily_task'||lead.stage==='daily_search_task')return '日常搜索任务';
   if(lead.channel==='driver_supply_intel'||String(lead.need_type||'').startsWith('driver_supply_'))return '司机供给线索';
   if(lead.channel==='demand_supply_intel'||String(lead.need_type||'').startsWith('intel_'))return '需求/供给情报';
@@ -1821,6 +1822,9 @@ function supplierQualificationText(lead) {
   const fields = lead.fields || {};
   if(lead.channel==='agent_work_order'||String(lead.need_type||'').startsWith('work_order_')){
     return fields.next_step || lead.stage || '待后台分派';
+  }
+  if(lead.channel==='city_franchise_consult'||lead.need_type==='city_franchise'){
+    return `${fields.cooperation_role_label || '城市合作'} · ${fields.resources || '资源待补充'}`;
   }
   if(lead.channel==='ld_01_daily_task'||lead.stage==='daily_search_task'){
     const blocked = Array.isArray(fields.blocked_by) ? fields.blocked_by.join(' / ') : (fields.blocked_by || '待判断');
@@ -1852,6 +1856,7 @@ function supplierLeadType(lead={}) {
   if (channel === 'adoption' || needType === 'adoption') return 'adoption';
   if (channel === 'feedback' || needType === 'feedback') return 'feedback';
   if (channel === 'agent_work_order' || needType.startsWith('work_order_')) return 'intel';
+  if (channel === 'city_franchise_consult' || needType === 'city_franchise') return 'intel';
   if (channel === 'ld_01_daily_task' || lead.stage === 'daily_search_task') return 'daily';
   if (channel === 'driver_supply_intel' || needType.startsWith('driver_supply_')) return 'driver';
   if (channel === 'demand_supply_intel' || needType.startsWith('intel_')) return 'intel';
