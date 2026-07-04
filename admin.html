@@ -390,6 +390,9 @@ body {
     <div class="nav-item" onclick="showSection('trips')">
       <span class="nav-icon">🚗</span> 订单管理
     </div>
+    <div class="nav-item" onclick="showSection('delivery')">
+      <span class="nav-icon">🍱</span> 外卖平台
+    </div>
   </div>
 
   <div class="nav-section">
@@ -469,6 +472,11 @@ body {
         <div class="quick-icon">🚗</div>
         <strong>订单管理</strong>
         <span>跟进接送机、包车和旅游用车订单</span>
+      </div>
+      <div class="admin-quick-card" onclick="showSection('delivery')">
+        <div class="quick-icon">🍱</div>
+        <strong>外卖平台</strong>
+        <span>用户点餐、商家接单、外卖员配送三端订单池</span>
       </div>
       <div class="admin-quick-card" onclick="showSection('ai-training')">
         <div class="quick-icon">🎓</div>
@@ -652,6 +660,52 @@ body {
           </thead>
           <tbody id="trips-body">
             <tr><td colspan="9" style="text-align:center;color:var(--text3);padding:40px;">加载中...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 外卖平台 ══ -->
+<div class="section" id="section-delivery">
+  <div class="topbar">
+    <div>
+      <div class="page-title">外卖平台</div>
+      <div class="page-sub">用户端 / 商家端 / 外卖员端</div>
+    </div>
+    <div class="topbar-actions">
+      <select class="input" id="delivery-status-filter" onchange="loadDeliveryOrders()" style="width:150px;">
+        <option value="">全部订单</option>
+        <option value="new_order">新单</option>
+        <option value="matching">匹配中</option>
+        <option value="merchant_confirmed">商家已接</option>
+        <option value="delivering">配送中</option>
+        <option value="completed">已完成</option>
+      </select>
+      <button class="btn btn-ghost" onclick="loadDeliveryOrders()">↻ 刷新</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="card">
+      <div class="card-body" style="font-size:12px;color:var(--text2);line-height:1.7;border-bottom:1px solid var(--border);padding-bottom:16px;margin-bottom:8px;">
+        外卖先用轻量流程跑通：用户确认订单后进入这里，人工或 Agent 匹配商家与配送员。商家、外卖员通过供给侧审核后再开放接单能力。
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>订单</th>
+              <th>用户</th>
+              <th>需求</th>
+              <th>地点/时间</th>
+              <th>金额</th>
+              <th>状态</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="delivery-orders-body">
+            <tr><td colspan="7" style="text-align:center;color:var(--text3);padding:40px;">加载中...</td></tr>
           </tbody>
         </table>
       </div>
@@ -1205,6 +1259,7 @@ function showSection(name) {
   const actions = {
     dashboard: loadDashboard,
     trips: loadTrips,
+    delivery: loadDeliveryOrders,
     drivers: loadDrivers,
     passengers: loadPassengers,
     suppliers: loadSuppliers,
@@ -1589,6 +1644,119 @@ async function assignTrip(tripId) {
   if (!driverIdInput) return;
   await supaPatch(`trips?id=eq.${tripId}`, {status:'confirmed', driver_id: driverIdInput});
   loadTrips();
+}
+
+// ── Delivery ──
+function deliveryStatusBadge(status='new_order') {
+  const map = {
+    new_order: ['badge-pending', '🆕 新单'],
+    matching: ['badge-pending-driver', '🔎 匹配中'],
+    merchant_confirmed: ['badge-confirmed', '🏪 商家已接'],
+    delivering: ['badge-enroute', '🛵 配送中'],
+    completed: ['badge-completed', '✓ 已完成'],
+    cancelled: ['badge-cancelled', '✕ 已取消']
+  };
+  const [cls, label] = map[status] || ['badge-inactive', status || '未知'];
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+
+function deliveryStatusText(lead={}) {
+  const fields = lead.fields || {};
+  return fields.delivery_order?.delivery_status || fields.delivery_status || 'new_order';
+}
+
+function deliveryOrderData(lead={}) {
+  const fields = lead.fields || {};
+  const order = fields.delivery_order || {};
+  const wo = fields.work_order || {};
+  return {
+    item: order.item || wo.task || lead.message || '-',
+    address: order.delivery_address || wo.place || lead.city || '-',
+    time: order.delivery_time || wo.time || '-',
+    amount: order.budget || wo.amount || '-',
+    notes: order.notes || wo.remark || fields.next_step || ''
+  };
+}
+
+async function loadDeliveryOrders() {
+  const filter = document.getElementById('delivery-status-filter')?.value || '';
+  const tbody = document.getElementById('delivery-orders-body');
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:30px;">加载中...</td></tr>';
+  try {
+    const buildQ = table => `${table}?channel=eq.delivery_order&order=created_at.desc&limit=100`;
+    const [betaRows, userRows] = await Promise.all([
+      supaFetch(buildQ('beta_leads')).then(rows=>rows.map(row=>({...row,__table:'beta_leads'}))).catch(()=>[]),
+      supaFetch(buildQ('user_leads')).then(rows=>rows.map(row=>({...row,__table:'user_leads'}))).catch(()=>[])
+    ]);
+    let orders = [...betaRows, ...userRows].sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
+    if (filter) orders = orders.filter(row => deliveryStatusText(row) === filter);
+    if (!orders.length) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:40px;">暂无外卖订单</td></tr>';
+      return;
+    }
+    tbody.innerHTML = orders.map(lead => {
+      const order = deliveryOrderData(lead);
+      const status = deliveryStatusText(lead);
+      return `<tr>
+        <td>
+          <div style="font-family:monospace;font-size:11px;color:var(--text3);">DLV-${String(lead.id||'').slice(-6).toUpperCase()}</div>
+          <div style="font-size:11px;color:var(--text3);">${fmtDateShort(lead.created_at)}</div>
+        </td>
+        <td>
+          <div style="font-weight:700;">${escapeHtml(lead.name || '华伴用户')}</div>
+          <div style="font-size:11px;color:var(--text3);font-family:monospace;">${escapeHtml(lead.contact || '')}</div>
+        </td>
+        <td>
+          <div style="font-weight:700;color:var(--text);max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(order.item)}</div>
+          <div style="font-size:11px;color:var(--text3);max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(order.notes)}</div>
+        </td>
+        <td>
+          <div style="font-size:12px;color:var(--text);max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(order.address)}</div>
+          <div style="font-size:11px;color:var(--text3);">${escapeHtml(order.time)}</div>
+        </td>
+        <td style="font-weight:800;color:var(--gold);">${escapeHtml(order.amount)}</td>
+        <td>${deliveryStatusBadge(status)}</td>
+        <td>
+          <button class="action-btn" onclick="updateDeliveryStatus('${lead.id}','${lead.__table}','matching')">匹配</button>
+          <button class="action-btn success" onclick="updateDeliveryStatus('${lead.id}','${lead.__table}','merchant_confirmed')" style="margin-left:4px;">商家接</button>
+          <button class="action-btn" onclick="updateDeliveryStatus('${lead.id}','${lead.__table}','delivering')" style="margin-left:4px;">配送</button>
+          <button class="action-btn success" onclick="updateDeliveryStatus('${lead.id}','${lead.__table}','completed')" style="margin-left:4px;">完成</button>
+        </td>
+      </tr>`;
+    }).join('');
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="7" style="color:var(--red);padding:20px;">${escapeHtml(e.message)}</td></tr>`;
+  }
+}
+
+async function updateDeliveryStatus(id, table='beta_leads', status='matching') {
+  const tables = [table, table === 'beta_leads' ? 'user_leads' : 'beta_leads'].filter(Boolean);
+  let lastError = null;
+  for (const target of [...new Set(tables)]) {
+    try {
+      const rows = await supaFetch(`${target}?id=eq.${id}&select=fields`);
+      if (!Array.isArray(rows) || !rows.length) continue;
+      const fields = rows[0].fields || {};
+      const order = fields.delivery_order || {};
+      const nextFields = {
+        ...fields,
+        delivery_status: status,
+        delivery_status_updated_at: new Date().toISOString(),
+        delivery_order: {
+          ...order,
+          delivery_status: status,
+          merchant_status: status === 'merchant_confirmed' || status === 'delivering' || status === 'completed' ? 'confirmed' : (order.merchant_status || 'waiting_match'),
+          courier_status: status === 'delivering' || status === 'completed' ? 'confirmed' : (order.courier_status || 'waiting_match')
+        }
+      };
+      await supaPatch(`${target}?id=eq.${id}`, {fields:nextFields, status:status === 'completed' ? 'approved' : 'new'});
+      loadDeliveryOrders();
+      return;
+    } catch(e) {
+      lastError = e;
+    }
+  }
+  alert('更新失败：' + (lastError?.message || '没有找到这条订单'));
 }
 
 // ── Drivers ──

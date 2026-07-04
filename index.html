@@ -2914,15 +2914,15 @@ async function handleSupplyIntent(text, options={}){
 // ── 启动 ──
 let appStarted=false;
 const APP_RELEASE={
-  version:'2026.07.04-plugin-trial-delivery',
+  version:'2026.07.04-delivery-mvp',
   title:'华伴更新了',
-  summary:'出行和外卖配送先成型，商业功能按插件免费试用。',
+  summary:'外卖配送三端开始跑通，用户下单后进入商家和配送匹配。',
   items:[
-    '外卖配送新增用户端、商家端、外卖员端',
+    '外卖配送新增用户确认单、商家端、外卖员端',
+    '后台新增外卖订单池，可推进匹配、商家接单、配送和完成',
     '电商商家入驻接入现有审核接口',
     '商业插件支持先免费试用，后续再订阅',
-    '确认卡可以修改后再推送',
-    '闲聊陪伴保留，不会一开口就派工'
+    '确认卡可以修改后再推送'
   ],
   primary:{label:'试试外卖',action:'delivery'},
   secondary:{label:'知道了'}
@@ -4153,13 +4153,14 @@ function openDeliveryPlatformHub(sourceText=''){
 
 async function startDeliveryOrder(text=''){
   const clean=String(text||'想点中餐外卖').trim();
+  const city=intelCityFromText(clean)||currentRegion.city||currentRegion.country;
   const post={
     id:'delivery-'+Date.now(),
     wishType:'need_paid',
     zone:'paid',
     role:'用户端',
     category:'外卖配送',
-    city:intelCityFromText(clean)||currentRegion.city||currentRegion.country,
+    city,
     text:clean,
     budget:'待确认',
     contact:betaContact(),
@@ -4167,14 +4168,14 @@ async function startDeliveryOrder(text=''){
     flow:'delivery_order',
     direction:'demand',
     freshnessPolicy:intelFreshnessPolicy('demand'),
-    searchQueries:buildIntelSearchQueries({city:currentRegion.city||currentRegion.country,category:'外卖配送',text:clean,wishType:'need_paid',direction:'demand'}),
+    searchQueries:buildIntelSearchQueries({city,category:'外卖配送',text:clean,wishType:'need_paid',direction:'demand'}),
     globalTargets:[],
     confidence:'pending_confirmation',
     createdAt:new Date().toISOString(),
     status:'open'
   };
   await agentSay('收到',80);
-  renderWorkOrderConfirmCard(post);
+  renderDeliveryOrderConfirmCard(post);
 }
 
 async function openLocalPeopleIntent(sourceText=''){
@@ -4266,6 +4267,37 @@ function workOrderInputRow(label,field,value,textarea=false){
   return `<div class="confirm-row"><span class="confirm-label">${label}</span><span class="confirm-value">${input}</span></div>`;
 }
 
+function renderDeliveryOrderConfirmCard(post={}){
+  const id='wo-'+Date.now()+'-'+Math.random().toString(36).slice(2,7);
+  const base=inferWorkOrderFields(post);
+  post.workOrder={
+    ...base,
+    task:post.text||base.task||'想点中餐外卖',
+    remark:'华伴会先匹配餐饮商家、商品供给和外卖配送；价格、卫生、配送时效由双方确认。',
+    deal_status:'等待确认'
+  };
+  PENDING_WORK_ORDERS[id]=post;
+  const wo=post.workOrder;
+  const card=document.createElement('section');
+  card.className='confirm-card';
+  card.id=id;
+  card.innerHTML=`
+    <div style="font-size:14px;font-weight:900;color:white;margin-bottom:6px;">🍱 外卖确认单</div>
+    <div style="font-size:12px;color:rgba(255,255,255,0.45);line-height:1.5;margin-bottom:12px;">你改一下信息，确认后我再推给商家和配送员。</div>
+    ${workOrderInputRow('送达时间','time',wo.time)}
+    ${workOrderInputRow('送到哪里','place',wo.place)}
+    ${workOrderInputRow('想吃/想买','task',wo.task,true)}
+    ${workOrderInputRow('预算/费用','amount',wo.amount)}
+    ${workOrderInputRow('备注','remark',wo.remark,true)}
+    <div class="confirm-row"><span class="confirm-label">流程</span><span class="confirm-value">下单确认 → 匹配商家 → 匹配配送 → 双方确认 → 完成</span></div>
+    <div class="confirm-btns">
+      <button class="confirm-btn secondary" onclick="cancelWorkOrder('${id}')">再想想</button>
+      <button class="confirm-btn primary" onclick="confirmWorkOrder('${id}')">确认下单</button>
+    </div>`;
+  chatArea.appendChild(card);
+  scrollBottom();
+}
+
 function renderWorkOrderConfirmCard(post={}){
   const id='wo-'+Date.now()+'-'+Math.random().toString(36).slice(2,7);
   post.workOrder=inferWorkOrderFields(post);
@@ -4334,6 +4366,17 @@ async function syncWorkOrder(post={}){
       confirmed_by_user:true,
       confirmed_by_provider:false,
       deal_status:'waiting_confirmation',
+      delivery_order:isDelivery?{
+        item:wo.task,
+        delivery_time:wo.time,
+        delivery_address:wo.place,
+        budget:wo.amount,
+        notes:wo.remark,
+        delivery_status:'new_order',
+        merchant_status:'waiting_match',
+        courier_status:'waiting_match',
+        platform_model:'merchant_courier_customer_three_ports'
+      }:null,
       user_role_model:{
         current_role:'demand',
         also_potential_supply:true,
@@ -4902,6 +4945,7 @@ function buildPrompt(){
 身份：${agentTitle}
 形象：${agentEmoji}
 服务：第一阶段优先做好出行和外卖配送。出行包括接机、送机、包车出游；外卖配送包括用户点餐/买东西、商家入驻、外卖员接单。
+外卖流程：用户说想吃、想买、想送或要外卖时，生成外卖确认单；确认后进入后台外卖订单池，依次匹配商家、匹配配送、双方确认、配送完成。商家和外卖员表达入驻或接单意愿时，推送供给侧审核，审核后进入对应端口。
 产品形态：AI 是默认入口，商业化平台隐藏在 AI 后面。有需求才出现对应插件、流程和确认卡。
 商业化功能都是插件：出行、外卖配送、电商商家、专业服务、市场、城市合伙人等都按插件接入。默认不把一堆功能摊给用户；用户要，就给，立刻打开对应插件、确认卡或流程。
 商业化路径：用户需要某个插件时，先给免费试用，不要一上来讲收费。用户试用后确实有连续需求，再自然提示订阅。订阅是为了持续使用插件能力，不是阻止用户第一次办事。
