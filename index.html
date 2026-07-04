@@ -3438,6 +3438,9 @@ async function handleAgentTaskPlan(text){
 
 const BUSINESS_MODULES={
   ride:{
+    plugin:true,
+    pluginType:'commercial',
+    stage:'first_wave',
     enabled:true,
     title:'用车',
     menu:{key:'ride',icon:'🚗',label:'用车',category:true},
@@ -3448,6 +3451,9 @@ const BUSINESS_MODULES={
     ]
   },
   travel:{
+    plugin:true,
+    pluginType:'commercial',
+    stage:'later',
     enabled:true,
     title:'旅游',
     menu:{key:'travel',icon:'🧳',label:'旅游',category:true},
@@ -3457,6 +3463,9 @@ const BUSINESS_MODULES={
     ]
   },
   help:{
+    plugin:true,
+    pluginType:'commercial',
+    stage:'later',
     enabled:true,
     title:'华人帮',
     menu:{key:'help',icon:'🤝',label:'华人帮',category:true},
@@ -3469,24 +3478,39 @@ const BUSINESS_MODULES={
     ]
   },
   market:{
+    plugin:true,
+    pluginType:'commercial',
+    stage:'later',
     enabled:true,
     title:'市场',
     menu:{key:'market',icon:'🏪',label:'市场'},
     action:()=>{window.location.href='plaza.html';}
   },
   delivery:{
+    plugin:true,
+    pluginType:'commercial',
+    stage:'first_wave',
     enabled:true,
     title:'外卖配送',
     menu:{key:'delivery',icon:'🍱',label:'外卖'},
     action:()=>openDeliveryPlatformHub()
   },
   mutualAid:{
+    plugin:true,
+    pluginType:'utility',
+    stage:'support',
     enabled:true,
     title:'找线索',
     menu:{key:'mutual-aid',icon:'🧭',label:'找线索'},
     action:openMutualAidCommunity
   }
 };
+
+function enabledCommercialPlugins(){
+  return Object.entries(BUSINESS_MODULES)
+    .filter(([,module])=>module.enabled&&module.pluginType==='commercial')
+    .map(([key,module])=>({key,title:module.title,stage:module.stage}));
+}
 
 const CORE_TOOL_ITEMS=[
   {key:'ride',icon:'🚗',label:'出行',category:true},
@@ -4747,6 +4771,7 @@ function buildPrompt(){
 身份：${agentTitle}
 形象：${agentEmoji}
 服务：第一阶段优先做好出行和外卖配送。出行包括接机、送机、包车出游；外卖配送包括用户点餐/买东西、商家入驻、外卖员接单。
+商业化功能都是插件：出行、外卖配送、电商商家、专业服务、市场、城市合伙人等都按插件接入。默认不把一堆功能摊给用户；用户要，就给，立刻打开对应插件、确认卡或流程。
 平台：没有中间商赚差价，只让需要的人遇见可靠的人。平台不从单笔交易中抽佣，用户与供给方直接达成共识合约并交易，平台靠AI工具、认证展示、订阅、打赏和城市贡献网络盈利
 语气：像朋友聊天，口语化，每次只说1句话
 
@@ -4758,6 +4783,7 @@ function buildPrompt(){
 不要把用户贴死标签；要把用户理解成“既会求助，也能互助/做生意”的海外华人网络节点。
 商品销售、餐馆、外卖员、跑腿配送和普通用户也可以被连接起来：用户说想买、想吃、想送、想找配送，要整理需求；用户说自己开店、卖货、做餐、能送，要整理供给；需要时把餐馆/商家、配送者和用户需求组合成一条可成交的链路。
 当前产品优先级：先让出行和外卖配送成型。其他生活服务、专业服务、互助和合伙人招募可以接住并记录，但不要喧宾夺主。
+插件原则：不要主动罗列所有商业插件，不要让页面像功能超市。用户明确要某个能力时，不解释架构，直接给对应能力；用户只是闲聊时，不塞插件。
 
 【陪伴成长状态】
 你也是用户正在养成的AI旅行伙伴。
