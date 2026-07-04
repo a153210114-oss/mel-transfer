@@ -1990,10 +1990,12 @@ function supplierServiceText(lead) {
 function supplierQualificationText(lead) {
   const fields = lead.fields || {};
   if(lead.channel==='delivery_order'||String(lead.need_type||'').startsWith('delivery_order_')){
-    return fields.next_step || '匹配商家/商品/配送';
+    const decision = fields.agent_decision?.hidden_board ? `${fields.agent_decision.hidden_board} · ${fields.agent_decision.next_action || fields.agent_decision.decision || ''}` : '';
+    return decision || fields.next_step || '匹配商家/商品/配送';
   }
   if(lead.channel==='agent_work_order'||String(lead.need_type||'').startsWith('work_order_')){
-    return fields.next_step || lead.stage || '待后台分派';
+    const decision = fields.agent_decision?.hidden_board ? `${fields.agent_decision.hidden_board} · ${fields.agent_decision.next_action || fields.agent_decision.decision || ''}` : '';
+    return decision || fields.next_step || lead.stage || '待后台分派';
   }
   if(lead.channel==='city_partner_recruitment'||lead.channel==='city_franchise_consult'||lead.need_type==='city_franchise'){
     return `${fields.recruitment_status || 'candidate'} · ${fields.cooperation_role_label || '城市合作'} · ${fields.resources || '资源待补充'}`;
@@ -2218,9 +2220,9 @@ function rewritePromoCopy(){
     return pain&&sell?`- ${pain}：${sell}`:`- ${line}`;
   }).join('\n');
   const templates={
-    wechat:`华伴开始公测啦。\n\n它不是普通问答 AI，而是一个能帮你办事的小伙伴：\n${body}\n\n你只管说需求，华伴在背后帮你整理、找线索、找服务、找同城人。\n\n公测入口：${url}\n欢迎试用，也欢迎狠狠吐槽。`,
-    moments:`快来领你的华伴 AI。\n\n${painPoints.slice(0,3).map(line=>line.replace('→','，')).join('\n')}\n\n前台只有 AI，后台是一座城市服务网络。\n${url}`,
-    supplier:`去中心化，不抽佣。\n\n如果你在海外提供商品、餐饮、配送或服务，华伴可以帮你被更多需要的人看见。\n\n${body}\n\n适合：接送机、包车、翻译、会计、律师、电工、维修、跑腿、中餐馆、外卖配送、本地服务、商品售卖。\n\n你告诉华伴你能提供什么，它会先整理到供给侧，审核后再推荐给有真实需求的人；餐馆、外卖员和用户也可以被连接起来。\n${url}`,
+    wechat:`华伴开始公测啦。\n\n它不是普通问答 AI，而是一个能帮你办事的小伙伴：\n${body}\n\n前台只有一个 AI，后台隐藏出行、外卖、商城、社交媒体四大板块。你只管说心愿，华伴会通过互动收集信息、分析判断，再帮你推进。\n\n公测入口：${url}\n欢迎试用，也欢迎狠狠吐槽。`,
+    moments:`快来领你的华伴 AI。\n\n${painPoints.slice(0,3).map(line=>line.replace('→','，')).join('\n')}\n\n前台只有 AI，后台隐藏出行、外卖、商城、社交媒体四大板块。\n${url}`,
+    supplier:`去中心化，不抽佣。\n\n如果你在海外提供商品、餐饮、配送或服务，华伴可以帮你被更多需要的人看见。\n\n${body}\n\n华伴背后是出行、外卖、商城、社交媒体四大隐藏板块。你告诉华伴你能提供什么，它会先整理到供给侧，审核后再推荐给有真实需求的人。\n${url}`,
     driver:`去中心化，不抽佣。\n\n墨尔本司机/车队看这里。\n\n${body}\n\n如果你能接送机、包车、旅游用车或临时用车，华伴可以帮你连接更多真实需求。\n\n你告诉华伴车型、区域和联系方式，通过审核后就能开通司机端。\n${url}`,
     slogan:`快来领你的华伴 AI，有趣又有用。\n你只管说，华伴替你找人、找服务、找机会。\n${url}`
   };

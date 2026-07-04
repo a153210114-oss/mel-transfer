@@ -1017,9 +1017,9 @@ async function findNearbyAirports(lat,lng){
 
 function refreshHomeRegionCopy(){
   const copy=document.getElementById('home-region-copy');
-  if(copy)copy.textContent=`在${currentRegion.city||currentRegion.country}需要出行或华人帮助，直接用中文告诉我。`;
+  if(copy)copy.textContent=`在${currentRegion.city||currentRegion.country}需要出行、外卖、商城或同城连接，直接用中文告诉我。`;
   const trust=document.querySelector('.home-trust');
-  if(trust&&!currentRegion.marketEnabled)trust.textContent=`已定位${currentRegion.city||currentRegion.country} · 当地服务正在招募中 · 可先使用咨询与华人帮办`;
+  if(trust&&!currentRegion.marketEnabled)trust.textContent=`已定位${currentRegion.city||currentRegion.country} · 当地服务正在招募中 · 可先使用咨询与同城连接`;
 }
 
 function changeRegion(){
@@ -3295,9 +3295,9 @@ const FEATURE_INTENTS=[
   {key:'ride-menu',label:'用车',pattern:/打开.*用车|进入.*用车|用车.*(菜单|功能|入口)/i},
   {key:'delivery',label:'外卖配送',pattern:/外卖|送餐|配送|点餐|中餐|餐馆|餐厅|盒饭|便当|奶茶|买菜|送东西/i},
   {key:'travel-menu',label:'旅游',pattern:/打开.*旅游|进入.*旅游|旅游.*(菜单|功能|入口)/i},
-  {key:'help-menu',label:'华人帮',pattern:/华人帮|打开.*帮|帮.*(菜单|功能|入口)/i},
+  {key:'help-menu',label:'社交媒体',pattern:/社交媒体|同城连接|华人帮|打开.*帮|帮.*(菜单|功能|入口)/i},
   {key:'mutual-aid',label:'找线索',pattern:/心愿墙|情报库|找线索|找供给|互助|免费帮助|志愿者|愿意支付|求助|出售.*(物品|服务)|免费服务区|收费服务区|电工|水管|维修|跳闸|断电|漏水|修理|上门检查|找人帮忙/i},
-  {key:'market',label:'市场',pattern:/打开.*市场|去.*市场|逛.*市场|二手|买东西|卖东西|商城/i},
+  {key:'market',label:'商城',pattern:/打开.*(商城|市场)|去.*(商城|市场)|逛.*(商城|市场)|二手|买东西|卖东西|商城|电商|网店|团购|商品/i},
   {key:'tour-charter',label:'包车游',pattern:/包车游|旅游包车|旅行包车/i},
   {key:'group-tour',label:'拼团',pattern:/拼团|跟团|一起玩|组团/i},
   {key:'pickup',label:'接机',pattern:/接机|机场接|从机场接|飞机到了|落地接/i},
@@ -3341,7 +3341,7 @@ function detectDirectFeatureIntent(text){
 async function handleDirectFeatureIntent(text, options={}){
   const intent=detectDirectFeatureIntent(text);
   if(!intent)return false;
-  const commercialKeys=['ride-menu','travel-menu','help-menu','market','delivery','pickup','dropoff','charter','tour-charter','group-tour','rental','agency','translation','lawyer','accountant','other-help'];
+  const commercialKeys=['ride-menu','travel-menu','help-menu','market','delivery','pickup','dropoff','charter','tour-charter','group-tour','rental','agency','translation','lawyer','accountant','other-help','local-people'];
   if(commercialKeys.includes(intent.key)&&!options.confirmed){
     renderPluginConfirmCard({key:intent.key,label:intent.label,sourceText:text,voice:options.voice});
     return true;
@@ -3513,10 +3513,18 @@ async function handleAgentTaskPlan(text){
   return true;
 }
 
+const HIDDEN_BUSINESS_BOARDS={
+  travel:{key:'travel-board',title:'出行',icon:'🚗',description:'接送机、包车、旅游、租车和行程安排'},
+  delivery:{key:'delivery-board',title:'外卖',icon:'🍱',description:'用户点餐、商家接单、外卖员配送'},
+  commerce:{key:'commerce-board',title:'商城',icon:'🛒',description:'商品销售、电商商家、二手和本地供给'},
+  social:{key:'social-board',title:'社交媒体',icon:'👥',description:'同城人脉、搭子、小群、内容推广和社区连接'}
+};
+
 const BUSINESS_MODULES={
   ride:{
     plugin:true,
     pluginType:'commercial',
+    board:'travel',
     stage:'first_wave',
     enabled:true,
     title:'用车',
@@ -3530,6 +3538,7 @@ const BUSINESS_MODULES={
   travel:{
     plugin:true,
     pluginType:'commercial',
+    board:'travel',
     stage:'later',
     enabled:true,
     title:'旅游',
@@ -3542,11 +3551,13 @@ const BUSINESS_MODULES={
   help:{
     plugin:true,
     pluginType:'commercial',
+    board:'social',
     stage:'later',
     enabled:true,
-    title:'华人帮',
-    menu:{key:'help',icon:'🤝',label:'华人帮',category:true},
+    title:'社交媒体',
+    menu:{key:'help',icon:'👥',label:'社交媒体',category:true},
     items:[
+      {key:'local-people',icon:'👥',label:'找同城人'},
       {key:'agency',icon:'🏠',label:'中介'},
       {key:'translation',icon:'🗣️',label:'翻译'},
       {key:'lawyer',icon:'⚖️',label:'律师'},
@@ -3557,15 +3568,17 @@ const BUSINESS_MODULES={
   market:{
     plugin:true,
     pluginType:'commercial',
+    board:'commerce',
     stage:'later',
     enabled:true,
-    title:'市场',
-    menu:{key:'market',icon:'🏪',label:'市场'},
+    title:'商城',
+    menu:{key:'market',icon:'🛒',label:'商城'},
     action:()=>{window.location.href='plaza.html';}
   },
   delivery:{
     plugin:true,
     pluginType:'commercial',
+    board:'delivery',
     stage:'first_wave',
     enabled:true,
     title:'外卖配送',
@@ -3575,6 +3588,7 @@ const BUSINESS_MODULES={
   mutualAid:{
     plugin:true,
     pluginType:'utility',
+    board:'social',
     stage:'support',
     enabled:true,
     title:'找线索',
@@ -3769,7 +3783,7 @@ function runMoreAction(key,label){
   rememberMenuKey(key);
   if(runBusinessModule(key))return;
   rewardCompanionAction('try_feature');
-  const serviceMap={pickup:'接机',dropoff:'送机',charter:'包车','tour-charter':'旅游包车','group-tour':'旅游拼团',rental:'租车',payment:'支付',friends:'交友',agency:'中介服务',translation:'翻译',lawyer:'律师',accountant:'会计','other-help':'华人帮办'};
+  const serviceMap={pickup:'接机',dropoff:'送机',charter:'包车','tour-charter':'旅游包车','group-tour':'旅游拼团',rental:'租车',payment:'支付',friends:'交友',agency:'中介服务',translation:'翻译',lawyer:'律师',accountant:'会计','other-help':'同城帮办'};
   if(key==='voice'){toggleMic();return;}
   if(key==='market'){window.location.href='plaza.html';return;}
   if(key==='driver'){switchToDriver();return;}
@@ -3795,7 +3809,7 @@ async function openFeatureByKey(key,label,options={}){
   closeMorePanel();
   rememberMenuKey(key);
   const say=(html,ms=120)=>agentSay(html,ms);
-  const serviceMap={pickup:'接机',dropoff:'送机',charter:'包车','tour-charter':'旅游包车','group-tour':'旅游拼团',rental:'租车',agency:'中介服务',translation:'翻译',lawyer:'律师',accountant:'会计','other-help':'华人帮办'};
+  const serviceMap={pickup:'接机',dropoff:'送机',charter:'包车','tour-charter':'旅游包车','group-tour':'旅游拼团',rental:'租车',agency:'中介服务',translation:'翻译',lawyer:'律师',accountant:'会计','other-help':'同城帮办'};
   const categoryMap={'ride-menu':'ride','travel-menu':'travel','help-menu':'help'};
 
   if(key==='delivery'&&options.confirmed&&options.sourceText&&isDeliveryDemand(options.sourceText)){
@@ -3861,7 +3875,7 @@ async function openFeatureByKey(key,label,options={}){
     return;
   }
   if(key==='market'){
-    await say('好，我带你去市场。');
+    await say('好，我带你去商城。');
     setTimeout(()=>{window.location.href='plaza.html';},500);
     return;
   }
@@ -4241,6 +4255,37 @@ function workOrderNextAction(post={}){
   return '整理公开线索、可联系对象和需要补充的信息';
 }
 
+function inferHiddenBoard(post={}){
+  const text=`${post.flow||''} ${post.category||''} ${post.text||''}`;
+  if(post.flow==='delivery_order'||/外卖|送餐|配送|点餐|餐馆|餐厅|买菜|奶茶|盒饭|便当/i.test(text))return HIDDEN_BUSINESS_BOARDS.delivery;
+  if(/接机|送机|包车|用车|司机|航班|机场|旅游|租车|行程/i.test(text))return HIDDEN_BUSINESS_BOARDS.travel;
+  if(/商城|商品|买东西|卖东西|电商|网店|二手|团购|代购|商家/i.test(text))return HIDDEN_BUSINESS_BOARDS.commerce;
+  if(/社交|同城|搭子|交友|找朋友|建群|微信群|小群|推广|内容|人脉/i.test(text))return HIDDEN_BUSINESS_BOARDS.social;
+  return HIDDEN_BUSINESS_BOARDS.social;
+}
+
+function buildAgentDecision(post={},wo={}){
+  const board=inferHiddenBoard(post);
+  const collected=[
+    wo.time&&wo.time!=='待确认'?'时间':'',
+    wo.place&&wo.place!=='待确认'?'地点':'',
+    wo.task&&wo.task!=='待确认'?'任务':'',
+    wo.amount&&wo.amount!=='待确认'?'金额/预算':'',
+    betaContact()?'联系方式':''
+  ].filter(Boolean);
+  const missing=['时间','地点','任务','金额/预算','联系方式'].filter(item=>!collected.includes(item));
+  return {
+    method:'交互收集数据 -> 分析意图和资源 -> 形成决策 -> 推送确认 -> 帮用户完成心愿',
+    hidden_board:board.title,
+    hidden_board_key:board.key,
+    user_intent:post.category||'用户心愿',
+    collected_fields:collected,
+    missing_fields:missing,
+    decision:workOrderNextAction(post),
+    next_action:missing.length?`补充${missing.slice(0,2).join('、')}`:'推送后台匹配执行'
+  };
+}
+
 function inferWorkOrderFields(post={}){
   const text=String(post.text||'');
   const amountText=String(post.budget||'');
@@ -4361,6 +4406,7 @@ async function syncWorkOrder(post={}){
       event:isDelivery?'delivery_order_confirmed':'agent_work_order_confirmed',
       post,
       work_order:wo,
+      agent_decision:buildAgentDecision(post,wo),
       flow:post.flow||'work_order',
       next_step:workOrderNextAction(post),
       confirmed_by_user:true,
@@ -4944,10 +4990,18 @@ function buildPrompt(){
 名字：${agentName}
 身份：${agentTitle}
 形象：${agentEmoji}
-服务：第一阶段优先做好出行和外卖配送。出行包括接机、送机、包车出游；外卖配送包括用户点餐/买东西、商家入驻、外卖员接单。
+产品骨架：一个 AI + 四大隐藏板块。前台只让用户看见华伴 AI；后台隐藏四个板块：出行、外卖、商城、社交媒体。
+AI 核心任务：主要通过和用户交互来收集数据、分析意图和资源、形成决策建议，再调用隐藏板块帮助用户完成心愿。不要把自己表现成只会回答问题的聊天机器人，也不要表现成静态功能菜单。
+办事方法：先在自然聊天中收集关键数据；再判断用户是需求方、供给方或两者兼具；然后选择出行、外卖、商城、社交媒体中的合适隐藏板块；信息足够时生成可修改确认卡；确认后推送到后台或对应流程；过程中继续补充数据和更新决策。
+四大隐藏板块：
+1. 出行：接机、送机、包车、旅游、租车、行程安排、司机/车队供给。
+2. 外卖：用户点餐/买东西、餐馆/私厨/商家接单、外卖员/跑腿配送。
+3. 商城：商品销售、电商商家入驻、二手、本地好物、团购和供给展示。
+4. 社交媒体：同城人脉、搭子、小群、微信群入口、内容推广、商户曝光和社区连接。
+服务：第一阶段优先做好出行和外卖配送，同时把商城和社交媒体作为隐藏板块接住需求，不主动铺开。
 外卖流程：用户说想吃、想买、想送或要外卖时，生成外卖确认单；确认后进入后台外卖订单池，依次匹配商家、匹配配送、双方确认、配送完成。商家和外卖员表达入驻或接单意愿时，推送供给侧审核，审核后进入对应端口。
 产品形态：AI 是默认入口，商业化平台隐藏在 AI 后面。有需求才出现对应插件、流程和确认卡。
-商业化功能都是插件：出行、外卖配送、电商商家、专业服务、市场、城市合伙人等都按插件接入。默认不把一堆功能摊给用户；用户要，就给，立刻打开对应插件、确认卡或流程。
+商业化功能都是插件：出行、外卖、商城、社交媒体四大板块按插件接入。默认不把一堆功能摊给用户；用户要，就给，立刻打开对应插件、确认卡或流程。
 商业化路径：用户需要某个插件时，先给免费试用，不要一上来讲收费。用户试用后确实有连续需求，再自然提示订阅。订阅是为了持续使用插件能力，不是阻止用户第一次办事。
 卖方订阅原则：任何通过华伴获得收款机会的卖方，将来都是订阅者，包括司机、商家、餐馆、外卖员、电商卖家、专业服务者和城市运营方。用户端尽量轻，收款方承担持续商业化。
 商户推广口号：去中心化，不抽佣。对商户强调华伴不是抽佣平台，而是帮他们连接真实需求、展示资质、沉淀口碑和获得持续生意的 AI 工具网络。
@@ -4960,7 +5014,7 @@ function buildPrompt(){
 当用户说“我是、我会、我能、我有、我提供、我卖、我可以帮、我认识、我有资源”时，立刻识别为供给方线索。对用户只说“收到”或“好呀”这类短句，后台默默沉淀供给画像。
 同一轮对话里如果同时出现需求和能力，要同时整理：一边帮他办当前需求，一边把他能提供的部分沉淀到供给画像里。
 不要把用户贴死标签；要把用户理解成“既会求助，也能互助/做生意”的海外华人网络节点。
-商品销售、餐馆、外卖员、跑腿配送和普通用户也可以被连接起来：用户说想买、想吃、想送、想找配送，要整理需求；用户说自己开店、卖货、做餐、能送，要整理供给；需要时把餐馆/商家、配送者和用户需求组合成一条可成交的链路。
+商品销售、餐馆、外卖员、跑腿配送和普通用户也可以被连接起来：用户说想买、想吃、想送、想找配送，要整理需求；用户说自己开店、卖货、做餐、能送，要整理供给；需要时把餐馆/商家、配送者和用户需求组合成一条可成交的链路。买卖商品进入商城板块；找人、搭子、建群、推广和社区连接进入社交媒体板块。
 当前产品优先级：先让出行和外卖配送成型。其他生活服务、专业服务、互助和合伙人招募可以接住并记录，但不要喧宾夺主。
 插件原则：不要主动罗列所有商业插件，不要让页面像功能超市。用户明确要某个能力时，不解释架构，直接给对应能力；用户只是闲聊时，不塞插件。
 试用原则：用户要，就给免费试用；试用中少讲商业模式，先让用户感受到能解决问题。等用户重复使用、要更多额度、要持续接单或运营城市时，再进入订阅/付费说明。
@@ -4983,11 +5037,11 @@ function buildPrompt(){
 当用户提出当前还没开通的生活、工作、旅游攻略、当地华人律师、会计、公共交通、出租车、Uber、拼车或其他需求时，不要生硬拒绝，不要说“我只做出行”，也不要把话题强行拉回接送机。
 统一口径：先用两个字左右接住，例如“收到”“好呀”。随后默默执行动作，例如查近期攻略、列候选清单、找可联系对象、核验公开资质入口、保存提醒或生成确认卡。信息不明确时只问一个最关键的补充问题；信息差不多够了，就给用户可修改的确认卡。内部可以记录任务，但不要把“生成线索任务/情报任务/工单/后台整理”当成主要回复说给用户。
 如果用户问“芝加哥有什么好吃好玩”“当地华人律师/会计”等，先给一点实用方向，再说你会继续查近期公开信息、可联系对象和需要核验的点，不要只说以后会。
-只有当用户明确提出接送机、包车、用车、行程安排时，才优先推进出行业务；当用户提出点餐、外卖、餐馆、买东西、配送时，优先推进外卖配送三端。
+只有当用户明确提出接送机、包车、用车、行程安排时，才优先推进出行板块；当用户提出点餐、外卖、餐馆、买东西、配送时，优先推进外卖板块；当用户提出卖货、买商品、二手、团购、网店时，推进商城板块；当用户提出交友、搭子、建群、微信群、内容推广、找同城人时，推进社交媒体板块。
 
 【平台介绍与新手引导】
 当用户问“华伴是什么”“这个平台怎么用”“你能做什么”“怎么预约”时，先简短介绍：
-华伴是一个会聊天、会办事、会成长的 AI 伙伴，底层连接海外华人的出行、本地生活、专业服务和城市互助网络。
+华伴是一个会聊天、会办事、会成长的 AI 伙伴，底层连接海外华人的出行、外卖、商城和社交媒体网络。
 使用方式：直接用中文说需求，例如“明天下午四点送我去机场”；你帮用户补齐时间、人数、行李、车型并提交需求。
 平台原则：没有中间商赚差价，只让需要的人遇见可靠的人；华伴提供 AI 工具、信用记录和信息连接，具体商品、服务、配送、费用和履约由双方确认。
 最后引导用户说出一个真实需求，优先从接机、送机、包车或外卖配送开始。
@@ -4996,7 +5050,7 @@ function buildPrompt(){
 你有一个长期任务：像朋友聊天一样搜集用户反馈，不要像问卷。
 可以自然打开话题：“等我长大了，就是你的生活管家、工作助理、休闲陪伴。你是要自己探索功能，还是让我一一介绍呀？”
 如果用户选择自己探索：鼓励他先试，并请他遇到不顺直接告诉你。
-如果用户选择一一介绍：按介绍、取名/头像、用车、找线索、市场、华人帮、个人中心的顺序，每次只介绍一项，再问要不要继续。
+如果用户选择一一介绍：按介绍、取名/头像、出行、外卖、商城、社交媒体、个人中心的顺序，每次只介绍一项，再问要不要继续。
 当用户表达想获得帮助/帮助别人时，可以俏皮地说：“如果您想获得帮助或者帮助别人，我来帮你查、筛、核验，整理出能行动的结果。”然后引导他把事情说清楚。
 当用户提出电工、水管、跳闸、漏水、搬运、跑腿、临时上门检查、旅游攻略、当地餐厅景点、中餐馆、外卖配送、买东西、华人律师、会计、报税等需求时，不要拒绝；先自然接住需求，再说“我来查近期公开信息、可联系对象和需要核验的点”。专业维修、上门服务、法律、税务、食品、配送、涉及金钱或安全的事，要提醒用户自行核验资质、价格、卫生和安全。
 当用户提出交友、搭子、同城活动、找群或建群时，不要把华伴说成开放社交平台；先说你会按真实需求做同城撮合，适合时再建议临时小群，并提醒不要公开隐私、钱款和证件信息。
