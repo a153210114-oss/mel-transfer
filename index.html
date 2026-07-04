@@ -283,7 +283,7 @@ body:not(.companion-docked) .brand-positioning{left:50%;right:auto;transform:tra
   border-bottom:1px solid var(--wx-line);display:flex;align-items:center;
 }
 .adoption-ticker-track{
-  display:flex;gap:26px;white-space:nowrap;animation:adoptionScroll 28s linear infinite;
+  display:flex;gap:26px;white-space:nowrap;width:max-content;min-width:220%;animation:adoptionScroll 28s linear infinite;
   color:#666;font-size:12px;line-height:1;
 }
 .adoption-ticker-track span{display:inline-flex;align-items:center;gap:5px;}
@@ -294,7 +294,7 @@ body:not(.companion-docked) .brand-positioning{left:50%;right:auto;transform:tra
   border-bottom:1px solid var(--wx-line);display:flex;align-items:center;
 }
 .ai-intro-ticker-track{
-  display:flex;gap:34px;white-space:nowrap;animation:adoptionScroll 42s linear infinite;
+  display:flex;gap:34px;white-space:nowrap;width:max-content;min-width:220%;animation:adoptionScroll 42s linear infinite;
   color:#4e5965;font-size:12px;line-height:1;
 }
 .ai-intro-ticker-track span{display:inline-flex;align-items:center;gap:7px;}
@@ -2793,6 +2793,13 @@ function adoptionTickerLabel(row={}){
   return `${safe} 领养华伴 AI 成功`;
 }
 
+function loopTickerHtml(unitHtml, copies=6){
+  const html=String(unitHtml||'').trim();
+  if(!html)return '';
+  const evenCopies=Math.max(2, Math.ceil(copies/2)*2);
+  return Array.from({length:evenCopies},()=>html).join('');
+}
+
 const TICKER_SETTINGS_KEY='huaban_ticker_settings';
 let tickerSettingsCache=null;
 
@@ -2832,7 +2839,7 @@ function renderIntroTickerFromSettings(){
     const result=parts.slice(1).join(' ')||'告诉华伴就行';
     return `<span><b>${companionEscape(pain)}</b> <em>${companionEscape(result)}</em></span>`;
   }).join(''):defaultHtml;
-  track.innerHTML=html+html;
+  track.innerHTML=loopTickerHtml(html);
 }
 
 function renderDefaultAdoptionTicker(){
@@ -2843,7 +2850,7 @@ function renderDefaultAdoptionTicker(){
   const defaultHtml=track.dataset.baseHtml||track.innerHTML;
   track.dataset.baseHtml=defaultHtml;
   const html=lines.length?lines.map(text=>`<span><i></i>${companionEscape(text)}</span>`).join(''):defaultHtml;
-  track.innerHTML=html+html;
+  track.innerHTML=loopTickerHtml(html);
   track.dataset.virtualHtml=html;
   delete track.dataset.loadedReal;
 }
@@ -2870,7 +2877,7 @@ async function loadRealAdoptionTicker(){
     if(!realItems.length)return;
     const realHtml=realItems.map(text=>`<span><i></i>${companionEscape(text)}</span>`).join('');
     const fullHtml=base+realHtml;
-    track.innerHTML=fullHtml+fullHtml;
+    track.innerHTML=loopTickerHtml(fullHtml);
     track.dataset.loadedReal=String(realItems.length);
   }catch(e){
     console.warn('real adoption ticker skipped',e?.message||e);
@@ -3939,6 +3946,7 @@ function closeMorePanel(){
 function runMoreAction(key,label){
   closeMorePanel();
   rememberMenuKey(key);
+  if(key==='partner'){openCityFranchiseConsult();return;}
   if(runBusinessModule(key))return;
   rewardCompanionAction('try_feature');
   const serviceMap={pickup:'接机',dropoff:'送机',charter:'包车','tour-charter':'旅游包车','group-tour':'旅游拼团',rental:'租车',payment:'支付',friends:'交友',agency:'中介服务',translation:'翻译',lawyer:'律师',accountant:'会计','other-help':'同城帮办'};
@@ -3952,7 +3960,6 @@ function runMoreAction(key,label){
   if(key==='profile'){openProfile();return;}
   if(key==='region'){changeRegion();return;}
   if(key==='share'){shareRefLink();return;}
-  if(key==='partner'){openCityFranchiseConsult();return;}
   if(key==='install'){showInstallPrompt(true);return;}
   if(key==='customize-agent'){openAgentCustomizer();return;}
   const activeKeys=['pickup','dropoff','charter','tour-charter','group-tour','rental','agency','translation','lawyer','accountant','other-help'];
@@ -6500,6 +6507,8 @@ function openCityFranchiseConsult(){
   const overlay=document.createElement('div');
   overlay.id='city-franchise-modal';
   overlay.className='modal-overlay show';
+  overlay.style.display='flex';
+  overlay.style.zIndex='4200';
   overlay.onclick=(event)=>{if(event.target===overlay)overlay.remove();};
   overlay.innerHTML=`
     <div class="modal-sheet">
