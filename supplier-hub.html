@@ -79,7 +79,7 @@ function saveDeliveryProfile(kind){
   if(!info)return;
   const data={kind,info,updated_at:new Date().toISOString()};
   localStorage.setItem('huaban_delivery_supplier_profile', JSON.stringify(data));
-  alert('已保存。后台会根据订单人工匹配，正式接单系统会继续升级。');
+  alert('已保存。有合适订单时，华伴会帮你连接需要的人。');
 }
 
 function renderHub(){
@@ -100,7 +100,7 @@ function renderHub(){
     <section class="hero">
       <div class="badge">✅ 服务者身份已通过</div>
       <h1>欢迎进入华伴供给中心</h1>
-      <p>你可以在这里准备自己的本地服务与商品。首批功能会从服务资料、商品/服务发布、订单线索跟进逐步开放。</p>
+      <p>你可以在这里准备自己的本地服务与商品，让真正需要的人更容易找到你。</p>
     </section>
     <div class="grid">
       <div class="card">
@@ -129,7 +129,7 @@ function renderHub(){
         <button class="btn ghost" onclick="showComingSoon()">完善资料</button>
       </div>
     </div>
-    <div class="note">平台原则：没有中间商赚差价，只让需要的人遇见可靠的人。正式交易由用户与服务者达成共识合约。供应商应保证资质、商品与服务信息真实有效，并自行承担履约、质量、安全和合法合规责任；华伴主要提供信息连接、AI工具、信用记录和公开资质核验辅助。</div>`;
+    <div class="note">请保证资质、商品与服务信息真实有效。价格、质量、安全和履约由双方确认。</div>`;
 }
 
 renderHub();

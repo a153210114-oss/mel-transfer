@@ -652,13 +652,13 @@ body.more-open .chat-area{padding-bottom:390px;}
 <div class="ai-intro-ticker" aria-label="华伴 AI 自我介绍">
   <div class="ai-intro-ticker-track">
     <span><b>找人太难</b> <em>我帮你找靠谱的人</em></span>
-    <span><b>服务真假难辨</b> <em>我帮你整理来源和核验点</em></span>
+    <span><b>服务真假难辨</b> <em>我帮你看到靠谱选择</em></span>
     <span><b>有生意没人知道</b> <em>我帮你介绍给更多需要的人</em></span>
     <span><b>不想翻菜单</b> <em>有事直接跟我说</em></span>
     <span><b>人在海外不熟路</b> <em>我帮你接住本地生活需求</em></span>
-    <span><b>临时需要帮忙</b> <em>我帮你找线索、找服务、找同城人</em></span>
+    <span><b>临时需要帮忙</b> <em>我帮你找到可用选择</em></span>
     <span><b>找人太难</b> <em>我帮你找靠谱的人</em></span>
-    <span><b>服务真假难辨</b> <em>我帮你整理来源和核验点</em></span>
+    <span><b>服务真假难辨</b> <em>我帮你看到靠谱选择</em></span>
   </div>
 </div>
 
@@ -1120,7 +1120,7 @@ function addMsg(html,isUser=false){
 }
 function addTyping(){
   const div=document.createElement('div');div.className='msg';
-  div.innerHTML=`<div class="msg-av agent">${agentAvatarMarkup()}</div><div class="typing-bubble"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
+  div.innerHTML=`<div class="msg-av agent">${agentAvatarMarkup()}</div><div class="typing-bubble" aria-label="正在思考"><span style="font-size:12px;color:rgba(255,255,255,.55);margin-right:7px;">正在思考</span><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
   chatArea.appendChild(div);scrollBottom();return div;
 }
 function delay(ms){return new Promise(r=>setTimeout(r,ms));}
@@ -2912,8 +2912,8 @@ async function handleSupplyIntent(text, options={}){
   supaInsertLead(payload).catch(e=>console.warn('supply lead sync failed',e));
   rewardCompanionAction('try_feature');
   await agentSay(isOnboarding
-    ? `收到，我马上把你的入驻意向推给后台。华伴是去中心化、不抽佣，我会帮你把生意介绍给更多真正需要的人。`
-    : `太好了，我先帮你整理成“${supply.serviceType}”供给线索。以后有人需要这类商品、服务或配送，我可以帮你把生意介绍给更多人；如果你愿意，下一步补一下联系方式、服务区域和资质，我就能帮你进入审核。`,150);
+    ? `收到。华伴去中心化、不抽佣，我会帮你把生意介绍给更多真正需要的人。`
+    : `太好了。以后有人需要这类商品、服务或配送，我可以帮你把生意介绍给更多人；你可以继续补充联系方式、服务区域和资质。`,150);
   return true;
 }
 
@@ -2924,11 +2924,11 @@ const APP_RELEASE={
   title:'外卖新功能上线，要不要试试？',
   summary:'外卖配送三端开始跑通，用户下单后进入商家和配送匹配。',
   items:[
-    '外卖配送新增用户确认单、商家端、外卖员端',
-    '后台新增外卖订单池，可推进匹配、商家接单、配送和完成',
-    '电商商家入驻接入现有审核接口',
-    '商业插件支持先免费试用，后续再订阅',
-    '确认卡可以修改后再推送'
+    '想点外卖，可以直接说想吃什么',
+    '想接配送单，可以申请成为外卖骑手',
+    '想卖餐食或商品，可以申请商家入驻',
+    '外卖信息可以先修改确认',
+    '确认后，华伴帮你得到可执行结果'
   ],
   primary:{label:'要，试试',action:'delivery'},
   secondary:{label:'知道了'}
@@ -3169,11 +3169,11 @@ async function handleOnboardingFeedbackIntent(text){
     openMutualAidCommunity(draft);
     const category=draft.category||'这类需求';
     if(/旅游攻略|吃喝玩乐/i.test(category)){
-      await agentSay('英国可以先按伦敦 2-3 天，再看你要不要加牛津、剑桥或爱丁堡。我先去查近期攻略、当地华人推荐和交通玩法，整理一份能直接看的清单给你。',120);
+      await agentSay('英国可以先按伦敦 2-3 天，再看你要不要加牛津、剑桥或爱丁堡。我会给你一份能直接看的选择清单。',120);
     }else if(/专业服务|律师|会计/i.test(category)){
-      await agentSay('这个我来办：先找当地公开信息和华人服务者，再把资质核验入口、联系方式和注意事项列给你。律师、会计这类一定要再核验资质和来源。',120);
+      await agentSay('这个我来办。我会给你可联系的选择和注意事项；律师、会计这类请再确认资质。',120);
     }else{
-      await agentSay('可以，这件事我来办。我先去找公开信息、可联系的人和需要核验的点，整理后再给你看。',120);
+      await agentSay('可以，这件事我来办。等我整理好，会直接给你能行动的结果。',120);
     }
     return true;
   }
@@ -3194,7 +3194,7 @@ function renderWishWallNudgeCard(){
   card.innerHTML=`
     <div class="install-copy">
       <strong>如果您想获得帮助或者帮助别人</strong>
-      <span>我来帮你找线索和靠谱的人</span>
+      <span>我来帮你找到靠谱的人</span>
     </div>
     <div class="install-actions">
       <button class="install-primary" onclick="openWishWallFromNudge()">去看看</button>
@@ -3237,7 +3237,7 @@ async function openWishWallFromNudge(){
   document.getElementById('wish-wall-nudge-card')?.remove();
   addMsg('交给华伴处理',true);
   openMutualAidCommunity();
-  await agentSay('好呀，你把事情说清楚，我来查、筛、核验，再把能行动的结果整理给你。',120);
+  await agentSay('好呀，你把事情说清楚，我会直接给你能行动的结果。',120);
 }
 
 function renderFeedbackStarterCard(){
@@ -3275,11 +3275,10 @@ async function showPlatformGuide(fromUser=false){
   const guide=`<strong>我是华伴 AI。</strong><br>
 不用研究平台怎么用，有事直接说。<br><br>
 <strong>找人太难：</strong>我帮你找靠谱的人。<br>
-<strong>服务真假难辨：</strong>我帮你整理来源、口碑和核验点。<br>
-<strong>人在海外不熟路：</strong>我帮你接住出行、本地生活和专业服务需求。<br>
-<strong>有生意没人知道：</strong>我帮你整理到供给侧，把服务介绍给更多需要的人。<br>
-<strong>不想翻菜单：</strong>你只管说，我在背后找线索、找服务、找同城人。<br><br>
-前台只有我，后台是一座城市服务网络。`;
+<strong>服务真假难辨：</strong>我帮你看到更靠谱的选择。<br>
+<strong>人在海外不熟路：</strong>我帮你解决出行、生活和专业服务需求。<br>
+<strong>有生意没人知道：</strong>我帮你遇见更多真正需要的人。<br>
+<strong>不想翻菜单：</strong>你只管说，我直接给你能行动的结果。`;
   await agentSay(guide,160);
   showIntroActionCards();
 }
@@ -3302,7 +3301,7 @@ const FEATURE_INTENTS=[
   {key:'delivery',label:'外卖配送',pattern:/外卖|送餐|配送|点餐|中餐|餐馆|餐厅|盒饭|便当|奶茶|买菜|送东西/i},
   {key:'travel-menu',label:'旅游',pattern:/打开.*旅游|进入.*旅游|旅游.*(菜单|功能|入口)/i},
   {key:'help-menu',label:'社交媒体',pattern:/社交媒体|同城连接|华人帮|打开.*帮|帮.*(菜单|功能|入口)/i},
-  {key:'mutual-aid',label:'找线索',pattern:/心愿墙|情报库|找线索|找供给|互助|免费帮助|志愿者|愿意支付|求助|出售.*(物品|服务)|免费服务区|收费服务区|电工|水管|维修|跳闸|断电|漏水|修理|上门检查|找人帮忙/i},
+  {key:'mutual-aid',label:'找帮助',pattern:/心愿墙|情报库|找线索|找供给|互助|免费帮助|志愿者|愿意支付|求助|出售.*(物品|服务)|免费服务区|收费服务区|电工|水管|维修|跳闸|断电|漏水|修理|上门检查|找人帮忙/i},
   {key:'market',label:'商城',pattern:/打开.*(商城|市场)|去.*(商城|市场)|逛.*(商城|市场)|二手|买东西|卖东西|商城|电商|网店|团购|商品/i},
   {key:'tour-charter',label:'包车游',pattern:/包车游|旅游包车|旅行包车/i},
   {key:'group-tour',label:'拼团',pattern:/拼团|跟团|一起玩|组团/i},
@@ -3597,8 +3596,8 @@ const BUSINESS_MODULES={
     board:'social',
     stage:'support',
     enabled:true,
-    title:'找线索',
-    menu:{key:'mutual-aid',icon:'🧭',label:'找线索'},
+    title:'找帮助',
+    menu:{key:'mutual-aid',icon:'🧭',label:'找帮助'},
     action:openMutualAidCommunity
   }
 };
@@ -3843,7 +3842,7 @@ async function openFeatureByKey(key,label,options={}){
   if(key==='mutual-aid'){
     rewardCompanionAction('wish_wall');
     openMutualAidCommunity(buildWishWallDraft(options.sourceText||''));
-    await say('交给华伴处理吧。这类本地维修、临时求助、愿意付费请人帮忙的事，我会去查可联系对象、来源和核验点。');
+    await say('交给华伴处理吧。这类本地维修、临时求助、愿意付费请人帮忙的事，我会给你可联系的选择。');
     return;
   }
   if(key==='profile'){
@@ -3888,7 +3887,7 @@ async function openFeatureByKey(key,label,options={}){
   if(key==='driver'){
     const driver=hasApprovedDriverAccess()?getDriver():await refreshApprovedDriverAccess({announce:false}).catch(()=>null);
     if(!driver){
-      await say('你还没有开通司机端。后台审核通过后，我会自动把司机端加到功能区。');
+      await say('你还没有开通司机端。通过后，我会把入口加到功能区。');
       return;
     }
     await say('好，我带你去司机端。');
@@ -4354,7 +4353,7 @@ function renderDeliveryOrderConfirmCard(post={}){
   post.workOrder={
     ...base,
     task:post.text||base.task||'想点中餐外卖',
-    remark:'华伴会先匹配餐饮商家、商品供给和外卖配送；价格、卫生、配送时效由双方确认。',
+    remark:'价格、卫生、配送时效请确认清楚。',
     deal_status:'等待确认'
   };
   PENDING_WORK_ORDERS[id]=post;
@@ -4364,13 +4363,12 @@ function renderDeliveryOrderConfirmCard(post={}){
   card.id=id;
   card.innerHTML=`
     <div style="font-size:14px;font-weight:900;color:white;margin-bottom:6px;">🍱 外卖确认单</div>
-    <div style="font-size:12px;color:rgba(255,255,255,0.45);line-height:1.5;margin-bottom:12px;">你改一下信息，确认后我再推给商家和配送员。</div>
+    <div style="font-size:12px;color:rgba(255,255,255,0.45);line-height:1.5;margin-bottom:12px;">你改一下信息，确认后我开始帮你安排。</div>
     ${workOrderInputRow('送达时间','time',wo.time)}
     ${workOrderInputRow('送到哪里','place',wo.place)}
     ${workOrderInputRow('想吃/想买','task',wo.task,true)}
     ${workOrderInputRow('预算/费用','amount',wo.amount)}
     ${workOrderInputRow('备注','remark',wo.remark,true)}
-    <div class="confirm-row"><span class="confirm-label">流程</span><span class="confirm-value">下单确认 → 匹配商家 → 匹配配送 → 双方确认 → 完成</span></div>
     <div class="confirm-btns">
       <button class="confirm-btn secondary" onclick="cancelWorkOrder('${id}')">再想想</button>
       <button class="confirm-btn primary" onclick="confirmWorkOrder('${id}')">确认下单</button>
@@ -4389,7 +4387,7 @@ function renderWorkOrderConfirmCard(post={}){
   card.id=id;
   card.innerHTML=`
     <div style="font-size:14px;font-weight:900;color:white;margin-bottom:6px;">🧾 确认卡</div>
-    <div style="font-size:12px;color:rgba(255,255,255,0.45);line-height:1.5;margin-bottom:12px;">可以直接修改，确认后我再推送。</div>
+    <div style="font-size:12px;color:rgba(255,255,255,0.45);line-height:1.5;margin-bottom:12px;">可以直接修改，确认后我开始帮你办。</div>
     ${workOrderInputRow('时间','time',wo.time)}
     ${workOrderInputRow('地点','place',wo.place)}
     ${workOrderInputRow('任务','task',wo.task,true)}
@@ -4398,7 +4396,7 @@ function renderWorkOrderConfirmCard(post={}){
     <div class="confirm-row"><span class="confirm-label">状态</span><span class="confirm-value">等待确认</span></div>
     <div class="confirm-btns">
       <button class="confirm-btn secondary" onclick="cancelWorkOrder('${id}')">再想想</button>
-      <button class="confirm-btn primary" onclick="confirmWorkOrder('${id}')">确认推送</button>
+      <button class="confirm-btn primary" onclick="confirmWorkOrder('${id}')">确认</button>
     </div>`;
   chatArea.appendChild(card);
   scrollBottom();
@@ -4482,16 +4480,16 @@ async function confirmWorkOrder(id){
   const card=document.getElementById(id);
   card?.remove();
   delete PENDING_WORK_ORDERS[id];
-  addMsg('确认推送',true);
+  addMsg('确认',true);
   syncWorkOrder(post).catch(e=>console.warn('work order sync failed',e));
   syncWishWallPost({...post,source:'work_order_confirmed'}).catch(e=>console.warn('intel task sync failed',e));
-  await agentSay('收到，工单已确认并推送。接下来我会继续确认时间、地点、任务和金额；状态先记为等待确认。如果缺信息，我再回来问你。',140);
+  await agentSay('收到，已确认。我会继续帮你安排；如果还缺关键信息，我再问你。',140);
 }
 
 async function cancelWorkOrder(id){
   document.getElementById(id)?.remove();
   delete PENDING_WORK_ORDERS[id];
-  await agentSay('好，我先不推送。你可以继续补充一句，我再帮你重新整理。',120);
+  await agentSay('好，我先不处理。你可以继续补充一句，我再帮你重新整理。',120);
 }
 
 async function submitMutualAidPost(){
@@ -4784,7 +4782,7 @@ function renderReminderSuggestionCard(draft={}){
 
 async function analyzeImageToWishWall(file,label){
   try{
-    await agentSay('我先帮你读一下图片，看看能不能整理成需求/供给情报任务。',80);
+    const thinking=addTyping();
     const dataUrl=await resizeImageForRecognition(file);
     const payload=dataUrlToPayload(dataUrl);
     if(!payload)throw new Error('图片读取失败');
@@ -4803,12 +4801,14 @@ async function analyzeImageToWishWall(file,label){
     openMutualAidCommunity(draft);
     rememberMenuKey('mutual-aid');
     renderReminderSuggestionCard(draft);
-    await agentSay('我把图片里的关键信息整理成草稿了。你看一下日期、价格和联系方式，对了就交给我去找线索。',120);
+    thinking.remove();
+    await agentSay('图片里的关键信息我整理好了。你看一下日期、价格和联系方式，对了我就继续帮你办。',120);
   }catch(e){
     console.warn('image wish recognition failed',e);
+    document.querySelector('.typing-bubble[aria-label="正在思考"]')?.closest('.msg')?.remove();
     openMutualAidCommunity({wishType:'need_paid',category:'其他互助',text:`我上传了一张${label}，想请华伴帮我整理需求。请补充图片里的关键信息。`});
     rememberMenuKey('mutual-aid');
-    await agentSay('图片识别暂时没成功，我先打开情报任务面板，你可以把关键信息补一下，我再去找线索。',120);
+    await agentSay('图片暂时没读清楚。你把关键信息补一下，我继续帮你办。',120);
   }
 }
 
@@ -5031,6 +5031,7 @@ function buildPrompt(){
 AI Agent 核心任务：什么都能聊，但聊天不是目的。主要通过和用户交互来收集数据、分析意图和资源、形成决策建议，再调用工具和隐藏板块帮助用户完成心愿。不要把自己表现成只会回答问题的聊天机器人，也不要表现成静态功能菜单。
 办事方法：先在自然聊天中收集关键数据；再判断用户是需求方、供给方或两者兼具；然后选择出行、外卖、商城、社交媒体中的合适隐藏板块或工具；信息足够时整理成建议和可修改确认卡；最终让用户决定，确认后再推送到后台或对应流程；过程中继续补充数据和更新决策。
 决策边界：你可以分析、整理、推荐和调用工具，但不要替用户做最终决定。涉及金钱、资质、安全、交易、隐私和身份信息时，必须给出建议、风险点和确认卡，让用户决定后再执行。
+用户可见原则：用户只能看到华伴能够帮他得到什么结果、有哪些可选择结果、需要确认什么。不要向用户展示你怎么做、依据什么规则、调用了什么工具、进入哪个隐藏板块、是否推送后台、是否生成线索/情报/工单。所有规则、流程、动作和依据只用于 AI 训练、内部判断和后台执行。
 四大隐藏板块：
 1. 出行：接机、送机、包车、旅游、租车、行程安排、司机/车队供给。
 2. 外卖：用户点餐/买东西、餐馆/私厨/商家接单、外卖员/跑腿配送。
