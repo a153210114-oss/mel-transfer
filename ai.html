@@ -289,7 +289,7 @@ body.companion-docked .top-bar .brand-lockup{position:absolute;left:12px;margin:
   color:#1f2d3a;font-size:13px;font-weight:900;letter-spacing:.04em;
   text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.88;
 }
-body:not(.companion-docked) .brand-positioning{left:50%;right:auto;transform:translate(-50%,-50%);margin-left:56px;max-width:160px;}
+body:not(.companion-docked) .brand-positioning{left:calc(50% + 38px);right:12px;transform:translateY(-50%);margin-left:0;max-width:none;}
 #profile-btn.companion-entry{
   display:flex!important;position:absolute;right:10px;top:7px;height:42px;max-width:148px;
   align-items:center;gap:6px;padding:5px 8px!important;border:1px solid #dcdcdc!important;
@@ -618,6 +618,7 @@ body.theme-night .agent-age-seconds{color:#62ddb2;}
 .region-btn{max-width:132px;border:0;background:transparent;color:#555;font-family:inherit;font-size:12px;display:flex;align-items:center;gap:3px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .region-btn span{overflow:hidden;text-overflow:ellipsis;}.region-dot{width:6px;height:6px;border-radius:50%;background:var(--wx-green);flex-shrink:0;}
 .install-card{margin:0 0 0 44px;background:#fff;border:1px solid #dedede;border-radius:6px;padding:10px 11px;display:flex;align-items:center;gap:10px;box-shadow:0 1px 2px rgba(0,0,0,.04);}
+.install-card.home-welcome{width:calc(100% - 44px);max-width:calc(100% - 44px);}
 .intro-fade-card{opacity:0;transform:translateY(6px);animation:introCardIn .28s ease forwards;}
 .intro-fade-card.fade-away{animation:introCardOut .55s ease forwards;}
 @keyframes introCardIn{to{opacity:1;transform:translateY(0)}}
@@ -635,6 +636,20 @@ body.theme-night .agent-age-seconds{color:#62ddb2;}
 .adopt-card .install-copy span{font-size:12px;white-space:normal;line-height:1.55;}
 .adopt-card .install-primary{margin-top:2px;white-space:nowrap;}
 .wake-card{margin:0 0 0 44px;background:#fff;border:1px solid #dedede;border-radius:6px;padding:12px;display:flex;align-items:center;gap:10px;box-shadow:0 1px 2px rgba(0,0,0,.04);}
+#value-prompt-card{align-items:flex-start;}
+#value-prompt-card .install-actions{flex-wrap:wrap;justify-content:flex-end;max-width:136px;}
+#value-prompt-card .install-close{
+  width:auto;
+  min-width:54px;
+  height:32px;
+  padding:0 10px;
+  border-radius:5px;
+  background:#f1f1f1;
+  color:#4f5964;
+  font-size:12px;
+  font-weight:600;
+  white-space:nowrap;
+}
 .wake-orb{width:34px;height:34px;border-radius:50%;background:#e8fff1;color:var(--wx-green);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
 .wake-card.listening .wake-orb{animation:mp 1s ease-in-out infinite;background:#d9f7e6;}
 .wake-copy{flex:1;min-width:0;line-height:1.35;}
@@ -763,8 +778,18 @@ body.theme-night .mic-btn.recording .wave-icon i{background:#31d683;}
 .media-input{display:none;}
 body.more-open .chat-area{padding-bottom:390px;}
 @media(max-width:360px){.more-grid{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:360px){.brand-positioning{font-size:12px;right:145px;left:66px;letter-spacing:0}body:not(.companion-docked) .brand-positioning{max-width:132px;margin-left:50px;}}
-@media(max-width:360px){.install-card,.wake-card{margin-left:0}.install-copy span{white-space:normal}}
+@media(max-width:420px){
+  .brand-positioning{font-size:12px;letter-spacing:0;}
+  body:not(.companion-docked) .brand-positioning{left:calc(50% + 34px);right:10px;}
+  .install-card.home-welcome{margin-left:0;width:100%;max-width:100%;}
+  .adopt-card{align-items:center;}
+  #value-prompt-card{flex-direction:column;gap:10px;}
+  #value-prompt-card .install-actions{width:100%;max-width:none;justify-content:flex-start;}
+  #value-prompt-card .install-primary,
+  #value-prompt-card .install-close{min-width:64px;height:34px;}
+}
+@media(max-width:360px){.brand-positioning{font-size:12px;right:145px;left:66px;letter-spacing:0}body:not(.companion-docked) .brand-positioning{left:calc(50% + 32px);right:8px;max-width:none;margin-left:0;}}
+@media(max-width:360px){.install-card,.wake-card{margin-left:0}.install-card.home-welcome{width:100%;max-width:100%;}.install-copy span{white-space:normal}}
 @media(min-width:481px){body{margin-top:0;height:100vh;border:0;box-shadow:none}.input-bar{bottom:0}.more-panel{bottom:59px}}
 </style>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAHGLzz7_TpG2MLnqT1kCROeNIzRr-EQac&libraries=places&language=zh-CN&loading=async" async defer></script>
