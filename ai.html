@@ -923,7 +923,7 @@ body.more-open .chat-area{padding-bottom:390px;}
       <div class="profile-section-title">🔗 邀请好友</div>
       <div style="background:linear-gradient(135deg,rgba(0,150,199,0.1),rgba(0,100,150,0.05));border:1px solid rgba(0,150,199,0.25);border-radius:14px;padding:16px;">
         <div style="font-size:12px;color:rgba(255,255,255,0.52);line-height:1.7;margin-bottom:12px;">
-          微信联系国内亲朋好友，华伴连接当地朋友。你授权后，可以从手机通讯录里选择想邀请的人。
+          微信联系国内亲朋好友，华伴连接当地朋友。加密传输，授权选择，跨地区号码二次确认。
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
           <button onclick="pickContactsForInvite()" style="width:100%;padding:13px;background:rgba(0,200,150,0.2);border:1px solid rgba(0,200,150,0.3);border-radius:12px;color:white;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">通讯录添加</button>
@@ -7788,7 +7788,7 @@ function showContactFenceConfirm({local=[],outside=[],callingCode=''}={}){
       <div style="width:40px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:0 auto 20px;"></div>
       <div style="font-size:18px;font-weight:900;color:white;margin-bottom:8px;">确认邀请范围</div>
       <div style="font-size:13px;color:rgba(255,255,255,0.62);line-height:1.8;margin-bottom:12px;">
-        当前定位是「${companionEscape(regionName)}」，本地好友默认优先邀请 ${companionEscape(callingCode||'本地区号')} 的联系人。
+        当前定位是「${companionEscape(regionName)}」，本地好友默认优先邀请 ${companionEscape(callingCode||'本地区号')} 的联系人。邀请链接通过 HTTPS 加密传输。
       </div>
       <div style="background:rgba(241,207,73,0.08);border:1px solid rgba(241,207,73,0.24);border-radius:14px;padding:12px;color:rgba(255,255,255,0.72);font-size:13px;line-height:1.75;margin-bottom:14px;">
         有 ${outside.length} 位联系人看起来不是当前地区号码${outsideNames.length?`：${outsideNames.map(companionEscape).join('、')}`:''}。要一起邀请吗？
