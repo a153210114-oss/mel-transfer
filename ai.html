@@ -693,6 +693,14 @@ body.theme-night .agent-age-seconds{color:#62ddb2;}
 .install-finger-tip b{font-size:18px;line-height:1;}
 @keyframes installFingerBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
 .install-sheet button{width:100%;border:0;border-radius:6px;background:var(--wx-green);color:#fff;font:500 15px/1 inherit;padding:13px;cursor:pointer;}
+.install-choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;}
+.install-choice-btn{border:1px solid #e4e4e4;border-radius:12px;background:#fff;padding:13px 10px;text-align:left;font-family:inherit;cursor:pointer;}
+.install-choice-btn strong{display:block;color:#111;font-size:14px;margin-bottom:4px;}
+.install-choice-btn span{display:block;color:#777;font-size:12px;line-height:1.45;}
+.install-choice-btn.primary{background:#ecfff4;border-color:#9fe8be;}
+.install-choice-btn.primary strong{color:#087a3e;}
+.install-choice-btn.app{background:#f4fbff;border-color:#a9d8ea;}
+.install-choice-btn.app strong{color:#087c98;}
 
 /* AI 旅行伙伴养成卡 */
 .companion-card{margin:0 0 2px 44px;border-radius:14px;overflow:hidden;background:linear-gradient(145deg,#dff7ff 0%,#fff7d9 100%);border:1px solid rgba(80,130,150,.18);box-shadow:0 4px 14px rgba(35,85,100,.08);}
@@ -9042,16 +9050,52 @@ function showInstallPrompt(fromIntro=false){
   card.innerHTML=`
     <img src="assets/brand/huaban-logo-v1.png" alt="">
     <div class="install-copy">
-      <strong>添加到手机桌面</strong>
-      <span>${isIosDevice()?'按提示用 Safari 添加，下次像 App 一样打开':'下次像 App 一样一秒打开华伴'}</span>
+      <strong>选择打开华伴的方式</strong>
+      <span>可以添加到屏幕，也可以下载 App。</span>
     </div>
     <div class="install-actions">
-      <button class="install-primary" onclick="addToHome()">${isIosDevice()?'查看步骤':'添加'}</button>
+      <button class="install-primary" onclick="showAppInstallChoice()">${isIosDevice()?'选择':'选择'}</button>
       <button class="install-close" onclick="hideInstallPromptForNow()" aria-label="暂时不添加">×</button>
     </div>`;
   chatArea.appendChild(card);
   autoDismissIntroCard(card, fromIntro?18000:12000);
   scrollBottom();
+}
+
+function showAppInstallChoice(){
+  document.getElementById('install-guide')?.remove();
+  const overlay=document.createElement('div');
+  overlay.id='install-guide';
+  overlay.className='install-overlay';
+  overlay.innerHTML=`
+    <div class="install-sheet">
+      <div class="install-sheet-head">
+        <img src="assets/brand/huaban-logo-v1.png" alt="">
+        <div>
+          <div class="install-sheet-title">你想怎么使用华伴？</div>
+          <div class="install-sheet-sub">轻量就添加到屏幕，想要完整体验就下载 App。</div>
+        </div>
+      </div>
+      <div class="install-choice-grid">
+        <button type="button" class="install-choice-btn primary" onclick="addToHome()">
+          <strong>添加到屏幕</strong>
+          <span>最快。像 App 一样打开，不占太多空间。</span>
+        </button>
+        <button type="button" class="install-choice-btn app" onclick="openAppDownload()">
+          <strong>下载 App</strong>
+          <span>适合长期使用。后续语音、提醒和消息更稳定。</span>
+        </button>
+      </div>
+      <button type="button" onclick="document.getElementById('install-guide')?.remove()" style="margin-top:12px;background:rgba(255,255,255,0.08);color:#5f6f7f;">稍后</button>
+    </div>`;
+  overlay.onclick=(event)=>{ if(event.target===overlay)overlay.remove(); };
+  document.body.appendChild(overlay);
+  speak('你可以选择添加到屏幕，或者下载 App。');
+}
+
+function openAppDownload(){
+  rewardCompanionAction('install');
+  window.location.href='app-download.html';
 }
 
 function dismissInstallPrompt(){

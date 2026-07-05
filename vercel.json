@@ -49,6 +49,14 @@
       "destination": "/partner-recruit.html"
     },
     {
+      "source": "/app",
+      "destination": "/app-download.html"
+    },
+    {
+      "source": "/download",
+      "destination": "/app-download.html"
+    },
+    {
       "source": "/partners",
       "destination": "/partner-recruit.html"
     },
