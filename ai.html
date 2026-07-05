@@ -3789,6 +3789,7 @@ function renderWelcomeHome(){
   currentRole='passenger';
   chatArea.innerHTML='';
   renderAdoptWelcomeCard();
+  renderValuePromptCard();
   const companion=getCompanion();
   if(addCompanionBadge(companion,currentRegion.city||currentRegion.country,'📍'))saveCompanion(companion);
   document.getElementById('chat-input').placeholder='输入你需要的帮助';
@@ -3802,6 +3803,7 @@ function renderWelcomeHome(){
 function clearWelcomeHome(){
   document.querySelector('.home-welcome')?.remove();
   document.getElementById('adopt-welcome-card')?.remove();
+  document.getElementById('value-prompt-card')?.remove();
 }
 
 function renderAdoptWelcomeCard(){
@@ -3822,6 +3824,45 @@ function renderAdoptWelcomeCard(){
       <button class="install-primary" type="button" onclick="event.stopPropagation();beginAgentAdoption();">点击领养</button>
     </div>`;
   chatArea.appendChild(card);
+}
+
+function renderValuePromptCard(){
+  const card=document.createElement('section');
+  card.className='install-card intro-fade-card home-welcome';
+  card.id='value-prompt-card';
+  card.setAttribute('aria-label','华伴可以做什么');
+  card.innerHTML=`
+    <div class="install-copy">
+      <strong>微信联系熟人，华伴连接当地朋友</strong>
+      <span>生活、服务、生意、本地好友，都可以直接跟我说。</span>
+    </div>
+    <div class="install-actions">
+      <button class="install-primary" type="button" onclick="handleValuePrompt('friends')">加好友</button>
+      <button class="install-close" type="button" onclick="handleValuePrompt('service')" aria-label="找服务">找服务</button>
+      <button class="install-close" type="button" onclick="handleValuePrompt('business')" aria-label="推广生意">推广</button>
+    </div>`;
+  chatArea.appendChild(card);
+  autoDismissIntroCard(card, 18000);
+}
+
+async function handleValuePrompt(type){
+  document.getElementById('value-prompt-card')?.remove();
+  rewardCompanionAction('try_feature');
+  if(type==='friends'){
+    addMsg('我想添加本地好友',true);
+    await agentSay('好呀。你可以授权通讯录邀请本地联系人，也可以复制链接发给朋友；华伴会优先帮你连接当地朋友。',120);
+    pickContactsForInvite();
+    return;
+  }
+  if(type==='service'){
+    addMsg('我想找附近靠谱服务',true);
+    await openFeatureByKey('mutual-aid','找服务',{sourceText:'我想找附近靠谱服务'});
+    return;
+  }
+  if(type==='business'){
+    addMsg('我想推广我的生意',true);
+    await agentSay('可以。你直接告诉我：你提供什么、在哪个城市、适合什么人。我会帮你整理，让更多真正需要的人找到你。',120);
+  }
 }
 
 async function beginAgentAdoption(){
@@ -4022,6 +4063,7 @@ async function showPlatformGuide(fromUser=false){
 <strong>服务真假难辨：</strong>我帮你看到更靠谱的选择。<br>
 <strong>人在海外不熟路：</strong>我帮你解决出行、生活和专业服务需求。<br>
 <strong>有生意没人知道：</strong>我帮你遇见更多真正需要的人。<br>
+<strong>想认识本地人：</strong>微信联系熟人，华伴连接当地朋友。<br>
 <strong>不想翻菜单：</strong>你只管说，我直接给你能行动的结果。`;
   await agentSay(guide,160);
   showIntroActionCards();
