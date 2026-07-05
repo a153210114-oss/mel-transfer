@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>华伴推广视频</title>
+<title>华伴15秒宣传视频</title>
 <style>
 :root {
   --bg: #07111f;
@@ -87,6 +87,10 @@ h1 {
   grid-template-columns: 390px 1fr;
   gap: 18px;
   align-items: start;
+}
+body.public-video .grid {
+  grid-template-columns: minmax(320px, 430px) minmax(280px, 1fr);
+  align-items: stretch;
 }
 .stage, .panel {
   background: rgba(16, 27, 45, 0.84);
@@ -253,6 +257,67 @@ h1 {
 .panel-body {
   padding: 18px;
 }
+.public-panel {
+  display: none;
+}
+body.public-video .script-tools {
+  display: none;
+}
+body.public-video .public-panel {
+  display: grid;
+  gap: 14px;
+}
+.public-hero-copy {
+  border: 1px solid rgba(34, 211, 238, 0.28);
+  background: rgba(34, 211, 238, 0.08);
+  border-radius: 16px;
+  padding: 16px;
+}
+.public-hero-copy strong {
+  display: block;
+  font-size: 24px;
+  line-height: 1.25;
+  margin-bottom: 10px;
+}
+.public-hero-copy p {
+  color: rgba(255,255,255,0.72);
+  line-height: 1.75;
+  margin: 0;
+}
+.public-lines {
+  display: grid;
+  gap: 10px;
+}
+.public-lines span {
+  display: block;
+  border-left: 4px solid var(--green);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.06);
+  padding: 12px;
+  color: #e0f2fe;
+  font-weight: 900;
+  line-height: 1.55;
+}
+.public-qr {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.96);
+  color: #0f172a;
+  padding: 14px;
+}
+.public-qr img {
+  width: 112px;
+  height: 112px;
+  object-fit: contain;
+  border-radius: 12px;
+}
+.public-qr strong {
+  display: block;
+  font-size: 18px;
+  margin-bottom: 6px;
+}
 .tagline {
   padding: 14px;
   border-radius: 14px;
@@ -381,7 +446,7 @@ h1 {
   line-height: 1.65;
 }
 @media (max-width: 900px) {
-  .grid { grid-template-columns: 1fr; }
+  .grid, body.public-video .grid { grid-template-columns: 1fr; }
   .stage { position: static; }
   .phone { max-width: 390px; margin: 0 auto; }
 }
@@ -399,13 +464,14 @@ h1 {
     <div class="brand">
       <img src="assets/brand/huaban-logo-v1.png" alt="华伴">
       <div>
-        <h1 id="pageTitle">华伴宣传片脚本</h1>
-        <p class="sub" id="pageSub">18 秒主推版 · 无需配乐 · 生活 / 生意 / 情感 / 扫码领养</p>
+        <h1 id="pageTitle">华伴15秒宣传视频</h1>
+        <p class="sub" id="pageSub">生活 / 生意 / 情感 / 扫码领养</p>
       </div>
     </div>
     <div class="actions">
-      <button class="btn" id="backBtn" onclick="goBack()">回后台</button>
-      <button class="btn" onclick="copyScript()">复制脚本</button>
+      <button class="btn" id="backBtn" onclick="goBack()">返回</button>
+      <button class="btn script-copy-btn" onclick="copyScript()">复制脚本</button>
+      <button class="btn public-adopt-btn" onclick="location.href='index.html?ref=promo_video'" style="display:none;">领养华伴</button>
       <button class="btn primary" id="playBtn" onclick="togglePlay()">播放预览</button>
     </div>
   </div>
@@ -425,7 +491,7 @@ h1 {
       </div>
       <div class="progress-wrap">
         <div class="progress"><span id="progress"></span></div>
-        <div class="time-row"><span id="timeNow">00:00</span><span>00:18</span></div>
+        <div class="time-row"><span id="timeNow">00:00</span><span id="timeTotal">00:15</span></div>
       </div>
     </div>
 
@@ -435,9 +501,29 @@ h1 {
           <div class="panel-title" id="panelTitle">脚本内容</div>
           <p class="sub" id="panelSub">可直接复制给视频生成工具或剪辑工具。</p>
         </div>
-        <span class="pill">18 秒</span>
+        <span class="pill" id="durationPill">15 秒</span>
       </div>
       <div class="panel-body">
+        <div class="public-panel" id="publicPanel">
+          <div class="public-hero-copy">
+            <strong>华伴，不止是陪你聊天。</strong>
+            <p>还能按照指示做事。海外华人真正的生活管家、事业助手。</p>
+          </div>
+          <div class="public-lines">
+            <span>生活跟我聊，繁琐交给我，还自己一个高品质生活。</span>
+            <span>生意跟我聊，让更多真正需要你的人找到你。</span>
+            <span>情感跟我聊，能当树洞，也能当参谋。</span>
+          </div>
+          <div class="public-qr">
+            <img src="assets/brand/huaban-qr-logo.png" alt="华伴二维码">
+            <div>
+              <strong>扫码领养华伴 AI</strong>
+              <span>有趣，更有用<br>huabanapp.com</span>
+            </div>
+          </div>
+          <button class="btn primary" onclick="location.href='index.html?ref=promo_video'">立即领养华伴 AI</button>
+        </div>
+        <div class="script-tools">
         <div class="tagline" id="tagline"></div>
         <div class="user-video-tool" id="userVideoTool">
           <div class="tool-title">用手机里的视频推广自己</div>
@@ -455,6 +541,7 @@ h1 {
         <div class="scene-list" id="sceneList"></div>
         <textarea class="script" id="scriptBox" readonly></textarea>
         <div class="note">二维码默认使用当前华伴二维码。后续如果要接视频生成工具，直接使用每幕的 visualPrompt 即可。</div>
+        </div>
       </div>
     </div>
   </div>
@@ -467,7 +554,7 @@ const HUABAN_VIDEO_SCRIPT = {
   scenes: [
     {
       id: 1,
-      duration: 4.5,
+      duration: 4,
       subtitle: "生活跟我聊，繁琐交给我，还自己一个高品质生活",
       narration: "人在海外，琐事太累？生活跟我聊，繁琐交给我。帮您轻松打理一切，还自己一个高品质生活。",
       visualPrompt: "Cinematic transition from a cluttered table with overseas bills and documents to a pristine modern living room bathed in golden sunlight, relaxing green plants, and a hot steaming cup of tea.",
@@ -475,7 +562,7 @@ const HUABAN_VIDEO_SCRIPT = {
     },
     {
       id: 2,
-      duration: 4.5,
+      duration: 4,
       subtitle: "生意跟我聊，让更多需要你的人找到你",
       narration: "做生意，愁客源？生意跟我聊。直接面对真实客户，让更多真正需要你的人轻松找到你。",
       visualPrompt: "High-end dynamic neon-accented maps graphic with pulsing locator pins. A digital mock-up of customer requests matching direct with trustworthy service providers instantly.",
@@ -483,7 +570,7 @@ const HUABAN_VIDEO_SCRIPT = {
     },
     {
       id: 3,
-      duration: 4.5,
+      duration: 3.5,
       subtitle: "情感跟我聊，能当树洞也能当参谋",
       narration: "寂寞、迷茫，无人诉说？情感跟我聊。能当守护隐私的秘密树洞，也能当出谋划策的聪明参谋。",
       visualPrompt: "Cozy bedroom interior at night, soft starry sky visible through the window, warm fairy lights, a smartphone showing heartwarming chat bubble interactions, cozy aesthetic, slow pan.",
@@ -491,7 +578,7 @@ const HUABAN_VIDEO_SCRIPT = {
     },
     {
       id: 4,
-      duration: 4.5,
+      duration: 3.5,
       subtitle: "华伴：海外华人生活管家 • 事业助手 • 贴心伴侣",
       narration: "用华伴，做自己。有趣、更有用。现在就扫码领养您的专属华伴 AI 吧！",
       visualPrompt: "Sleek and polished branding card with the name '华伴', glowing neon green outlines, and a clean high-contrast scan QR code in the center, premium animation style.",
@@ -505,10 +592,26 @@ const qrPath = "assets/brand/huaban-qr-logo.png";
 let current = 0;
 let playing = false;
 let timer = null;
-const fromUser = new URLSearchParams(location.search).get("from") === "user";
+const params = new URLSearchParams(location.search);
+const fromUser = params.get("from") === "user";
+const publicVideo = !fromUser && (location.pathname.includes("/video") || params.get("ref")?.startsWith("official"));
 let selectedBusinessVideoFile = null;
 
 function applyModeText() {
+  if (publicVideo) {
+    document.body.classList.add("public-video");
+    document.getElementById("pageTitle").textContent = "华伴15秒宣传视频";
+    document.getElementById("pageSub").textContent = "海外华人真正的生活管家、事业助手";
+    document.getElementById("panelTitle").textContent = "华伴能帮你做到什么";
+    document.getElementById("panelSub").textContent = "不展示后台流程，只展示结果。";
+    document.getElementById("backBtn").style.display = "none";
+    document.querySelector(".script-copy-btn").style.display = "none";
+    document.querySelector(".public-adopt-btn").style.display = "inline-flex";
+    setTimeout(() => {
+      if (!playing) togglePlay();
+    }, 450);
+    return;
+  }
   if (!fromUser) return;
   document.getElementById("pageTitle").textContent = "我的推广视频";
   document.getElementById("pageSub").textContent = "把自己的生意、服务和作品整理成短视频脚本。";
@@ -520,7 +623,7 @@ function applyModeText() {
 }
 
 function goBack() {
-  location.href = fromUser ? "index.html" : "admin.html#outreach";
+  location.href = fromUser ? "index.html" : "official.html";
 }
 
 function totalDuration() {
@@ -554,6 +657,7 @@ function render() {
   `;
   document.getElementById("progress").style.width = `${Math.min(100, current / totalDuration() * 100)}%`;
   document.getElementById("timeNow").textContent = formatTime(current);
+  document.getElementById("timeTotal").textContent = formatTime(totalDuration());
   renderSceneList(index);
 }
 
