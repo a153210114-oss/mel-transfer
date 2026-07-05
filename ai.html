@@ -8079,32 +8079,7 @@ async function loadProfileTrips(phone){
 }
 
 async function shareRefLink(){
-  const code = getFriendCode();
-  const link = friendInviteLink(code);
-  const user=getUserProfile();
-  const roleLine=[user.industry,user.phone].filter(Boolean).join(' · ');
-  const shareData = {
-    title: '华伴AI伙伴',
-    text: `${user.name||'我'}的华伴本地名片${roleLine?'：'+roleLine:''}。微信联系国内亲朋好友，华伴连接当地朋友。`,
-    url: link
-  };
-  try{
-    if(navigator.share){
-      await navigator.share(shareData);
-      rewardCompanionAction('share');
-    } else {
-      // 降级：复制链接
-      await navigator.clipboard.writeText(link);
-      rewardCompanionAction('share');
-      await agentSay('链接已复制，可以粘贴分享给朋友', 200);
-    }
-  }catch(e){
-    if(e.name!=='AbortError'){
-      await navigator.clipboard.writeText(link).catch(()=>{});
-      rewardCompanionAction('share');
-      await agentSay('链接已复制', 200);
-    }
-  }
+  showPromoPosterSheet();
 }
 
 function inviteSharePayload(extraText=''){
@@ -8196,6 +8171,265 @@ function friendInviteLink(code=getFriendCode(), cardBy='', meta={}){
 
 function friendQrUrl(link=friendInviteLink()){
   return `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=12&data=${encodeURIComponent(link)}`;
+}
+
+function promoPosterCopy(user=getUserProfile(), link=friendInviteLink()){
+  const name=String(user.name||getPassenger().name||'我').trim();
+  const industry=String(user.industry||'').trim();
+  const roleLine=industry?`我的强项：${industry}\n`:'';
+  return `你熟视无睹的强项，也许正是TA苦苦寻觅的答案。
+告诉华伴吧，TA会静静守在你身旁；你不找TA，TA决不打扰。
+除非某时某天，华伴轻轻跳出来：“哎，被需要的幸福来了。”
+
+${name}邀请你领养华伴 AI。
+${roleLine}眼花缭乱的页面，换成干干净净的华伴。
+往后余生，不被定义，做自己，并不难。
+
+${link}`;
+}
+
+function loadCanvasImage(src){
+  return new Promise((resolve,reject)=>{
+    const img=new Image();
+    img.crossOrigin='anonymous';
+    img.onload=()=>resolve(img);
+    img.onerror=reject;
+    img.src=src;
+  });
+}
+
+function wrapCanvasText(ctx,text,x,y,maxWidth,lineHeight,maxLines=99){
+  const paragraphs=String(text||'').split('\n');
+  let lineCount=0;
+  for(const paragraph of paragraphs){
+    if(lineCount>=maxLines)break;
+    if(!paragraph.trim()){
+      y+=lineHeight*.7;
+      continue;
+    }
+    let line='';
+    for(const char of paragraph){
+      const test=line+char;
+      if(ctx.measureText(test).width>maxWidth&&line){
+        ctx.fillText(line,x,y);
+        y+=lineHeight;
+        line=char;
+        lineCount++;
+        if(lineCount>=maxLines)break;
+      }else{
+        line=test;
+      }
+    }
+    if(lineCount<maxLines&&line){
+      ctx.fillText(line,x,y);
+      y+=lineHeight;
+      lineCount++;
+    }
+  }
+  return y;
+}
+
+function canvasRoundRect(ctx,x,y,w,h,r){
+  const radius=Math.min(r,w/2,h/2);
+  ctx.moveTo(x+radius,y);
+  ctx.lineTo(x+w-radius,y);
+  ctx.quadraticCurveTo(x+w,y,x+w,y+radius);
+  ctx.lineTo(x+w,y+h-radius);
+  ctx.quadraticCurveTo(x+w,y+h,x+w-radius,y+h);
+  ctx.lineTo(x+radius,y+h);
+  ctx.quadraticCurveTo(x,y+h,x,y+h-radius);
+  ctx.lineTo(x,y+radius);
+  ctx.quadraticCurveTo(x,y,x+radius,y);
+}
+
+async function buildPromoPosterDataUrl({user=getUserProfile(), link=friendInviteLink(), copy=promoPosterCopy(user,link)}={}){
+  const canvas=document.createElement('canvas');
+  canvas.width=900;
+  canvas.height=1400;
+  const ctx=canvas.getContext('2d');
+  const bg=ctx.createLinearGradient(0,0,900,1400);
+  bg.addColorStop(0,'#08291f');
+  bg.addColorStop(.5,'#0f223f');
+  bg.addColorStop(1,'#071018');
+  ctx.fillStyle=bg;
+  ctx.fillRect(0,0,900,1400);
+
+  ctx.fillStyle='rgba(255,255,255,0.06)';
+  ctx.beginPath();
+  ctx.arc(760,130,220,0,Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle='rgba(0,210,145,0.12)';
+  ctx.beginPath();
+  ctx.arc(70,1180,260,0,Math.PI*2);
+  ctx.fill();
+
+  const logo=await loadCanvasImage('assets/brand/huaban-logo-v1.png').catch(()=>null);
+  if(logo){
+    ctx.fillStyle='rgba(255,255,255,0.95)';
+    ctx.beginPath();
+    canvasRoundRect(ctx,64,64,86,86,22);
+    ctx.fill();
+    ctx.drawImage(logo,78,78,58,58);
+  }
+
+  ctx.fillStyle='#ffffff';
+  ctx.font='800 42px -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillText('华伴 AI',170,106);
+  ctx.font='500 24px -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillStyle='rgba(255,255,255,0.72)';
+  ctx.fillText('一个更出色的你',170,142);
+
+  ctx.fillStyle='#ffffff';
+  ctx.font='900 54px -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif';
+  let y=250;
+  y=wrapCanvasText(ctx,'你熟视无睹的强项，也许正是TA苦苦寻觅的答案。',64,y,770,70,4);
+
+  ctx.font='500 30px -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillStyle='rgba(255,255,255,0.82)';
+  y+=34;
+  y=wrapCanvasText(ctx,'告诉华伴吧，TA会静静守在你身旁；你不找TA，TA决不打扰。',64,y,770,46,4);
+
+  ctx.fillStyle='rgba(0,210,145,0.17)';
+  ctx.beginPath();
+  canvasRoundRect(ctx,64,610,772,140,28);
+  ctx.fill();
+  ctx.strokeStyle='rgba(0,230,165,0.32)';
+  ctx.lineWidth=2;
+  ctx.stroke();
+  ctx.fillStyle='#bfffe5';
+  ctx.font='800 31px -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif';
+  wrapCanvasText(ctx,'“哎，被需要的幸福来了。”',96,672,700,44,2);
+  ctx.font='500 23px -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillStyle='rgba(230,255,246,0.75)';
+  ctx.fillText('有偿工卡或免费求助卡，你愿意就接。',96,722);
+
+  const displayName=String(user.name||getPassenger().name||'华伴用户').trim();
+  const industry=String(user.industry||'').trim();
+  ctx.fillStyle='rgba(255,255,255,0.08)';
+  ctx.beginPath();
+  canvasRoundRect(ctx,64,810,772,184,26);
+  ctx.fill();
+  ctx.fillStyle='#ffffff';
+  ctx.font='900 34px -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillText(displayName,96,870);
+  ctx.fillStyle='rgba(255,255,255,0.72)';
+  ctx.font='500 25px -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif';
+  wrapCanvasText(ctx,industry?`我的强项：${industry}`:'扫码领养你的华伴 AI',96,918,500,38,2);
+
+  const qr=await loadCanvasImage(friendQrUrl(link)).catch(()=>null);
+  ctx.fillStyle='#ffffff';
+  ctx.beginPath();
+  canvasRoundRect(ctx,580,835,210,210,26);
+  ctx.fill();
+  if(qr)ctx.drawImage(qr,600,855,170,170);
+  ctx.fillStyle='rgba(255,255,255,0.72)';
+  ctx.font='500 25px -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif';
+  wrapCanvasText(ctx,'眼花缭乱的页面，换成干干净净的华伴。往后余生，不被定义，做自己，并不难。',64,1110,772,42,4);
+  ctx.fillStyle='rgba(255,255,255,0.52)';
+  ctx.font='700 22px -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillText('huabanapp.com',64,1302);
+  ctx.fillStyle='rgba(0,230,165,0.85)';
+  ctx.fillText('扫码从这里开始',620,1302);
+  return canvas.toDataURL('image/png');
+}
+
+async function dataUrlToBlob(dataUrl){
+  const res=await fetch(dataUrl);
+  return res.blob();
+}
+
+async function showPromoPosterSheet(){
+  const code=getFriendCode();
+  const link=friendInviteLink(code);
+  const user=getUserProfile();
+  const copy=promoPosterCopy(user,link);
+  const overlay=document.createElement('div');
+  overlay.id='promo-poster-sheet';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.76);z-index:3200;display:flex;align-items:flex-end;justify-content:center;';
+  overlay.innerHTML=`
+    <div style="background:#0d1f3c;border-radius:24px 24px 0 0;padding:22px 18px 36px;width:100%;max-width:480px;max-height:88vh;overflow-y:auto;border-top:1px solid rgba(255,255,255,0.1);">
+      <div style="width:42px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:0 auto 16px;"></div>
+      <div style="font-size:18px;font-weight:900;color:white;margin-bottom:5px;">华伴推广海报</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.62);line-height:1.65;margin-bottom:12px;">已带上你的专属二维码。朋友扫码进入，会记录到你的贡献来源。</div>
+      <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:18px;padding:12px;margin-bottom:12px;text-align:center;">
+        <div id="promo-poster-loading" style="color:rgba(255,255,255,0.68);font-size:13px;padding:28px 0;">正在生成海报...</div>
+        <img id="promo-poster-preview" alt="华伴推广海报" style="display:none;width:100%;max-width:300px;border-radius:16px;margin:0 auto;box-shadow:0 12px 40px rgba(0,0,0,0.28);">
+      </div>
+      <textarea id="promo-poster-copy" readonly style="width:100%;min-height:132px;border:1px solid rgba(255,255,255,0.12);border-radius:14px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.86);font:13px/1.7 inherit;padding:12px;box-sizing:border-box;resize:vertical;">${companionEscape(copy)}</textarea>
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:12px;">
+        <button onclick="copyPromoPosterText()" style="padding:13px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:12px;color:rgba(255,255,255,0.76);font-size:14px;font-weight:900;font-family:inherit;cursor:pointer;">复制文案</button>
+        <button onclick="downloadPromoPoster()" style="padding:13px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:12px;color:rgba(255,255,255,0.76);font-size:14px;font-weight:900;font-family:inherit;cursor:pointer;">保存海报</button>
+        <button onclick="sharePromoPoster()" style="grid-column:1/-1;padding:14px;background:rgba(0,200,150,0.24);border:1px solid rgba(0,200,150,0.4);border-radius:12px;color:white;font-size:15px;font-weight:900;font-family:inherit;cursor:pointer;">分享海报</button>
+      </div>
+      <button onclick="this.closest('#promo-poster-sheet')?.remove()" style="width:100%;margin-top:10px;padding:12px;background:transparent;border:0;color:rgba(255,255,255,0.46);font-size:13px;font-family:inherit;cursor:pointer;">关闭</button>
+    </div>`;
+  overlay.onclick=(e)=>{if(e.target===overlay)overlay.remove();};
+  document.body.appendChild(overlay);
+  buildPromoPosterDataUrl({user,link,copy}).then(dataUrl=>{
+    window.HUABAN_PROMO_POSTER={dataUrl,copy,link};
+    const img=document.getElementById('promo-poster-preview');
+    const loading=document.getElementById('promo-poster-loading');
+    if(img){img.src=dataUrl;img.style.display='block';}
+    if(loading)loading.style.display='none';
+  }).catch(async()=>{
+    window.HUABAN_PROMO_POSTER={dataUrl:'',copy,link};
+    const loading=document.getElementById('promo-poster-loading');
+    if(loading)loading.textContent='海报生成暂时失败，可以先复制文案和链接。';
+  });
+}
+
+async function copyPromoPosterText(){
+  const data=window.HUABAN_PROMO_POSTER||{};
+  const text=document.getElementById('promo-poster-copy')?.value||data.copy||promoPosterCopy();
+  await navigator.clipboard.writeText(text).catch(()=>{});
+  rewardCompanionAction('share');
+  await agentSay('推广文案已复制，可以发到微信或朋友圈。',100);
+}
+
+async function downloadPromoPoster(){
+  const data=window.HUABAN_PROMO_POSTER||{};
+  if(!data.dataUrl){
+    await copyPromoPosterText();
+    return;
+  }
+  const a=document.createElement('a');
+  a.href=data.dataUrl;
+  a.download='huaban-promo-poster.png';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  rewardCompanionAction('share');
+  await agentSay('海报已生成，可以保存或转发。',100);
+}
+
+async function sharePromoPoster(){
+  const data=window.HUABAN_PROMO_POSTER||{};
+  const text=document.getElementById('promo-poster-copy')?.value||data.copy||promoPosterCopy();
+  const link=data.link||friendInviteLink();
+  try{
+    if(data.dataUrl&&navigator.canShare&&navigator.share){
+      const blob=await dataUrlToBlob(data.dataUrl);
+      const file=new File([blob],'huaban-promo-poster.png',{type:'image/png'});
+      if(navigator.canShare({files:[file]})){
+        await navigator.share({title:'华伴 AI',text,files:[file]});
+        rewardCompanionAction('share');
+        return;
+      }
+    }
+    if(navigator.share){
+      await navigator.share({title:'华伴 AI',text,url:link});
+      rewardCompanionAction('share');
+      return;
+    }
+    await navigator.clipboard.writeText(`${text}\n${link}`).catch(()=>{});
+    rewardCompanionAction('share');
+    await agentSay('海报文案和链接已复制，可以手动发送。',100);
+  }catch(e){
+    if(e?.name!=='AbortError'){
+      await navigator.clipboard.writeText(`${text}\n${link}`).catch(()=>{});
+      await agentSay('分享未完成，我先把文案和链接复制好了。',100);
+    }
+  }
 }
 
 function localFriendStore(){
