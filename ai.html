@@ -1042,6 +1042,7 @@ const AGENT_EMOJI_KEY = 'huaban_agent_emoji';
 const AGENT_BIRTH_KEY = 'huaban_agent_birth_at';
 const USER_NAME_KEY = 'huaban_user_name';
 const USER_AVATAR_KEY = 'huaban_user_avatar';
+const USER_INDUSTRY_KEY = 'huaban_user_industry';
 window._ttsVoice = 'FunAudioLLM/CosyVoice2-0.5B:diana';
 // 恢复已存性别（含currentGender同步）
 (function(){
@@ -1316,19 +1317,24 @@ function getUserProfile(){
   const passenger=typeof getPassenger==='function'?getPassenger():{};
   return {
     name: cleanUserName(localStorage.getItem(USER_NAME_KEY)||p.display_name||p.name||passenger.name||''),
-    avatar: cleanUserAvatar(localStorage.getItem(USER_AVATAR_KEY)||p.avatar||passenger.avatar||'👤')
+    avatar: cleanUserAvatar(localStorage.getItem(USER_AVATAR_KEY)||p.avatar||passenger.avatar||'👤'),
+    industry: String(localStorage.getItem(USER_INDUSTRY_KEY)||p.industry||passenger.industry||'').trim().slice(0,32),
+    phone: String(passenger.phone||p.phone||'').trim()
   };
 }
 
-function saveUserIdentity({name,avatar}){
+function saveUserIdentity({name,avatar,industry,phone}){
   const nextName=cleanUserName(name);
   const nextAvatar=cleanUserAvatar(avatar);
+  const nextIndustry=String(industry||'').trim().slice(0,32);
+  const nextPhone=String(phone||'').trim().slice(0,32);
   if(nextName)localStorage.setItem(USER_NAME_KEY,nextName);
   localStorage.setItem(USER_AVATAR_KEY,nextAvatar);
-  saveProfile({display_name:nextName,avatar:nextAvatar});
+  if(nextIndustry)localStorage.setItem(USER_INDUSTRY_KEY,nextIndustry);
+  saveProfile({display_name:nextName,avatar:nextAvatar,industry:nextIndustry,phone:nextPhone});
   const passenger=typeof getPassenger==='function'?getPassenger():{};
-  if(nextName||nextAvatar){
-    setLocal('au_passenger',{...passenger,name:nextName||passenger.name,avatar:nextAvatar});
+  if(nextName||nextAvatar||nextIndustry||nextPhone){
+    setLocal('au_passenger',{...passenger,name:nextName||passenger.name,avatar:nextAvatar,industry:nextIndustry||passenger.industry,phone:nextPhone||passenger.phone});
   }
   if(passenger.phone&&nextName){
     fetch(SUPA_URL+'/rest/v1/contacts?tenant_id=eq.'+TENANT_ID+'&phone=eq.'+encodeURIComponent(passenger.phone),{
@@ -1593,13 +1599,15 @@ function renderUserSetupCard(){
       <div class="agent-setup-avatar" id="user-setup-preview">${userAvatarMarkup()}</div>
       <div>
         <div class="agent-setup-title">也让我认识一下你</div>
-        <div class="agent-setup-sub">以后我就按这个称呼和头像陪你聊天</div>
+        <div class="agent-setup-sub">生成名片更方便引客流，华伴会帮你智能优选匹配</div>
       </div>
     </div>
     <div class="agent-setup-grid">
       <input class="agent-setup-input" id="user-setup-name" value="${companionEscape(user.name||'')}" maxlength="12" placeholder="我怎么称呼你">
       <button class="agent-setup-save" onclick="saveUserSetupCard()">保存</button>
     </div>
+    <input class="agent-setup-input" id="user-setup-industry" value="${companionEscape(user.industry||'')}" maxlength="32" placeholder="行业/服务：如水管工、私厨、司机、会计" style="width:100%;margin-top:8px;">
+    <input class="agent-setup-input" id="user-setup-phone" value="${companionEscape(user.phone||'')}" maxlength="32" placeholder="联系电话：分享名片时显示" style="width:100%;margin-top:8px;">
     <input id="user-setup-avatar" type="hidden" value="${companionEscape(active)}">
     <div class="agent-avatar-choices">
       ${USER_AVATAR_CHOICES.map(([value,label])=>userAvatarChoiceMarkup(value,label,value===active)).join('')}
@@ -1622,10 +1630,12 @@ function selectUserSetupAvatar(value){
 async function saveUserSetupCard(){
   const name=document.getElementById('user-setup-name')?.value||'';
   const avatar=document.getElementById('user-setup-avatar')?.value||'👤';
-  const saved=saveUserIdentity({name,avatar});
+  const industry=document.getElementById('user-setup-industry')?.value||'';
+  const phone=document.getElementById('user-setup-phone')?.value||'';
+  const saved=saveUserIdentity({name,avatar,industry,phone});
   document.getElementById('user-setup-card')?.remove();
   rewardCompanionAction('customize');
-  await agentSay(saved.name?`好呀，${companionEscape(saved.name)}。聊得越多，我就越懂你。`:'好呀，我记住你的头像了。聊得越多，我就越懂你。',120);
+  await agentSay(saved.industry?`好呀，${companionEscape(saved.name||'朋友')}。我会把「${companionEscape(saved.industry)}」写进你的本地好友名片。`:(saved.name?`好呀，${companionEscape(saved.name)}。聊得越多，我就越懂你。`:'好呀，我记住你的头像了。聊得越多，我就越懂你。'),120);
 }
 
 function renderAgentSetupCard(){
@@ -7231,6 +7241,8 @@ function openUserIdentityEditor(){
         <input class="agent-setup-input" id="user-editor-name" value="${companionEscape(user.name||'')}" maxlength="12" placeholder="我怎么称呼你">
         <button class="agent-setup-save" onclick="saveUserIdentityFromEditor()">保存</button>
       </div>
+      <input class="agent-setup-input" id="user-editor-industry" value="${companionEscape(user.industry||'')}" maxlength="32" placeholder="行业/服务：如水管工、私厨、司机、会计" style="width:100%;margin-top:8px;">
+      <input class="agent-setup-input" id="user-editor-phone" value="${companionEscape(user.phone||'')}" maxlength="32" placeholder="联系电话：分享名片时显示" style="width:100%;margin-top:8px;">
       <input id="user-editor-avatar" type="hidden" value="${companionEscape(user.avatar||'👤')}">
       <div class="agent-avatar-choices">
         ${USER_AVATAR_CHOICES.map(([value,label])=>`<button class="user-avatar-choice${value===(user.avatar||'👤')?' active':''}" onclick="selectUserEditorAvatar('${companionEscape(value)}')" aria-label="${companionEscape(label)}">${companionEscape(value)}</button>`).join('')}
@@ -7255,7 +7267,9 @@ function selectUserEditorAvatar(value){
 function saveUserIdentityFromEditor(){
   const name=document.getElementById('user-editor-name')?.value||'';
   const avatar=document.getElementById('user-editor-avatar')?.value||'👤';
-  saveUserIdentity({name,avatar});
+  const industry=document.getElementById('user-editor-industry')?.value||'';
+  const phone=document.getElementById('user-editor-phone')?.value||'';
+  saveUserIdentity({name,avatar,industry,phone});
   document.querySelector('div[style*=fixed]')?.remove();
   agentSay('好呀，我记住你的名片了。',80);
 }
@@ -7933,9 +7947,11 @@ async function loadProfileTrips(phone){
 async function shareRefLink(){
   const code = getFriendCode();
   const link = friendInviteLink(code);
+  const user=getUserProfile();
+  const roleLine=[user.industry,user.phone].filter(Boolean).join(' · ');
   const shareData = {
     title: '华伴AI伙伴',
-    text: '微信联系国内亲朋好友，华伴连接当地朋友。扫码领养华伴 AI，我们在当地圈子里互相照应。',
+    text: `${user.name||'我'}的华伴本地名片${roleLine?'：'+roleLine:''}。微信联系国内亲朋好友，华伴连接当地朋友。`,
     url: link
   };
   try{
@@ -8033,9 +8049,15 @@ function getFriendCode(){
   return String(p.ref||'').trim().toUpperCase();
 }
 
-function friendInviteLink(code=getFriendCode()){
+function friendInviteLink(code=getFriendCode(), cardBy='', meta={}){
   const safe=encodeURIComponent(String(code||getFriendCode()).trim());
-  return `https://www.huabanapp.com/ai?ref=${safe}&friend=${safe}`;
+  const by=String(cardBy||'').trim();
+  const q=new URLSearchParams({ref:by||safe,friend:String(code||getFriendCode()).trim()});
+  if(by)q.set('card_by',by);
+  if(meta.name)q.set('card_name',String(meta.name).slice(0,24));
+  if(meta.industry)q.set('card_industry',String(meta.industry).slice(0,32));
+  if(meta.phone)q.set('card_phone',String(meta.phone).slice(0,32));
+  return `https://www.huabanapp.com/ai?${q.toString()}`;
 }
 
 function friendQrUrl(link=friendInviteLink()){
@@ -8054,6 +8076,64 @@ function saveLocalFriend(friend={}){
   filtered.unshift(next);
   localStorage.setItem('huaban_local_friends',JSON.stringify(filtered.slice(0,200)));
   return next;
+}
+
+function friendCardLink(friend={}){
+  const code=String(friend.code||friend.id||'').trim().toUpperCase();
+  return friendInviteLink(code,getFriendCode(),friend);
+}
+
+function friendDisplayName(friend={}){
+  return String(friend.name||friend.wechat||friend.phone||friend.code||'华伴好友').trim();
+}
+
+function showFriendCardSheet(friend={}){
+  const code=String(friend.code||friend.id||'').trim().toUpperCase();
+  if(!code){
+    agentSay('这个好友还没有可分享的华伴好友码。',100);
+    return;
+  }
+  const name=friendDisplayName(friend);
+  const link=friendCardLink(friend);
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:3000;display:flex;align-items:flex-end;justify-content:center;';
+  overlay.innerHTML=`
+    <div style="background:#0d1f3c;border-radius:24px 24px 0 0;padding:24px 20px 44px;width:100%;max-width:480px;border-top:1px solid rgba(255,255,255,0.1);">
+      <div style="width:40px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:0 auto 18px;"></div>
+      <div style="font-size:18px;font-weight:900;color:white;margin-bottom:6px;">好友名片</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.62);line-height:1.75;margin-bottom:14px;">
+        把「${companionEscape(name)}」推荐给别人。名片更方便引客流，华伴会帮你智能优选匹配；对方打开名片会直接添加这位好友，同时记录由你转介绍。
+      </div>
+      <div style="background:#fff;border-radius:18px;padding:14px;text-align:center;margin-bottom:12px;">
+        <img src="${friendQrUrl(link)}" alt="华伴好友名片二维码" style="width:220px;height:220px;display:block;margin:0 auto;border-radius:12px;">
+        <div style="color:#0d1f3c;font-size:15px;font-weight:900;margin-top:8px;">${companionEscape(name)}</div>
+        <div style="color:#607080;font-size:12px;font-weight:800;margin-top:3px;">好友码：${companionEscape(code)}</div>
+      </div>
+      <div style="display:flex;gap:9px;">
+        <button onclick="copyText('${jsString(link)}','好友名片链接已复制')" style="flex:1;padding:13px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:12px;color:rgba(255,255,255,0.72);font-size:14px;font-weight:800;font-family:inherit;cursor:pointer;">复制名片</button>
+        <button onclick="shareFriendCard('${jsString(code)}')" style="flex:1;padding:13px;background:rgba(0,200,150,0.24);border:1px solid rgba(0,200,150,0.4);border-radius:12px;color:white;font-size:14px;font-weight:900;font-family:inherit;cursor:pointer;">分享名片</button>
+      </div>
+      <button onclick="this.closest('div[style*=fixed]')?.remove()" style="width:100%;margin-top:9px;padding:12px;background:transparent;border:0;color:rgba(255,255,255,0.46);font-size:13px;font-family:inherit;cursor:pointer;">关闭</button>
+    </div>`;
+  overlay.onclick=(e)=>{if(e.target===overlay)overlay.remove();};
+  document.body.appendChild(overlay);
+}
+
+async function shareFriendCard(code=''){
+  const friend=localFriendStore().find(item=>String(item.code||item.id||'').toUpperCase()===String(code||'').toUpperCase())||{code};
+  const name=friendDisplayName(friend);
+  const link=friendCardLink(friend);
+  const text=`这是 ${name} 的华伴本地好友名片。扫码添加，华伴连接当地朋友。`;
+  try{
+    if(navigator.share){
+      await navigator.share({title:'华伴好友名片',text,url:link});
+    }else{
+      await navigator.clipboard.writeText(`${text}\n${link}`);
+      await agentSay('好友名片已复制，可以发给别人。',100);
+    }
+  }catch(e){
+    if(e?.name!=='AbortError')await agentSay('好友名片链接已准备好，可以复制发送。',100);
+  }
 }
 
 function renderFriendAddCard(){
@@ -8128,7 +8208,8 @@ async function addHuabanFriend(id='',name='华伴用户',phone='',wechat=''){
     status:'confirmed',
     fields:{friend, contribution_code:getFriendCode(), source:'search_or_code'}
   });
-  await agentSay(`已添加「${companionEscape(name)}」到本地好友。微信联系熟人，华伴连接当地朋友。`,120);
+  await agentSay(`已添加「${companionEscape(name)}」到本地好友。你也可以把这位好友的名片分享给别人。`,120);
+  setTimeout(()=>showFriendCardSheet(friend),260);
 }
 
 async function inviteUnknownFriend(target=''){
@@ -8165,6 +8246,7 @@ async function copyText(text='',notice='已复制'){
 function showFriendCodeSheet(){
   const code=getFriendCode();
   const link=friendInviteLink(code);
+  const user=getUserProfile();
   const overlay=document.createElement('div');
   overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:3000;display:flex;align-items:flex-end;justify-content:center;';
   overlay.innerHTML=`
@@ -8172,16 +8254,20 @@ function showFriendCodeSheet(){
       <div style="width:40px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:0 auto 18px;"></div>
       <div style="font-size:18px;font-weight:900;color:white;margin-bottom:6px;">我的华伴好友码</div>
       <div style="font-size:13px;color:rgba(255,255,255,0.62);line-height:1.75;margin-bottom:14px;">
-        朋友扫码领养或添加你，都会记录到你的贡献来源。后续推广积分、城市贡献和资源贡献都从这里留痕。
+        生成名片更方便引客流，华伴会帮你智能优选匹配。朋友扫码领养或添加你，都会记录到你的贡献来源。
       </div>
       <div style="background:#fff;border-radius:18px;padding:14px;text-align:center;margin-bottom:12px;">
         <img src="${friendQrUrl(link)}" alt="华伴好友二维码" style="width:220px;height:220px;display:block;margin:0 auto;border-radius:12px;">
-        <div style="color:#0d1f3c;font-size:13px;font-weight:900;margin-top:8px;">好友码：${companionEscape(code)}</div>
+        <div style="color:#0d1f3c;font-size:15px;font-weight:900;margin-top:8px;">${companionEscape(user.name||'华伴用户')}</div>
+        ${user.industry?`<div style="color:#20a070;font-size:13px;font-weight:900;margin-top:3px;">${companionEscape(user.industry)}</div>`:''}
+        ${user.phone?`<div style="color:#607080;font-size:12px;font-weight:800;margin-top:3px;">${companionEscape(user.phone)}</div>`:''}
+        <div style="color:#607080;font-size:12px;font-weight:800;margin-top:3px;">好友码：${companionEscape(code)}</div>
       </div>
       <div style="display:flex;gap:9px;">
         <button onclick="copyText('${jsString(link)}','好友码链接已复制')" style="flex:1;padding:13px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:12px;color:rgba(255,255,255,0.72);font-size:14px;font-weight:800;font-family:inherit;cursor:pointer;">复制链接</button>
         <button onclick="inviteUnknownFriend('扫码邀请')" style="flex:1;padding:13px;background:rgba(0,200,150,0.24);border:1px solid rgba(0,200,150,0.4);border-radius:12px;color:white;font-size:14px;font-weight:900;font-family:inherit;cursor:pointer;">分享二维码</button>
       </div>
+      <button onclick="this.closest('div[style*=fixed]')?.remove();openUserIdentityEditor();" style="width:100%;margin-top:9px;padding:12px;background:rgba(241,207,73,0.12);border:1px solid rgba(241,207,73,0.28);border-radius:12px;color:#f1cf49;font-size:13px;font-weight:900;font-family:inherit;cursor:pointer;">完善行业和电话</button>
       <button onclick="this.closest('div[style*=fixed]')?.remove()" style="width:100%;margin-top:9px;padding:12px;background:transparent;border:0;color:rgba(255,255,255,0.46);font-size:13px;font-family:inherit;cursor:pointer;">关闭</button>
     </div>`;
   overlay.onclick=(e)=>{if(e.target===overlay)overlay.remove();};
@@ -8219,9 +8305,17 @@ function scanFriendCode(){
 
 async function handleIncomingFriendLink(raw=''){
   let friendCode='';
+  let cardBy='';
+  let cardMeta={};
   try{
     const url=new URL(raw,location.origin);
     friendCode=url.searchParams.get('friend')||url.searchParams.get('ref')||'';
+    cardBy=url.searchParams.get('card_by')||'';
+    cardMeta={
+      name:url.searchParams.get('card_name')||'',
+      industry:url.searchParams.get('card_industry')||'',
+      phone:url.searchParams.get('card_phone')||''
+    };
   }catch(e){
     friendCode=String(raw||'').replace(/[^a-zA-Z0-9]/g,'').toUpperCase();
   }
@@ -8234,7 +8328,7 @@ async function handleIncomingFriendLink(raw=''){
     await agentSay('这是你自己的好友码，可以给别人扫码添加你。',120);
     return;
   }
-  await acceptIncomingFriendCode(friendCode,'qr_scan');
+  await acceptIncomingFriendCode(friendCode,'qr_scan',cardBy,cardMeta);
 }
 
 function renderIncomingFriendConfirm(friendCode=''){
@@ -8252,7 +8346,7 @@ function renderIncomingFriendConfirm(friendCode=''){
   scrollBottom();
 }
 
-async function acceptIncomingFriendCode(friendCode='',source='qr_open'){
+async function acceptIncomingFriendCode(friendCode='',source='qr_open',cardBy='',cardMeta={}){
   if(!friendCode)return;
   const code=String(friendCode).trim().toUpperCase();
   const myCode=getFriendCode();
@@ -8262,7 +8356,7 @@ async function acceptIncomingFriendCode(friendCode='',source='qr_open'){
   }
   const seenKey=`huaban_friend_code_added_${code}`;
   const alreadyAdded=localStorage.getItem(seenKey)==='1';
-  const friend=saveLocalFriend({code,name:`华伴好友 ${code}`,source});
+  const friend=saveLocalFriend({code,name:cardMeta.name||`华伴好友 ${code}`,industry:cardMeta.industry||'',phone:cardMeta.phone||'',source});
   localStorage.setItem(seenKey,'1');
   if(!alreadyAdded){
     rewardCompanionAction('share');
@@ -8274,7 +8368,7 @@ async function acceptIncomingFriendCode(friendCode='',source='qr_open'){
       contact:getPassenger().phone||'',
       message:`扫码添加华伴好友：${code}`,
       status:'confirmed',
-      fields:{friend, contribution_code:getFriendCode(), source_friend_code:code, source}
+      fields:{friend, contribution_code:getFriendCode(), source_friend_code:code, card_by:cardBy||'', source}
     });
   }
   await agentSay('已添加为本地好友。这个好友码也会记录贡献来源。第二步，把华伴添加到手机桌面，下次一点就能找我。',120);
@@ -8297,7 +8391,10 @@ function maybeShowIncomingFriendCode(){
   const friend=sessionStorage.getItem('incoming_friend_code');
   if(!friend)return;
   sessionStorage.removeItem('incoming_friend_code');
-  setTimeout(()=>acceptIncomingFriendCode(friend,'qr_open'),600);
+  const by=new URLSearchParams(location.search).get('card_by')||'';
+  const params=new URLSearchParams(location.search);
+  const meta={name:params.get('card_name')||'',industry:params.get('card_industry')||'',phone:params.get('card_phone')||''};
+  setTimeout(()=>acceptIncomingFriendCode(friend,'qr_open',by,meta),600);
 }
 
 async function pickContactsForInvite(){
