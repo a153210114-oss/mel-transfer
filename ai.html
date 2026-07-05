@@ -3912,8 +3912,7 @@ const FEATURE_INTENTS=[
   {key:'lawyer',label:'律师',pattern:/律师|法律|合同|纠纷/i},
   {key:'accountant',label:'会计',pattern:/会计|报税|退税|税务/i},
   {key:'other-help',label:'其他帮办',pattern:/帮办|跑腿|代办|办事/i},
-  {key:'camera',label:'相机',pattern:/相机|拍照|拍一张|现场拍/i},
-  {key:'image',label:'图片',pattern:/图片|照片|相册|上传图|发图/i},
+  {key:'media',label:'发图',pattern:/发图|图片|照片|相册|上传图|发照片|发图片|相机|拍照|拍一张|现场拍/i},
   {key:'payment',label:'支付',pattern:/支付|付款|收款|付钱/i},
   {key:'local-people',label:'本地好友',pattern:/本地好友|当地朋友|当地好友|交友|找朋友|认识朋友|搭子|同城|建群|微信群|找群|一起.*(玩|走|去|吃|活动|出行)|拼团|拼车/i},
   {key:'contacts-invite',label:'通讯录添加',pattern:/通讯录|联系人|手机好友|添加好友|邀请好友|导入好友/i},
@@ -4261,8 +4260,7 @@ function enabledCommercialPlugins(){
 
 const CORE_TOOL_ITEMS=[
   {key:'voice',icon:'🎙️',label:'语音'},
-  {key:'camera',icon:'📷',label:'相机'},
-  {key:'image',icon:'🖼️',label:'图片'},
+  {key:'media',icon:'📷',label:'发图'},
   {key:'reminder',icon:'⏰',label:'提醒'},
   {key:'local-people',icon:'👥',label:'本地好友'},
   {key:'promo-video',icon:'🎬',label:'推广视频'},
@@ -4400,8 +4398,7 @@ function renderMoreMenu(category='home'){
     back.style.visibility='hidden';
     grid.innerHTML=[
       ['voice','🎙️','语音'],
-      ['camera','📷','相机'],
-      ['image','🖼️','图片'],
+      ['media','📷','发图'],
       ['reminder','⏰','提醒'],
       ['share','🔗','分享'],
       ['profile','👤','个人中心'],
@@ -4450,8 +4447,7 @@ function runMoreAction(key,label){
   if(key==='voice'){toggleMic();return;}
   if(key==='market'){window.location.href='plaza.html';return;}
   if(key==='driver'){switchToDriver();return;}
-  if(key==='camera'){document.getElementById('camera-input')?.click();return;}
-  if(key==='image'){document.getElementById('image-input')?.click();return;}
+  if(key==='media'||key==='camera'||key==='image'){openMediaChoiceSheet();return;}
   if(key==='intro'){showPlatformGuide(true);return;}
   if(key==='local-people'){openLocalPeopleIntent();return;}
   if(key==='contacts-invite'){pickContactsForInvite();return;}
@@ -4564,11 +4560,9 @@ async function openFeatureByKey(key,label,options={}){
     setTimeout(()=>{switchToDriver();},500);
     return;
   }
-  if(key==='camera'||key==='image'){
-    const inputId=key==='camera'?'camera-input':'image-input';
-    const toolLabel=key==='camera'?'相机':'图片';
-    document.getElementById(inputId)?.click();
-    await say(`我帮你打开${toolLabel}。如果浏览器没有弹出，请点左下角加号里的${toolLabel}。`);
+  if(key==='media'||key==='camera'||key==='image'){
+    openMediaChoiceSheet();
+    await say('发给我看看，我来帮你看懂、整理和提醒。');
     return;
   }
   if(key==='customize-agent'){
@@ -4586,6 +4580,31 @@ async function openFeatureByKey(key,label,options={}){
 function openPromoVideoTool(){
   rewardCompanionAction('try_feature');
   window.location.href='promo-video.html?from=user';
+}
+
+function openMediaChoiceSheet(){
+  const existing=document.getElementById('media-choice-modal');
+  existing?.remove();
+  const overlay=document.createElement('div');
+  overlay.id='media-choice-modal';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:3000;display:flex;align-items:flex-end;justify-content:center;';
+  overlay.innerHTML=`
+    <div style="width:100%;max-width:480px;background:#0d1f3c;border-radius:24px 24px 0 0;padding:22px 18px calc(28px + env(safe-area-inset-bottom));border-top:1px solid rgba(255,255,255,0.1);">
+      <div style="width:40px;height:4px;background:rgba(255,255,255,0.16);border-radius:2px;margin:0 auto 18px;"></div>
+      <div style="font-size:18px;font-weight:900;color:white;margin-bottom:6px;">发给我看看</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.58);line-height:1.7;margin-bottom:14px;">拍一张或从相册选一张，我来帮你看懂、整理和提醒。</div>
+      <button onclick="chooseMediaSource('camera')" style="width:100%;padding:14px;background:rgba(0,200,150,0.22);border:1px solid rgba(0,200,150,0.38);border-radius:14px;color:white;font-size:15px;font-weight:900;font-family:inherit;cursor:pointer;margin-bottom:9px;">📷 拍照</button>
+      <button onclick="chooseMediaSource('album')" style="width:100%;padding:14px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:14px;color:rgba(255,255,255,0.82);font-size:15px;font-weight:900;font-family:inherit;cursor:pointer;margin-bottom:9px;">🖼️ 从相册选择</button>
+      <button onclick="document.getElementById('media-choice-modal')?.remove()" style="width:100%;padding:12px;background:transparent;border:0;color:rgba(255,255,255,0.46);font-size:13px;font-family:inherit;cursor:pointer;">取消</button>
+    </div>`;
+  overlay.onclick=(e)=>{if(e.target===overlay)overlay.remove();};
+  document.body.appendChild(overlay);
+}
+
+function chooseMediaSource(source){
+  document.getElementById('media-choice-modal')?.remove();
+  const inputId=source==='camera'?'camera-input':'image-input';
+  document.getElementById(inputId)?.click();
 }
 
 async function showComingSoon(label, options={}){
