@@ -38,6 +38,7 @@ body{
 }
 .brand-lockup{position:relative;width:46px;height:46px;display:flex;align-items:center;justify-content:center;min-width:46px;flex-shrink:0;}
 .brand-logo{width:46px;height:46px;border-radius:12px;display:block;object-fit:cover;flex-shrink:0;}
+.brand-lockup{cursor:pointer;}
 .splash-logo{width:82px;height:82px;border-radius:22px;display:block;object-fit:cover;box-shadow:0 10px 28px rgba(0,0,0,.12);animation:splashBounce 0.8s ease-out forwards;}
 .top-exit{
   background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);
@@ -307,6 +308,38 @@ body:not(.companion-docked) .brand-positioning{left:50%;right:auto;transform:tra
 .companion-entry-meta{display:flex;flex-direction:column;align-items:flex-start;min-width:0;}
 .companion-entry-level{font-weight:900;color:#20a070;white-space:nowrap;}
 .companion-entry-xp{font-size:10px;color:#777;white-space:nowrap;}
+.summon-orb{
+  position:fixed;
+  right:max(15px, env(safe-area-inset-right));
+  bottom:calc(76px + env(safe-area-inset-bottom));
+  z-index:175;
+  width:54px;
+  height:54px;
+  border:0;
+  border-radius:50%;
+  background:rgba(255,255,255,.9);
+  box-shadow:0 12px 30px rgba(0,0,0,.18);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  padding:7px;
+  backdrop-filter:blur(14px);
+}
+.summon-orb img{width:100%;height:100%;border-radius:15px;object-fit:cover;}
+.summon-orb::before,.summon-orb::after{
+  content:"";
+  position:absolute;
+  inset:-7px;
+  border-radius:50%;
+  border:1px solid rgba(7,193,96,.26);
+  animation:summonRipple 2.5s ease-out infinite;
+}
+.summon-orb::after{animation-delay:.9s;}
+@keyframes summonRipple{
+  0%{opacity:.7;transform:scale(.86)}
+  75%,100%{opacity:0;transform:scale(1.28)}
+}
 .adoption-ticker{
   flex-shrink:0;height:28px;overflow:hidden;background:rgba(255,255,255,0.72);
   border-bottom:1px solid var(--wx-line);display:flex;align-items:center;
@@ -369,6 +402,8 @@ body.theme-night .brand-positioning{color:#edf3f8;opacity:.82;}
 body.theme-night #profile-btn.companion-entry{background:#242a31!important;border-color:#3a424c!important;color:#dce4ec!important;}
 body.theme-night #profile-btn.companion-entry.nudge::after{background:#242a31;border-color:#3a424c;color:#62ddb2;}
 body.theme-night .companion-entry-xp{color:#9aa7af;}
+body.theme-night .summon-orb{background:#242a31;box-shadow:0 12px 30px rgba(0,0,0,.34);}
+body.theme-night .summon-orb::before,body.theme-night .summon-orb::after{border-color:rgba(98,221,178,.26);}
 body.theme-night .adoption-ticker{background:rgba(23,27,32,0.9);border-bottom-color:#2b3138;}
 body.theme-night .adoption-ticker-track{color:#aeb6bf;}
 body.theme-night .ai-intro-ticker{background:rgba(23,27,32,0.92);border-bottom-color:#2b3138;}
@@ -753,7 +788,7 @@ body.more-open .chat-area{padding-bottom:390px;}
 
 <!-- 顶部栏 -->
 <div class="top-bar">
-  <div class="brand-lockup">
+  <div class="brand-lockup" onclick="summonAI('logo')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();summonAI('logo')}" aria-label="召唤华伴 AI">
     <img class="brand-logo" src="assets/brand/huaban-logo-v1.png" alt="华伴 logo">
   </div>
   <div class="brand-positioning">生活事业好帮手</div>
@@ -791,6 +826,10 @@ body.more-open .chat-area{padding-bottom:390px;}
 
 <!-- 对话区 -->
 <div class="chat-area" id="chat-area"></div>
+
+<button class="summon-orb" onclick="summonAI('orb')" aria-label="召唤华伴 AI" title="召唤华伴">
+  <img src="assets/brand/huaban-logo-v1.png" alt="">
+</button>
 
 <!-- 底部输入 -->
 <div class="input-bar no-nav" id="main-input-bar">
@@ -1239,6 +1278,23 @@ function addTyping(){
   chatArea.appendChild(div);scrollBottom();return div;
 }
 function delay(ms){return new Promise(r=>setTimeout(r,ms));}
+function summonAI(source='orb'){
+  closeMorePanel?.();
+  document.getElementById('splash')?.style.setProperty('display','none');
+  document.getElementById('main-input-bar')?.scrollIntoView({block:'end',behavior:'smooth'});
+  scrollBottom();
+  const input=document.getElementById('chat-input');
+  if(input){
+    input.focus({preventScroll:true});
+    input.placeholder='我在，直接跟我说';
+  }
+  const now=Date.now();
+  if(!window._lastSummonAt||now-window._lastSummonAt>9000){
+    window._lastSummonAt=now;
+    agentSay(source==='logo'?'我在。点我或者下面这个小光球，都可以随时叫我出来。':'我在。生活、事业、朋友、本地事情，都可以先跟我聊。',80);
+  }
+  rewardCompanionAction?.('try_feature');
+}
 async function agentSay(html,ms=700){
   const t=addTyping();
   await delay(ms);

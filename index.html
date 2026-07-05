@@ -78,6 +78,7 @@ a { color: inherit; text-decoration: none; }
   align-items: center;
   gap: 10px;
   font-weight: 950;
+  cursor: pointer;
 }
 .brand img {
   width: 42px;
@@ -113,6 +114,45 @@ a { color: inherit; text-decoration: none; }
   border: 0;
   color: #04140e;
   background: linear-gradient(135deg, #2bd18e, #41c5ef);
+}
+.ai-summon {
+  position: fixed;
+  right: max(18px, env(safe-area-inset-right));
+  bottom: max(20px, env(safe-area-inset-bottom));
+  z-index: 30;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 52px;
+  padding: 8px 14px 8px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(22,183,123,0.24);
+  background: rgba(255,255,255,0.92);
+  box-shadow: 0 14px 34px rgba(16,32,51,0.16);
+  font-size: 14px;
+  font-weight: 950;
+  color: var(--ink);
+  backdrop-filter: blur(14px);
+}
+.ai-summon img {
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  object-fit: cover;
+  box-shadow: 0 0 0 1px rgba(16,32,51,0.06);
+}
+.ai-summon::before {
+  content: "";
+  position: absolute;
+  inset: -7px;
+  border-radius: inherit;
+  border: 1px solid rgba(22,183,123,0.18);
+  animation: summonPulse 2.4s ease-out infinite;
+  pointer-events: none;
+}
+@keyframes summonPulse {
+  0% { opacity: .72; transform: scale(.96); }
+  70%,100% { opacity: 0; transform: scale(1.12); }
 }
 .hero {
   width: min(1120px, calc(100vw - 32px));
@@ -386,13 +426,15 @@ footer {
   .hero-points, .cards, .cta, .video-strip { grid-template-columns: 1fr; }
   .section { padding: 48px 0; }
   .qr { width: min(260px, 100%); }
+  .ai-summon { right: 14px; bottom: 14px; padding-right: 10px; }
+  .ai-summon span { display: none; }
 }
 </style>
 </head>
 <body>
 <nav class="nav">
   <div class="nav-inner">
-    <a class="brand" href="/" aria-label="华伴官网">
+    <a class="brand" href="/ai?ref=logo_summon" aria-label="召唤华伴 AI">
       <img src="assets/brand/huaban-logo-v1.png" alt="华伴 logo">
       <span>华伴</span>
     </a>
@@ -536,6 +578,11 @@ footer {
     </div>
   </section>
 </main>
+
+<a class="ai-summon" href="/ai?ref=floating_summon" aria-label="召唤华伴 AI">
+  <img src="assets/brand/huaban-logo-v1.png" alt="">
+  <span>叫华伴</span>
+</a>
 
 <footer>
   <div class="footer-inner">
