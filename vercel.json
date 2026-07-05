@@ -27,6 +27,22 @@
     {
       "source": "/admin",
       "destination": "/admin.html"
+    },
+    {
+      "source": "/official",
+      "destination": "/official.html"
+    },
+    {
+      "source": "/about",
+      "destination": "/official.html"
+    },
+    {
+      "source": "/partner-recruit",
+      "destination": "/partner-recruit.html"
+    },
+    {
+      "source": "/partners",
+      "destination": "/partner-recruit.html"
     }
   ]
 }

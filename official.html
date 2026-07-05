@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>华伴官网｜海外华人 AI 生活管家与事业助手</title>
+<meta name="description" content="华伴是不止陪你聊天、还能按照指示做事的 AI。面向海外华人、留学生、旅行者、商家和服务者，协助处理生活琐事、出行用车、生意推广、情感陪伴和本地资源连接。">
+<meta name="keywords" content="华伴, Huaban, 华伴AI, 海外华人AI, 海外生活帮手, 华人出行, 华人服务, 墨尔本华人, AI生活管家, AI事业助手">
+<link rel="canonical" href="https://www.huabanapp.com/official.html">
+<link rel="icon" href="assets/brand/icon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/brand/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="华伴">
+<meta property="og:title" content="华伴官网｜海外华人 AI 生活管家与事业助手">
+<meta property="og:description" content="生活跟我聊，繁琐交给我。生意跟我聊，让更多需要你的人找到你。情感跟我聊，能当树洞也能当参谋。">
+<meta property="og:url" content="https://www.huabanapp.com/official.html">
+<meta property="og:image" content="https://www.huabanapp.com/assets/brand/huaban-logo-v1.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="华伴｜海外华人 AI 生活管家与事业助手">
+<meta name="twitter:description" content="不止陪你聊天，还能按照指示做事。">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "华伴 AI",
+  "alternateName": "Huaban AI",
+  "applicationCategory": "LifestyleApplication",
+  "operatingSystem": "Web",
+  "url": "https://www.huabanapp.com/",
+  "description": "华伴是面向海外华人的 AI 生活管家与事业助手，协助用户整理需求、推进生活事务、连接服务和发现机会。",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "AUD"
+  }
+}
+</script>
+<style>
+:root {
+  --bg: #f7faf9;
+  --ink: #102033;
+  --muted: #5d6b7c;
+  --line: rgba(15, 40, 70, 0.12);
+  --green: #16b77b;
+  --cyan: #1ca7d8;
+  --gold: #e7a72f;
+  --blue: #162b55;
+  --panel: #ffffff;
+  --soft: #edf7f4;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+}
+a { color: inherit; text-decoration: none; }
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgba(247,250,249,0.92);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--line);
+}
+.nav-inner {
+  width: min(1120px, calc(100vw - 32px));
+  margin: 0 auto;
+  min-height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 950;
+}
+.brand img {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  object-fit: contain;
+  background: #fff;
+}
+.brand span { font-size: 18px; }
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.nav-link {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 800;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  font-weight: 900;
+  background: #fff;
+}
+.btn.primary {
+  border: 0;
+  color: #04140e;
+  background: linear-gradient(135deg, #2bd18e, #41c5ef);
+}
+.hero {
+  width: min(1120px, calc(100vw - 32px));
+  margin: 0 auto;
+  min-height: calc(100vh - 68px);
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(320px, 0.92fr);
+  align-items: center;
+  gap: 44px;
+  padding: 42px 0 58px;
+}
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgba(22,183,123,0.22);
+  background: rgba(22,183,123,0.09);
+  color: #087552;
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 950;
+}
+h1 {
+  margin: 18px 0 0;
+  font-size: clamp(40px, 7vw, 78px);
+  line-height: 1.04;
+  letter-spacing: 0;
+}
+.hero-copy {
+  margin: 20px 0 0;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1.85;
+  max-width: 690px;
+}
+.hero-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 28px;
+}
+.hero-points {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0,1fr));
+  gap: 10px;
+  margin-top: 28px;
+}
+.point {
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,0.74);
+  border-radius: 14px;
+  padding: 13px;
+}
+.point strong {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+.point span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+.phone-wrap {
+  display: flex;
+  justify-content: center;
+}
+.phone {
+  width: min(360px, 100%);
+  aspect-ratio: 9 / 16;
+  border-radius: 34px;
+  background: #0b1528;
+  padding: 12px;
+  border: 1px solid rgba(15,40,70,0.16);
+  box-shadow: 0 28px 70px rgba(20, 54, 88, 0.22);
+}
+.screen {
+  height: 100%;
+  border-radius: 26px;
+  background: linear-gradient(180deg, #f8fffc, #eaf6ff);
+  overflow: hidden;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.phone-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #476070;
+  font-size: 12px;
+  font-weight: 900;
+}
+.ai-card {
+  margin-top: 18px;
+  border: 1px solid rgba(22,183,123,0.18);
+  background: #fff;
+  border-radius: 22px;
+  padding: 18px;
+}
+.ai-card img {
+  width: 62px;
+  height: 62px;
+  display: block;
+  border-radius: 16px;
+  object-fit: contain;
+  margin-bottom: 12px;
+}
+.ai-card strong {
+  display: block;
+  font-size: 22px;
+  line-height: 1.28;
+}
+.ai-card p {
+  margin: 10px 0 0;
+  color: var(--muted);
+  line-height: 1.7;
+  font-size: 14px;
+}
+.bubble {
+  border-radius: 18px;
+  padding: 13px 14px;
+  line-height: 1.65;
+  font-size: 14px;
+}
+.bubble.user {
+  align-self: flex-end;
+  background: #daf8e8;
+  color: #0f5136;
+  max-width: 86%;
+}
+.bubble.ai {
+  background: #fff;
+  border: 1px solid rgba(15,40,70,0.09);
+  color: #21354a;
+}
+.section {
+  width: min(1120px, calc(100vw - 32px));
+  margin: 0 auto;
+  padding: 70px 0;
+}
+.section h2 {
+  margin: 0;
+  font-size: clamp(28px, 4vw, 44px);
+  line-height: 1.18;
+}
+.section-lead {
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.8;
+  margin: 14px 0 0;
+  max-width: 760px;
+}
+.cards {
+  margin-top: 28px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0,1fr));
+  gap: 16px;
+}
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 22px;
+  min-height: 190px;
+}
+.card-icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--soft);
+  font-size: 24px;
+  margin-bottom: 16px;
+}
+.card h3 {
+  margin: 0;
+  font-size: 19px;
+}
+.card p {
+  color: var(--muted);
+  line-height: 1.8;
+  margin: 10px 0 0;
+  font-size: 14px;
+}
+.band {
+  background: #10223d;
+  color: #fff;
+}
+.band .section-lead,
+.band .card p { color: rgba(255,255,255,0.68); }
+.band .card {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.12);
+}
+.band .card-icon { background: rgba(255,255,255,0.1); }
+.cta {
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  gap: 28px;
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  padding: 28px;
+}
+.cta h2 { margin-bottom: 12px; }
+.cta p {
+  color: var(--muted);
+  line-height: 1.8;
+}
+.qr {
+  text-align: center;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 16px;
+  background: #f8fbfa;
+}
+.qr img {
+  width: 190px;
+  height: 190px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto 10px;
+}
+footer {
+  border-top: 1px solid var(--line);
+  padding: 28px 0;
+  color: var(--muted);
+}
+.footer-inner {
+  width: min(1120px, calc(100vw - 32px));
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 13px;
+}
+@media (max-width: 860px) {
+  .nav-inner { min-height: 62px; }
+  .nav-link { display: none; }
+  .hero { grid-template-columns: 1fr; min-height: auto; padding-top: 34px; }
+  .phone-wrap { order: -1; }
+  .phone { max-width: 320px; }
+  .hero-points, .cards, .cta { grid-template-columns: 1fr; }
+  .section { padding: 48px 0; }
+  .qr { width: min(260px, 100%); }
+}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="official.html" aria-label="华伴官网">
+      <img src="assets/brand/huaban-logo-v1.png" alt="华伴 logo">
+      <span>华伴</span>
+    </a>
+    <div class="nav-actions">
+      <a class="nav-link" href="#life">生活</a>
+      <a class="nav-link" href="#business">事业</a>
+      <a class="nav-link" href="#partner">合作</a>
+      <a class="nav-link" href="partner-recruit.html">招募</a>
+      <a class="btn" href="index.html">打开 AI</a>
+      <a class="btn primary" href="index.html">领养华伴 AI</a>
+    </div>
+  </div>
+</nav>
+
+<main>
+  <section class="hero">
+    <div>
+      <div class="eyebrow">海外华人 AI 生活管家 · 事业助手</div>
+      <h1>华伴，不止是陪你聊天，还能按照指示做事。</h1>
+      <p class="hero-copy">人在海外，生活琐事、生意推广、情感倾诉、出行安排和本地资源寻找，都可以先跟华伴聊聊。华伴会帮你整理需求、判断重点、推进下一步。</p>
+      <div class="hero-actions">
+        <a class="btn primary" href="index.html">立即体验华伴 AI</a>
+        <a class="btn" href="#what">看看能做什么</a>
+      </div>
+      <div class="hero-points" aria-label="华伴核心价值">
+        <div class="point"><strong>生活跟我聊</strong><span>繁琐交给我，还自己一个高品质生活。</span></div>
+        <div class="point"><strong>生意跟我聊</strong><span>让更多真正需要你的人找到你。</span></div>
+        <div class="point"><strong>情感跟我聊</strong><span>能当树洞，也能当参谋。</span></div>
+      </div>
+    </div>
+    <div class="phone-wrap">
+      <div class="phone" aria-label="华伴 AI 对话预览">
+        <div class="screen">
+          <div class="phone-head"><span>9:41</span><span>5G 100%</span></div>
+          <div class="ai-card">
+            <img src="assets/brand/huaban-logo-v1.png" alt="华伴">
+            <strong>你好，我是你的华伴 AI。</strong>
+            <p>定义自己的人生。有事先跟我说，我帮你整理清楚。</p>
+          </div>
+          <div class="bubble user">我想找个靠谱水管工，中英文都行。</div>
+          <div class="bubble ai">收到。我先帮你整理时间、地点、任务和预算，再给你一张确认卡。</div>
+          <div class="bubble user">我是司机，也想让更多人找到我。</div>
+          <div class="bubble ai">生意跟我聊。我帮你整理服务内容，让更多真正需要的人找到你。</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="what">
+    <h2>华伴能够做什么</h2>
+    <p class="section-lead">用户看到的是一个 AI。复杂的信息整理、资源匹配、确认卡和后续推进，交给华伴在背后完成。</p>
+    <div class="cards">
+      <article class="card" id="life">
+        <div class="card-icon">🏠</div>
+        <h3>海外生活帮手</h3>
+        <p>接送机、包车、维修、搬家、跑腿、翻译、本地咨询、餐饮外卖，遇到生活问题先告诉华伴。</p>
+      </article>
+      <article class="card">
+        <div class="card-icon">🧭</div>
+        <h3>出行与安排</h3>
+        <p>从机场接送、包车旅游，到行程计划和提醒，华伴帮你把时间、地点、任务和预算整理清楚。</p>
+      </article>
+      <article class="card">
+        <div class="card-icon">💬</div>
+        <h3>情感陪伴与参谋</h3>
+        <p>心里有事可以说，拿不定主意也可以聊。华伴能当树洞，也能帮你一起分析选择。</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="section" id="business">
+      <h2>做生意，也可以跟华伴聊</h2>
+      <p class="section-lead">华伴希望让需要的人遇见能提供的人。司机、餐馆、外卖员、会计、电工、翻译、代购、商家和本地服务者，都可以把自己的服务说清楚。</p>
+      <div class="cards">
+        <article class="card">
+          <div class="card-icon">🎬</div>
+          <h3>推广视频</h3>
+          <p>用户可以用手机里的视频，配上华伴整理的推广文案，轻量转发自己的生意和服务。</p>
+        </article>
+        <article class="card">
+          <div class="card-icon">🤝</div>
+          <h3>真实客户连接</h3>
+          <p>华伴不是让你刷广告，而是帮助你把服务内容、区域、资质和联系方式整理给真正需要的人。</p>
+        </article>
+        <article class="card">
+          <div class="card-icon">✨</div>
+          <h3>去中心化，不抽佣</h3>
+          <p>面向服务者和商家，华伴强调连接、信用和效率。服务质量、费用和履约由双方确认。</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="partner">
+    <h2>海外城市与资源合作</h2>
+    <p class="section-lead">华伴正在从墨尔本开始，逐步连接全球海外华人城市。欢迎有本地资源、华人社群、商家服务、推广能力或工具能力的人参与共建。</p>
+    <div class="cards">
+      <article class="card">
+        <div class="card-icon">🌏</div>
+        <h3>城市合伙</h3>
+        <p>一起整理当地华人需求、可靠服务、商家资源和推广入口，服务更多海外华人。</p>
+      </article>
+      <article class="card">
+        <div class="card-icon">🧩</div>
+        <h3>资源合作</h3>
+        <p>司机、餐饮、维修、法律、税务、配送、商品和本地服务，都可以成为华伴能力的一部分。</p>
+      </article>
+      <article class="card">
+        <div class="card-icon">🛡️</div>
+        <h3>规则与可信</h3>
+        <p>华伴坚持贡献留痕、规则先行、后台监督，不承诺固定收益，不做资金盘，只看真实贡献。</p>
+      </article>
+    </div>
+    <div class="hero-actions" style="margin-top:22px;">
+      <a class="btn primary" href="partner-recruit.html?ref=official_partner">查看合伙人招募</a>
+      <a class="btn" href="index.html?ref=partner_intro">先体验华伴 AI</a>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="cta">
+      <div>
+        <h2>快来领养你的华伴 AI</h2>
+        <p>华伴开始公测。欢迎体验，也欢迎狠狠吐槽。你只管说出心愿，华伴会帮你整理、判断、推进。</p>
+        <div class="hero-actions">
+          <a class="btn primary" href="index.html">打开华伴 AI</a>
+          <a class="btn" href="promo-video.html?from=user">做我的推广视频</a>
+        </div>
+      </div>
+      <div class="qr">
+        <img src="assets/brand/huaban-qr-logo.png" alt="华伴二维码">
+        <strong>扫码体验华伴</strong>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="footer-inner">
+    <span>华伴 Huaban · 海外华人生活事业好帮手</span>
+    <span>huabanapp.com</span>
+  </div>
+</footer>
+</body>
+</html>

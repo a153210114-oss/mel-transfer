@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>华伴推广视频</title>
+<style>
+:root {
+  --bg: #07111f;
+  --panel: #101b2d;
+  --panel2: #16243a;
+  --line: rgba(148, 163, 184, 0.24);
+  --text: #f8fafc;
+  --muted: #94a3b8;
+  --green: #16c784;
+  --cyan: #22d3ee;
+  --gold: #facc15;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 12% 10%, rgba(34, 211, 238, 0.18), transparent 28%),
+    radial-gradient(circle at 88% 4%, rgba(22, 199, 132, 0.16), transparent 30%),
+    linear-gradient(160deg, #07111f 0%, #0b1728 58%, #07111f 100%);
+}
+button, textarea { font: inherit; }
+.page {
+  width: min(1120px, calc(100vw - 28px));
+  margin: 0 auto;
+  padding: 22px 0 34px;
+}
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.brand img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  border-radius: 12px;
+  background: #fff;
+}
+h1 {
+  margin: 0;
+  font-size: 22px;
+  letter-spacing: 0;
+}
+.sub {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+.actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.btn {
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-weight: 800;
+}
+.btn.primary {
+  border-color: rgba(22, 199, 132, 0.64);
+  background: linear-gradient(135deg, #0ea56f, #22d3ee);
+  color: #04140e;
+}
+.grid {
+  display: grid;
+  grid-template-columns: 390px 1fr;
+  gap: 18px;
+  align-items: start;
+}
+.stage, .panel {
+  background: rgba(16, 27, 45, 0.84);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  overflow: hidden;
+}
+.stage {
+  padding: 18px;
+  position: sticky;
+  top: 18px;
+}
+.phone {
+  aspect-ratio: 9 / 16;
+  border-radius: 34px;
+  padding: 12px;
+  background: #050b14;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 26px 64px rgba(0, 0, 0, 0.38);
+}
+.screen {
+  height: 100%;
+  border-radius: 26px;
+  position: relative;
+  overflow: hidden;
+  background: #0f172a;
+}
+.scene-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+}
+.scene-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(2, 6, 23, 0.06), rgba(2, 6, 23, 0.18) 42%, rgba(2, 6, 23, 0.78));
+}
+.status {
+  position: absolute;
+  top: 14px;
+  left: 18px;
+  right: 18px;
+  display: flex;
+  justify-content: space-between;
+  color: #fff;
+  font-weight: 900;
+  z-index: 2;
+  text-shadow: 0 1px 10px rgba(0,0,0,0.35);
+}
+.logo-chip {
+  position: absolute;
+  top: 48px;
+  left: 18px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.9);
+  color: #0f172a;
+  border-radius: 14px;
+  padding: 7px 10px;
+  font-weight: 900;
+}
+.logo-chip img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+.scene-content {
+  position: absolute;
+  inset: auto 18px 22px 18px;
+  z-index: 2;
+}
+.kicker {
+  display: inline-flex;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(52, 211, 153, 0.92);
+  color: #022c22;
+  font-size: 12px;
+  font-weight: 900;
+  margin-bottom: 10px;
+}
+.subtitle {
+  margin: 0;
+  color: #fff;
+  font-size: 29px;
+  line-height: 1.16;
+  text-shadow: 0 2px 16px rgba(0,0,0,0.38);
+}
+.narration {
+  margin: 12px 0 0;
+  color: rgba(255,255,255,0.88);
+  font-size: 14px;
+  line-height: 1.72;
+  text-shadow: 0 2px 14px rgba(0,0,0,0.3);
+}
+.qr-card {
+  margin-top: 16px;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  background: rgba(255,255,255,0.96);
+  color: #0f172a;
+  border-radius: 18px;
+  padding: 14px;
+}
+.qr-card img {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+  border-radius: 10px;
+  background: #fff;
+}
+.qr-card strong {
+  display: block;
+  font-size: 18px;
+  margin-bottom: 6px;
+}
+.progress-wrap {
+  margin-top: 16px;
+}
+.progress {
+  height: 8px;
+  background: rgba(255,255,255,0.12);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.progress span {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, var(--green), var(--cyan));
+}
+.time-row {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.panel-head {
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+.panel-title {
+  font-size: 16px;
+  font-weight: 900;
+}
+.pill {
+  color: #042f2e;
+  background: var(--gold);
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 900;
+}
+.panel-body {
+  padding: 18px;
+}
+.tagline {
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(34, 211, 238, 0.28);
+  background: rgba(34, 211, 238, 0.08);
+  color: #dffaff;
+  line-height: 1.75;
+  font-weight: 800;
+  margin-bottom: 14px;
+}
+.scene-list {
+  display: grid;
+  gap: 10px;
+}
+.scene-item {
+  display: grid;
+  grid-template-columns: 36px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.04);
+  padding: 12px;
+  cursor: pointer;
+}
+.scene-item.active {
+  border-color: rgba(34, 211, 238, 0.62);
+  background: rgba(34, 211, 238, 0.1);
+}
+.num {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: rgba(255,255,255,0.08);
+  color: var(--cyan);
+  font-weight: 900;
+}
+.scene-item strong {
+  display: block;
+  font-size: 14px;
+}
+.scene-item span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 4px;
+}
+.script {
+  margin-top: 14px;
+  width: 100%;
+  min-height: 300px;
+  resize: vertical;
+  border: 1px solid var(--line);
+  background: rgba(2, 6, 23, 0.42);
+  color: #dbeafe;
+  border-radius: 12px;
+  padding: 14px;
+  line-height: 1.7;
+}
+.note {
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+.user-video-tool {
+  display: none;
+  margin-bottom: 14px;
+  border: 1px solid rgba(34, 211, 238, 0.28);
+  background: rgba(34, 211, 238, 0.07);
+  border-radius: 14px;
+  padding: 14px;
+}
+.user-video-tool.show { display: block; }
+.tool-title {
+  font-size: 14px;
+  font-weight: 950;
+  margin-bottom: 6px;
+}
+.tool-copy {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.65;
+  margin-bottom: 12px;
+}
+.video-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.file-label {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid rgba(22, 199, 132, 0.58);
+  background: linear-gradient(135deg, rgba(22, 199, 132, 0.25), rgba(34, 211, 238, 0.18));
+  color: var(--text);
+  border-radius: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-weight: 900;
+}
+.file-label input { display: none; }
+.video-preview {
+  display: none;
+  margin-top: 12px;
+  width: 100%;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: #020617;
+  max-height: 360px;
+}
+.video-preview.show { display: block; }
+.share-copy {
+  margin-top: 12px;
+  width: 100%;
+  min-height: 112px;
+  resize: vertical;
+  border: 1px solid var(--line);
+  background: rgba(2, 6, 23, 0.42);
+  color: #dbeafe;
+  border-radius: 12px;
+  padding: 12px;
+  line-height: 1.65;
+}
+@media (max-width: 900px) {
+  .grid { grid-template-columns: 1fr; }
+  .stage { position: static; }
+  .phone { max-width: 390px; margin: 0 auto; }
+}
+@media (max-width: 560px) {
+  .page { width: min(100vw - 20px, 1120px); padding-top: 12px; }
+  .topbar { flex-direction: column; align-items: flex-start; }
+  .actions { width: 100%; }
+  .actions .btn { flex: 1; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="topbar">
+    <div class="brand">
+      <img src="assets/brand/huaban-logo-v1.png" alt="华伴">
+      <div>
+        <h1 id="pageTitle">华伴宣传片脚本</h1>
+        <p class="sub" id="pageSub">18 秒主推版 · 无需配乐 · 生活 / 生意 / 情感 / 扫码领养</p>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn" id="backBtn" onclick="goBack()">回后台</button>
+      <button class="btn" onclick="copyScript()">复制脚本</button>
+      <button class="btn primary" id="playBtn" onclick="togglePlay()">播放预览</button>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="stage">
+      <div class="phone">
+        <div class="screen">
+          <div class="scene-bg" id="sceneBg"></div>
+          <div class="status"><span>9:41</span><span>5G 100%</span></div>
+          <div class="logo-chip">
+            <img src="assets/brand/huaban-logo-v1.png" alt="">
+            <span>华伴 AI</span>
+          </div>
+          <div class="scene-content" id="sceneContent"></div>
+        </div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress"><span id="progress"></span></div>
+        <div class="time-row"><span id="timeNow">00:00</span><span>00:18</span></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title" id="panelTitle">脚本内容</div>
+          <p class="sub" id="panelSub">可直接复制给视频生成工具或剪辑工具。</p>
+        </div>
+        <span class="pill">18 秒</span>
+      </div>
+      <div class="panel-body">
+        <div class="tagline" id="tagline"></div>
+        <div class="user-video-tool" id="userVideoTool">
+          <div class="tool-title">用手机里的视频推广自己</div>
+          <div class="tool-copy">选择相册里的视频，华伴帮你配一段推广文案。视频只在你的手机浏览器里预览，除非你主动分享，不会被自动上传。</div>
+          <div class="video-actions">
+            <label class="file-label">选择视频
+              <input id="businessVideoInput" type="file" accept="video/*" onchange="handleBusinessVideo(event)">
+            </label>
+            <button class="btn" onclick="copyUserVideoCopy()">复制文案</button>
+            <button class="btn primary" onclick="shareBusinessVideo()">转发视频</button>
+          </div>
+          <video class="video-preview" id="businessVideoPreview" controls playsinline></video>
+          <textarea class="share-copy" id="businessVideoCopy"></textarea>
+        </div>
+        <div class="scene-list" id="sceneList"></div>
+        <textarea class="script" id="scriptBox" readonly></textarea>
+        <div class="note">二维码默认使用当前华伴二维码。后续如果要接视频生成工具，直接使用每幕的 visualPrompt 即可。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const HUABAN_VIDEO_SCRIPT = {
+  tagline: "生活跟我聊，繁琐交给我，还自己一个高品质生活。生意跟我聊，让更多需要你的人找到你。情感跟我聊，能当树洞也能当参谋",
+  bgmSuggestion: "无需配乐 (不添加背景音乐)",
+  scenes: [
+    {
+      id: 1,
+      duration: 4.5,
+      subtitle: "生活跟我聊，繁琐交给我，还自己一个高品质生活",
+      narration: "人在海外，琐事太累？生活跟我聊，繁琐交给我。帮您轻松打理一切，还自己一个高品质生活。",
+      visualPrompt: "Cinematic transition from a cluttered table with overseas bills and documents to a pristine modern living room bathed in golden sunlight, relaxing green plants, and a hot steaming cup of tea.",
+      bg: "linear-gradient(135deg,#fef3c7,#064e3b)"
+    },
+    {
+      id: 2,
+      duration: 4.5,
+      subtitle: "生意跟我聊，让更多需要你的人找到你",
+      narration: "做生意，愁客源？生意跟我聊。直接面对真实客户，让更多真正需要你的人轻松找到你。",
+      visualPrompt: "High-end dynamic neon-accented maps graphic with pulsing locator pins. A digital mock-up of customer requests matching direct with trustworthy service providers instantly.",
+      bg: "linear-gradient(135deg,#0f172a,#0e7490)"
+    },
+    {
+      id: 3,
+      duration: 4.5,
+      subtitle: "情感跟我聊，能当树洞也能当参谋",
+      narration: "寂寞、迷茫，无人诉说？情感跟我聊。能当守护隐私的秘密树洞，也能当出谋划策的聪明参谋。",
+      visualPrompt: "Cozy bedroom interior at night, soft starry sky visible through the window, warm fairy lights, a smartphone showing heartwarming chat bubble interactions, cozy aesthetic, slow pan.",
+      bg: "linear-gradient(135deg,#312e81,#0f172a)"
+    },
+    {
+      id: 4,
+      duration: 4.5,
+      subtitle: "华伴：海外华人生活管家 • 事业助手 • 贴心伴侣",
+      narration: "用华伴，做自己。有趣、更有用。现在就扫码领养您的专属华伴 AI 吧！",
+      visualPrompt: "Sleek and polished branding card with the name '华伴', glowing neon green outlines, and a clean high-contrast scan QR code in the center, premium animation style.",
+      bg: "linear-gradient(135deg,#ecfeff,#dcfce7)",
+      final: true
+    }
+  ]
+};
+
+const qrPath = "assets/brand/huaban-qr-logo.png";
+let current = 0;
+let playing = false;
+let timer = null;
+const fromUser = new URLSearchParams(location.search).get("from") === "user";
+let selectedBusinessVideoFile = null;
+
+function applyModeText() {
+  if (!fromUser) return;
+  document.getElementById("pageTitle").textContent = "我的推广视频";
+  document.getElementById("pageSub").textContent = "把自己的生意、服务和作品整理成短视频脚本。";
+  document.getElementById("panelTitle").textContent = "我的视频脚本";
+  document.getElementById("panelSub").textContent = "先用华伴模板生成，后续可以保存自己的版本。";
+  document.getElementById("backBtn").textContent = "回华伴";
+  document.getElementById("userVideoTool").classList.add("show");
+  document.getElementById("businessVideoCopy").value = userVideoShareCopy();
+}
+
+function goBack() {
+  location.href = fromUser ? "index.html" : "admin.html#outreach";
+}
+
+function totalDuration() {
+  return HUABAN_VIDEO_SCRIPT.scenes.reduce((sum, item) => sum + item.duration, 0);
+}
+
+function activeScene() {
+  let cursor = 0;
+  for (let i = 0; i < HUABAN_VIDEO_SCRIPT.scenes.length; i++) {
+    cursor += HUABAN_VIDEO_SCRIPT.scenes[i].duration;
+    if (current < cursor) return { scene: HUABAN_VIDEO_SCRIPT.scenes[i], index: i };
+  }
+  return { scene: HUABAN_VIDEO_SCRIPT.scenes[HUABAN_VIDEO_SCRIPT.scenes.length - 1], index: HUABAN_VIDEO_SCRIPT.scenes.length - 1 };
+}
+
+function render() {
+  const { scene, index } = activeScene();
+  document.getElementById("sceneBg").style.background = scene.bg;
+  document.getElementById("sceneContent").innerHTML = scene.final ? `
+    <div class="kicker">扫码领养</div>
+    <h2 class="subtitle" style="color:#0f172a;text-shadow:none;">${scene.subtitle}</h2>
+    <p class="narration" style="color:#334155;text-shadow:none;">${scene.narration}</p>
+    <div class="qr-card">
+      <img src="${qrPath}" alt="华伴二维码">
+      <div><strong>快来领养华伴 AI</strong><span>有趣，更有用<br>huabanapp.com</span></div>
+    </div>
+  ` : `
+    <div class="kicker">第 ${scene.id} 幕</div>
+    <h2 class="subtitle">${scene.subtitle}</h2>
+    <p class="narration">${scene.narration}</p>
+  `;
+  document.getElementById("progress").style.width = `${Math.min(100, current / totalDuration() * 100)}%`;
+  document.getElementById("timeNow").textContent = formatTime(current);
+  renderSceneList(index);
+}
+
+function renderSceneList(activeIndex) {
+  document.getElementById("sceneList").innerHTML = HUABAN_VIDEO_SCRIPT.scenes.map((scene, index) => `
+    <div class="scene-item ${index === activeIndex ? "active" : ""}" onclick="jumpTo(${index})">
+      <div class="num">${scene.id}</div>
+      <div>
+        <strong>${scene.subtitle}</strong>
+        <span>${scene.duration} 秒 · ${scene.narration}</span>
+      </div>
+      <span class="pill">${index === activeIndex ? "预览中" : "场景"}</span>
+    </div>
+  `).join("");
+}
+
+function makeScriptText() {
+  return `Tagline:
+${HUABAN_VIDEO_SCRIPT.tagline}
+
+BGM:
+${HUABAN_VIDEO_SCRIPT.bgmSuggestion}
+
+${HUABAN_VIDEO_SCRIPT.scenes.map(scene => `Scene ${scene.id}
+Duration: ${scene.duration}s
+Subtitle: ${scene.subtitle}
+Narration: ${scene.narration}
+Visual Prompt: ${scene.visualPrompt}`).join("\n\n")}`;
+}
+
+function userVideoShareCopy() {
+  return `这是我的服务/作品介绍。
+
+生活跟我聊，繁琐交给我。
+生意跟我聊，让更多需要的人找到你。
+
+华伴 AI 可以帮你整理需求、介绍服务、连接真正需要的人。
+公测入口：https://www.huabanapp.com/`;
+}
+
+function handleBusinessVideo(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  selectedBusinessVideoFile = file;
+  const preview = document.getElementById("businessVideoPreview");
+  preview.src = URL.createObjectURL(file);
+  preview.classList.add("show");
+  document.getElementById("businessVideoCopy").value = `我刚整理了一条推广视频：${file.name}
+
+${userVideoShareCopy()}`;
+}
+
+function copyUserVideoCopy() {
+  const text = document.getElementById("businessVideoCopy").value || userVideoShareCopy();
+  navigator.clipboard.writeText(text).then(() => alert("推广文案已复制"));
+}
+
+async function shareBusinessVideo() {
+  const text = document.getElementById("businessVideoCopy").value || userVideoShareCopy();
+  if (selectedBusinessVideoFile && navigator.canShare && navigator.canShare({ files: [selectedBusinessVideoFile] })) {
+    await navigator.share({
+      title: "我的华伴推广视频",
+      text,
+      files: [selectedBusinessVideoFile]
+    }).catch(() => {});
+    return;
+  }
+  if (navigator.share) {
+    await navigator.share({
+      title: "我的华伴推广视频",
+      text,
+      url: "https://www.huabanapp.com/"
+    }).catch(() => {});
+    return;
+  }
+  copyUserVideoCopy();
+  alert("这个浏览器不支持直接分享视频，已复制推广文案。你可以手动转发视频并粘贴文案。");
+}
+
+function togglePlay() {
+  playing = !playing;
+  document.getElementById("playBtn").textContent = playing ? "暂停预览" : "播放预览";
+  if (playing) {
+    timer = setInterval(() => {
+      current += 0.5;
+      if (current > totalDuration()) current = 0;
+      render();
+    }, 500);
+  } else {
+    clearInterval(timer);
+  }
+}
+
+function jumpTo(index) {
+  current = HUABAN_VIDEO_SCRIPT.scenes.slice(0, index).reduce((sum, scene) => sum + scene.duration, 0);
+  render();
+}
+
+function copyScript() {
+  navigator.clipboard.writeText(document.getElementById("scriptBox").value).then(() => alert("脚本已复制"));
+}
+
+function formatTime(sec) {
+  const m = Math.floor(sec / 60).toString().padStart(2, "0");
+  const s = Math.floor(sec % 60).toString().padStart(2, "0");
+  return `${m}:${s}`;
+}
+
+document.getElementById("tagline").textContent = HUABAN_VIDEO_SCRIPT.tagline;
+document.getElementById("scriptBox").value = makeScriptText();
+applyModeText();
+render();
+</script>
+</body>
+</html>

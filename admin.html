@@ -3,6 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="assets/brand/icon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/brand/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="华伴后台">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0f1a">
 <title>我的后台 · 华伴</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -134,9 +141,9 @@ body {
   .sidebar-bottom{display:none;}
   .main{margin-left:0;}
   .topbar{position:relative;padding:14px;align-items:flex-start;gap:10px;}
-  .topbar-actions{flex-wrap:wrap;justify-content:flex-end;}
-  .topbar-actions .input{max-width:46vw;}
-  .topbar-actions .btn{padding:8px 12px;}
+  .topbar-actions{flex-wrap:wrap;justify-content:flex-start;width:100%;}
+  .topbar-actions .input{max-width:100%;width:100%!important;}
+  .topbar-actions .btn{padding:8px 12px;flex:1 1 calc(50% - 8px);min-width:128px;}
   .content{padding:14px;}
   .stats-grid,.admin-quick-grid{grid-template-columns:repeat(2,1fr);gap:10px;}
   .admin-quick-card{min-height:104px;padding:14px;}
@@ -919,11 +926,13 @@ body {
         <option value="blocked">不可发布</option>
       </select>
       <button class="btn" onclick="focusPromoRewrite()">✍️ 推广改写</button>
-      <button class="btn btn-ghost" onclick="loadOutreachTasks()">↻ 刷新</button>
+      <button class="btn" onclick="window.location.href='promo-video.html'">🎬 视频脚本</button>
+      <button class="btn btn-ghost" onclick="loadOutreachTasks(true)">↻ 刷新</button>
     </div>
   </div>
   <div class="content">
     <div class="card">
+      <div id="outreach-refresh-status" style="display:none;margin-bottom:12px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:rgba(0,212,255,.08);color:var(--text2);font-size:12px;"></div>
       <div class="promo-rewrite-grid" id="promo-rewrite-panel">
         <div>
           <div style="font-size:13px;font-weight:800;color:var(--text);margin-bottom:8px;">推广原文</div>
@@ -953,6 +962,9 @@ body {
       </div>
       <div class="card-body" style="font-size:12px;color:var(--text2);line-height:1.7;border-bottom:1px solid var(--border);padding-bottom:16px;margin-bottom:8px;">
         Agent 可以自动挑入口、生成推广文案和落地页参数；但微信群、Facebook 群、论坛等默认需要人工确认。只有自有渠道或明确授权入口才能自动发布。
+      </div>
+      <div class="card-body" style="padding:12px 0 16px;border-bottom:1px solid var(--border);margin-bottom:8px;">
+        <button class="btn btn-primary" onclick="window.location.href='promo-video.html'" style="width:100%;">🎬 打开视频脚本</button>
       </div>
       <div style="overflow-x:auto;">
         <table class="table">
@@ -1561,17 +1573,34 @@ function jsString(value) {
 const AI_TRAINING_KEY = 'huaban_ai_training_queue';
 let selectedTrainingId = null;
 
+const BUILTIN_TRAINING_ITEMS = [
+  {
+    id: 'builtin-partner-smart-contract-direct-client-20260705',
+    question: '服务者/商家问：有没有合作方式、负责人联系？',
+    context: '来自微信群沟通截图：对方问有没有合作方式负责人联系；推荐话术应强调智能合约、无需中间联系、客户直接对接、不抽佣。',
+    source: 'coach-script',
+    status: 'trained',
+    coachAnswer: '可以这样回答：有合作方式。华伴不是中间抽佣平台，而是让你的产品和服务进入华伴的后台工具体系。用户需要时，华伴会按需求帮他找到合适资源；双方通过确认卡和智能合约形成约定，客户可以直接联系你或与你确认服务，华伴不抽佣。你只需要提供产品说明、服务范围、联系方式和必要资质，我们审核后把它接入华伴。',
+    personaNote: '话术要短、稳、像人说话。不要说平台功能、插件、板块。重点说：智能合约、不用找负责人反复联系、直接对接客户、不抽佣、放产品和联系方式即可。',
+    createdAt: '2026-07-05T13:05:00+10:00',
+    updatedAt: '2026-07-05T13:05:00+10:00'
+  }
+];
+
 function readTrainingItems() {
   try {
     const parsed = JSON.parse(localStorage.getItem(AI_TRAINING_KEY) || '[]');
-    return Array.isArray(parsed) ? parsed : [];
+    const items = Array.isArray(parsed) ? parsed : [];
+    const ids = new Set(items.map(item => item.id));
+    return [...BUILTIN_TRAINING_ITEMS.filter(item => !ids.has(item.id)), ...items];
   } catch(e) {
-    return [];
+    return [...BUILTIN_TRAINING_ITEMS];
   }
 }
 
 function writeTrainingItems(items) {
-  localStorage.setItem(AI_TRAINING_KEY, JSON.stringify(items));
+  const builtinIds = new Set(BUILTIN_TRAINING_ITEMS.map(item => item.id));
+  localStorage.setItem(AI_TRAINING_KEY, JSON.stringify(items.filter(item => !builtinIds.has(item.id))));
 }
 
 function trainingBadge(status) {
@@ -1590,6 +1619,7 @@ function trainingSourceLabel(source) {
     'voice-error': '语音对话',
     'weak-reply': '回答偏弱',
     'more-menu': '未开通入口',
+    'coach-script': '话术提炼',
     manual: '手动添加'
   };
   return map[source] || '用户问题';
@@ -2401,9 +2431,45 @@ const OUTREACH_LEVEL_LABELS={
 
 function defaultOutreachTasks(){
   return [
-    {title:'墨尔本用户公测招募',source_name:'微信朋友圈/微信群人工发布',city:'Melbourne',country:'Australia',audience:'user',channel_level:'B_manual_review',status:'needs_review',copy_short:'快来领你的 AI，有趣又有用。华伴是你的生活帮手、工作助理和休闲陪伴。有事直接说，它会帮你整理需求，找到靠谱的人。',landing_url:'https://www.huabanapp.com/?ref=wechat_melbourne_beta',compliance_notes:'微信群不能自动群发，只能人工选择合适群并遵守群规。'},
-    {title:'墨尔本 Facebook 华人群推广',source_name:'Facebook 华人群人工发布',city:'Melbourne',country:'Australia',audience:'mixed',channel_level:'B_manual_review',status:'needs_review',copy_short:'在墨尔本有事不用到处问。把需求告诉华伴 AI，它会帮你整理、搜索公开线索、核验来源，再匹配可能靠谱的人。',landing_url:'https://www.huabanapp.com/?ref=facebook_melbourne_beta',compliance_notes:'不自动加群，不自动发帖。'},
-    {title:'海外华人服务者招募',source_name:'服务者招募人工发布',city:'Global',country:'Global',audience:'supplier',channel_level:'B_manual_review',status:'needs_review',copy_short:'如果你在海外为华人提供接送机、包车、翻译、律师、会计、电工、跑腿或本地生活服务，欢迎加入华伴城市服务网络。',landing_url:'https://www.huabanapp.com/?ref=supplier_recruit',compliance_notes:'专业服务必须进入资质核验和人工审核。'}
+    {
+      title:'华伴公测招募',
+      source_name:'微信朋友圈/微信群人工发布',
+      city:'Global',
+      country:'Global',
+      audience:'user',
+      channel_level:'B_manual_review',
+      status:'needs_review',
+      copy_short:'华伴开始公测啦。它不是普通问答 AI，而是一个能帮你办事的小伙伴。你只管说出心愿，华伴会帮你整理、判断、推进。',
+      copy_long:'华伴开始公测啦。\n\n它不是普通问答 AI，而是一个能帮你办事的小伙伴。\n\n跟我聊，生活的繁琐交给我，还自己一个高品质生活。\n跟我聊，生意的困难变轻松，让更多需要你的人找到你。\n跟我聊，心里的话有人接住，能当树洞，也能当参谋。\n\n你只管说出心愿，华伴会帮你整理、判断、推进。\n\n公测入口：https://www.huabanapp.com/\n欢迎试用，也欢迎狠狠吐槽。',
+      landing_url:'https://www.huabanapp.com/?ref=wechat_beta',
+      compliance_notes:'微信群不能自动群发，只能人工选择合适群并遵守群规。'
+    },
+    {
+      title:'海外华人生活事业帮手',
+      source_name:'Facebook 华人群人工发布',
+      city:'Global',
+      country:'Global',
+      audience:'mixed',
+      channel_level:'B_manual_review',
+      status:'needs_review',
+      copy_short:'人在海外，生活和事业遇到事，不用被信息带着跑。把心愿告诉华伴，它会帮你整理、判断、推进。',
+      copy_long:'人在海外，生活和事业遇到事，不用被信息带着跑。\n\n把心愿告诉华伴，它会帮你整理、判断、推进。\n生活的繁琐、生意的困难、心里的话，都可以先跟华伴聊聊。\n\n公测入口：https://www.huabanapp.com/',
+      landing_url:'https://www.huabanapp.com/?ref=facebook_beta',
+      compliance_notes:'不自动加群，不自动发帖。'
+    },
+    {
+      title:'海外服务者/商家招募',
+      source_name:'服务者招募人工发布',
+      city:'Global',
+      country:'Global',
+      audience:'supplier',
+      channel_level:'B_manual_review',
+      status:'needs_review',
+      copy_short:'去中心化，不抽佣。如果你在海外提供商品、餐饮、配送或服务，华伴可以帮你被更多需要的人看见。',
+      copy_long:'去中心化，不抽佣。\n\n如果你在海外提供商品、餐饮、配送或服务，华伴可以帮你被更多需要的人看见。\n\n你告诉华伴你能提供什么，它会帮你整理服务内容，让更多真正需要的人找到你。\n\n入口：https://www.huabanapp.com/',
+      landing_url:'https://www.huabanapp.com/?ref=supplier_recruit',
+      compliance_notes:'专业服务必须进入资质核验和人工审核。'
+    }
   ];
 }
 
@@ -2466,9 +2532,9 @@ function rewritePromoCopy(){
     return pain&&sell?`- ${pain}：${sell}`:`- ${line}`;
   }).join('\n');
   const templates={
-    wechat:`华伴开始公测啦。\n\n它不是普通问答 AI，而是一个能帮你办事的小伙伴：\n${body}\n\n前台只有一个 AI，后台隐藏出行、外卖、商城、社交媒体四大板块。你只管说心愿，华伴会通过互动收集信息、分析判断，再帮你推进。\n\n公测入口：${url}\n欢迎试用，也欢迎狠狠吐槽。`,
-    moments:`快来领你的华伴 AI。\n\n${painPoints.slice(0,3).map(line=>line.replace('→','，')).join('\n')}\n\n前台只有 AI，后台隐藏出行、外卖、商城、社交媒体四大板块。\n${url}`,
-    supplier:`去中心化，不抽佣。\n\n如果你在海外提供商品、餐饮、配送或服务，华伴可以帮你被更多需要的人看见。\n\n${body}\n\n华伴背后是出行、外卖、商城、社交媒体四大隐藏板块。你告诉华伴你能提供什么，它会先整理到供给侧，审核后再推荐给有真实需求的人。\n${url}`,
+    wechat:`华伴开始公测啦。\n\n它不是普通问答 AI，而是一个能帮你办事的小伙伴：\n${body}\n\n你只管说出心愿，华伴会帮你整理、判断、推进。生活、事业、情感，都可以先跟华伴聊聊。\n\n公测入口：${url}\n欢迎试用，也欢迎狠狠吐槽。`,
+    moments:`快来领你的华伴 AI。\n\n${painPoints.slice(0,3).map(line=>line.replace('→','，')).join('\n')}\n\n你只管说出心愿，华伴帮你整理、判断、推进。\n${url}`,
+    supplier:`去中心化，不抽佣。\n\n如果你在海外提供商品、餐饮、配送或服务，华伴可以帮你被更多需要的人看见。\n\n${body}\n\n你告诉华伴你能提供什么，它会帮你整理服务内容，让更多真正需要的人找到你。\n${url}`,
     driver:`去中心化，不抽佣。\n\n墨尔本司机/车队看这里。\n\n${body}\n\n如果你能接送机、包车、旅游用车或临时用车，华伴可以帮你连接更多真实需求。\n\n你告诉华伴车型、区域和联系方式，通过审核后就能开通司机端。\n${url}`,
     slogan:`快来领你的华伴 AI，有趣又有用。\n你只管说，华伴替你找人、找服务、找机会。\n${url}`
   };
@@ -2481,10 +2547,20 @@ function copyPromoRewrite(){
   navigator.clipboard?.writeText(text).then(()=>alert('已复制改写文案')).catch(()=>alert(text));
 }
 
-async function loadOutreachTasks(){
+function setOutreachStatus(message='', type='info'){
+  const el=document.getElementById('outreach-refresh-status');
+  if(!el)return;
+  if(!message){el.style.display='none';el.textContent='';return;}
+  el.style.display='block';
+  el.textContent=message;
+  el.style.color=type==='warn'?'var(--gold)':type==='ok'?'var(--green)':'var(--text2)';
+}
+
+async function loadOutreachTasks(showNotice=false){
   const filter=document.getElementById('outreach-filter')?.value||'';
   const tbody=document.getElementById('outreach-body');
   if(!tbody)return;
+  if(showNotice)setOutreachStatus('正在刷新推广任务...', 'info');
   tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:30px;">加载中...</td></tr>';
   let rows=[];
   let fallback=false;
@@ -2503,7 +2579,8 @@ async function loadOutreachTasks(){
   }
   window._outreachRows=rows;
   window._outreachCopyTexts=rows.map(row=>`${row.copy_long||row.copy_short}\n${row.landing_url||'https://www.huabanapp.com/'}`);
-  const banner=fallback?`<tr><td colspan="6" style="color:var(--gold);font-size:12px;padding:12px 16px;background:rgba(245,166,35,.08);">当前显示内置模板。执行 <code>workflows/outreach_campaign_schema_seed.sql</code> 后，这里会读取数据库推广任务。</td></tr>`:'';
+  if(showNotice)setOutreachStatus(fallback?'数据库推广任务暂未读取成功，当前显示新版内置模板。':'已刷新，正在显示数据库推广任务。', fallback?'warn':'ok');
+  const banner=fallback?`<tr><td colspan="6" style="color:var(--gold);font-size:12px;padding:12px 16px;background:rgba(245,166,35,.08);">当前显示新版内置模板。执行 <code>workflows/outreach_campaign_schema_seed.sql</code> 后，这里会读取数据库推广任务。</td></tr>`:'';
   tbody.innerHTML=banner+rows.map((row,index)=>{
     const level=OUTREACH_LEVEL_LABELS[row.channel_level]||row.channel_level||'-';
     const audience={user:'用户',supplier:'服务者',driver:'司机',professional:'专业服务者',mixed:'混合'}[row.audience]||row.audience||'-';

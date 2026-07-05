@@ -1,10 +1,13 @@
-const CACHE_NAME = 'huaban-mobile-shell-v3';
+const CACHE_NAME = 'huaban-mobile-shell-v4';
 const APP_SHELL = [
   '/',
   '/index.html',
   '/admin.html',
   '/manifest.json',
   '/assets/brand/huaban-logo-v1.png',
+  '/assets/brand/apple-touch-icon.png',
+  '/assets/brand/icon-192.png',
+  '/assets/brand/icon-512.png',
   '/assets/brand/huaban-qr-logo.png'
 ];
 
@@ -36,10 +39,10 @@ self.addEventListener('fetch', event => {
       fetch(request)
         .then(response => {
           const copy = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put('/index.html', copy));
+          caches.open(CACHE_NAME).then(cache => cache.put(url.pathname, copy));
           return response;
         })
-        .catch(() => caches.match('/index.html'))
+        .catch(() => caches.match(url.pathname).then(cached => cached || caches.match('/index.html')))
     );
     return;
   }
