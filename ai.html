@@ -8743,6 +8743,15 @@ function isIosDevice(){
   return /iphone|ipad|ipod/i.test(navigator.userAgent);
 }
 
+function isWeChatBrowser(){
+  return /micromessenger/i.test(navigator.userAgent);
+}
+
+function isSafariBrowser(){
+  const ua=navigator.userAgent;
+  return /safari/i.test(ua) && !/crios|fxios|edgios|micromessenger/i.test(ua);
+}
+
 function showInstallPrompt(fromIntro=false){
   if(isStandaloneApp())return;
   if(!fromIntro&&localStorage.getItem('huaban_install_dismissed')==='1')return;
@@ -8755,10 +8764,10 @@ function showInstallPrompt(fromIntro=false){
     <img src="assets/brand/huaban-logo-v1.png" alt="">
     <div class="install-copy">
       <strong>添加到手机桌面</strong>
-      <span>下次像 App 一样一秒打开华伴</span>
+      <span>${isIosDevice()?'按提示用 Safari 添加，下次像 App 一样打开':'下次像 App 一样一秒打开华伴'}</span>
     </div>
     <div class="install-actions">
-      <button class="install-primary" onclick="addToHome()">添加</button>
+      <button class="install-primary" onclick="addToHome()">${isIosDevice()?'查看步骤':'添加'}</button>
       <button class="install-close" onclick="hideInstallPromptForNow()" aria-label="暂时不添加">×</button>
     </div>`;
   chatArea.appendChild(card);
@@ -8796,9 +8805,20 @@ async function addToHome(){
 function showAddToHomeGuide(){
   document.getElementById('install-guide')?.remove();
   const ios=isIosDevice();
-  const steps=ios
-    ? ['点击 Safari 底部分享按钮', '选择“添加到主屏幕”', '点击右上角“添加”']
-    : ['点击浏览器右上角菜单', '选择“安装应用”或“添加到主屏幕”', '确认添加华伴'];
+  const wechat=isWeChatBrowser();
+  const safari=isSafariBrowser();
+  const steps=wechat
+    ? ['点击右上角“…”', '选择“在 Safari 中打开”或“在浏览器打开”', '再点分享按钮，选择“添加到主屏幕”']
+    : ios && safari
+      ? ['点击 Safari 底部分享按钮', '向下滑，选择“添加到主屏幕”', '点击右上角“添加”']
+      : ios
+        ? ['如果没有“添加到主屏幕”，先用 Safari 打开', '点击分享按钮', '选择“添加到主屏幕”并确认']
+        : ['点击浏览器右上角菜单', '选择“安装应用”或“添加到主屏幕”', '确认添加华伴'];
+  const tip=wechat
+    ? '当前在微信里。iPhone 需要先用 Safari 打开，才能添加到主屏幕。'
+    : ios
+      ? 'iPhone 需要通过 Safari 分享菜单添加，网页按钮不能自动完成。'
+      : '安卓浏览器如果支持安装，会出现系统安装确认。';
   const overlay=document.createElement('div');
   overlay.id='install-guide';
   overlay.className='install-overlay';
@@ -8808,7 +8828,7 @@ function showAddToHomeGuide(){
         <img src="assets/brand/huaban-logo-v1.png" alt="">
         <div>
           <div class="install-sheet-title">把华伴放到手机桌面</div>
-          <div class="install-sheet-sub">不用下载商店 App，下次直接点图标进入</div>
+          <div class="install-sheet-sub">${tip}</div>
         </div>
       </div>
       <div class="install-steps">
@@ -8818,7 +8838,7 @@ function showAddToHomeGuide(){
     </div>`;
   overlay.onclick=(event)=>{ if(event.target===overlay)overlay.remove(); };
   document.body.appendChild(overlay);
-  speak(ios?'点击分享按钮，选择添加到主屏幕':'点击浏览器菜单，选择安装应用或添加到主屏幕');
+  speak(wechat?'请先用 Safari 打开，再添加到主屏幕':ios?'点击分享按钮，选择添加到主屏幕':'点击浏览器菜单，选择安装应用或添加到主屏幕');
 }
 
 function logoutUser(){
