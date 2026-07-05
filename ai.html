@@ -8371,8 +8371,13 @@ async function acceptIncomingFriendCode(friendCode='',source='qr_open',cardBy=''
       fields:{friend, contribution_code:getFriendCode(), source_friend_code:code, card_by:cardBy||'', source}
     });
   }
-  await agentSay('已添加为本地好友。这个好友码也会记录贡献来源。第二步，把华伴添加到手机桌面，下次一点就能找我。',120);
-  setTimeout(()=>showInstallPrompt(true),500);
+  const friendName=friendDisplayName(friend);
+  const inviter=cardBy?`发起邀请的人`:'邀请你的人';
+  await agentSay(`${inviter}已经在你的好友列表里了：${companionEscape(friendName)}。`,120);
+  setTimeout(async()=>{
+    await agentSay('以后有事直接跟华伴说：找本地朋友、找靠谱服务、整理需求，或者生成自己的名片引客流。我会帮你智能优选匹配。第二步，把华伴添加到手机桌面，下次一点就能找我。',120);
+    showInstallPrompt(true);
+  },500);
 }
 
 async function confirmIncomingFriend(friendCode='',btn){
