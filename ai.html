@@ -2048,6 +2048,109 @@ async function speak(text) {
   processTTSQueue();
 }
 
+let incomingMessageAlertTimer=null;
+let incomingMessageAlertActive=false;
+
+function speakIncomingMessageOnce(text='来消息啦'){
+  playLocalFriendBell();
+  try{
+    if(!('speechSynthesis' in window))return;
+    window.speechSynthesis.cancel();
+    const utterance=new SpeechSynthesisUtterance(text);
+    utterance.lang='zh-CN';
+    utterance.rate=1.06;
+    utterance.pitch=1.12;
+    utterance.volume=1;
+    window.speechSynthesis.speak(utterance);
+  }catch(e){}
+}
+
+function removeIncomingMessageAlertCard(){
+  document.getElementById('incoming-message-alert')?.remove();
+}
+
+function renderIncomingMessageAlertCard(from='本地好友'){
+  removeIncomingMessageAlertCard();
+  const card=document.createElement('div');
+  card.id='incoming-message-alert';
+  card.style.cssText='position:fixed;left:50%;bottom:92px;transform:translateX(-50%);z-index:3600;width:calc(100% - 32px);max-width:420px;background:#111820;border:1px solid rgba(98,221,178,0.35);border-radius:18px;padding:13px 14px;box-shadow:0 14px 34px rgba(0,0,0,0.28);display:flex;align-items:center;gap:11px;';
+  card.innerHTML=`
+    <img src="assets/brand/huaban-logo-v1.png" alt="" style="width:38px;height:38px;border-radius:12px;background:white;flex-shrink:0;">
+    <div style="flex:1;min-width:0;">
+      <div style="font-size:15px;font-weight:900;color:white;">来消息啦</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.55);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${companionEscape(from)} 发来消息，触碰页面即可停止提醒</div>
+    </div>
+    <button type="button" onpointerdown="event.stopPropagation()" onclick="openLastIncomingFriendMessage()" style="border:0;border-radius:999px;background:#07c160;color:white;padding:9px 12px;font-size:12px;font-weight:900;font-family:inherit;cursor:pointer;white-space:nowrap;">查看</button>`;
+  document.body.appendChild(card);
+}
+
+function startIncomingMessageAlert(options={}){
+  const from=options.from||'本地好友';
+  stopIncomingMessageAlert({silent:true});
+  incomingMessageAlertActive=true;
+  renderIncomingMessageAlertCard(from);
+  const tick=()=>{
+    if(!incomingMessageAlertActive)return;
+    speakIncomingMessageOnce('来消息啦');
+  };
+  tick();
+  incomingMessageAlertTimer=setInterval(tick,2200);
+}
+
+function stopIncomingMessageAlert(options={}){
+  incomingMessageAlertActive=false;
+  if(incomingMessageAlertTimer){
+    clearInterval(incomingMessageAlertTimer);
+    incomingMessageAlertTimer=null;
+  }
+  removeIncomingMessageAlertCard();
+  try{ window.speechSynthesis?.cancel(); }catch(e){}
+  if(!options.silent)maybeStartWakeListening();
+}
+
+function wireIncomingMessageAlertStopper(){
+  if(window._incomingMessageStopperWired)return;
+  window._incomingMessageStopperWired=true;
+  ['pointerdown','touchstart','keydown','wheel','scroll'].forEach(eventName=>{
+    window.addEventListener(eventName,()=>{
+      if(incomingMessageAlertActive)stopIncomingMessageAlert();
+    },{passive:true});
+  });
+  window.addEventListener('focus',()=>{
+    if(incomingMessageAlertActive)stopIncomingMessageAlert();
+  });
+}
+
+function handleIncomingFriendMessage(friend={},message=''){
+  const from=friendDisplayName(friend||{})||'本地好友';
+  sessionStorage.setItem('huaban_last_incoming_friend',JSON.stringify({friend,message,at:Date.now()}));
+  startIncomingMessageAlert({from});
+}
+
+function openLastIncomingFriendMessage(){
+  let payload=null;
+  try{ payload=JSON.parse(sessionStorage.getItem('huaban_last_incoming_friend')||'null'); }catch(e){}
+  stopIncomingMessageAlert();
+  if(payload?.friend){
+    openFriendConversation(payload.friend);
+  }
+}
+
+function wireIncomingMessageStorageListener(){
+  if(window._incomingMessageStorageWired)return;
+  window._incomingMessageStorageWired=true;
+  window.addEventListener('storage',event=>{
+    if(event.key!=='huaban_incoming_friend_message'||!event.newValue)return;
+    try{
+      const payload=JSON.parse(event.newValue);
+      handleIncomingFriendMessage(payload.friend||{},payload.message||'');
+    }catch(e){
+      startIncomingMessageAlert({from:'本地好友'});
+    }
+  });
+  window.huabanIncomingFriendMessage=handleIncomingFriendMessage;
+}
+
 function speakBeforeText(text, renderText, onDone) {
   const clean = text.replace(/<[^>]*>/g,'').replace(/\*\*([^*]+)\*\*/g,'$1').replace(/\s+/g,' ')
     .replace(/AUD\s*([\d.]+)/g,'澳元$1').replace(/A\$([\d.]+)/g,'澳元$1').replace(/\$([\d.]+)/g,'澳元$1')
@@ -3762,6 +3865,8 @@ async function startApp(){
   appStarted=true;
   checkIncomingFriendCode();
   startTimeTheme();
+  wireIncomingMessageAlertStopper();
+  wireIncomingMessageStorageListener();
   updateRegionUI();
   updateAgentIdentityUI();
   detectRegion();
