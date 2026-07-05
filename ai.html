@@ -2592,6 +2592,9 @@ async function sendVoiceMessage(text){
     await showPlatformGuide(false);
     return;
   }
+  if(await handleLocalFriendChatIntent(corrected)){
+    return;
+  }
   if(await handleActionableIntentTools(corrected,{voice:true})){
     return;
   }
@@ -6249,6 +6252,7 @@ AI Agent 核心任务：什么都能聊，但聊天不是目的。主要通过�
 当用户表达想获得帮助/帮助别人时，可以俏皮地说：“如果您想获得帮助或者帮助别人，我来帮你查、筛、核验，整理出能行动的结果。”然后引导他把事情说清楚。
 当用户提出电工、水管、跳闸、漏水、搬运、跑腿、临时上门检查、旅游攻略、当地餐厅景点、中餐馆、外卖配送、买东西、华人律师、会计、报税等需求时，不要拒绝；先自然接住需求，再说“我来查近期公开信息、可联系对象和需要核验的点”。专业维修、上门服务、法律、税务、食品、配送、涉及金钱或安全的事，要提醒用户自行核验资质、价格、卫生和安全。
 当用户提出交友、搭子、同城活动、找群或建群时，不要把华伴说成开放社交平台，也不要说成替代熟人聊天。先说华伴是解决本地连接：把本地朋友、服务、搭子和生意机会，从原有圈子的杂乱和分组负担里分出来，互不打扰；并提醒不要公开隐私、钱款和证件信息。
+本地好友默认不要展示列表，不要让用户像管理通讯录一样焦虑。用户说“联系谁/找谁/给谁发消息”时，直接打开双方对话；没动作的一方由华伴提醒。只有用户想不起是谁、主动问好友列表或匹配不明确时，才给“查看好友”按钮。
 当用户表达自己能提供商品或服务，例如“我是司机/会计/电工”“我开中餐馆”“我能送外卖”“我能接送机”“我卖东西”“我可以提供服务”，要主动说可以帮他整理到供给侧，审核后把生意介绍给更多需要的人；不要把它当成普通闲聊。
 当用户只是顺口提到自己懂某件事、有某个资源、认识某类人，也要温和捕捉为潜在供给，不要打断当前任务；可以说“这个我也记一下，以后可能帮你介绍给需要的人”。
 不要在每个非出行需求后都介绍出行能力，除非用户主动提到要用车或行程接送。
@@ -6418,6 +6422,9 @@ async function sendMessage(){ stopTTS();
   }
   if(isPlatformGuideIntent(msg)){
     await showPlatformGuide(false);
+    return;
+  }
+  if(await handleLocalFriendChatIntent(msg)){
     return;
   }
   if(await handleActionableIntentTools(msg,{voice:false})){
@@ -8099,6 +8106,159 @@ function friendCardLink(friend={}){
 
 function friendDisplayName(friend={}){
   return String(friend.name||friend.wechat||friend.phone||friend.code||'华伴好友').trim();
+}
+
+function friendSearchText(friend={}){
+  return [friend.name,friend.wechat,friend.phone,friend.code,friend.industry,friend.id].filter(Boolean).join(' ').toLowerCase();
+}
+
+function findLocalFriendByText(text=''){
+  const list=localFriendStore();
+  if(!list.length)return null;
+  const raw=String(text||'').trim();
+  const cleaned=raw
+    .replace(/^(帮我|我要|我想|请|麻烦)?(联系|找|打开|发消息给|给|约|叫)/,'')
+    .replace(/(聊天|对话|发消息|说话|一下|吧|呀|哈|呢|联系)$/g,'')
+    .trim();
+  const tokens=[cleaned,raw].map(item=>String(item||'').toLowerCase()).filter(Boolean);
+  return list.find(friend=>{
+    const hay=friendSearchText(friend);
+    return tokens.some(token=>token&&hay.includes(token));
+  })||null;
+}
+
+function isFriendListRecallIntent(text=''){
+  return /好友列表|朋友列表|通讯录|我想不起来|忘了.*(名字|是谁)|有哪些好友|我的好友|看看.*好友|找不到.*好友/i.test(String(text||''));
+}
+
+function isFriendContactIntent(text=''){
+  const clean=String(text||'').trim();
+  if(!clean)return false;
+  return /(联系|找|发消息给|给.*发消息|打开.*对话|跟.*聊|叫一下|提醒.*一下).{0,18}(朋友|好友|同学|司机|客户|人|[A-Za-z0-9_\u4e00-\u9fa5]{2,})/i.test(clean)
+    || /^(联系|找|发消息给|打开对话)\s*[\s\S]{1,24}$/i.test(clean);
+}
+
+function playLocalFriendBell(){
+  try{
+    const Ctx=window.AudioContext||window.webkitAudioContext;
+    if(!Ctx)return;
+    const ctx=new Ctx();
+    const oscillator=ctx.createOscillator();
+    const gain=ctx.createGain();
+    oscillator.type='sine';
+    oscillator.frequency.value=880;
+    gain.gain.setValueAtTime(0.001,ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.12,ctx.currentTime+0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.32);
+    oscillator.connect(gain);
+    gain.connect(ctx.destination);
+    oscillator.start();
+    oscillator.stop(ctx.currentTime+0.34);
+  }catch(e){}
+}
+
+function openFriendConversation(friend={}){
+  const name=friendDisplayName(friend);
+  playLocalFriendBell();
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.68);z-index:3200;display:flex;align-items:flex-end;justify-content:center;';
+  overlay.innerHTML=`
+    <div style="width:100%;max-width:480px;max-height:86vh;background:#111820;border-radius:24px 24px 0 0;border-top:1px solid rgba(255,255,255,0.12);overflow:hidden;box-shadow:0 -14px 34px rgba(0,0,0,0.28);">
+      <div style="display:flex;align-items:center;gap:11px;padding:16px 18px;border-bottom:1px solid rgba(255,255,255,0.08);">
+        <img src="assets/brand/huaban-logo-v1.png" alt="" style="width:38px;height:38px;border-radius:11px;background:white;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:16px;font-weight:900;color:white;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${companionEscape(name)}</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.48);margin-top:2px;">华伴已用铃声提醒对方</div>
+        </div>
+        <button onclick="this.closest('div[style*=fixed]')?.remove()" style="width:34px;height:34px;border:0;border-radius:50%;background:rgba(255,255,255,0.08);color:white;font-size:22px;line-height:1;cursor:pointer;">×</button>
+      </div>
+      <div style="padding:18px;display:flex;flex-direction:column;gap:12px;min-height:220px;background:#0d131a;">
+        <div style="align-self:flex-start;max-width:82%;background:#202a34;border:1px solid rgba(255,255,255,0.08);border-radius:16px 16px 16px 4px;padding:12px 13px;color:rgba(255,255,255,0.86);font-size:14px;line-height:1.6;">
+          我把对话框打开了。你可以直接说要找 ${companionEscape(name)} 做什么，我会帮你整理清楚。
+        </div>
+        <div style="align-self:flex-end;max-width:82%;background:#087f4f;border-radius:16px 16px 4px 16px;padding:12px 13px;color:white;font-size:14px;line-height:1.6;">
+          你好，我通过华伴联系你。
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:12px 14px calc(14px + env(safe-area-inset-bottom));background:#111820;border-top:1px solid rgba(255,255,255,0.08);">
+        <button onclick="playLocalFriendBell();agentSay('我又帮你提醒了一下，对方看到后就可以回应。',80)" style="padding:13px;border:0;border-radius:12px;background:#07c160;color:white;font-size:14px;font-weight:900;font-family:inherit;cursor:pointer;">再提醒一下</button>
+        <button onclick="showFriendCardSheet(${JSON.stringify(friend).replace(/"/g,'&quot;')})" style="padding:13px;border:1px solid rgba(255,255,255,0.12);border-radius:12px;background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.82);font-size:14px;font-weight:900;font-family:inherit;cursor:pointer;">分享名片</button>
+      </div>
+    </div>`;
+  overlay.onclick=(e)=>{if(e.target===overlay)overlay.remove();};
+  document.body.appendChild(overlay);
+}
+
+function showFriendListChoice(){
+  const list=localFriendStore();
+  const card=document.createElement('section');
+  card.className='install-card intro-fade-card';
+  card.innerHTML=`
+    <img src="assets/brand/huaban-logo-v1.png" alt="">
+    <div class="install-copy">
+      <strong>${list.length?'要不要看看好友？':'还没有本地好友'}</strong>
+      <span>${list.length?'不用一直翻列表。想不起名字时，我再帮你打开。':'可以扫码、搜手机号，或者邀请对方领养华伴。'}</span>
+    </div>
+    <div class="install-actions">
+      <button class="install-primary" type="button" onclick="${list.length?'showLocalFriendListSheet()':'renderFriendAddCard()'}">${list.length?'查看好友':'去添加'}</button>
+    </div>`;
+  chatArea.appendChild(card);
+  scrollBottom();
+}
+
+function showLocalFriendListSheet(){
+  const list=localFriendStore();
+  if(!list.length){
+    renderFriendAddCard();
+    return;
+  }
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.68);z-index:3200;display:flex;align-items:flex-end;justify-content:center;';
+  overlay.innerHTML=`
+    <div style="width:100%;max-width:480px;max-height:82vh;background:#111820;border-radius:24px 24px 0 0;border-top:1px solid rgba(255,255,255,0.12);overflow:hidden;">
+      <div style="padding:18px;border-bottom:1px solid rgba(255,255,255,0.08);">
+        <div style="font-size:18px;font-weight:900;color:white;">本地好友</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.48);margin-top:5px;">平时隐藏，想不起来时再看。</div>
+      </div>
+      <div style="max-height:56vh;overflow:auto;padding:8px;">
+        ${list.map((friend,index)=>`
+          <button onclick="this.closest('div[style*=fixed]')?.remove();openFriendConversation(localFriendStore()[${index}])" style="width:100%;display:flex;align-items:center;gap:12px;padding:13px 12px;border:0;border-bottom:1px solid rgba(255,255,255,0.06);background:transparent;color:white;text-align:left;font-family:inherit;cursor:pointer;">
+            <span style="width:36px;height:36px;border-radius:12px;background:rgba(7,193,96,0.16);display:flex;align-items:center;justify-content:center;font-weight:900;color:#62ddb2;">友</span>
+            <span style="flex:1;min-width:0;">
+              <strong style="display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${companionEscape(friendDisplayName(friend))}</strong>
+              <em style="display:block;font-style:normal;font-size:11px;color:rgba(255,255,255,0.42);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${companionEscape(friend.industry||friend.phone||friend.wechat||friend.code||'本地连接')}</em>
+            </span>
+            <span style="color:rgba(255,255,255,0.36);font-size:20px;">›</span>
+          </button>`).join('')}
+      </div>
+      <button onclick="this.closest('div[style*=fixed]')?.remove()" style="width:100%;padding:14px;border:0;background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.62);font-size:14px;font-family:inherit;cursor:pointer;">关闭</button>
+    </div>`;
+  overlay.onclick=(e)=>{if(e.target===overlay)overlay.remove();};
+  document.body.appendChild(overlay);
+}
+
+async function handleLocalFriendChatIntent(text=''){
+  if(isFriendListRecallIntent(text)){
+    showFriendListChoice();
+    await agentSay('可以。平时我不把好友列表摊出来，想不起来是谁时再给你看，互不打扰。',100);
+    return true;
+  }
+  if(!isFriendContactIntent(text))return false;
+  const list=localFriendStore();
+  if(!list.length){
+    await agentSay('你还没有本地好友。可以扫码、搜手机号，或者把邀请链接发给对方。',100);
+    renderFriendAddCard();
+    return true;
+  }
+  const friend=findLocalFriendByText(text);
+  if(friend){
+    await agentSay(`收到，我帮你打开和「${companionEscape(friendDisplayName(friend))}」的对话。`,80);
+    openFriendConversation(friend);
+    return true;
+  }
+  showFriendListChoice();
+  await agentSay('我还没确认你要联系谁。你可以直接说名字；想不起来的话，点一下查看好友。',100);
+  return true;
 }
 
 function showFriendCardSheet(friend={}){
