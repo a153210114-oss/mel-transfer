@@ -3834,8 +3834,8 @@ function renderValuePromptCard(){
   card.innerHTML=`
     <div class="install-copy">
       <strong>一个安全、实用的当地圈子</strong>
-      <span>不用整理通讯录，华伴按事情帮你找对的人。</span>
-      <span style="margin-top:8px;display:block;">• 原来的熟人圈还在<br>• 本地朋友自然拓展<br>• 找服务、找搭子、推广生意都能聊</span>
+      <span>微信熟人多、信息杂、分组累。华伴按事情帮你找对的人。</span>
+      <span style="margin-top:8px;display:block;">• 原来的熟人圈不被打扰<br>• 本地朋友自然拓展<br>• 找服务、找搭子、推广生意都能聊</span>
     </div>
     <div class="install-actions">
       <button class="install-primary" type="button" onclick="handleValuePrompt('friends')">加好友</button>
@@ -3851,7 +3851,7 @@ async function handleValuePrompt(type){
   rewardCompanionAction('try_feature');
   if(type==='friends'){
     addMsg('我想添加本地好友',true);
-    await agentSay('好呀。华伴帮你建立一个安全、实用的当地圈子。你不用整理通讯录，我会按事情帮你找对的人：原来的熟人圈还在，本地新朋友会自然长出来。你可以授权通讯录邀请，也可以复制链接发给朋友。',120);
+    await agentSay('好呀。微信里的熟人圈继续留在微信，华伴帮你建立一个安全、实用的当地圈子，互不打扰。你不用整理通讯录，我会按事情帮你找对的人：本地朋友、服务、搭子和生意连接会自然长出来。',120);
     pickContactsForInvite();
     return;
   }
