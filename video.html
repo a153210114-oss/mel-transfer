@@ -428,7 +428,7 @@ let playing = false;
 let muted = false;
 let raf = null;
 let last = 0;
-let lastSpokenIndex = -1;
+let narrationStarted = false;
 let voiceMode = "mandarin";
 const sceneEls = Array.from(document.querySelectorAll(".scene"));
 const playBtn = document.getElementById("playBtn");
@@ -439,18 +439,8 @@ const cantoneseBtn = document.getElementById("cantoneseBtn");
 const progress = document.getElementById("progress");
 const now = document.getElementById("now");
 const narrations = {
-  mandarin: [
-    "生活跟我聊，繁琐交给我，还自己一个高品质生活。",
-    "生意跟我聊，让更多真正需要你的人找到你。",
-    "情感跟我聊，能当树洞，也能当参谋。",
-    "华伴，不止是陪你聊天，还能按照指示做事。现在就领养你的华伴 AI。"
-  ],
-  cantonese: [
-    "生活同我倾，繁琐交畀我，还返一个高品质生活畀自己。",
-    "生意同我倾，等更多真正需要你嘅人搵到你。",
-    "情感同我倾，我可以做树洞，亦可以帮你谂办法。",
-    "华伴，唔止陪你倾偈，仲可以照你意思做事。即刻领养你嘅华伴 AI。"
-  ]
+  mandarin: "生活跟我聊，繁琐交给我，还自己一个高品质生活。生意跟我聊，让更多真正需要你的人找到你。情感跟我聊，能当树洞，也能当参谋。",
+  cantonese: "生活同我倾，繁琐交畀我，还返一个高品质生活畀自己。生意同我倾，等更多真正需要你嘅人搵到你。情感同我倾，我可以做树洞，亦可以帮你谂办法。"
 };
 
 function format(sec){
@@ -474,22 +464,21 @@ function render(){
   cantoneseBtn.classList.toggle("active", voiceMode === "cantonese");
 }
 
-function speakScene(index){
+function speakNarration(){
   if (muted || !("speechSynthesis" in window)) return;
-  const lines = narrations[voiceMode] || narrations.mandarin;
-  if (index < 0 || !lines[index]) return;
+  const text = narrations[voiceMode] || narrations.mandarin;
   window.speechSynthesis.cancel();
   window.speechSynthesis.resume();
-  const utter = new SpeechSynthesisUtterance(lines[index]);
+  const utter = new SpeechSynthesisUtterance(text);
   utter.lang = voiceMode === "cantonese" ? "zh-HK" : "zh-CN";
-  utter.rate = 1.02;
+  utter.rate = voiceMode === "cantonese" ? 0.98 : 1.02;
   utter.pitch = 1.12;
   const voices = window.speechSynthesis.getVoices ? window.speechSynthesis.getVoices() : [];
   const zhVoice = voiceMode === "cantonese"
     ? voices.find(v => /zh-HK|yue|Cantonese|粤语|廣東/i.test(`${v.lang} ${v.name}`))
     : voices.find(v => /zh-CN|zh_CN|Mandarin|普通话|普通話|Chinese/i.test(`${v.lang} ${v.name}`) && !/zh-HK|Cantonese|粤语|廣東/i.test(`${v.lang} ${v.name}`));
   if (zhVoice) utter.voice = zhVoice;
-  lastSpokenIndex = index;
+  narrationStarted = true;
   window.speechSynthesis.speak(utter);
 }
 
@@ -498,19 +487,16 @@ function loop(ts){
   if (!last) last = ts;
   const delta = (ts - last) / 1000;
   last = ts;
-  const before = activeIndex();
   current += delta;
   if (current >= total) {
     current = total;
     playing = false;
     last = 0;
-    lastSpokenIndex = -1;
+    narrationStarted = false;
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
     render();
     return;
   }
-  const after = activeIndex();
-  if (after !== before) speakScene(after);
   render();
   raf = requestAnimationFrame(loop);
 }
@@ -519,10 +505,7 @@ function play(){
   if (current >= total) current = 0;
   playing = true;
   last = 0;
-  const idx = Math.max(0, activeIndex());
-  if (idx !== lastSpokenIndex || !("speechSynthesis" in window) || !window.speechSynthesis.speaking) {
-    speakScene(idx);
-  }
+  if (!narrationStarted || !("speechSynthesis" in window) || !window.speechSynthesis.speaking) speakNarration();
   render();
   cancelAnimationFrame(raf);
   raf = requestAnimationFrame(loop);
@@ -532,36 +515,36 @@ function pause(){
   playing = false;
   last = 0;
   if ("speechSynthesis" in window) window.speechSynthesis.cancel();
-  lastSpokenIndex = -1;
+  narrationStarted = false;
   render();
 }
 
 playBtn.addEventListener("click", () => playing ? pause() : play());
 replayBtn.addEventListener("click", () => {
   current = 0;
-  lastSpokenIndex = -1;
+  narrationStarted = false;
   if ("speechSynthesis" in window) window.speechSynthesis.cancel();
   play();
 });
 muteBtn.addEventListener("click", () => {
   muted = !muted;
-  lastSpokenIndex = -1;
+  narrationStarted = false;
   if ("speechSynthesis" in window) {
     window.speechSynthesis.cancel();
     window.speechSynthesis.resume();
   }
-  if (!muted && playing) speakScene(Math.max(0, activeIndex()));
+  if (!muted && playing) speakNarration();
   render();
 });
 
 function setVoiceMode(mode){
   voiceMode = mode === "cantonese" ? "cantonese" : "mandarin";
-  lastSpokenIndex = -1;
+  narrationStarted = false;
   if ("speechSynthesis" in window) {
     window.speechSynthesis.cancel();
     window.speechSynthesis.resume();
   }
-  if (playing && !muted) speakScene(Math.max(0, activeIndex()));
+  if (playing && !muted) speakNarration();
   render();
 }
 
