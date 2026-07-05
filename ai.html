@@ -637,7 +637,10 @@ body.theme-night .agent-age-seconds{color:#62ddb2;}
 .adopt-card .install-primary{margin-top:2px;white-space:nowrap;}
 .wake-card{margin:0 0 0 44px;background:#fff;border:1px solid #dedede;border-radius:6px;padding:12px;display:flex;align-items:center;gap:10px;box-shadow:0 1px 2px rgba(0,0,0,.04);}
 #value-prompt-card{align-items:flex-start;}
-#value-prompt-card .install-actions{flex-wrap:wrap;justify-content:flex-end;max-width:136px;}
+#value-prompt-card{flex-direction:column;align-items:stretch;}
+#value-prompt-card .install-actions{width:100%;flex-wrap:wrap;justify-content:flex-start;max-width:none;margin-top:10px;}
+#value-prompt-card .value-action{min-width:74px;height:34px;padding:0 12px;font-size:12px;white-space:nowrap;}
+#value-prompt-card .value-action.secondary{background:#f1f1f1;color:#4f5964;}
 #value-prompt-card .install-close{
   width:auto;
   min-width:54px;
@@ -677,7 +680,18 @@ body.theme-night .agent-age-seconds{color:#62ddb2;}
 .install-sheet-head img{width:44px;height:44px;border-radius:11px;object-fit:cover;}
 .install-sheet-title{font-size:17px;font-weight:700;color:var(--wx-text);}
 .install-sheet-sub{font-size:12px;color:#888;margin-top:2px;}
-.install-steps{background:#f7f7f7;border-radius:10px;padding:12px 14px;margin:12px 0;color:#333;font-size:14px;line-height:1.9;}
+.install-platform{display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:7px 10px;border-radius:999px;background:#ecfff4;color:#087a3e;font-size:12px;font-weight:700;}
+.install-steps{display:flex;flex-direction:column;gap:9px;background:#f7f7f7;border-radius:10px;padding:12px;margin:12px 0;color:#333;font-size:14px;line-height:1.55;}
+.install-step{display:flex;gap:9px;align-items:flex-start;padding:9px 10px;border-radius:9px;background:#fff;border:1px solid #ececec;}
+.install-step-finger{font-size:18px;line-height:1.15;flex-shrink:0;}
+.install-step-text{flex:1;min-width:0;}
+.install-step-text strong{display:block;color:#111;font-size:14px;margin-bottom:2px;}
+.install-step-text span{display:block;color:#666;font-size:12px;}
+.install-next-wrap{position:relative;margin-bottom:8px;}
+.install-finger-tip{position:absolute;right:10px;top:-39px;display:flex;align-items:center;gap:6px;padding:7px 10px;border-radius:999px;background:#111;color:#fff;font-size:13px;font-weight:800;box-shadow:0 8px 18px rgba(0,0,0,.18);animation:installFingerBounce .85s ease-in-out infinite;pointer-events:none;}
+.install-finger-tip::after{content:'';position:absolute;right:22px;bottom:-6px;border-width:6px 6px 0;border-style:solid;border-color:#111 transparent transparent;}
+.install-finger-tip b{font-size:18px;line-height:1;}
+@keyframes installFingerBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
 .install-sheet button{width:100%;border:0;border-radius:6px;background:var(--wx-green);color:#fff;font:500 15px/1 inherit;padding:13px;cursor:pointer;}
 
 /* AI 旅行伙伴养成卡 */
@@ -3880,9 +3894,9 @@ function renderValuePromptCard(){
       <span style="margin-top:8px;display:block;">• 原有圈子的杂乱少一点<br>• 不用承担分组负担<br>• 找服务、找搭子、推广生意都能聊</span>
     </div>
     <div class="install-actions">
-      <button class="install-primary" type="button" onclick="handleValuePrompt('friends')">加好友</button>
-      <button class="install-close" type="button" onclick="handleValuePrompt('service')" aria-label="找服务">找服务</button>
-      <button class="install-close" type="button" onclick="handleValuePrompt('business')" aria-label="推广生意">推广</button>
+      <button class="install-primary value-action" type="button" onclick="handleValuePrompt('friends')">加好友</button>
+      <button class="install-primary value-action secondary" type="button" onclick="handleValuePrompt('service')" aria-label="找服务">找服务</button>
+      <button class="install-primary value-action secondary" type="button" onclick="handleValuePrompt('business')" aria-label="推广生意">推广</button>
     </div>`;
   chatArea.appendChild(card);
   autoDismissIntroCard(card, 18000);
@@ -8153,11 +8167,11 @@ function renderFriendAddCard(){
         <button class="install-primary" type="button" onclick="searchHuabanFriend()">搜索</button>
       </div>
       <div id="friend-search-result" style="margin-top:9px;font-size:12px;color:#888;line-height:1.55;">我的好友码：${companionEscape(code)}</div>
-    </div>
-    <div class="install-actions" style="flex-direction:column;align-items:stretch;gap:6px;">
-      <button class="install-primary" type="button" onclick="showFriendCodeSheet()">我的二维码</button>
-      <button class="install-close friend-scan-btn" type="button" onclick="scanFriendCode()" aria-label="扫一扫">扫一扫</button>
-      <button class="install-close friend-scan-btn" type="button" onclick="pickContactsForInvite()" aria-label="通讯录">通讯录</button>
+      <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:11px;">
+        <button class="install-primary" type="button" onclick="showFriendCodeSheet()" style="height:36px;padding:0 8px;white-space:nowrap;">我的二维码</button>
+        <button class="install-primary" type="button" onclick="scanFriendCode()" style="height:36px;padding:0 8px;background:#f1f1f1;color:#4f5964;white-space:nowrap;">扫一扫</button>
+        <button class="install-primary" type="button" onclick="pickContactsForInvite()" style="height:36px;padding:0 8px;background:#f1f1f1;color:#4f5964;white-space:nowrap;">通讯录</button>
+      </div>
     </div>`;
   chatArea.appendChild(card);
   scrollBottom();
@@ -8802,23 +8816,81 @@ async function addToHome(){
   showAddToHomeGuide();
 }
 
-function showAddToHomeGuide(){
-  document.getElementById('install-guide')?.remove();
+function getInstallGuideContext(){
   const ios=isIosDevice();
   const wechat=isWeChatBrowser();
   const safari=isSafariBrowser();
-  const steps=wechat
-    ? ['点击右上角“…”', '选择“在 Safari 中打开”或“在浏览器打开”', '再点分享按钮，选择“添加到主屏幕”']
-    : ios && safari
-      ? ['点击 Safari 底部分享按钮', '向下滑，选择“添加到主屏幕”', '点击右上角“添加”']
-      : ios
-        ? ['如果没有“添加到主屏幕”，先用 Safari 打开', '点击分享按钮', '选择“添加到主屏幕”并确认']
-        : ['点击浏览器右上角菜单', '选择“安装应用”或“添加到主屏幕”', '确认添加华伴'];
-  const tip=wechat
-    ? '当前在微信里。iPhone 需要先用 Safari 打开，才能添加到主屏幕。'
-    : ios
-      ? 'iPhone 需要通过 Safari 分享菜单添加，网页按钮不能自动完成。'
-      : '安卓浏览器如果支持安装，会出现系统安装确认。';
+  if(wechat){
+    return {
+      platform: ios?'微信里的 iPhone':'微信浏览器',
+      tip:'当前在微信里，系统不允许网页直接添加。先用 Safari 或系统浏览器打开，再添加到主屏幕。',
+      actionLabel:'复制链接，去浏览器',
+      speech:'我先帮你复制链接。点右上角三个点，选择在 Safari 或浏览器打开。',
+      steps:[
+        {title:'点右上角三个点', desc:'先打开微信菜单'},
+        {title:'选择在浏览器打开', desc:ios?'优先选择 Safari':'选择系统浏览器'},
+        {title:'再点分享或菜单', desc:'选择添加到主屏幕'}
+      ]
+    };
+  }
+  if(ios){
+    return {
+      platform: safari?'iPhone Safari':'iPhone 浏览器',
+      tip:safari?'我会尽量打开分享面板，你再点“添加到主屏幕”。':'如果没有“添加到主屏幕”，请先用 Safari 打开。',
+      actionLabel:'打开分享面板',
+      speech:'点击分享面板里的添加到主屏幕，再点添加。',
+      steps:[
+        {title:'点下方分享按钮', desc:'就是 Safari 底部中间的分享图标'},
+        {title:'选择添加到主屏幕', desc:'如果没看到，向下滑一下'},
+        {title:'点右上角添加', desc:'下次桌面一秒打开华伴'}
+      ]
+    };
+  }
+  return {
+    platform:'安卓浏览器',
+    tip:deferredInstallPrompt?'可以直接打开系统安装确认。':'如果没有弹出安装框，请点浏览器右上角菜单。',
+    actionLabel:deferredInstallPrompt?'打开安装':'查看浏览器菜单',
+    speech:deferredInstallPrompt?'我帮你打开系统安装确认。':'点浏览器右上角菜单，选择安装应用或添加到主屏幕。',
+    steps:[
+      {title:'点右上角菜单', desc:'Chrome 通常是三个点'},
+      {title:'选择安装应用', desc:'也可能叫添加到主屏幕'},
+      {title:'确认添加华伴', desc:'下次像 App 一样打开'}
+    ]
+  };
+}
+
+async function continueInstallGuide(){
+  const ctx=getInstallGuideContext();
+  if(deferredInstallPrompt){
+    document.getElementById('install-guide')?.remove();
+    await addToHome();
+    return;
+  }
+  if(isWeChatBrowser()){
+    try{
+      if(!navigator.clipboard)throw new Error('clipboard unavailable');
+      await navigator.clipboard.writeText(location.href);
+      agentSay('链接已复制。点右上角“…”选择在 Safari 或浏览器打开，再添加到主屏幕。',80);
+    }catch(e){
+      agentSay('请点右上角“…”选择在 Safari 或浏览器打开，再添加到主屏幕。',80);
+    }
+    speak(ctx.speech);
+    return;
+  }
+  if(isIosDevice()&&navigator.share){
+    try{
+      await navigator.share({title:'华伴',text:'把华伴添加到主屏幕，下次一秒打开。',url:location.href});
+    }catch(e){}
+    speak(ctx.speech);
+    return;
+  }
+  agentSay(ctx.speech,80);
+  speak(ctx.speech);
+}
+
+function showAddToHomeGuide(){
+  document.getElementById('install-guide')?.remove();
+  const ctx=getInstallGuideContext();
   const overlay=document.createElement('div');
   overlay.id='install-guide';
   overlay.className='install-overlay';
@@ -8828,18 +8900,29 @@ function showAddToHomeGuide(){
         <img src="assets/brand/huaban-logo-v1.png" alt="">
         <div>
           <div class="install-sheet-title">把华伴放到手机桌面</div>
-          <div class="install-sheet-sub">${tip}</div>
+          <div class="install-sheet-sub">${ctx.tip}</div>
+          <div class="install-platform">👆 ${ctx.platform}</div>
         </div>
       </div>
       <div class="install-steps">
-        ${steps.map((step,index)=>`<div>${index+1}. ${step}</div>`).join('')}
+        ${ctx.steps.map((step,index)=>`
+          <div class="install-step">
+            <div class="install-step-finger">👉</div>
+            <div class="install-step-text">
+              <strong>${index+1}. ${step.title}</strong>
+              <span>${step.desc}</span>
+            </div>
+          </div>`).join('')}
       </div>
-      <button onclick="document.getElementById('install-guide')?.remove()" style="margin-bottom:8px;">${wechat?'我去 Safari 打开':ios?'我去分享菜单添加':'我去浏览器菜单添加'}</button>
-      <button onclick="document.getElementById('install-guide')?.remove()" style="background:rgba(255,255,255,0.08);color:#5f6f7f;">稍后</button>
+      <div class="install-next-wrap">
+        <div class="install-finger-tip"><b>👇</b><span>点这里</span></div>
+        <button type="button" onclick="continueInstallGuide()">${ctx.actionLabel}</button>
+      </div>
+      <button type="button" onclick="document.getElementById('install-guide')?.remove()" style="background:rgba(255,255,255,0.08);color:#5f6f7f;">稍后</button>
     </div>`;
   overlay.onclick=(event)=>{ if(event.target===overlay)overlay.remove(); };
   document.body.appendChild(overlay);
-  speak(wechat?'请先用 Safari 打开，再添加到主屏幕':ios?'点击分享按钮，选择添加到主屏幕':'点击浏览器菜单，选择安装应用或添加到主屏幕');
+  speak(ctx.speech);
 }
 
 function logoutUser(){
