@@ -44,6 +44,24 @@ body{
   display:grid;
   gap:14px;
 }
+.close-btn{
+  position:fixed;
+  top:14px;
+  right:14px;
+  z-index:20;
+  width:40px;
+  height:40px;
+  border:1px solid rgba(255,255,255,.18);
+  border-radius:50%;
+  background:rgba(2,6,23,.62);
+  color:#fff;
+  display:grid;
+  place-items:center;
+  text-decoration:none;
+  font-size:22px;
+  font-weight:800;
+  backdrop-filter:blur(14px);
+}
 .brand{
   display:flex;
   align-items:center;
@@ -270,6 +288,30 @@ body{
   font-size:13px;
   line-height:1.7;
 }
+.language-switch{
+  display:inline-grid;
+  grid-template-columns:1fr 1fr;
+  gap:4px;
+  padding:4px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.06);
+  margin:0 auto;
+}
+.lang-btn{
+  min-width:78px;
+  height:34px;
+  border:0;
+  border-radius:999px;
+  cursor:pointer;
+  background:transparent;
+  color:rgba(255,255,255,.66);
+  font-weight:900;
+}
+.lang-btn.active{
+  background:linear-gradient(135deg,var(--green),var(--cyan));
+  color:#04140e;
+}
 .cta{
   display:inline-flex;
   justify-content:center;
@@ -293,6 +335,7 @@ body{
 </style>
 </head>
 <body>
+<a class="close-btn" href="/" aria-label="关闭视频">×</a>
 <main class="wrap" aria-label="华伴15秒宣传视频">
   <div class="brand">
     <img src="assets/brand/huaban-logo-v1.png" alt="华伴">
@@ -363,8 +406,12 @@ body{
   </section>
 
   <div class="below">
+    <div class="language-switch" aria-label="旁白语言选择">
+      <button class="lang-btn active" id="mandarinBtn" type="button">普通话</button>
+      <button class="lang-btn" id="cantoneseBtn" type="button">粤语</button>
+    </div>
     <div>华伴，不止是陪你聊天，还能按照指示做事。</div>
-    <a class="cta" href="index.html?ref=video">立即领养华伴 AI</a>
+    <a class="cta" href="/ai?ref=video">立即领养华伴 AI</a>
   </div>
 </main>
 
@@ -382,18 +429,29 @@ let muted = false;
 let raf = null;
 let last = 0;
 let lastSpokenIndex = -1;
+let voiceMode = "mandarin";
 const sceneEls = Array.from(document.querySelectorAll(".scene"));
 const playBtn = document.getElementById("playBtn");
 const replayBtn = document.getElementById("replayBtn");
 const muteBtn = document.getElementById("muteBtn");
+const mandarinBtn = document.getElementById("mandarinBtn");
+const cantoneseBtn = document.getElementById("cantoneseBtn");
 const progress = document.getElementById("progress");
 const now = document.getElementById("now");
-const narration = [
-  "生活跟我聊，繁琐交给我，还自己一个高品质生活。",
-  "生意跟我聊，让更多真正需要你的人找到你。",
-  "情感跟我聊，能当树洞，也能当参谋。",
-  "华伴，不止是陪你聊天，还能按照指示做事。现在就领养你的华伴 AI。"
-];
+const narrations = {
+  mandarin: [
+    "生活跟我聊，繁琐交给我，还自己一个高品质生活。",
+    "生意跟我聊，让更多真正需要你的人找到你。",
+    "情感跟我聊，能当树洞，也能当参谋。",
+    "华伴，不止是陪你聊天，还能按照指示做事。现在就领养你的华伴 AI。"
+  ],
+  cantonese: [
+    "生活同我倾，繁琐交畀我，还返一个高品质生活畀自己。",
+    "生意同我倾，等更多真正需要你嘅人搵到你。",
+    "情感同我倾，我可以做树洞，亦可以帮你谂办法。",
+    "华伴，唔止陪你倾偈，仲可以照你意思做事。即刻领养你嘅华伴 AI。"
+  ]
+};
 
 function format(sec){
   const s = Math.max(0, Math.floor(sec)).toString().padStart(2, "0");
@@ -412,19 +470,24 @@ function render(){
   playBtn.textContent = playing ? "Ⅱ" : "▶";
   muteBtn.textContent = muted ? "🔇" : "🔊";
   muteBtn.setAttribute("aria-pressed", muted ? "true" : "false");
+  mandarinBtn.classList.toggle("active", voiceMode === "mandarin");
+  cantoneseBtn.classList.toggle("active", voiceMode === "cantonese");
 }
 
 function speakScene(index){
   if (muted || !("speechSynthesis" in window)) return;
-  if (index < 0 || !narration[index]) return;
+  const lines = narrations[voiceMode] || narrations.mandarin;
+  if (index < 0 || !lines[index]) return;
   window.speechSynthesis.cancel();
   window.speechSynthesis.resume();
-  const utter = new SpeechSynthesisUtterance(narration[index]);
-  utter.lang = "zh-CN";
+  const utter = new SpeechSynthesisUtterance(lines[index]);
+  utter.lang = voiceMode === "cantonese" ? "zh-HK" : "zh-CN";
   utter.rate = 1.02;
   utter.pitch = 1.12;
   const voices = window.speechSynthesis.getVoices ? window.speechSynthesis.getVoices() : [];
-  const zhVoice = voices.find(v => /zh|Chinese|中文|普通话|Mandarin/i.test(`${v.lang} ${v.name}`));
+  const zhVoice = voiceMode === "cantonese"
+    ? voices.find(v => /zh-HK|yue|Cantonese|粤语|廣東/i.test(`${v.lang} ${v.name}`))
+    : voices.find(v => /zh-CN|zh_CN|Mandarin|普通话|普通話|Chinese/i.test(`${v.lang} ${v.name}`) && !/zh-HK|Cantonese|粤语|廣東/i.test(`${v.lang} ${v.name}`));
   if (zhVoice) utter.voice = zhVoice;
   lastSpokenIndex = index;
   window.speechSynthesis.speak(utter);
@@ -490,6 +553,20 @@ muteBtn.addEventListener("click", () => {
   if (!muted && playing) speakScene(Math.max(0, activeIndex()));
   render();
 });
+
+function setVoiceMode(mode){
+  voiceMode = mode === "cantonese" ? "cantonese" : "mandarin";
+  lastSpokenIndex = -1;
+  if ("speechSynthesis" in window) {
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.resume();
+  }
+  if (playing && !muted) speakScene(Math.max(0, activeIndex()));
+  render();
+}
+
+mandarinBtn.addEventListener("click", () => setVoiceMode("mandarin"));
+cantoneseBtn.addEventListener("click", () => setVoiceMode("cantonese"));
 
 if ("speechSynthesis" in window) {
   window.speechSynthesis.onvoiceschanged = () => render();
