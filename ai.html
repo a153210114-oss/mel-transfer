@@ -953,7 +953,8 @@ body.more-open .chat-area{padding-bottom:390px;}
         <div style="font-size:12px;color:rgba(255,255,255,0.52);line-height:1.7;margin-bottom:12px;">
           微信联系国内亲朋好友，华伴连接当地朋友。加密传输，授权选择，跨地区号码二次确认。
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+          <button onclick="showFriendCodeSheet()" style="width:100%;padding:13px;background:rgba(7,193,96,0.22);border:1px solid rgba(7,193,96,0.38);border-radius:12px;color:white;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">扫码添加</button>
           <button onclick="pickContactsForInvite()" style="width:100%;padding:13px;background:rgba(0,200,150,0.2);border:1px solid rgba(0,200,150,0.3);border-radius:12px;color:white;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">通讯录添加</button>
           <button onclick="shareRefLink()" style="width:100%;padding:13px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:12px;color:rgba(255,255,255,0.78);font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">点击分享</button>
         </div>
@@ -1477,6 +1478,10 @@ function companionVoiceStage(state=getCompanion()){
 
 function companionEscape(value){
   return String(value).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+
+function jsString(value){
+  return String(value||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,'\\n').replace(/\r/g,'');
 }
 
 function companionMood(state){
@@ -3728,6 +3733,7 @@ function openReleasePrimaryAction(){
 async function startApp(){
   if(appStarted)return;
   appStarted=true;
+  checkIncomingFriendCode();
   startTimeTheme();
   updateRegionUI();
   updateAgentIdentityUI();
@@ -3806,6 +3812,7 @@ async function startApp(){
   rewardCompanionAction('app_open');
   if(currentRole!=='driver')setTimeout(()=>showReleaseNotice(false),700);
   if(currentRole!=='driver')setTimeout(()=>openFounderRecruitmentStartup(false),1200);
+  if(currentRole!=='driver')maybeShowIncomingFriendCode();
   maybeStartWakeListening();
 }
 
@@ -3876,8 +3883,8 @@ async function handleValuePrompt(type){
   rewardCompanionAction('try_feature');
   if(type==='friends'){
     addMsg('我想添加本地好友',true);
-    await agentSay('好呀。华伴不是替代熟人聊天，而是帮你解决本地连接：把本地朋友、服务、搭子和生意机会，从原有圈子的杂乱和分组负担里分出来，互不打扰。',120);
-    pickContactsForInvite();
+    await agentSay('好呀。微信联系原来的熟人圈，华伴连接当地朋友。你可以扫码加、搜手机号，或者邀请对方领养华伴。',120);
+    renderFriendAddCard();
     return;
   }
   if(type==='service'){
@@ -5113,7 +5120,8 @@ async function startDeliveryOrder(text=''){
 async function openLocalPeopleIntent(sourceText=''){
   const text=String(sourceText||'').trim();
   if(!text){
-    await agentSay('微信联系原来的熟人圈，华伴帮你自然拓展本地圈子。你想认识哪类本地朋友？比如同城搭子、兴趣伙伴、互相照应的人，或者一起参加某个活动的人。',120);
+    await agentSay('微信联系原来的熟人圈，华伴连接当地朋友。你可以扫码加、搜手机号，也可以邀请对方领养华伴。',120);
+    renderFriendAddCard();
     return;
   }
   await startHiddenIntelTask({
@@ -7923,13 +7931,11 @@ async function loadProfileTrips(phone){
 }
 
 async function shareRefLink(){
-  const p = getPassenger();
-  if(!p.ref) p.ref = genRef();
-  const officialSite = 'https://huabanapp.com';
-  const link = `${officialSite}?ref=${p.ref}`;
+  const code = getFriendCode();
+  const link = friendInviteLink(code);
   const shareData = {
     title: '华伴AI伙伴',
-    text: '从旅行开始，共同成长。没有中间商赚差价，只让需要的人遇见可靠的人。来试试华伴AI伙伴 👇',
+    text: '微信联系国内亲朋好友，华伴连接当地朋友。扫码领养华伴 AI，我们在当地圈子里互相照应。',
     url: link
   };
   try{
@@ -7952,9 +7958,8 @@ async function shareRefLink(){
 }
 
 function inviteSharePayload(extraText=''){
-  const p=getPassenger();
-  if(!p.ref)p.ref=genRef();
-  const link=`https://huabanapp.com?ref=${p.ref}`;
+  const code=getFriendCode();
+  const link=friendInviteLink(code);
   const text=extraText||'微信联系国内亲朋好友，华伴连接当地朋友。来领养你的华伴 AI，有事直接跟它说。';
   return {
     title:'邀请你领养华伴 AI',
@@ -8017,6 +8022,282 @@ function splitContactsByFence(contacts=[]){
 function contactDisplayName(contact={}){
   const name=Array.isArray(contact.name)?contact.name[0]:contact.name;
   return String(name||contactPrimaryPhone(contact)||'未命名联系人').trim();
+}
+
+function getFriendCode(){
+  const p=getPassenger();
+  if(!p.ref){
+    p.ref=genRef();
+    setLocal('au_passenger',p);
+  }
+  return String(p.ref||'').trim().toUpperCase();
+}
+
+function friendInviteLink(code=getFriendCode()){
+  const safe=encodeURIComponent(String(code||getFriendCode()).trim());
+  return `https://www.huabanapp.com/ai?ref=${safe}&friend=${safe}`;
+}
+
+function friendQrUrl(link=friendInviteLink()){
+  return `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=12&data=${encodeURIComponent(link)}`;
+}
+
+function localFriendStore(){
+  try{return JSON.parse(localStorage.getItem('huaban_local_friends')||'[]')||[];}catch(e){return[];}
+}
+
+function saveLocalFriend(friend={}){
+  const list=localFriendStore();
+  const id=String(friend.code||friend.phone||friend.wechat||friend.name||Date.now()).toLowerCase();
+  const next={...friend,id,addedAt:new Date().toISOString(),city:currentRegion.city||'',country:currentRegion.country||''};
+  const filtered=list.filter(item=>String(item.id||item.code||item.phone||'').toLowerCase()!==id);
+  filtered.unshift(next);
+  localStorage.setItem('huaban_local_friends',JSON.stringify(filtered.slice(0,200)));
+  return next;
+}
+
+function renderFriendAddCard(){
+  document.getElementById('friend-add-card')?.remove();
+  const code=getFriendCode();
+  const card=document.createElement('section');
+  card.id='friend-add-card';
+  card.className='install-card intro-fade-card';
+  card.style.alignItems='flex-start';
+  card.innerHTML=`
+    <div class="install-copy">
+      <strong>添加本地好友</strong>
+      <span>扫码加、搜手机号，或者邀请对方领养华伴。每个好友码都会记录贡献来源。</span>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+        <input id="friend-search-input" inputmode="tel" placeholder="手机号 / 微信 / 好友码"
+          style="flex:1 1 150px;min-width:0;height:38px;border:1px solid #ddd;border-radius:8px;background:#f7f7f7;color:#191919;font:14px/1 inherit;padding:0 10px;outline:none;">
+        <button class="install-primary" type="button" onclick="searchHuabanFriend()">搜索</button>
+      </div>
+      <div id="friend-search-result" style="margin-top:9px;font-size:12px;color:#888;line-height:1.55;">我的好友码：${companionEscape(code)}</div>
+    </div>
+    <div class="install-actions" style="flex-direction:column;align-items:stretch;gap:6px;">
+      <button class="install-primary" type="button" onclick="showFriendCodeSheet()">我的二维码</button>
+      <button class="install-close friend-scan-btn" type="button" onclick="scanFriendCode()" aria-label="扫一扫">扫一扫</button>
+      <button class="install-close friend-scan-btn" type="button" onclick="pickContactsForInvite()" aria-label="通讯录">通讯录</button>
+    </div>`;
+  chatArea.appendChild(card);
+  scrollBottom();
+  setTimeout(()=>document.getElementById('friend-search-input')?.focus(),180);
+}
+
+async function searchHuabanFriend(){
+  const input=document.getElementById('friend-search-input');
+  const result=document.getElementById('friend-search-result');
+  const raw=String(input?.value||'').trim();
+  if(!raw){ if(result)result.textContent='请输入手机号、微信或好友码。'; return; }
+  if(result)result.textContent='正在查找...';
+  const cleanPhone=normalizeContactPhone(raw);
+  const code=raw.replace(/[^a-zA-Z0-9]/g,'').toUpperCase();
+  let rows=[];
+  try{
+    if(/[0-9+]/.test(cleanPhone)&&cleanPhone.length>=6){
+      rows=await supaGet(`contacts?tenant_id=eq.${TENANT_ID}&phone=eq.${encodeURIComponent(cleanPhone)}&select=id,full_name,phone,wechat_id,city,country,status`);
+    }
+    if(!rows.length){
+      rows=await supaGet(`contacts?tenant_id=eq.${TENANT_ID}&wechat_id=eq.${encodeURIComponent(raw)}&select=id,full_name,phone,wechat_id,city,country,status`);
+    }
+  }catch(e){ rows=[]; }
+  if(rows.length){
+    const person=rows[0];
+    if(result)result.innerHTML=`
+      找到华伴用户：<strong style="color:var(--wx-green);">${companionEscape(person.full_name||person.wechat_id||person.phone||'华伴用户')}</strong>
+      <button class="install-primary" style="margin-left:8px;padding:7px 10px;" onclick="addHuabanFriend('${jsString(person.id||'')}','${jsString(person.full_name||'华伴用户')}','${jsString(person.phone||'')}','${jsString(person.wechat_id||'')}')">添加</button>`;
+    return;
+  }
+  const inviteLink=friendInviteLink();
+  if(result)result.innerHTML=`
+    对方还没用华伴。可以发邀请链接，扫码或点开后会记到你的贡献来源。<br>
+    <button class="install-primary" style="margin-top:7px;padding:7px 10px;" onclick="inviteUnknownFriend('${jsString(raw)}')">邀请加入华伴</button>
+    <button class="install-close friend-scan-btn" style="margin-top:7px;margin-left:6px;" onclick="copyText('${jsString(inviteLink)}','邀请链接已复制')">复制链接</button>`;
+}
+
+async function addHuabanFriend(id='',name='华伴用户',phone='',wechat=''){
+  const friend=saveLocalFriend({code:id,name,phone,wechat,source:'huaban_search'});
+  rewardCompanionAction('share');
+  await supaInsertLead({
+    lead_type:'social',
+    channel:'local_friend_add',
+    need_type:'local_friend_add',
+    name:getPassenger().name||'华伴用户',
+    contact:getPassenger().phone||'',
+    message:`添加本地好友：${name}`,
+    status:'confirmed',
+    fields:{friend, contribution_code:getFriendCode(), source:'search_or_code'}
+  });
+  await agentSay(`已添加「${companionEscape(name)}」到本地好友。微信联系熟人，华伴连接当地朋友。`,120);
+}
+
+async function inviteUnknownFriend(target=''){
+  const payload=inviteSharePayload(`微信联系国内亲朋好友，华伴连接当地朋友。扫码领养华伴 AI，我们在当地圈子里互相照应。`);
+  saveInvitedContacts([{name:target,tel:target}]);
+  rewardCompanionAction('share');
+  await supaInsertLead({
+    lead_type:'social',
+    channel:'friend_invite',
+    need_type:'friend_invite',
+    name:getPassenger().name||'华伴用户',
+    contact:getPassenger().phone||'',
+    message:`邀请好友加入华伴：${target}`,
+    status:'pending',
+    fields:{target, contribution_code:getFriendCode(), invite_link:payload.link}
+  });
+  try{
+    if(navigator.share){
+      await navigator.share({title:payload.title,text:payload.text,url:payload.link});
+    }else{
+      await navigator.clipboard.writeText(`${payload.text}\n${payload.link}`);
+      await agentSay('邀请文案已复制，可以发给微信或短信好友。',120);
+    }
+  }catch(e){
+    if(e?.name!=='AbortError')await agentSay('邀请链接已准备好，你可以复制后发给对方。',120);
+  }
+}
+
+async function copyText(text='',notice='已复制'){
+  await navigator.clipboard.writeText(text).catch(()=>{});
+  await agentSay(notice,80);
+}
+
+function showFriendCodeSheet(){
+  const code=getFriendCode();
+  const link=friendInviteLink(code);
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:3000;display:flex;align-items:flex-end;justify-content:center;';
+  overlay.innerHTML=`
+    <div style="background:#0d1f3c;border-radius:24px 24px 0 0;padding:24px 20px 44px;width:100%;max-width:480px;border-top:1px solid rgba(255,255,255,0.1);">
+      <div style="width:40px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:0 auto 18px;"></div>
+      <div style="font-size:18px;font-weight:900;color:white;margin-bottom:6px;">我的华伴好友码</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.62);line-height:1.75;margin-bottom:14px;">
+        朋友扫码领养或添加你，都会记录到你的贡献来源。后续推广积分、城市贡献和资源贡献都从这里留痕。
+      </div>
+      <div style="background:#fff;border-radius:18px;padding:14px;text-align:center;margin-bottom:12px;">
+        <img src="${friendQrUrl(link)}" alt="华伴好友二维码" style="width:220px;height:220px;display:block;margin:0 auto;border-radius:12px;">
+        <div style="color:#0d1f3c;font-size:13px;font-weight:900;margin-top:8px;">好友码：${companionEscape(code)}</div>
+      </div>
+      <div style="display:flex;gap:9px;">
+        <button onclick="copyText('${jsString(link)}','好友码链接已复制')" style="flex:1;padding:13px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:12px;color:rgba(255,255,255,0.72);font-size:14px;font-weight:800;font-family:inherit;cursor:pointer;">复制链接</button>
+        <button onclick="inviteUnknownFriend('扫码邀请')" style="flex:1;padding:13px;background:rgba(0,200,150,0.24);border:1px solid rgba(0,200,150,0.4);border-radius:12px;color:white;font-size:14px;font-weight:900;font-family:inherit;cursor:pointer;">分享二维码</button>
+      </div>
+      <button onclick="this.closest('div[style*=fixed]')?.remove()" style="width:100%;margin-top:9px;padding:12px;background:transparent;border:0;color:rgba(255,255,255,0.46);font-size:13px;font-family:inherit;cursor:pointer;">关闭</button>
+    </div>`;
+  overlay.onclick=(e)=>{if(e.target===overlay)overlay.remove();};
+  document.body.appendChild(overlay);
+}
+
+function scanFriendCode(){
+  const input=document.createElement('input');
+  input.type='file';
+  input.accept='image/*';
+  input.capture='environment';
+  input.onchange=async()=>{
+    const file=input.files&&input.files[0];
+    if(!file)return;
+    if(!('BarcodeDetector' in window)){
+      await agentSay('这台设备暂时不能直接识别二维码图片。你可以用手机相机扫对方的华伴码，或让对方把手机号/好友码发给你搜索。',120);
+      return;
+    }
+    try{
+      const bitmap=await createImageBitmap(file);
+      const detector=new BarcodeDetector({formats:['qr_code']});
+      const codes=await detector.detect(bitmap);
+      const value=codes?.[0]?.rawValue||'';
+      if(!value){
+        await agentSay('这张图里没有识别到华伴好友码。可以再拍清楚一点，或者直接搜手机号。',120);
+        return;
+      }
+      handleIncomingFriendLink(value);
+    }catch(e){
+      await agentSay('二维码识别失败。可以让对方出示二维码，直接用手机相机扫码打开。',120);
+    }
+  };
+  input.click();
+}
+
+async function handleIncomingFriendLink(raw=''){
+  let friendCode='';
+  try{
+    const url=new URL(raw,location.origin);
+    friendCode=url.searchParams.get('friend')||url.searchParams.get('ref')||'';
+  }catch(e){
+    friendCode=String(raw||'').replace(/[^a-zA-Z0-9]/g,'').toUpperCase();
+  }
+  if(!friendCode){
+    await agentSay('没有识别到有效好友码。',120);
+    return;
+  }
+  const myCode=getFriendCode();
+  if(friendCode.toUpperCase()===myCode){
+    await agentSay('这是你自己的好友码，可以给别人扫码添加你。',120);
+    return;
+  }
+  await acceptIncomingFriendCode(friendCode,'qr_scan');
+}
+
+function renderIncomingFriendConfirm(friendCode=''){
+  const card=document.createElement('section');
+  card.className='install-card intro-fade-card';
+  card.innerHTML=`
+    <div class="install-copy">
+      <strong>发现一个华伴好友码</strong>
+      <span>好友码：${companionEscape(friendCode)}。添加后会记录双方的本地连接来源。</span>
+    </div>
+    <div class="install-actions">
+      <button class="install-primary" type="button" onclick="confirmIncomingFriend('${jsString(friendCode)}',this)">添加</button>
+    </div>`;
+  chatArea.appendChild(card);
+  scrollBottom();
+}
+
+async function acceptIncomingFriendCode(friendCode='',source='qr_open'){
+  if(!friendCode)return;
+  const code=String(friendCode).trim().toUpperCase();
+  const myCode=getFriendCode();
+  if(code===myCode){
+    await agentSay('这是你自己的好友码。让朋友扫码，就能添加你。',120);
+    return;
+  }
+  const seenKey=`huaban_friend_code_added_${code}`;
+  const alreadyAdded=localStorage.getItem(seenKey)==='1';
+  const friend=saveLocalFriend({code,name:`华伴好友 ${code}`,source});
+  localStorage.setItem(seenKey,'1');
+  if(!alreadyAdded){
+    rewardCompanionAction('share');
+    await supaInsertLead({
+      lead_type:'social',
+      channel:'friend_qr_add',
+      need_type:'friend_qr_add',
+      name:getPassenger().name||'华伴用户',
+      contact:getPassenger().phone||'',
+      message:`扫码添加华伴好友：${code}`,
+      status:'confirmed',
+      fields:{friend, contribution_code:getFriendCode(), source_friend_code:code, source}
+    });
+  }
+  await agentSay('已添加为本地好友。这个好友码也会记录贡献来源。第二步，把华伴添加到手机桌面，下次一点就能找我。',120);
+  setTimeout(()=>showInstallPrompt(true),500);
+}
+
+async function confirmIncomingFriend(friendCode='',btn){
+  btn?.closest('.install-card')?.remove();
+  await acceptIncomingFriendCode(friendCode,'qr_confirm');
+}
+
+function checkIncomingFriendCode(){
+  const params=new URLSearchParams(location.search);
+  const friend=params.get('friend');
+  if(!friend)return;
+  sessionStorage.setItem('incoming_friend_code',friend);
+}
+
+function maybeShowIncomingFriendCode(){
+  const friend=sessionStorage.getItem('incoming_friend_code');
+  if(!friend)return;
+  sessionStorage.removeItem('incoming_friend_code');
+  setTimeout(()=>acceptIncomingFriendCode(friend,'qr_open'),600);
 }
 
 async function pickContactsForInvite(){
