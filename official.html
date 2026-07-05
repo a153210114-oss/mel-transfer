@@ -313,71 +313,6 @@ h1 {
   border-color: rgba(255,255,255,0.12);
 }
 .band .card-icon { background: rgba(255,255,255,0.1); }
-.video-showcase {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.72fr);
-  gap: 26px;
-  align-items: stretch;
-  margin-top: 30px;
-}
-.video-copy {
-  border: 1px solid var(--line);
-  background: #fff;
-  border-radius: 22px;
-  padding: 24px;
-}
-.video-copy h3 {
-  margin: 0;
-  font-size: 24px;
-  line-height: 1.25;
-}
-.video-lines {
-  display: grid;
-  gap: 10px;
-  margin: 18px 0 0;
-}
-.video-lines span {
-  display: block;
-  border-left: 4px solid var(--green);
-  background: var(--soft);
-  border-radius: 12px;
-  padding: 12px 14px;
-  color: #16354a;
-  font-weight: 900;
-  line-height: 1.55;
-}
-.video-preview {
-  border-radius: 22px;
-  overflow: hidden;
-  background:
-    radial-gradient(circle at 20% 20%, rgba(65,197,239,0.28), transparent 34%),
-    radial-gradient(circle at 90% 0%, rgba(43,209,142,0.22), transparent 30%),
-    linear-gradient(160deg, #07111f, #112b44);
-  color: #fff;
-  min-height: 320px;
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  box-shadow: 0 24px 54px rgba(16, 34, 61, 0.18);
-}
-.video-preview img {
-  width: 70px;
-  height: 70px;
-  object-fit: contain;
-  border-radius: 18px;
-  background: #fff;
-}
-.video-preview strong {
-  display: block;
-  margin-top: 18px;
-  font-size: 28px;
-  line-height: 1.18;
-}
-.video-preview p {
-  color: rgba(255,255,255,0.74);
-  line-height: 1.75;
-}
 .cta {
   display: grid;
   grid-template-columns: 1fr 260px;
@@ -427,7 +362,7 @@ footer {
   .hero { grid-template-columns: 1fr; min-height: auto; padding-top: 34px; }
   .phone-wrap { order: -1; }
   .phone { max-width: 320px; }
-  .hero-points, .cards, .cta, .video-showcase { grid-template-columns: 1fr; }
+  .hero-points, .cards, .cta { grid-template-columns: 1fr; }
   .section { padding: 48px 0; }
   .qr { width: min(260px, 100%); }
 }
@@ -443,7 +378,6 @@ footer {
     <div class="nav-actions">
       <a class="nav-link" href="#life">生活</a>
       <a class="nav-link" href="#business">事业</a>
-      <a class="nav-link" href="#video">视频</a>
       <a class="nav-link" href="#partner">合作</a>
       <a class="nav-link" href="partner-recruit.html">招募</a>
       <a class="btn" href="index.html">打开 AI</a>
@@ -460,7 +394,6 @@ footer {
       <p class="hero-copy">人在海外，生活琐事、生意推广、情感倾诉、出行安排和本地资源寻找，都可以先跟华伴聊聊。华伴会帮你整理需求、判断重点、推进下一步。</p>
       <div class="hero-actions">
         <a class="btn primary" href="index.html">立即体验华伴 AI</a>
-        <a class="btn" href="promo-video.html?ref=official_hero">观看宣传视频</a>
         <a class="btn" href="#what">看看能做什么</a>
       </div>
       <div class="hero-points" aria-label="华伴核心价值">
@@ -484,33 +417,6 @@ footer {
           <div class="bubble ai">生意跟我聊。我帮你整理服务内容，让更多真正需要的人找到你。</div>
         </div>
       </div>
-    </div>
-  </section>
-
-  <section class="section" id="video">
-    <h2>先看一支华伴宣传视频</h2>
-    <p class="section-lead">生活、生意、情感，很多事情不用到处翻。先跟华伴聊，它会帮你把事情整理清楚，再推进下一步。</p>
-    <div class="video-showcase">
-      <div class="video-copy">
-        <h3>三句话讲清楚华伴</h3>
-        <div class="video-lines">
-          <span>生活跟我聊，繁琐交给我，还自己一个高品质生活。</span>
-          <span>生意跟我聊，让更多真正需要你的人找到你。</span>
-          <span>情感跟我聊，能当树洞，也能当参谋。</span>
-        </div>
-        <div class="hero-actions">
-          <a class="btn primary" href="promo-video.html?ref=official_video">观看宣传视频</a>
-          <a class="btn" href="promo-video.html?from=user&ref=official_video">做我的推广视频</a>
-        </div>
-      </div>
-      <a class="video-preview" href="promo-video.html?ref=official_video_card" aria-label="打开华伴宣传视频">
-        <div>
-          <img src="assets/brand/huaban-logo-v1.png" alt="华伴">
-          <strong>华伴，不止是陪你聊天。</strong>
-          <p>还能按照指示做事。海外华人真正的生活管家、事业助手。</p>
-        </div>
-        <span class="btn primary" style="width:max-content;">播放预览</span>
-      </a>
     </div>
   </section>
 
@@ -593,7 +499,6 @@ footer {
         <p>华伴开始公测。欢迎体验，也欢迎狠狠吐槽。你只管说出心愿，华伴会帮你整理、判断、推进。</p>
         <div class="hero-actions">
           <a class="btn primary" href="index.html">打开华伴 AI</a>
-          <a class="btn" href="promo-video.html?from=user">做我的推广视频</a>
         </div>
       </div>
       <div class="qr">
