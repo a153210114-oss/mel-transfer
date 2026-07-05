@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>华伴15秒宣传视频｜海外华人生活管家与事业助手</title>
+<meta name="description" content="华伴15秒宣传视频。华伴不止是陪你聊天，还能按照指示做事，是海外华人真正的生活管家、事业助手。">
+<link rel="canonical" href="https://www.huabanapp.com/video.html">
+<link rel="icon" href="assets/brand/icon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/brand/apple-touch-icon.png">
+<meta property="og:type" content="video.other">
+<meta property="og:site_name" content="华伴">
+<meta property="og:title" content="华伴15秒宣传视频">
+<meta property="og:description" content="生活跟我聊，生意跟我聊，情感跟我聊。华伴不止陪你聊天，还能按照指示做事。">
+<meta property="og:url" content="https://www.huabanapp.com/video.html">
+<meta property="og:image" content="https://www.huabanapp.com/assets/brand/huaban-logo-v1.png">
+<style>
+:root{
+  --bg:#07111f;
+  --ink:#f8fafc;
+  --muted:rgba(248,250,252,.66);
+  --line:rgba(255,255,255,.14);
+  --green:#25d48d;
+  --cyan:#35d2ee;
+  --gold:#f3c84b;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  color:var(--ink);
+  background:
+    radial-gradient(circle at 20% 10%,rgba(53,210,238,.18),transparent 34%),
+    radial-gradient(circle at 86% 4%,rgba(37,212,141,.15),transparent 30%),
+    linear-gradient(160deg,#07111f,#0b1728 56%,#06101d);
+  min-height:100%;
+  display:grid;
+  place-items:center;
+  padding:18px;
+}
+.wrap{
+  width:min(100%,430px);
+  display:grid;
+  gap:14px;
+}
+.brand{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  color:rgba(255,255,255,.86);
+  font-weight:950;
+  letter-spacing:0;
+}
+.brand img{
+  width:40px;
+  height:40px;
+  border-radius:12px;
+  object-fit:contain;
+  background:#fff;
+}
+.phone{
+  width:min(100%,390px);
+  margin:0 auto;
+  aspect-ratio:9/16;
+  border-radius:42px;
+  padding:10px;
+  background:#020617;
+  border:1px solid rgba(255,255,255,.16);
+  box-shadow:0 28px 70px rgba(0,0,0,.42);
+}
+.screen{
+  position:relative;
+  height:100%;
+  border-radius:32px;
+  overflow:hidden;
+  background:#0f172a;
+}
+.scene{
+  position:absolute;
+  inset:0;
+  opacity:0;
+  transform:scale(1.04);
+  transition:opacity .48s ease,transform 1.1s ease;
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-end;
+  padding:76px 22px 104px;
+}
+.scene.active{opacity:1;transform:scale(1)}
+.scene::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  opacity:.95;
+}
+.scene::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(180deg,rgba(2,6,23,.04),rgba(2,6,23,.14) 44%,rgba(2,6,23,.72));
+}
+.scene-1::before{
+  background:
+    radial-gradient(circle at 20% 18%,rgba(255,255,255,.48),transparent 22%),
+    linear-gradient(135deg,#f9e7a9,#2f8d62 68%,#0c4638);
+}
+.scene-2::before{
+  background:
+    radial-gradient(circle at 34% 30%,rgba(53,210,238,.44),transparent 24%),
+    radial-gradient(circle at 82% 18%,rgba(37,212,141,.38),transparent 22%),
+    linear-gradient(135deg,#0f172a,#0d6b80 62%,#083344);
+}
+.scene-3::before{
+  background:
+    radial-gradient(circle at 70% 24%,rgba(255,255,255,.28),transparent 20%),
+    radial-gradient(circle at 18% 78%,rgba(244,114,182,.24),transparent 24%),
+    linear-gradient(135deg,#312e81,#111827 64%,#070b18);
+}
+.scene-4::before{
+  background:
+    radial-gradient(circle at 50% 28%,rgba(37,212,141,.32),transparent 26%),
+    linear-gradient(135deg,#ecfeff,#dcfce7 58%,#bbf7d0);
+}
+.status{
+  position:absolute;
+  top:15px;
+  left:22px;
+  right:22px;
+  z-index:4;
+  display:flex;
+  justify-content:space-between;
+  color:#fff;
+  font-weight:950;
+  font-size:14px;
+  text-shadow:0 2px 10px rgba(0,0,0,.24);
+}
+.chip{
+  position:absolute;
+  top:48px;
+  left:22px;
+  z-index:4;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  border-radius:15px;
+  padding:8px 11px;
+  background:rgba(255,255,255,.92);
+  color:#0f172a;
+  font-weight:950;
+  box-shadow:0 10px 24px rgba(0,0,0,.14);
+}
+.chip img{width:28px;height:28px;object-fit:contain}
+.content{
+  position:relative;
+  z-index:3;
+}
+.kicker{
+  display:inline-flex;
+  padding:5px 10px;
+  border-radius:999px;
+  background:rgba(37,212,141,.94);
+  color:#042f2e;
+  font-size:12px;
+  font-weight:950;
+  margin-bottom:10px;
+}
+.title{
+  margin:0;
+  font-size:clamp(30px,8.2vw,38px);
+  line-height:1.12;
+  color:#fff;
+  text-shadow:0 3px 18px rgba(0,0,0,.38);
+  letter-spacing:0;
+}
+.caption{
+  margin:12px 0 0;
+  color:rgba(255,255,255,.86);
+  font-size:15px;
+  line-height:1.72;
+  text-shadow:0 2px 12px rgba(0,0,0,.34);
+}
+.scene-4 .title{color:#0f172a;text-shadow:none}
+.scene-4 .caption{color:#334155;text-shadow:none}
+.qr-card{
+  margin-top:16px;
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding:14px;
+  border-radius:18px;
+  background:rgba(255,255,255,.96);
+  color:#0f172a;
+  box-shadow:0 18px 36px rgba(15,23,42,.16);
+}
+.qr-card img{
+  width:96px;
+  height:96px;
+  object-fit:contain;
+  border-radius:12px;
+}
+.qr-card strong{display:block;font-size:18px;margin-bottom:5px}
+.qr-card span{display:block;color:#475569;font-size:13px;line-height:1.55;font-weight:800}
+.controls{
+  position:absolute;
+  left:16px;
+  right:16px;
+  bottom:16px;
+  z-index:6;
+  padding:10px;
+  border:1px solid rgba(255,255,255,.16);
+  border-radius:20px;
+  background:rgba(2,6,23,.72);
+  backdrop-filter:blur(16px);
+}
+.control-row{
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  gap:10px;
+  align-items:center;
+}
+.icon-btn{
+  width:38px;
+  height:38px;
+  border:0;
+  border-radius:50%;
+  cursor:pointer;
+  color:#03140d;
+  background:linear-gradient(135deg,var(--green),var(--cyan));
+  font-size:17px;
+  font-weight:950;
+  display:grid;
+  place-items:center;
+}
+.ghost-btn{
+  width:34px;
+  height:34px;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:50%;
+  background:rgba(255,255,255,.08);
+  color:#fff;
+  cursor:pointer;
+  display:grid;
+  place-items:center;
+}
+.bar{
+  height:8px;
+  border-radius:999px;
+  background:rgba(255,255,255,.14);
+  overflow:hidden;
+}
+.bar span{
+  display:block;
+  width:0;
+  height:100%;
+  background:linear-gradient(90deg,var(--green),var(--cyan));
+}
+.time{
+  margin-top:7px;
+  display:flex;
+  justify-content:space-between;
+  color:rgba(255,255,255,.58);
+  font-size:11px;
+  font-weight:800;
+}
+.below{
+  text-align:center;
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.7;
+}
+.cta{
+  display:inline-flex;
+  justify-content:center;
+  align-items:center;
+  min-height:44px;
+  border-radius:13px;
+  padding:0 18px;
+  background:linear-gradient(135deg,var(--green),var(--cyan));
+  color:#04140e;
+  font-weight:950;
+  text-decoration:none;
+  margin-top:6px;
+}
+@media(max-width:420px){
+  body{padding:10px}
+  .brand{font-size:14px}
+  .phone{border-radius:34px}
+  .screen{border-radius:25px}
+  .scene{padding-left:18px;padding-right:18px}
+}
+</style>
+</head>
+<body>
+<main class="wrap" aria-label="华伴15秒宣传视频">
+  <div class="brand">
+    <img src="assets/brand/huaban-logo-v1.png" alt="华伴">
+    <span>华伴15秒宣传视频</span>
+  </div>
+
+  <section class="phone" aria-label="视频播放器">
+    <div class="screen">
+      <div class="status"><span>9:41</span><span>5G 100%</span></div>
+      <div class="chip">
+        <img src="assets/brand/huaban-logo-v1.png" alt="">
+        <span>华伴 AI</span>
+      </div>
+
+      <article class="scene scene-1 active">
+        <div class="content">
+          <span class="kicker">生活</span>
+          <h1 class="title">生活跟我聊，繁琐交给我</h1>
+          <p class="caption">人在海外，琐事太累？华伴帮你把事情整理清楚，还自己一个高品质生活。</p>
+        </div>
+      </article>
+
+      <article class="scene scene-2">
+        <div class="content">
+          <span class="kicker">生意</span>
+          <h1 class="title">让更多需要你的人找到你</h1>
+          <p class="caption">做生意、愁客源？华伴帮你把服务说清楚，连接真正需要的人。</p>
+        </div>
+      </article>
+
+      <article class="scene scene-3">
+        <div class="content">
+          <span class="kicker">情感</span>
+          <h1 class="title">能当树洞，也能当参谋</h1>
+          <p class="caption">寂寞、迷茫、拿不定主意？跟华伴聊，它会陪你一起想办法。</p>
+        </div>
+      </article>
+
+      <article class="scene scene-4">
+        <div class="content">
+          <span class="kicker">扫码领养</span>
+          <h1 class="title">华伴，海外华人生活管家、事业助手</h1>
+          <p class="caption">不止是陪你聊天，还能按照指示做事。有趣，更有用。</p>
+          <div class="qr-card">
+            <img src="assets/brand/huaban-qr-logo.png" alt="华伴二维码">
+            <div>
+              <strong>领养华伴 AI</strong>
+              <span>huabanapp.com<br>定义自己的人生</span>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <div class="controls" aria-label="播放控制">
+        <div class="control-row">
+          <button class="icon-btn" id="playBtn" type="button" aria-label="播放或暂停">▶</button>
+          <div>
+            <div class="bar"><span id="progress"></span></div>
+            <div class="time"><span id="now">00:00</span><span>00:15</span></div>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button class="ghost-btn" id="replayBtn" type="button" aria-label="重新播放">↺</button>
+            <button class="ghost-btn" id="muteBtn" type="button" aria-label="静音或恢复">🔇</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="below">
+    <div>华伴，不止是陪你聊天，还能按照指示做事。</div>
+    <a class="cta" href="index.html?ref=video">立即领养华伴 AI</a>
+  </div>
+</main>
+
+<script>
+const scenes = [
+  { start: 0, end: 4 },
+  { start: 4, end: 8 },
+  { start: 8, end: 11.5 },
+  { start: 11.5, end: 15 }
+];
+const total = 15;
+let current = 0;
+let playing = false;
+let muted = true;
+let raf = null;
+let last = 0;
+const sceneEls = Array.from(document.querySelectorAll(".scene"));
+const playBtn = document.getElementById("playBtn");
+const replayBtn = document.getElementById("replayBtn");
+const muteBtn = document.getElementById("muteBtn");
+const progress = document.getElementById("progress");
+const now = document.getElementById("now");
+const narration = [
+  "生活跟我聊，繁琐交给我，还自己一个高品质生活。",
+  "生意跟我聊，让更多真正需要你的人找到你。",
+  "情感跟我聊，能当树洞，也能当参谋。",
+  "华伴，不止是陪你聊天，还能按照指示做事。现在就领养你的华伴 AI。"
+];
+
+function format(sec){
+  const s = Math.max(0, Math.floor(sec)).toString().padStart(2, "0");
+  return `00:${s}`;
+}
+
+function activeIndex(){
+  return scenes.findIndex(item => current >= item.start && current < item.end);
+}
+
+function render(){
+  const idx = Math.max(0, activeIndex());
+  sceneEls.forEach((el, i) => el.classList.toggle("active", i === idx));
+  progress.style.width = `${Math.min(100, current / total * 100)}%`;
+  now.textContent = format(current);
+  playBtn.textContent = playing ? "Ⅱ" : "▶";
+  muteBtn.textContent = muted ? "🔇" : "🔊";
+}
+
+function speakScene(index){
+  if (muted || !("speechSynthesis" in window)) return;
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(narration[index]);
+  utter.lang = "zh-CN";
+  utter.rate = 1.02;
+  utter.pitch = 1.12;
+  window.speechSynthesis.speak(utter);
+}
+
+function loop(ts){
+  if (!playing) return;
+  if (!last) last = ts;
+  const delta = (ts - last) / 1000;
+  last = ts;
+  const before = activeIndex();
+  current += delta;
+  if (current >= total) {
+    current = total;
+    playing = false;
+    last = 0;
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    render();
+    return;
+  }
+  const after = activeIndex();
+  if (after !== before) speakScene(after);
+  render();
+  raf = requestAnimationFrame(loop);
+}
+
+function play(){
+  if (current >= total) current = 0;
+  playing = true;
+  last = 0;
+  speakScene(Math.max(0, activeIndex()));
+  render();
+  cancelAnimationFrame(raf);
+  raf = requestAnimationFrame(loop);
+}
+
+function pause(){
+  playing = false;
+  last = 0;
+  if ("speechSynthesis" in window) window.speechSynthesis.pause();
+  render();
+}
+
+playBtn.addEventListener("click", () => playing ? pause() : play());
+replayBtn.addEventListener("click", () => {
+  current = 0;
+  if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+  play();
+});
+muteBtn.addEventListener("click", () => {
+  muted = !muted;
+  if (muted && "speechSynthesis" in window) window.speechSynthesis.cancel();
+  if (!muted && playing) speakScene(Math.max(0, activeIndex()));
+  render();
+});
+
+render();
+</script>
+</body>
+</html>

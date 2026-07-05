@@ -313,6 +313,27 @@ h1 {
   border-color: rgba(255,255,255,0.12);
 }
 .band .card-icon { background: rgba(255,255,255,0.1); }
+.video-strip {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+  margin-top: 26px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: #fff;
+}
+.video-strip strong {
+  display: block;
+  font-size: 22px;
+  line-height: 1.25;
+}
+.video-strip p {
+  color: var(--muted);
+  line-height: 1.75;
+  margin: 8px 0 0;
+}
 .cta {
   display: grid;
   grid-template-columns: 1fr 260px;
@@ -362,7 +383,7 @@ footer {
   .hero { grid-template-columns: 1fr; min-height: auto; padding-top: 34px; }
   .phone-wrap { order: -1; }
   .phone { max-width: 320px; }
-  .hero-points, .cards, .cta { grid-template-columns: 1fr; }
+  .hero-points, .cards, .cta, .video-strip { grid-template-columns: 1fr; }
   .section { padding: 48px 0; }
   .qr { width: min(260px, 100%); }
 }
@@ -378,6 +399,7 @@ footer {
     <div class="nav-actions">
       <a class="nav-link" href="#life">生活</a>
       <a class="nav-link" href="#business">事业</a>
+      <a class="nav-link" href="video.html">视频</a>
       <a class="nav-link" href="#partner">合作</a>
       <a class="nav-link" href="partner-recruit.html">招募</a>
       <a class="btn" href="index.html">打开 AI</a>
@@ -394,6 +416,7 @@ footer {
       <p class="hero-copy">人在海外，生活琐事、生意推广、情感倾诉、出行安排和本地资源寻找，都可以先跟华伴聊聊。华伴会帮你整理需求、判断重点、推进下一步。</p>
       <div class="hero-actions">
         <a class="btn primary" href="index.html">立即体验华伴 AI</a>
+        <a class="btn" href="video.html?ref=official_hero">观看15秒视频</a>
         <a class="btn" href="#what">看看能做什么</a>
       </div>
       <div class="hero-points" aria-label="华伴核心价值">
@@ -417,6 +440,13 @@ footer {
           <div class="bubble ai">生意跟我聊。我帮你整理服务内容，让更多真正需要的人找到你。</div>
         </div>
       </div>
+    </div>
+    <div class="video-strip">
+      <div>
+        <strong>15 秒看懂华伴</strong>
+        <p>生活跟我聊，生意跟我聊，情感跟我聊。一个干净的宣传视频，只展示华伴能做到什么。</p>
+      </div>
+      <a class="btn primary" href="video.html?ref=official_strip">播放视频</a>
     </div>
   </section>
 
@@ -483,7 +513,7 @@ footer {
       <article class="card">
         <div class="card-icon">🛡️</div>
         <h3>规则与可信</h3>
-        <p>华伴坚持贡献留痕、规则先行、后台监督，不承诺固定收益，不做资金盘，只看真实贡献。</p>
+        <p>华伴坚持贡献留痕、规则先行、系统监督，不承诺固定收益，不做资金盘，只看真实贡献。</p>
       </article>
     </div>
     <div class="hero-actions" style="margin-top:22px;">
