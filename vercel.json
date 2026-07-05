@@ -25,6 +25,14 @@
   ],
   "rewrites": [
     {
+      "source": "/",
+      "destination": "/official.html"
+    },
+    {
+      "source": "/ai",
+      "destination": "/index.html"
+    },
+    {
       "source": "/admin",
       "destination": "/admin.html"
     },
