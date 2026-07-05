@@ -355,7 +355,7 @@ body{
           </div>
           <div style="display:flex;gap:6px;">
             <button class="ghost-btn" id="replayBtn" type="button" aria-label="重新播放">↺</button>
-            <button class="ghost-btn" id="muteBtn" type="button" aria-label="静音或恢复">🔇</button>
+            <button class="ghost-btn" id="muteBtn" type="button" aria-label="静音或恢复">🔊</button>
           </div>
         </div>
       </div>
@@ -378,9 +378,10 @@ const scenes = [
 const total = 15;
 let current = 0;
 let playing = false;
-let muted = true;
+let muted = false;
 let raf = null;
 let last = 0;
+let lastSpokenIndex = -1;
 const sceneEls = Array.from(document.querySelectorAll(".scene"));
 const playBtn = document.getElementById("playBtn");
 const replayBtn = document.getElementById("replayBtn");
@@ -410,15 +411,22 @@ function render(){
   now.textContent = format(current);
   playBtn.textContent = playing ? "Ⅱ" : "▶";
   muteBtn.textContent = muted ? "🔇" : "🔊";
+  muteBtn.setAttribute("aria-pressed", muted ? "true" : "false");
 }
 
 function speakScene(index){
   if (muted || !("speechSynthesis" in window)) return;
+  if (index < 0 || !narration[index]) return;
   window.speechSynthesis.cancel();
+  window.speechSynthesis.resume();
   const utter = new SpeechSynthesisUtterance(narration[index]);
   utter.lang = "zh-CN";
   utter.rate = 1.02;
   utter.pitch = 1.12;
+  const voices = window.speechSynthesis.getVoices ? window.speechSynthesis.getVoices() : [];
+  const zhVoice = voices.find(v => /zh|Chinese|中文|普通话|Mandarin/i.test(`${v.lang} ${v.name}`));
+  if (zhVoice) utter.voice = zhVoice;
+  lastSpokenIndex = index;
   window.speechSynthesis.speak(utter);
 }
 
@@ -433,6 +441,7 @@ function loop(ts){
     current = total;
     playing = false;
     last = 0;
+    lastSpokenIndex = -1;
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
     render();
     return;
@@ -447,7 +456,10 @@ function play(){
   if (current >= total) current = 0;
   playing = true;
   last = 0;
-  speakScene(Math.max(0, activeIndex()));
+  const idx = Math.max(0, activeIndex());
+  if (idx !== lastSpokenIndex || !("speechSynthesis" in window) || !window.speechSynthesis.speaking) {
+    speakScene(idx);
+  }
   render();
   cancelAnimationFrame(raf);
   raf = requestAnimationFrame(loop);
@@ -456,22 +468,32 @@ function play(){
 function pause(){
   playing = false;
   last = 0;
-  if ("speechSynthesis" in window) window.speechSynthesis.pause();
+  if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+  lastSpokenIndex = -1;
   render();
 }
 
 playBtn.addEventListener("click", () => playing ? pause() : play());
 replayBtn.addEventListener("click", () => {
   current = 0;
+  lastSpokenIndex = -1;
   if ("speechSynthesis" in window) window.speechSynthesis.cancel();
   play();
 });
 muteBtn.addEventListener("click", () => {
   muted = !muted;
-  if (muted && "speechSynthesis" in window) window.speechSynthesis.cancel();
+  lastSpokenIndex = -1;
+  if ("speechSynthesis" in window) {
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.resume();
+  }
   if (!muted && playing) speakScene(Math.max(0, activeIndex()));
   render();
 });
+
+if ("speechSynthesis" in window) {
+  window.speechSynthesis.onvoiceschanged = () => render();
+}
 
 render();
 </script>
