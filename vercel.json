@@ -30,7 +30,7 @@
     },
     {
       "source": "/ai",
-      "destination": "/index.html"
+      "destination": "/ai.html"
     },
     {
       "source": "/admin",
