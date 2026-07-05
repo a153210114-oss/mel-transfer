@@ -703,6 +703,8 @@ body.theme-night .agent-age-seconds{color:#62ddb2;}
 .agent-avatar-choices{display:flex;gap:7px;margin-top:10px;overflow-x:auto;padding-bottom:1px;}
 .agent-avatar-choice{width:42px;height:42px;border-radius:12px;border:1px solid #ddd;background:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;flex-shrink:0;overflow:hidden;}
 .agent-avatar-choice.active{border-color:#20b77b;box-shadow:0 0 0 2px rgba(32,183,123,.14);}
+.user-avatar-choice{width:42px;height:42px;border-radius:12px;border:1px solid #ddd;background:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;flex-shrink:0;overflow:hidden;}
+.user-avatar-choice.active{border-color:#20b77b;box-shadow:0 0 0 2px rgba(32,183,123,.14);}
 .agent-setup-age{margin-top:10px;padding:9px 10px;border-radius:10px;background:#f7f7f7;color:#60777d;font-size:12px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
 .agent-age-seconds{font-variant-numeric:tabular-nums;font-weight:900;color:#20a070;}
 .companion-stage{height:66px;display:flex;align-items:center;justify-content:center;}
@@ -888,11 +890,12 @@ body.more-open .chat-area{padding-bottom:390px;}
     <div class="profile-section" id="profile-user-info" style="margin-top:16px;">
       <div style="background:rgba(0,150,199,0.1);border:1px solid rgba(0,150,199,0.2);border-radius:16px;padding:16px;">
         <div style="display:flex;align-items:center;gap:12px;">
-          <div style="width:48px;height:48px;background:rgba(0,150,199,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;">👤</div>
-          <div>
+          <div id="profile-user-avatar" style="width:48px;height:48px;background:rgba(0,150,199,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;">👤</div>
+          <div style="flex:1;min-width:0;">
             <div id="profile-name" style="font-size:16px;font-weight:800;color:white;">—</div>
             <div id="profile-phone" style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:2px;">—</div>
           </div>
+          <button onclick="openUserIdentityEditor()" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.75);border-radius:10px;padding:8px 10px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;">编辑</button>
         </div>
       </div>
     </div>
@@ -1011,6 +1014,8 @@ const AGENT_NAME_KEY = 'huaban_agent_name';
 const AGENT_TITLE_KEY = 'huaban_agent_title';
 const AGENT_EMOJI_KEY = 'huaban_agent_emoji';
 const AGENT_BIRTH_KEY = 'huaban_agent_birth_at';
+const USER_NAME_KEY = 'huaban_user_name';
+const USER_AVATAR_KEY = 'huaban_user_avatar';
 window._ttsVoice = 'FunAudioLLM/CosyVoice2-0.5B:diana';
 // 恢复已存性别（含currentGender同步）
 (function(){
@@ -1271,10 +1276,61 @@ function agentAvatarMarkup(value=agentEmoji){
   return `<span class="agent-avatar-emoji">${companionEscape(value)}</span>`;
 }
 
+function cleanUserName(value){
+  return String(value||'').trim().replace(/\s+/g,' ').slice(0,12);
+}
+
+function cleanUserAvatar(value){
+  const clean=String(value||'').trim();
+  return clean ? clean.slice(0,4) : '👤';
+}
+
+function getUserProfile(){
+  const p=getProfile();
+  const passenger=typeof getPassenger==='function'?getPassenger():{};
+  return {
+    name: cleanUserName(localStorage.getItem(USER_NAME_KEY)||p.display_name||p.name||passenger.name||''),
+    avatar: cleanUserAvatar(localStorage.getItem(USER_AVATAR_KEY)||p.avatar||passenger.avatar||'👤')
+  };
+}
+
+function saveUserIdentity({name,avatar}){
+  const nextName=cleanUserName(name);
+  const nextAvatar=cleanUserAvatar(avatar);
+  if(nextName)localStorage.setItem(USER_NAME_KEY,nextName);
+  localStorage.setItem(USER_AVATAR_KEY,nextAvatar);
+  saveProfile({display_name:nextName,avatar:nextAvatar});
+  const passenger=typeof getPassenger==='function'?getPassenger():{};
+  if(nextName||nextAvatar){
+    setLocal('au_passenger',{...passenger,name:nextName||passenger.name,avatar:nextAvatar});
+  }
+  if(passenger.phone&&nextName){
+    fetch(SUPA_URL+'/rest/v1/contacts?tenant_id=eq.'+TENANT_ID+'&phone=eq.'+encodeURIComponent(passenger.phone),{
+      method:'PATCH',
+      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({full_name:nextName})
+    }).catch(()=>{});
+  }
+  updateUserIdentityUI();
+  return {name:nextName,avatar:nextAvatar};
+}
+
+function userAvatarMarkup(){
+  return `<span class="agent-avatar-emoji">${companionEscape(getUserProfile().avatar)}</span>`;
+}
+
+function updateUserIdentityUI(){
+  const profile=getUserProfile();
+  const avatarEl=document.getElementById('profile-user-avatar');
+  const nameEl=document.getElementById('profile-name');
+  if(avatarEl)avatarEl.innerHTML=userAvatarMarkup();
+  if(nameEl)nameEl.textContent=profile.name||getPassenger().name||'未登录';
+}
+
 function addMsg(html,isUser=false){
   const div=document.createElement('div');
   div.className='msg'+(isUser?' user':'');
-  const av=isUser?(currentGender==='female'?'👩':'👤'):agentAvatarMarkup();
+  const av=isUser?userAvatarMarkup():agentAvatarMarkup();
   div.innerHTML=`<div class="msg-av${isUser?'':' agent'}">${av}</div><div class="msg-bubble">${html}</div>`;
   chatArea.appendChild(div);scrollBottom();return div;
 }
@@ -1476,6 +1532,72 @@ const AGENT_AVATAR_CHOICES=[
   ['🫶','暖心']
 ];
 
+const USER_AVATAR_CHOICES=[
+  ['👤','默认'],
+  ['😊','微笑'],
+  ['😎','酷'],
+  ['🌸','温柔'],
+  ['🌿','清爽'],
+  ['💼','事业'],
+  ['🍜','美食'],
+  ['🚗','出行'],
+  ['🏡','生活'],
+  ['📚','学习'],
+  ['🎧','陪伴'],
+  ['✨','闪光']
+];
+
+function userAvatarChoiceMarkup(value,label,active=false){
+  return `<button class="user-avatar-choice${active?' active':''}" onclick="selectUserSetupAvatar('${companionEscape(value)}')" aria-label="${companionEscape(label)}" title="${companionEscape(label)}">${companionEscape(value)}</button>`;
+}
+
+function renderUserSetupCard(){
+  if(document.getElementById('user-setup-card'))return;
+  const user=getUserProfile();
+  const card=document.createElement('section');
+  card.id='user-setup-card';
+  card.className='agent-setup-card';
+  const active=user.avatar||'👤';
+  card.innerHTML=`
+    <div class="agent-setup-head">
+      <div class="agent-setup-avatar" id="user-setup-preview">${userAvatarMarkup()}</div>
+      <div>
+        <div class="agent-setup-title">也让我认识一下你</div>
+        <div class="agent-setup-sub">以后我就按这个称呼和头像陪你聊天</div>
+      </div>
+    </div>
+    <div class="agent-setup-grid">
+      <input class="agent-setup-input" id="user-setup-name" value="${companionEscape(user.name||'')}" maxlength="12" placeholder="我怎么称呼你">
+      <button class="agent-setup-save" onclick="saveUserSetupCard()">保存</button>
+    </div>
+    <input id="user-setup-avatar" type="hidden" value="${companionEscape(active)}">
+    <div class="agent-avatar-choices">
+      ${USER_AVATAR_CHOICES.map(([value,label])=>userAvatarChoiceMarkup(value,label,value===active)).join('')}
+    </div>
+    <button class="agent-secondary" onclick="document.getElementById('user-setup-card')?.remove()" style="width:100%;height:36px;border:0;border-radius:9px;font:700 13px/1 inherit;cursor:pointer;">先跳过</button>`;
+  chatArea.appendChild(card);
+  scrollBottom();
+}
+
+function selectUserSetupAvatar(value){
+  const normalized=cleanUserAvatar(value);
+  document.getElementById('user-setup-avatar')?.setAttribute('value',normalized);
+  document.querySelectorAll('.user-avatar-choice').forEach(btn=>btn.classList.remove('active'));
+  const target=[...document.querySelectorAll('.user-avatar-choice')].find(btn=>btn.textContent.trim()===normalized);
+  target?.classList.add('active');
+  const preview=document.getElementById('user-setup-preview');
+  if(preview)preview.innerHTML=`<span class="agent-avatar-emoji">${companionEscape(normalized)}</span>`;
+}
+
+async function saveUserSetupCard(){
+  const name=document.getElementById('user-setup-name')?.value||'';
+  const avatar=document.getElementById('user-setup-avatar')?.value||'👤';
+  const saved=saveUserIdentity({name,avatar});
+  document.getElementById('user-setup-card')?.remove();
+  rewardCompanionAction('customize');
+  await agentSay(saved.name?`好呀，${companionEscape(saved.name)}。聊得越多，我就越懂你。`:'好呀，我记住你的头像了。聊得越多，我就越懂你。',120);
+}
+
 function renderAgentSetupCard(){
   if(document.getElementById('agent-setup-card'))return;
   const card=document.createElement('section');
@@ -1529,8 +1651,9 @@ async function saveAgentSetupCard(){
   const ok=setAgentCustomization({name,title:agentTitle||'AI伙伴',emoji:avatar});
   if(!ok){alert('先给我取一个 2 到 8 个字的名字吧');return;}
   renderCompanionBirthCard(true);
+  renderUserSetupCard();
   rewardCompanionAction('customize');
-  await agentSay(`好呀，我记住了。我叫<strong>${agentName}</strong>，我会长大帮你做更多事情。`,120);
+  await agentSay(`好呀，我记住了。我叫<strong>${agentName}</strong>。也告诉我怎么称呼你吧。`,120);
 }
 
 function addCompanionBadge(state,label,icon='📍'){
@@ -7013,6 +7136,54 @@ function showAddressBookEditor(){
   document.body.appendChild(overlay);
 }
 
+function openUserIdentityEditor(){
+  const user=getUserProfile();
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:flex-end;justify-content:center;';
+  overlay.innerHTML=`
+    <div style="background:#0d1f3c;border-radius:24px 24px 0 0;padding:24px 20px 44px;width:100%;max-width:480px;max-height:80vh;overflow-y:auto;">
+      <div style="width:40px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:0 auto 20px;"></div>
+      <div style="font-size:16px;font-weight:900;color:white;margin-bottom:14px;">👤 我的名片</div>
+      <div class="agent-setup-head">
+        <div class="agent-setup-avatar" id="user-editor-preview">${userAvatarMarkup()}</div>
+        <div>
+          <div class="agent-setup-title" style="color:white;">华伴这样认识你</div>
+          <div class="agent-setup-sub">只保存在你的设备和个人资料里</div>
+        </div>
+      </div>
+      <div class="agent-setup-grid">
+        <input class="agent-setup-input" id="user-editor-name" value="${companionEscape(user.name||'')}" maxlength="12" placeholder="我怎么称呼你">
+        <button class="agent-setup-save" onclick="saveUserIdentityFromEditor()">保存</button>
+      </div>
+      <input id="user-editor-avatar" type="hidden" value="${companionEscape(user.avatar||'👤')}">
+      <div class="agent-avatar-choices">
+        ${USER_AVATAR_CHOICES.map(([value,label])=>`<button class="user-avatar-choice${value===(user.avatar||'👤')?' active':''}" onclick="selectUserEditorAvatar('${companionEscape(value)}')" aria-label="${companionEscape(label)}">${companionEscape(value)}</button>`).join('')}
+      </div>
+      <button onclick="this.closest('div[style*=fixed]').remove()"
+        style="width:100%;padding:12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:rgba(255,255,255,0.6);font-size:13px;cursor:pointer;font-family:inherit;margin-top:8px;">关闭</button>
+    </div>`;
+  overlay.onclick=(e)=>{ if(e.target===overlay) overlay.remove(); };
+  document.body.appendChild(overlay);
+}
+
+function selectUserEditorAvatar(value){
+  const normalized=cleanUserAvatar(value);
+  document.getElementById('user-editor-avatar')?.setAttribute('value',normalized);
+  document.querySelectorAll('.user-avatar-choice').forEach(btn=>btn.classList.remove('active'));
+  const target=[...document.querySelectorAll('.user-avatar-choice')].find(btn=>btn.textContent.trim()===normalized);
+  target?.classList.add('active');
+  const preview=document.getElementById('user-editor-preview');
+  if(preview)preview.innerHTML=`<span class="agent-avatar-emoji">${companionEscape(normalized)}</span>`;
+}
+
+function saveUserIdentityFromEditor(){
+  const name=document.getElementById('user-editor-name')?.value||'';
+  const avatar=document.getElementById('user-editor-avatar')?.value||'👤';
+  saveUserIdentity({name,avatar});
+  document.querySelector('div[style*=fixed]')?.remove();
+  agentSay('好呀，我记住你的名片了。',80);
+}
+
 function updateAddressLabel(idx, label){
   const book = getAddressBook();
   if(book[idx]) book[idx].label=label;
@@ -7143,7 +7314,7 @@ async function openProfile(){ stopTTS();
   panel.classList.add('open');
   const p = getPassenger();
   // 填充用户信息
-  document.getElementById('profile-name').textContent = p.name||'未登录';
+  updateUserIdentityUI();
   document.getElementById('profile-phone').textContent = p.phone||'—';
   profilePointsState = {points: 0, level: LEVELS[0], nextLevel: LEVELS[1]};
   document.getElementById('profile-points').textContent = '—';
@@ -8210,6 +8381,8 @@ function logoutUser(){
   localStorage.removeItem(AGENT_NAME_KEY);
   localStorage.removeItem(AGENT_TITLE_KEY);
   localStorage.removeItem(AGENT_EMOJI_KEY);
+  localStorage.removeItem(USER_NAME_KEY);
+  localStorage.removeItem(USER_AVATAR_KEY);
   localStorage.removeItem(VOICE_WAKE_KEY);
   stopWakeListening(true);
   closeProfile();
