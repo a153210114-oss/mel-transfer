@@ -7704,6 +7704,39 @@ function saveInvitedContacts(contacts=[]){
   return existing;
 }
 
+function contactPrimaryPhone(contact={}){
+  const tel=Array.isArray(contact.tel)?contact.tel[0]:contact.tel;
+  return String(tel||'').trim();
+}
+
+function normalizeContactPhone(phone=''){
+  let value=String(phone||'').trim().replace(/[\s().-]/g,'');
+  if(value.startsWith('00'))value='+'+value.slice(2);
+  return value;
+}
+
+function contactMatchesLocalCallingCode(contact={},callingCode=''){
+  const phone=normalizeContactPhone(contactPrimaryPhone(contact));
+  const code=String(callingCode||currentRegion.callingCode||'').trim();
+  if(!phone||!code)return true;
+  if(!phone.startsWith('+'))return true;
+  return phone.startsWith(code);
+}
+
+function splitContactsByFence(contacts=[]){
+  const callingCode=String(currentRegion.callingCode||'').trim();
+  if(!callingCode)return {local:contacts, outside:[], callingCode:''};
+  return contacts.reduce((acc,contact)=>{
+    (contactMatchesLocalCallingCode(contact,callingCode)?acc.local:acc.outside).push(contact);
+    return acc;
+  },{local:[],outside:[],callingCode});
+}
+
+function contactDisplayName(contact={}){
+  const name=Array.isArray(contact.name)?contact.name[0]:contact.name;
+  return String(name||contactPrimaryPhone(contact)||'未命名联系人').trim();
+}
+
 async function pickContactsForInvite(){
   const supported=!!(navigator.contacts&&navigator.contacts.select);
   if(!supported){
@@ -7718,9 +7751,12 @@ async function pickContactsForInvite(){
       await agentSay('好，我没有读取任何联系人。你想邀请时再点通讯录添加就行。',120);
       return;
     }
-    saveInvitedContacts(contacts);
-    rewardCompanionAction('share');
-    showContactInviteResult(contacts);
+    const fenced=splitContactsByFence(contacts);
+    if(fenced.outside.length){
+      showContactFenceConfirm(fenced);
+      return;
+    }
+    confirmContactInviteSelection(contacts);
   }catch(e){
     if(e?.name==='AbortError'){
       await agentSay('没关系，你没有选择联系人。需要的时候再点通讯录添加。',120);
@@ -7729,6 +7765,53 @@ async function pickContactsForInvite(){
     await agentSay('通讯录暂时没打开。我先帮你生成邀请链接，你可以手动发给朋友。',120);
     await shareRefLink();
   }
+}
+
+function confirmContactInviteSelection(contacts=[]){
+  saveInvitedContacts(contacts);
+  rewardCompanionAction('share');
+  showContactInviteResult(contacts);
+}
+
+function showContactFenceConfirm({local=[],outside=[],callingCode=''}={}){
+  const regionName=currentRegion.city||currentRegion.country||'当前地区';
+  const outsideNames=outside.slice(0,5).map(contactDisplayName);
+  const localId='contacts-local-'+Date.now()+'-'+Math.random().toString(36).slice(2,7);
+  const allId='contacts-all-'+Date.now()+'-'+Math.random().toString(36).slice(2,7);
+  window._contactFencePayloads=window._contactFencePayloads||{};
+  window._contactFencePayloads[localId]=local;
+  window._contactFencePayloads[allId]=[...local,...outside];
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:3000;display:flex;align-items:flex-end;justify-content:center;';
+  overlay.innerHTML=`
+    <div style="background:#0d1f3c;border-radius:24px 24px 0 0;padding:24px 20px 44px;width:100%;max-width:480px;border-top:1px solid rgba(255,255,255,0.1);">
+      <div style="width:40px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:0 auto 20px;"></div>
+      <div style="font-size:18px;font-weight:900;color:white;margin-bottom:8px;">确认邀请范围</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.62);line-height:1.8;margin-bottom:12px;">
+        当前定位是「${companionEscape(regionName)}」，本地好友默认优先邀请 ${companionEscape(callingCode||'本地区号')} 的联系人。
+      </div>
+      <div style="background:rgba(241,207,73,0.08);border:1px solid rgba(241,207,73,0.24);border-radius:14px;padding:12px;color:rgba(255,255,255,0.72);font-size:13px;line-height:1.75;margin-bottom:14px;">
+        有 ${outside.length} 位联系人看起来不是当前地区号码${outsideNames.length?`：${outsideNames.map(companionEscape).join('、')}`:''}。要一起邀请吗？
+      </div>
+      <div style="display:flex;gap:9px;flex-wrap:wrap;">
+        <button onclick="confirmFencedContacts('${localId}',this)" style="flex:1 1 45%;padding:13px;background:rgba(0,200,150,0.22);border:1px solid rgba(0,200,150,0.38);border-radius:12px;color:white;font-size:14px;font-weight:900;font-family:inherit;cursor:pointer;">只邀请本地</button>
+        <button onclick="confirmFencedContacts('${allId}',this)" style="flex:1 1 45%;padding:13px;background:rgba(241,207,73,0.16);border:1px solid rgba(241,207,73,0.32);border-radius:12px;color:#f1cf49;font-size:14px;font-weight:900;font-family:inherit;cursor:pointer;">仍然一起邀请</button>
+      </div>
+      <button onclick="this.closest('div[style*=fixed]')?.remove()" style="width:100%;margin-top:9px;padding:12px;background:transparent;border:0;color:rgba(255,255,255,0.46);font-size:13px;font-family:inherit;cursor:pointer;">取消</button>
+    </div>`;
+  overlay.onclick=(e)=>{if(e.target===overlay)overlay.remove();};
+  document.body.appendChild(overlay);
+}
+
+function confirmFencedContacts(payloadId,btn){
+  const contacts=(window._contactFencePayloads&&window._contactFencePayloads[payloadId])||[];
+  if(window._contactFencePayloads)delete window._contactFencePayloads[payloadId];
+  btn?.closest('div[style*=fixed]')?.remove();
+  if(!contacts.length){
+    agentSay('这次没有本地区号联系人。你也可以重新选择，或直接复制邀请链接。',120);
+    return;
+  }
+  confirmContactInviteSelection(contacts);
 }
 
 function showContactInviteResult(contacts=[]){
