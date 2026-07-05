@@ -2986,8 +2986,21 @@ async function loadTokenUsage() {
       image_wish: '图片识别',
       tts: '语音输出'
     };
+    const routeLabel = {
+      casual_chat: '闲聊陪伴',
+      chat: '通用对话',
+      complex_planning: '复杂规划',
+      search_verify: '搜索核验',
+      supply_intel: '供给识别',
+      booking_action: '办事预约',
+      vision_understanding: '图片理解'
+    };
     body.innerHTML = rows.length ? rows.slice(0, 80).map(row => {
       const provider = [row.provider, row.model].filter(Boolean).join(' · ') || '-';
+      const fields = row.fields && typeof row.fields === 'object' ? row.fields : {};
+      const route = fields.route || fields.task_type || '';
+      const directorScore = Number(fields.director_confidence) || 0;
+      const auditScore = Number(fields.audit_score) || 0;
       const feature = featureLabel[row.feature] || row.feature || row.endpoint || '-';
       const input = Number(row.input_tokens) || 0;
       const output = Number(row.output_tokens) || 0;
@@ -2996,7 +3009,11 @@ async function loadTokenUsage() {
       return `<tr>
         <td>${fmtDate(row.created_at)}</td>
         <td><span class="tag">${escapeHtml(feature)}</span></td>
-        <td style="font-size:12px;color:var(--text2);max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(provider)}</td>
+        <td style="font-size:12px;color:var(--text2);max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+          ${escapeHtml(provider)}
+          ${route ? `<div style="font-size:11px;color:var(--accent);margin-top:3px;">${escapeHtml(routeLabel[route] || route)}${fields.cost_tier ? ` · ${escapeHtml(fields.cost_tier)}` : ''}</div>` : ''}
+          ${(directorScore || auditScore) ? `<div style="font-size:11px;color:var(--text3);margin-top:2px;">导演 ${Math.round(directorScore*100)} · 质检 ${Math.round(auditScore*100)}${fields.audit_approved===false ? ' · 待优化' : ''}</div>` : ''}
+        </td>
         <td style="font-family:monospace;color:var(--text2);">${input.toLocaleString('zh-CN')}${chars ? `<div style="font-size:11px;color:var(--text3);">${chars.toLocaleString('zh-CN')}字</div>` : ''}</td>
         <td style="font-family:monospace;color:var(--text2);">${output.toLocaleString('zh-CN')}</td>
         <td style="font-family:monospace;color:var(--gold);font-weight:800;">${total.toLocaleString('zh-CN')}</td>

@@ -1,7 +1,5 @@
 // api/image-wish.js - extract wish-wall draft from an uploaded image
-const Anthropic = require('@anthropic-ai/sdk');
-
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const { createVisionMessage } = require('./model-router');
 
 function safeJson(text) {
   const raw = String(text || '').trim();
@@ -46,41 +44,29 @@ module.exports = async function handler(req, res) {
 - 如果看不清，text 里说明“图片部分信息不清楚，请补充...”。
 - 不要编造图片中没有的联系电话。`;
 
-    const model = 'claude-haiku-4-5-20251001';
-    const response = await client.messages.create({
-      model,
-      max_tokens: 700,
-      messages: [{
-        role: 'user',
-        content: [
-          {
-            type: 'image',
-            source: {
-              type: 'base64',
-              media_type: mediaType,
-              data: image
-            }
-          },
-          { type: 'text', text: prompt }
-        ]
-      }]
+    const routed = await createVisionMessage({
+      maxTokens: 700,
+      content: [
+        {
+          type: 'image',
+          source: {
+            type: 'base64',
+            media_type: mediaType,
+            data: image
+          }
+        },
+        { type: 'text', text: prompt }
+      ]
     });
+    const response = routed.response;
 
     const text = response.content?.map(part => part.text || '').join('\n') || '';
     const draft = safeJson(text);
     if (!draft) return res.status(502).json({ error: 'Could not parse image result' });
-    const usage = response.usage || {};
     res.status(200).json({
       draft,
-      huaban_usage: {
-        provider: 'anthropic',
-        model,
-        endpoint: 'image-wish',
-        request_id: response.id || '',
-        input_tokens: Number(usage.input_tokens) || 0,
-        output_tokens: Number(usage.output_tokens) || 0,
-        total_tokens: (Number(usage.input_tokens) || 0) + (Number(usage.output_tokens) || 0)
-      }
+      huaban_route: routed.route,
+      huaban_usage: routed.usage
     });
   } catch (error) {
     console.error('Image wish API error:', error);

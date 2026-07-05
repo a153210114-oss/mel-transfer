@@ -1,7 +1,5 @@
 // api/chat.js - CommonJS for Vercel
-const Anthropic = require('@anthropic-ai/sdk');
-
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const { createTextMessage } = require('./model-router');
 
 // 天气查询（wttr.in，无需API key）
 async function getWeather(city) {
@@ -81,7 +79,13 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (
+    !process.env.ANTHROPIC_API_KEY &&
+    !process.env.SILICONFLOW_API_KEY &&
+    !process.env.OPENAI_API_KEY &&
+    !process.env.GEMINI_API_KEY &&
+    !process.env.GOOGLE_API_KEY
+  ) {
     return res.status(500).json({ error: 'Chat service is not configured' });
   }
 
@@ -94,26 +98,17 @@ module.exports = async function handler(req, res) {
     // 注入实时数据到system prompt
     const enrichedSystem = await enrichSystemPrompt(system || '', messages, region || {});
 
-    const model = 'claude-haiku-4-5-20251001';
-    const response = await client.messages.create({
-      model,
-      max_tokens: 600,
+    const routed = await createTextMessage({
+      maxTokens: 600,
       system: enrichedSystem,
       messages: messages.slice(-12) // 保留最近12条
     });
+    const response = routed.response;
 
-    const usage = response.usage || {};
     res.status(200).json({
       ...response,
-      huaban_usage: {
-        provider: 'anthropic',
-        model,
-        endpoint: 'chat',
-        request_id: response.id || '',
-        input_tokens: Number(usage.input_tokens) || 0,
-        output_tokens: Number(usage.output_tokens) || 0,
-        total_tokens: (Number(usage.input_tokens) || 0) + (Number(usage.output_tokens) || 0)
-      }
+      huaban_route: routed.route,
+      huaban_usage: routed.usage
     });
   } catch (error) {
     console.error('Chat API error:', error);
