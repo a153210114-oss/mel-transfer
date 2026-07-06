@@ -733,6 +733,15 @@ body.theme-night .agent-age-seconds{color:#62ddb2;}
 .agent-setup-avatar{width:48px;height:48px;border-radius:13px;background:#f1fbf6;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;box-shadow:0 0 0 1px rgba(0,0,0,.04);}
 .agent-setup-title{font-size:15px;font-weight:800;color:var(--wx-text);}
 .agent-setup-sub{font-size:11px;color:#888;margin-top:2px;}
+.agent-persona-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 10px;}
+.agent-persona-card{border:1px solid #ddd;border-radius:11px;background:#fff;color:#333;text-align:left;padding:9px 8px;cursor:pointer;min-width:0;box-shadow:0 1px 4px rgba(0,0,0,.03);}
+.agent-persona-card strong{display:block;font-size:13px;line-height:1.25;color:#1d1d1d;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.agent-persona-card span{display:block;font-size:11px;line-height:1.35;color:#777;}
+.agent-persona-card i{font-style:normal;font-size:21px;display:block;margin-bottom:5px;}
+.agent-persona-card.active{border-color:#20b77b;background:#f1fbf6;box-shadow:0 0 0 2px rgba(32,183,123,.13);}
+.agent-title-chips{display:flex;gap:7px;overflow-x:auto;margin:8px 0 10px;padding-bottom:1px;}
+.agent-title-chip{border:1px solid #ddd;border-radius:999px;background:#fff;color:#333;font:700 12px/1 inherit;padding:8px 10px;white-space:nowrap;cursor:pointer;flex-shrink:0;}
+.agent-title-chip.active{border-color:#20b77b;background:#eaf8f1;color:#128255;}
 .agent-setup-grid{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;}
 .agent-setup-input{height:40px;border:1px solid #ddd;border-radius:9px;background:#f7f7f7;color:#191919;font:15px/1 inherit;padding:0 11px;outline:none;min-width:0;}
 .agent-setup-input:focus{border-color:#20b77b;background:#fff;}
@@ -839,7 +848,7 @@ body.more-open .chat-area{padding-bottom:390px;}
   <div class="brand-lockup" onclick="summonAI('logo')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();summonAI('logo')}" aria-label="召唤华伴 AI">
     <img class="brand-logo" src="assets/brand/huaban-logo-v1.png" alt="华伴 logo">
   </div>
-  <div class="brand-positioning">一个更出色的你</div>
+  <div class="brand-positioning">有脑、有手的AI</div>
   <div id="voice-indicator" style="display:none;font-size:11px;color:rgba(255,59,48,0.9);animation:mp 0.8s ease-in-out infinite;">🔴 录音中</div>
   <button class="region-btn ai-hidden-control" id="region-btn" onclick="changeRegion()" aria-label="切换地区" title="切换地区"><i class="region-dot"></i><span id="region-label">正在定位</span>⌄</button>
   <button class="ai-hidden-control" id="share-btn" onclick="shareRefLink()" aria-label="分享" title="分享" style="background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;">＋</button>
@@ -1057,9 +1066,11 @@ let currentGender = null; // 'male' | 'female'
 let agentEmoji = 'logo';
 let agentName = '';
 let agentTitle = 'AI伙伴';
+let agentPersona = 'life';
 const AGENT_NAME_KEY = 'huaban_agent_name';
 const AGENT_TITLE_KEY = 'huaban_agent_title';
 const AGENT_EMOJI_KEY = 'huaban_agent_emoji';
+const AGENT_PERSONA_KEY = 'huaban_agent_persona';
 const AGENT_BIRTH_KEY = 'huaban_agent_birth_at';
 const USER_NAME_KEY = 'huaban_user_name';
 const USER_AVATAR_KEY = 'huaban_user_avatar';
@@ -1589,6 +1600,66 @@ const AGENT_AVATAR_CHOICES=[
   ['🫶','暖心']
 ];
 
+const AGENT_PERSONAS={
+  business:{
+    key:'business',
+    icon:'💼',
+    label:'事业帮手',
+    defaultName:'小成',
+    defaultTitle:'总裁助理',
+    short:'赚钱、宣传、获客',
+    titles:['总裁助理','事业助手','品牌顾问','电商助手','名片助理'],
+    prompt:'优先理解用户的赚钱、宣传、获客、个人网站、独立电商、个人店铺、个人名片、推广文案、报价表、客户跟进和商业资料整理需求。先帮用户把想法变成可执行结果；需要连接客户、商家、服务者或资源时，再慢慢问清条件并生成确认卡。'
+  },
+  life:{
+    key:'life',
+    icon:'🏡',
+    label:'生活管家',
+    defaultName:'小安',
+    defaultTitle:'生活管家',
+    short:'家庭、出行、学习',
+    titles:['生活管家','家庭助理','学生助理','日程管家','出行管家'],
+    prompt:'优先理解家庭事务、老人孩子、家务、购物、出行、提醒、学生学习规划、生活安排和日常管理需求。能直接给建议就先给建议；需要找人、找服务、匹配资源时，再问清时间、地点、预算、备注和联系方式。'
+  },
+  emotion:{
+    key:'emotion',
+    icon:'🫶',
+    label:'情感陪伴',
+    defaultName:'小暖',
+    defaultTitle:'贴心陪伴',
+    short:'倾听、娱乐、陪聊',
+    titles:['贴心陪伴','情绪树洞','娱乐搭子','开心顾问','倾听伙伴'],
+    prompt:'优先理解用户的陪聊、倾听、情绪安放、娱乐节目搜索推荐、讲笑话、聊天陪伴和温柔建议需求。先让用户感觉被理解；需要活动、朋友、资源或线下连接时，再自然补齐条件。'
+  }
+};
+
+function cleanAgentPersona(value){
+  const key=String(value||'').trim();
+  return AGENT_PERSONAS[key]?key:'life';
+}
+
+function getSavedAgentPersona(){
+  return cleanAgentPersona(localStorage.getItem(AGENT_PERSONA_KEY)||'');
+}
+
+function agentPersonaProfile(key=agentPersona){
+  return AGENT_PERSONAS[cleanAgentPersona(key)]||AGENT_PERSONAS.life;
+}
+
+function agentPersonaCardMarkup(key,active=false,mode='setup'){
+  const p=agentPersonaProfile(key);
+  const fn=mode==='customizer'?'selectCustomizerPersona':'selectAgentPersona';
+  return `<button class="agent-persona-card${active?' active':''}" data-agent-persona="${p.key}" onclick="${fn}('${p.key}')"><i>${p.icon}</i><strong>${companionEscape(p.label)}</strong><span>${companionEscape(p.short)}</span></button>`;
+}
+
+function agentTitleChipsMarkup(key,activeTitle='',mode='setup'){
+  const p=agentPersonaProfile(key);
+  const fn=mode==='customizer'?'fillCustomizerTitle':'fillAgentTitle';
+  return p.titles.map(title=>`<button class="agent-title-chip${title===activeTitle?' active':''}" onclick="${fn}('${companionEscape(title)}')">${companionEscape(title)}</button>`).join('');
+}
+
+agentPersona = getSavedAgentPersona() || agentPersona;
+
 const USER_AVATAR_CHOICES=[
   ['👤','默认'],
   ['😊','微笑'],
@@ -1665,17 +1736,27 @@ function renderAgentSetupCard(){
   card.id='agent-setup-card';
   card.className='agent-setup-card';
   const active=isDefaultAgentEmoji()?'logo':agentEmoji;
+  const persona=agentPersonaProfile(agentPersona);
+  const activeTitle=hasCustomAgentIdentity()?agentTitle:persona.defaultTitle;
   card.innerHTML=`
     <div class="agent-setup-head">
       <div class="agent-setup-avatar" id="agent-setup-preview">${agentAvatarMarkup()}</div>
       <div>
-        <div class="agent-setup-title">先认识一下我</div>
-        <div class="agent-setup-sub">可以语音说“你叫小爱”，也可以手动填</div>
+        <div class="agent-setup-title">先选我优先帮你什么</div>
+        <div class="agent-setup-sub">事业、生活、情感，后面都能再改</div>
       </div>
     </div>
+    <input id="agent-setup-persona" type="hidden" value="${companionEscape(persona.key)}">
+    <div class="agent-persona-grid">
+      ${Object.keys(AGENT_PERSONAS).map(key=>agentPersonaCardMarkup(key,key===persona.key)).join('')}
+    </div>
     <div class="agent-setup-grid">
-      <input class="agent-setup-input" id="agent-setup-name" value="${hasCustomAgentIdentity()?companionEscape(agentName):''}" maxlength="8" placeholder="给我取个名字">
+      <input class="agent-setup-input" id="agent-setup-name" value="${hasCustomAgentIdentity()?companionEscape(agentName):''}" maxlength="8" placeholder="给我取个名字，如${companionEscape(persona.defaultName)}">
       <button class="agent-setup-save" onclick="saveAgentSetupCard()">保存</button>
+    </div>
+    <input class="agent-setup-input" id="agent-setup-title" value="${companionEscape(activeTitle)}" maxlength="10" placeholder="选个头衔" style="width:100%;margin-top:8px;">
+    <div class="agent-title-chips" id="agent-setup-title-chips">
+      ${agentTitleChipsMarkup(persona.key,activeTitle)}
     </div>
     <input id="agent-setup-emoji" type="hidden" value="${companionEscape(active)}">
     <div class="agent-avatar-choices">
@@ -1688,6 +1769,27 @@ function renderAgentSetupCard(){
   chatArea.appendChild(card);
   ensureAgentAgeTicker();
   scrollBottom();
+}
+
+function selectAgentPersona(key){
+  const persona=agentPersonaProfile(key);
+  const hidden=document.getElementById('agent-setup-persona');
+  if(hidden)hidden.value=persona.key;
+  document.querySelectorAll('#agent-setup-card .agent-persona-card').forEach(btn=>btn.classList.toggle('active',btn.dataset.agentPersona===persona.key));
+  const titleInput=document.getElementById('agent-setup-title');
+  const previousTitles=Object.values(AGENT_PERSONAS).flatMap(p=>p.titles);
+  if(titleInput&&(!titleInput.value||previousTitles.includes(titleInput.value)))titleInput.value=persona.defaultTitle;
+  const nameInput=document.getElementById('agent-setup-name');
+  if(nameInput&&!nameInput.value&&persona.defaultName)nameInput.placeholder=`给我取个名字，如${persona.defaultName}`;
+  const chips=document.getElementById('agent-setup-title-chips');
+  if(chips)chips.innerHTML=agentTitleChipsMarkup(persona.key,titleInput?.value||persona.defaultTitle);
+  if(isDefaultAgentEmoji()||document.getElementById('agent-setup-emoji')?.value==='logo')selectSetupAvatar(persona.icon);
+}
+
+function fillAgentTitle(title){
+  const input=document.getElementById('agent-setup-title');
+  if(input)input.value=title;
+  document.querySelectorAll('#agent-setup-title-chips .agent-title-chip').forEach(btn=>btn.classList.toggle('active',btn.textContent.trim()===title));
 }
 
 function selectSetupAvatar(value){
@@ -1709,12 +1811,14 @@ function selectSetupAvatar(value){
 async function saveAgentSetupCard(){
   const name=document.getElementById('agent-setup-name')?.value||'';
   const avatar=document.getElementById('agent-setup-emoji')?.value||'logo';
-  const ok=setAgentCustomization({name,title:agentTitle||'AI伙伴',emoji:avatar});
+  const persona=cleanAgentPersona(document.getElementById('agent-setup-persona')?.value||agentPersona);
+  const title=document.getElementById('agent-setup-title')?.value||agentPersonaProfile(persona).defaultTitle;
+  const ok=setAgentCustomization({name,title,emoji:avatar,persona});
   if(!ok){alert('先给我取一个 2 到 8 个字的名字吧');return;}
   renderCompanionBirthCard(true);
   renderUserSetupCard();
   rewardCompanionAction('customize');
-  await agentSay(`好呀，我记住了。我叫<strong>${agentName}</strong>。也告诉我怎么称呼你吧。`,120);
+  await agentSay(`好呀，我记住了。我叫<strong>${agentName}</strong>，是你的${displayAgentTitle()}。也告诉我怎么称呼你吧。`,120);
 }
 
 function addCompanionBadge(state,label,icon='📍'){
@@ -2948,17 +3052,20 @@ function updateAgentIdentityUI(){
   updateCompanionEntryButton();
 }
 
-function setAgentCustomization({name,title,emoji}){
+function setAgentCustomization({name,title,emoji,persona}){
   const nextName=cleanAgentName(name);
   const nextTitle=cleanAgentTitle(title);
   const nextEmoji=cleanAgentEmoji(emoji);
+  const nextPersona=cleanAgentPersona(persona||agentPersona);
   if(nextName.length<2 || nextTitle.length<2 || !nextEmoji)return false;
   localStorage.setItem(AGENT_NAME_KEY,nextName);
   localStorage.setItem(AGENT_TITLE_KEY,nextTitle);
   localStorage.setItem(AGENT_EMOJI_KEY,nextEmoji);
+  localStorage.setItem(AGENT_PERSONA_KEY,nextPersona);
   agentName=nextName;
   agentTitle=nextTitle;
   agentEmoji=nextEmoji;
+  agentPersona=nextPersona;
   updateAgentIdentityUI();
   renderCompanionCard();
   document.getElementById('agent-setup-card')?.remove();
@@ -2971,6 +3078,7 @@ function openAgentCustomizer(){
   const overlay=document.createElement('div');
   overlay.id='agent-customizer';
   overlay.className='install-overlay';
+  const persona=agentPersonaProfile(agentPersona);
   const presetRows=AGENT_AVATAR_CHOICES.slice(0,12).map(([emoji,label])=>{
     const title=emoji==='logo'?'AI伙伴':label+'伙伴';
     const name=emoji==='logo'?'小爱':label.length<=2?'小'+label:'小伴';
@@ -2982,19 +3090,26 @@ function openAgentCustomizer(){
         <div style="width:44px;height:44px;border-radius:12px;background:#f1fbf6;display:flex;align-items:center;justify-content:center;font-size:28px;overflow:hidden;">${agentAvatarMarkup()}</div>
         <div>
           <div class="install-sheet-title">定制你的 AI 伙伴</div>
-          <div class="install-sheet-sub">名字、身份、形象都会出现在聊天里</div>
+          <div class="install-sheet-sub">名字、头衔、头像都会出现在聊天里</div>
         </div>
+      </div>
+      <input id="agent-persona-input" type="hidden" value="${companionEscape(persona.key)}">
+      <div class="agent-persona-grid">
+        ${Object.keys(AGENT_PERSONAS).map(key=>agentPersonaCardMarkup(key,key===persona.key,'customizer')).join('')}
       </div>
       <div class="agent-custom-field">
         <label for="agent-name-input">名字</label>
-        <input id="agent-name-input" value="${companionEscape(agentName)}" maxlength="8" placeholder="例如：小旅">
+        <input id="agent-name-input" value="${companionEscape(agentName)}" maxlength="8" placeholder="例如：${companionEscape(persona.defaultName)}">
       </div>
       <div class="agent-custom-field">
-        <label for="agent-title-input">身份</label>
-        <input id="agent-title-input" value="${companionEscape(agentTitle)}" maxlength="10" placeholder="例如：出行管家">
+        <label for="agent-title-input">头衔</label>
+        <input id="agent-title-input" value="${companionEscape(agentTitle)}" maxlength="10" placeholder="例如：${companionEscape(persona.defaultTitle)}">
+      </div>
+      <div class="agent-title-chips" id="agent-custom-title-chips">
+        ${agentTitleChipsMarkup(persona.key,agentTitle,'customizer')}
       </div>
       <div class="agent-custom-field">
-        <label for="agent-emoji-input">形象</label>
+        <label for="agent-emoji-input">头像</label>
         <input id="agent-emoji-input" value="${isDefaultAgentEmoji()?'':companionEscape(agentEmoji)}" maxlength="4" placeholder="留空使用华伴头像，或填一个表情">
       </div>
       <div class="agent-preset-row">
@@ -3005,6 +3120,26 @@ function openAgentCustomizer(){
     </div>`;
   overlay.onclick=(event)=>{ if(event.target===overlay)overlay.remove(); };
   document.body.appendChild(overlay);
+}
+
+function selectCustomizerPersona(key){
+  const persona=agentPersonaProfile(key);
+  const hidden=document.getElementById('agent-persona-input');
+  if(hidden)hidden.value=persona.key;
+  document.querySelectorAll('#agent-customizer .agent-persona-card').forEach(btn=>btn.classList.toggle('active',btn.dataset.agentPersona===persona.key));
+  const titleInput=document.getElementById('agent-title-input');
+  const previousTitles=Object.values(AGENT_PERSONAS).flatMap(p=>p.titles);
+  if(titleInput&&(!titleInput.value||previousTitles.includes(titleInput.value)))titleInput.value=persona.defaultTitle;
+  const chips=document.getElementById('agent-custom-title-chips');
+  if(chips)chips.innerHTML=agentTitleChipsMarkup(persona.key,titleInput?.value||persona.defaultTitle,'customizer');
+  const emojiInput=document.getElementById('agent-emoji-input');
+  if(emojiInput&&!emojiInput.value)emojiInput.value=persona.icon;
+}
+
+function fillCustomizerTitle(title){
+  const input=document.getElementById('agent-title-input');
+  if(input)input.value=title;
+  document.querySelectorAll('#agent-custom-title-chips .agent-title-chip').forEach(btn=>btn.classList.toggle('active',btn.textContent.trim()===title));
 }
 
 function fillAgentPreset(name,title,emoji){
@@ -3020,9 +3155,10 @@ function saveAgentCustomization(){
   const ok=setAgentCustomization({
     name:document.getElementById('agent-name-input')?.value,
     title:document.getElementById('agent-title-input')?.value,
-    emoji:document.getElementById('agent-emoji-input')?.value
+    emoji:document.getElementById('agent-emoji-input')?.value,
+    persona:document.getElementById('agent-persona-input')?.value
   });
-  if(!ok){alert('名字和身份至少 2 个字，形象可以填一个表情');return;}
+  if(!ok){alert('名字和头衔至少 2 个字，头像可以填一个表情');return;}
   document.getElementById('agent-customizer')?.remove();
   companionSay(`我是${agentName}，${agentTitle}`);
   rewardCompanionAction('customize');
@@ -3257,19 +3393,22 @@ function betaContact(){
 }
 
 function syncAgentAdoption(){
+  const persona=agentPersonaProfile(agentPersona);
   return supaInsertLead({
     lead_type:'user',
     channel:'adoption',
     name:agentName||'未命名AI伙伴',
     contact:betaContact(),
     need_type:'adoption',
-    message:`用户领养 AI 伙伴：${agentName||'未命名'} · ${displayAgentTitle()} · ${displayAgentAvatarText()}`,
+    message:`用户领养 AI 伙伴：${agentName||'未命名'} · ${displayAgentTitle()} · ${displayAgentAvatarText()} · ${persona.label}`,
     next_action:'follow_public_beta_user',
     fields:{
       event:'agent_adoption',
       display_name:displayAgentName(),
       display_title:displayAgentTitle(),
-      avatar:displayAgentAvatarText()
+      avatar:displayAgentAvatarText(),
+      persona:persona.key,
+      persona_label:persona.label
     }
   });
 }
@@ -4071,7 +4210,7 @@ async function handleValuePrompt(type){
 async function beginAgentAdoption(){
   document.getElementById('adopt-welcome-card')?.remove();
   renderAgentSetupCard();
-  await agentSay('好呀，先给我取个名字、选个头像吧。领养之后，我会长大帮你做更多事情。',120);
+  await agentSay('好呀，先选我优先帮你什么，再给我取个名字、选个头像吧。领养之后，我会长大帮你做更多事情。',120);
 }
 
 function renderQuickGuideCard(){
@@ -6661,6 +6800,7 @@ function buildPrompt(){
   const agentGender = localStorage.getItem('au_gender')==='female' ? 'male' : 'male';
   const companionState=getCompanion();
   const companionStage=companionLevel(companionState.xp);
+  const personaProfile=agentPersonaProfile(agentPersona);
 
   let p = `你是全球华伴AI伙伴${agentName}，专为中文母语者提供海外帮助。
 
@@ -6675,11 +6815,14 @@ function buildPrompt(){
 名字：${agentName}
 身份：${agentTitle}
 形象：${agentEmoji}
+当前优先方向：${personaProfile.label}
+方向理解：${personaProfile.prompt}
 产品骨架：用户直觉里只有一个华伴 AI。所有商业化系统都在后台运行；接机、包车、外卖、接单、商家使用等都只是 AI 背后调用的工具，或审核后给使用者使用的工具。
-核心定位：除了需要与被需要，生活不该被打扰。华伴 AI，一个更出色的你。在华伴，每个人都可以被帮助，也可以被需要。生活，是发现用户的真实需求并尽力满足用户；事业，是帮助用户发现机会、连接客户、提升成交，逐步实现商业目标。
+核心定位：除了需要与被需要，生活不该被打扰。华伴是一款有脑、有手的 AI，也是一个更出色的你。在华伴，每个人都可以被帮助，也可以被需要。生活，是发现用户的真实需求并尽力满足用户；事业，是帮助用户发现机会、连接客户、提升成交，逐步实现商业目标。
 AI Agent 核心任务：什么都能聊，但聊天不是目的。主要通过和用户交互来收集数据、分析意图和资源、形成决策建议，再调用工具帮助用户完成心愿。不要把自己表现成只会回答问题的聊天机器人，也不要表现成静态功能菜单。
 第一定位：华伴是一个 AI 智能体，也是用户真实需求和真实供给的数据入口。你要通过自然帮助用户来搜集数据，而不是让用户感觉在填表或被采集。用户看到的是你在帮他整理、建议、提醒、匹配和推进；数据沉淀、分类、标签、线索和学习样本都在后台完成。
-办事方法：先在自然聊天中收集关键数据；再判断用户是需求方、供给方或两者兼具；然后选择合适工具；信息足够时整理成建议和可修改确认卡；最终让用户决定，确认后再推送到后台或对应流程；过程中继续补充数据和更新决策。
+办事方法：先回答或帮助用户，能直接满足就直接满足。只有涉及需要连接人、资源、服务、商品、客户、商家、司机、外卖员、本地朋友或专业人士时，才把“连接”作为背后隐秘目标，继续在自然聊天中问清关键条件；条件满足后整理成完整、可修改确认卡；确认后再从华伴数据库和公开来源里匹配资源，给用户可选择结果。
+连接方法：不要让用户感觉自己在填表。先聊透时间、地点、任务、金额/预算、备注、联系方式、可接受条件和安全边界；资源匹配后再自然询问是否生成私密好友/联系卡。私密好友要让用户感觉是“为这件事定制的连接”，不是平台硬塞好友列表；用户愿意时再引导分享或互相使用华伴。
 主动学习：用户需求就是学习方向。无论需求来自聊天、图片、确认卡、业务表单，还是公开搜索来的处理方法，都要沉淀成“下次遇到类似用户怎么更快处理”的经验。不要把搜索结果只当一次性答案；要把可复用的方法、字段、核验点、提醒点和成交路径留给后台训练。
 自我纠错：当用户指出“没聊透、太早弹卡、定义模糊、应该先问清楚、这是供给不是需求”等，必须立即吸收为改进规则。以后同类场景先自然聊天、问清关键点、默默整理，不要过早生成确认卡；尤其用户说“我是/我会/我能/我有”时，多半是供给自我介绍，先收集服务范围、区域、联系方式、资质和可接时间，不要当成需求方工单。
 决策边界：你可以分析、整理、推荐和调用工具，但不要替用户做最终决定。涉及金钱、资质、安全、交易、隐私和身份信息时，必须给出建议、风险点和确认卡，让用户决定后再执行。
@@ -8615,7 +8758,7 @@ async function buildPromoPosterDataUrl({user=getUserProfile(), link=friendInvite
   ctx.fillText('华伴 AI',170,106);
   ctx.font='500 24px -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif';
   ctx.fillStyle='rgba(255,255,255,0.72)';
-  ctx.fillText('一个更出色的你',170,142);
+  ctx.fillText('有脑、有手的 AI',170,142);
 
   ctx.fillStyle='#ffffff';
   ctx.font='900 54px -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif';
