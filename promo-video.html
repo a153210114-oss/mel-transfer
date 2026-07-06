@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex,nofollow">
-<title>华伴推广视频</title>
+<title>华伴创意制作</title>
 <style>
 :root {
   --bg: #07111f;
@@ -422,8 +422,8 @@ h1 {
     <div class="brand">
       <img src="assets/brand/huaban-logo-v1.png" alt="华伴">
       <div>
-        <h1 id="pageTitle">华伴推广视频脚本</h1>
-        <p class="sub" id="pageSub">15 秒主推版 · 按人群切换 · 可复制给视频生成工具</p>
+        <h1 id="pageTitle">华伴创意制作</h1>
+        <p class="sub" id="pageSub">文案 · 图片提示词 · 海报 · 短视频脚本</p>
       </div>
     </div>
     <div class="actions">
@@ -464,8 +464,8 @@ h1 {
         <div class="preset-switch" id="presetSwitch"></div>
         <div class="tagline" id="tagline"></div>
         <div class="user-video-tool" id="userVideoTool">
-          <div class="tool-title">用手机里的视频推广自己</div>
-          <div class="tool-copy">选择相册里的视频，华伴帮你配一段推广文案。视频只在你的手机浏览器里预览，除非你主动分享，不会被自动上传。</div>
+          <div class="tool-title">用手机里的视频或想法推广自己</div>
+          <div class="tool-copy">选择相册里的视频，或先用上方模板整理文案、图片提示词和分镜。素材只在你的手机浏览器里预览，除非你主动分享，不会被自动上传。</div>
           <div class="video-actions">
             <label class="file-label">选择视频
               <input id="businessVideoInput" type="file" accept="video/*" onchange="handleBusinessVideo(event)">
@@ -478,7 +478,7 @@ h1 {
         </div>
         <div class="scene-list" id="sceneList"></div>
         <textarea class="script" id="scriptBox" readonly></textarea>
-        <div class="note">二维码默认使用当前华伴二维码。后续如果要接视频生成工具，直接使用每幕的 visualPrompt 即可。</div>
+        <div class="note">这里先帮你把想法整理成可执行素材。需要生成图片或视频时，可复制每幕的 visualPrompt 到生成工具继续制作。</div>
       </div>
     </div>
   </div>
@@ -558,10 +558,21 @@ const VIDEO_PRESETS = {
       {id:3,duration:3.7,subtitle:"让事业成型",narration:"介绍、名片、推广文案、客户线索和跟进，都可以让华伴帮你整理。",visualPrompt:"Business dashboard with leads, profile card, poster copy, follow-up reminders, premium but simple.",bg:"linear-gradient(135deg,#1e293b,#14532d)"},
       {id:4,duration:3.8,subtitle:"先把自己说清楚",narration:"打开华伴 AI+，让真正需要的人找到你。",visualPrompt:"Huaban QR code business promotion card, clean green cyan branding, trustworthy overseas Chinese business tone.",bg:"linear-gradient(135deg,#ecfeff,#dcfce7)",final:true}
     ]
+  },
+  creative: {
+    label: "创意",
+    tagline: "你负责创意，华伴帮你整理成文案、图片提示词、分镜和短视频脚本。",
+    bgmSuggestion: "轻快、有灵感、适合创作工作流。",
+    scenes: [
+      {id:1,duration:3.8,subtitle:"先把想法说出来",narration:"不用一开始就完美。你说一句模糊的想法，华伴先帮你抓住重点。",visualPrompt:"A creator speaking an idea into a clean AI chat interface, messy notes becoming clear keywords, warm desk lighting.",bg:"linear-gradient(135deg,#111827,#4338ca)"},
+      {id:2,duration:3.7,subtitle:"变成能用的文案",narration:"标题、卖点、口播、朋友圈和小红书文案，都可以先整理出来。",visualPrompt:"Chinese copywriting cards, headline options and short social media captions arranged neatly on a phone screen.",bg:"linear-gradient(135deg,#0f766e,#0f172a)"},
+      {id:3,duration:3.7,subtitle:"再变成画面和分镜",narration:"华伴继续拆成图片提示词、镜头节奏和视频脚本。",visualPrompt:"Storyboard frames, image generation prompts, video timeline, clean creative production workspace.",bg:"linear-gradient(135deg,#1e293b,#7c3aed)"},
+      {id:4,duration:3.8,subtitle:"你的作品，可以开始了",narration:"文案、图片、视频，一步一步从想法变成作品。",visualPrompt:"Huaban AI creative production card, polished poster and short video preview, creator-friendly clean interface.",bg:"linear-gradient(135deg,#ecfeff,#dcfce7)",final:true}
+    ]
   }
 };
 
-let activePreset = "main";
+let activePreset = new URLSearchParams(location.search).get("mode") === "creative" ? "creative" : "main";
 let HUABAN_VIDEO_SCRIPT = VIDEO_PRESETS[activePreset];
 
 const qrPath = "assets/brand/huaban-qr-logo.png";
@@ -594,9 +605,9 @@ function setPreset(key) {
 
 function applyModeText() {
   if (!fromUser) return;
-  document.getElementById("pageTitle").textContent = "我的推广视频";
-  document.getElementById("pageSub").textContent = "把自己的生意、服务和作品整理成短视频脚本。";
-  document.getElementById("panelTitle").textContent = "我的视频脚本";
+  document.getElementById("pageTitle").textContent = "创意制作工具";
+  document.getElementById("pageSub").textContent = "把想法整理成文案、图片提示词、海报结构和短视频脚本。";
+  document.getElementById("panelTitle").textContent = "创意素材草稿";
   document.getElementById("panelSub").textContent = "先用华伴模板生成，后续可以保存自己的版本。";
   document.getElementById("backBtn").textContent = "回华伴";
   document.getElementById("userVideoTool").classList.add("show");
@@ -604,7 +615,7 @@ function applyModeText() {
 }
 
 function goBack() {
-  location.href = fromUser ? "index.html" : "admin.html#outreach";
+  location.href = fromUser ? "ai.html" : "admin.html#outreach";
 }
 
 function totalDuration() {

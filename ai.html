@@ -4453,6 +4453,7 @@ const FEATURE_INTENTS=[
   {key:'region',label:'定位',pattern:/定位|切换地区|切换城市|换城市|所在城市|地区/i},
   {key:'share',label:'分享',pattern:/分享|转发|二维码|邀请|推荐朋友/i},
   {key:'reminder',label:'提醒',pattern:/提醒|闹钟|日程|行程安排|待办|叫我|到点/i},
+  {key:'promo-video',label:'创意制作',pattern:/做.*(视频|短视频|宣传片|片子|海报|图片|图|文案|脚本|分镜|产品介绍|小红书|推广素材)|生成.*(视频|短视频|宣传片|海报|图片|图|文案|脚本|分镜|产品介绍|推广素材)|剪视频|写文案|写脚本|视频脚本|图片提示词|创意制作|创意工具/i},
   {key:'driver',label:'司机入驻',pattern:/司机入驻|司机注册|加入司机|做司机|司机端/i},
   {key:'partner',label:'合伙人招募',pattern:/合伙人|城市合伙|资源合伙|推广合伙|加盟|加盟推广|一起推广|城市代理|代理城市|分成|收益|获利|赚钱|资源合作|本地资源|社群资源|商家资源|推广资源/i},
   {key:'customize-agent',label:'定制AI',pattern:/定制.*(ai|AI|管家|助手)|自定义.*(名字|身份|形象)|改.*(名字|身份|形象)|换.*(名字|身份|形象)|给你.*起名/i},
@@ -4776,7 +4777,7 @@ const CORE_TOOL_ITEMS=[
   {key:'media',icon:'📷',label:'发图'},
   {key:'reminder',icon:'⏰',label:'提醒'},
   {key:'local-people',icon:'👥',label:'本地好友'},
-  {key:'promo-video',icon:'🎬',label:'推广视频'},
+  {key:'promo-video',icon:'🎬',label:'创意制作'},
   {key:'intro',icon:'💬',label:'介绍'},
   {key:'profile',icon:'👤',label:'个人中心'},
   {key:'share',icon:'🔗',label:'分享'},
@@ -5033,7 +5034,7 @@ async function openFeatureByKey(key,label,options={}){
   }
   if(key==='promo-video'){
     openPromoVideoTool();
-    await say('我带你打开推广视频工具。以后你可以把自己的生意、服务和作品整理成宣传视频。');
+    await say('好呀，我带你打开创意制作工具。文案、海报、图片提示词、短视频脚本和推广视频，都可以先在这里整理。');
     return;
   }
   if(key==='partner'){
@@ -5094,7 +5095,7 @@ async function openFeatureByKey(key,label,options={}){
 
 function openPromoVideoTool(){
   rewardCompanionAction('try_feature');
-  window.location.href='promo-video.html?from=user';
+  window.location.href='promo-video.html?from=user&mode=creative';
 }
 
 function inferPaymentAmount(text=''){
