@@ -981,7 +981,7 @@ body.more-open .chat-area{padding-bottom:390px;}
       <div class="profile-section-title">🔗 邀请好友</div>
       <div style="background:linear-gradient(135deg,rgba(0,150,199,0.1),rgba(0,100,150,0.05));border:1px solid rgba(0,150,199,0.25);border-radius:14px;padding:16px;">
         <div style="font-size:12px;color:rgba(255,255,255,0.52);line-height:1.7;margin-bottom:12px;">
-          微信联系国内亲朋好友，华伴连接当地朋友。加密传输，授权选择，跨地区号码二次确认。
+          带家人用上 AI，不被时代落下。家人可以不加红点，但必须随时能沟通；需要谁，就让华伴找谁。
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
           <button onclick="showFriendCodeSheet()" style="width:100%;padding:13px;background:rgba(7,193,96,0.22);border:1px solid rgba(7,193,96,0.38);border-radius:12px;color:white;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">扫码添加</button>
@@ -4184,9 +4184,9 @@ function renderValuePromptCard(){
   card.setAttribute('aria-label','华伴可以做什么');
   card.innerHTML=`
     <div class="install-copy">
-      <strong>一个安全、实用的当地圈子</strong>
-      <span>微信联系国内亲朋好友，华伴连接当地朋友。</span>
-      <span style="margin-top:8px;display:block;">• 不用天天盯着好友列表和红点<br>• 想联系谁，直接告诉华伴<br>• 找服务、找搭子、推广生意，都放在本地圈子里</span>
+      <strong>一个安全、私密的家庭与当地圈子</strong>
+      <span>带家人用上 AI，不被时代落下。</span>
+      <span style="margin-top:8px;display:block;">• 不用天天盯着好友列表和红点<br>• 想联系谁，直接告诉华伴<br>• 家人、服务、搭子、生意联系，都尽量私密少打扰</span>
     </div>
     <div class="install-actions">
       <button class="install-primary value-action" type="button" onclick="handleValuePrompt('friends')">加好友</button>
@@ -4202,7 +4202,7 @@ async function handleValuePrompt(type){
   rewardCompanionAction('try_feature');
   if(type==='friends'){
     addMsg('我想添加本地好友',true);
-    await agentSay('好呀。微信联系原来的熟人圈，华伴连接当地朋友。你可以扫码加、搜手机号，或者邀请对方领养华伴。',120);
+    await agentSay('好呀。带家人用上 AI，不被时代落下。家人可以不加红点，但必须随时能沟通。你可以扫码加、搜手机号，或者邀请对方领养华伴。',120);
     renderFriendAddCard();
     return;
   }
@@ -5537,7 +5537,7 @@ async function startDeliveryOrder(text=''){
 async function openLocalPeopleIntent(sourceText=''){
   const text=String(sourceText||'').trim();
   if(!text){
-    await agentSay('微信联系原来的熟人圈，华伴连接当地朋友。平时不铺开好友列表，不用盯红点；你要联系谁，直接告诉我。我先帮你准备扫码、搜索和名片。',120);
+    await agentSay('带家人用上 AI，不被时代落下。家人可以不加红点，但必须随时能沟通；你要联系谁，直接告诉我。我先帮你准备扫码、搜索和名片。',120);
     renderFriendAddCard();
     return;
   }
@@ -6827,7 +6827,9 @@ function buildPrompt(){
 形象：${agentEmoji}
 当前优先方向：${personaProfile.label}
 方向理解：${personaProfile.prompt}
-家庭套餐理解：华伴可以被一家人使用，不同成员可以偏向负责生意、家庭琐事、快乐成长或创意生产。对外仍然表现为一个会理解和办事的华伴 AI，不要把它讲成多个功能菜单；根据用户身份和场景自然切换侧重。
+家庭口号：带家人用上 AI，不被时代落下。
+家庭套餐理解：华伴可以被一家人使用，不同成员可以偏向负责生意、家庭琐事、快乐成长或创意生产。家人可以不加红点，但必须随时能沟通：家人连接是强可达、低打扰；普通本地好友是少打扰、需要时再唤出。对外仍然表现为一个会理解和办事的华伴 AI，不要把它讲成多个功能菜单；根据用户身份和场景自然切换侧重。
+家庭通讯理解：家庭套餐至少要让家人能用上华伴自己的通讯工具。AI 要自然引导“家人/当地好友可以先用华伴私密联系”，强调私密连接、少打扰、需要谁就让华伴找谁；不要主动摊开长好友列表，不要制造红点焦虑。用户需要联系家人时，直接打开双方对话或提醒；用户想不起来是谁时，再弹出好友列表或名片按钮。
 产品骨架：用户直觉里只有一个华伴 AI。所有商业化系统都在后台运行；接机、包车、外卖、接单、商家使用等都只是 AI 背后调用的工具，或审核后给使用者使用的工具。
 核心定位：除了需要与被需要，生活不该被打扰。华伴是一款有脑、有手的 AI，也是一个更出色的你。在华伴，每个人都可以被帮助，也可以被需要。生活，是发现用户的真实需求并尽力满足用户；事业，是帮助用户发现机会、连接客户、提升成交，逐步实现商业目标。
 AI Agent 核心任务：什么都能聊，但聊天不是目的。主要通过和用户交互来收集数据、分析意图和资源、形成决策建议，再调用工具帮助用户完成心愿。不要把自己表现成只会回答问题的聊天机器人，也不要表现成静态功能菜单。
@@ -9161,8 +9163,8 @@ function renderFriendAddCard(){
   card.style.alignItems='flex-start';
   card.innerHTML=`
     <div class="install-copy">
-      <strong>添加本地好友</strong>
-      <span>扫码加、搜手机号，或者邀请对方领养华伴。每个好友码都是你的名片和贡献记录。</span>
+      <strong>添加家人 / 当地好友</strong>
+      <span>扫码加、搜手机号，或者邀请对方领养华伴。带家人用上 AI，不被时代落下。</span>
       <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
         <input id="friend-search-input" inputmode="tel" placeholder="手机号 / 微信 / 好友码"
           style="flex:1 1 150px;min-width:0;height:38px;border:1px solid #ddd;border-radius:8px;background:#f7f7f7;color:#191919;font:14px/1 inherit;padding:0 10px;outline:none;">
