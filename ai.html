@@ -3634,6 +3634,26 @@ function inferSupplierTypeFromText(text=''){
       : null);
 }
 
+function professionalVerificationPolicy(supply={}){
+  const type=String(supply.typeValue||'');
+  if(!['lawyer','accounting'].includes(type))return null;
+  const label=type==='lawyer'?'律师/法律服务':'会计/税务服务';
+  const city=supply.city||currentRegion.city||currentRegion.country||'本地';
+  return {
+    required:true,
+    service_label:label,
+    professional_type:type,
+    status:'pending_public_registry_check',
+    minimum_required:['真实姓名或机构名','执业证号或注册号','公开政府/行业协会核验链接','服务范围和免责声明'],
+    search_queries:[
+      `${city} ${label} public register 中文`,
+      `${city} ${label} licence register`,
+      `${currentRegion.country||''} ${type==='lawyer'?'lawyer solicitor':'tax agent accountant'} public registry`
+    ],
+    admin_rule:'AI 只能给核验建议；未提供公开执业/资质来源前，后台不得通过。'
+  };
+}
+
 function extractBusinessAvailability(text=''){
   const clean=String(text||'');
   const days=[];
@@ -3752,6 +3772,7 @@ async function handleSupplyIntent(text, options={}){
   if(!supply)return false;
   const p=getPassenger();
   const isOnboarding=/入驻|进驻|加入华伴|成为服务者|接单|商家|商户/i.test(supply.text);
+  const professionalPolicy=professionalVerificationPolicy(supply);
   const message=`AI聊天识别供给侧：${supply.serviceType}\n城市：${supply.city}\n用户原话：${supply.text}\n联系方式：${betaContact()||'待补充'}\n推送：${isOnboarding?'用户有入驻意愿，优先跟进':'普通供给线索'}`;
   const payload={
     lead_type:'supply',
@@ -3779,7 +3800,13 @@ async function handleSupplyIntent(text, options={}){
       manual_followup_required:isOnboarding,
       manual_followup_status:isOnboarding?'pending':'optional',
       manual_followup_owner:'运营人工跟进',
-      manual_followup_goal:'确认入驻类型、联系方式、服务范围和资质材料',
+      manual_followup_goal:professionalPolicy?'核验公开执业/资质来源，再确认服务范围和联系方式':'确认入驻类型、联系方式、服务范围和资质材料',
+      professional_verification:professionalPolicy,
+      qualification_policy:professionalPolicy?{
+        required:true,
+        source_priority:'government_or_industry_registry',
+        decision:'manual_review_required_after_ai_check'
+      }:undefined,
       monetization_model:'seller_subscription',
       seller_subscriber_candidate:true,
       merchant_slogan:'去中心化，不抽佣',
@@ -8185,7 +8212,7 @@ async function shareRefLink(){
 function inviteSharePayload(extraText=''){
   const code=getFriendCode();
   const link=friendInviteLink(code);
-  const text=extraText||'微信联系国内亲朋好友，华伴连接当地朋友。来领养你的华伴 AI，有事直接跟它说。';
+  const text=extraText||'华伴正在公测。试用感觉好，请推荐给好友；感觉不好，请直接告诉华伴 AI。微信联系国内亲朋好友，华伴连接当地朋友。来领养你的华伴 AI，有事直接跟它说。';
   return {
     title:'邀请你领养华伴 AI',
     text,
@@ -8290,6 +8317,8 @@ function promoPosterCopy(user=getUserProfile(), link=friendInviteLink()){
 ${name}邀请你领养华伴 AI。
 ${roleLine}眼花缭乱的页面，换成干干净净的华伴。
 往后余生，不被定义，做自己，并不难。
+
+公测中：试用感觉好，请推荐给好友；感觉不好，请告诉华伴 AI。
 
 ${link}`;
 }
@@ -8449,6 +8478,7 @@ async function showPromoPosterSheet(){
   const link=friendInviteLink(code);
   const user=getUserProfile();
   const copy=promoPosterCopy(user,link);
+  setTimeout(()=>agentSay('公测分享会记录贡献积分。试用感觉好，请推荐给好友；感觉不好，也请告诉我，我会学着改。',90),180);
   const overlay=document.createElement('div');
   overlay.id='promo-poster-sheet';
   overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.76);z-index:3200;display:flex;align-items:flex-end;justify-content:center;';
@@ -8489,7 +8519,7 @@ async function copyPromoPosterText(){
   const text=document.getElementById('promo-poster-copy')?.value||data.copy||promoPosterCopy();
   await navigator.clipboard.writeText(text).catch(()=>{});
   rewardCompanionAction('share');
-  await agentSay('推广文案已复制，可以发到微信或朋友圈。',100);
+  await agentSay('推广文案已复制，可以发到微信或朋友圈。推荐好友会带来贡献积分；如果朋友觉得不好用，也让TA直接告诉华伴 AI。',100);
 }
 
 async function downloadPromoPoster(){
@@ -8505,7 +8535,7 @@ async function downloadPromoPoster(){
   a.click();
   a.remove();
   rewardCompanionAction('share');
-  await agentSay('海报已生成，可以保存或转发。',100);
+  await agentSay('海报已生成，可以保存或转发。推荐好友会记录贡献积分。',100);
 }
 
 async function sharePromoPoster(){
@@ -8519,12 +8549,14 @@ async function sharePromoPoster(){
       if(navigator.canShare({files:[file]})){
         await navigator.share({title:'华伴 AI',text,files:[file]});
         rewardCompanionAction('share');
+        await agentSay('分享已发起。推荐好友会记录贡献积分；如果TA觉得不好用，也可以直接告诉华伴 AI。',100);
         return;
       }
     }
     if(navigator.share){
       await navigator.share({title:'华伴 AI',text,url:link});
       rewardCompanionAction('share');
+      await agentSay('分享已发起。推荐好友会记录贡献积分；如果TA觉得不好用，也可以直接告诉华伴 AI。',100);
       return;
     }
     await navigator.clipboard.writeText(`${text}\n${link}`).catch(()=>{});

@@ -2329,8 +2329,30 @@ function supplierQualificationText(lead) {
   }
   const license = fields.license || '未填写资质';
   const url = fields.public_verification_url || '';
+  const professional = fields.professional_verification;
+  if (professional?.required) {
+    const status = professional.status || 'pending_public_registry_check';
+    const policy = professional.service_label || '专业服务';
+    return `${policy} · ${status} · 需公开执业/资质核验${url ? ' · '+url : ''}`;
+  }
   const monetization = fields.seller_subscriber_candidate ? ' · 卖方订阅候选' : '';
   return url ? `${license} · ${url}${monetization}` : `${license}${monetization}`;
+}
+
+function supplierNeedsProfessionalVerification(lead={}) {
+  const fields = lead.fields || {};
+  const service = `${fields.service_type || ''} ${lead.need_type || ''} ${lead.message || ''}`;
+  const isProfessional = Boolean(fields.professional_verification?.required) || /律师|法律|lawyer|legal|solicitor|会计|税务|accounting|accountant|tax/i.test(service);
+  if (!isProfessional) return false;
+  const hasRegistryProof = Boolean(
+    fields.public_verification_url ||
+    fields.license_number ||
+    fields.license ||
+    fields.professional_verification?.public_verification_url ||
+    fields.professional_verification?.license_number ||
+    fields.professional_verification?.status === 'verified'
+  );
+  return !hasRegistryProof;
 }
 
 function supplierFollowupText(lead) {
@@ -2927,6 +2949,11 @@ async function markSupplierFollowed(id, table='beta_leads') {
 async function approveSupplier(id, table='beta_leads') {
   if (!confirm('确认已完成必要资质核验，并通过这个供给侧申请？')) return;
   try {
+    const existing = await supaFetch(`${table}?id=eq.${id}&select=fields,message,need_type`);
+    if (existing?.[0] && supplierNeedsProfessionalVerification(existing[0])) {
+      alert('这条是律师/会计等专业服务，必须先补公开执业/资质核验链接或执业号。AI 可以给核验建议，但不能直接通过。');
+      return;
+    }
     const rows = await patchLeadStatus(id, table, 'approved');
     if (!rows.length) throw new Error('没有找到这条线索，可能已被移动或删除');
     alert('✅ 已通过。用户端个人中心将开放供给中心入口。');
