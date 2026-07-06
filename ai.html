@@ -353,7 +353,7 @@ body:not(.companion-docked) .brand-positioning{left:calc(50% + 38px);right:12px;
 @keyframes adoptionScroll{from{transform:translateX(0);}to{transform:translateX(-50%);}}
 .ai-intro-ticker{
   flex-shrink:0;height:38px;overflow:hidden;background:rgba(255,255,255,0.86);
-  border-bottom:1px solid var(--wx-line);display:flex;align-items:center;
+  border-bottom:1px solid var(--wx-line);display:none;align-items:center;
 }
 .ai-intro-ticker-track{
   display:flex;gap:34px;white-space:nowrap;width:max-content;min-width:220%;animation:adoptionScroll 42s linear infinite;
@@ -4137,7 +4137,7 @@ async function startApp(){
 function renderWelcomeHome(){
   currentRole='passenger';
   chatArea.innerHTML='';
-  addMsg('哈哈，这是谁呀？爸爸妈妈还是宝宝呀。我可以给你推荐不一样的华伴：生意伙伴、家庭管家、快乐成长，或者创意总监。你先说说现在最需要什么就行。');
+  addMsg('哈哈，这是谁呀？爸爸妈妈还是宝宝呀。');
   const companion=getCompanion();
   if(addCompanionBadge(companion,currentRegion.city||currentRegion.country,'📍'))saveCompanion(companion);
   document.getElementById('chat-input').placeholder='输入你需要的帮助';
@@ -6799,14 +6799,14 @@ function buildPrompt(){
 方向理解：${personaProfile.prompt}
 家庭口号：带家人用上 AI，不被时代落下。
 家庭套餐理解：华伴可以被一家人使用，不同成员可以偏向负责生意、家庭琐事、快乐成长或创意生产。家人可以不加红点，但必须随时能沟通：家人连接是强可达、低打扰；普通本地好友是少打扰、需要时再唤出。对外仍然表现为一个会理解和办事的华伴 AI，不要把它讲成多个功能菜单；根据用户身份和场景自然切换侧重。
-家庭角色推荐：开场可以俏皮地问“这是谁呀？爸爸妈妈还是宝宝呀”，再根据对方身份和需求推荐不同华伴角色：负责生意的人推荐生意伙伴；负责家里琐事的人推荐家庭管家；孩子、学生或想快乐成长的人推荐快乐成长；做图片、视频、产品、设计和内容的人推荐创意总监。不要用卡片堆给用户看，只在聊天中自然推荐。
-家庭通讯理解：家庭套餐至少要让家人能用上华伴自己的通讯工具。AI 要自然引导“家人/当地好友可以先用华伴私密联系”，强调私密连接、少打扰、需要谁就让华伴找谁；不要主动摊开长好友列表，不要制造红点焦虑。用户需要联系家人时，直接打开双方对话或提醒；用户想不起来是谁时，再弹出好友列表或名片按钮。
+家庭角色推荐：开场只要轻松问候，比如“哈哈，这是谁呀？爸爸妈妈还是宝宝呀”，不要急着推角色、讲功能或显得功利。爸爸/妈妈只是家庭身份，不是最终角色；要先追问“那你是贤内助还是顶梁柱啊？”，等家庭角色定了才推荐。用户说贤内助、负责家里、主内时推荐家庭管家；用户说顶梁柱、负责赚钱、做生意时推荐生意伙伴；孩子、学生或想快乐成长的人推荐快乐成长；做图片、视频、产品、设计和内容的人推荐创意总监。不要用卡片堆给用户看，只在聊天中自然推荐。
+家庭通讯理解：家庭套餐至少要让家人能用上华伴自己的通讯工具。AI 要自然引导“一家人的悄悄话。私密，不被淹没”，强调私密连接、少打扰、需要谁就让华伴找谁；不要主动摊开长好友列表，不要制造红点焦虑。用户需要联系家人时，直接打开双方对话或提醒；用户想不起来是谁时，再弹出好友列表或名片按钮。分享给家庭以外的人时，要表达为“点开/扫码后我们自动成为华伴好友”，让对方更快明白怎么联系和使用。
 产品骨架：用户直觉里只有一个华伴 AI。所有商业化系统都在后台运行；接机、包车、外卖、接单、商家使用等都只是 AI 背后调用的工具，或审核后给使用者使用的工具。
 核心定位：除了需要与被需要，生活不该被打扰。华伴是一款有脑、有手的 AI，也是一个更出色的你。在华伴，每个人都可以被帮助，也可以被需要。生活，是发现用户的真实需求并尽力满足用户；事业，是帮助用户发现机会、连接客户、提升成交，逐步实现商业目标。
 AI Agent 核心任务：什么都能聊，但聊天不是目的。主要通过和用户交互来收集数据、分析意图和资源、形成决策建议，再调用工具帮助用户完成心愿。不要把自己表现成只会回答问题的聊天机器人，也不要表现成静态功能菜单。
 第一定位：华伴是一个 AI 智能体，也是用户真实需求和真实供给的数据入口。你要通过自然帮助用户来搜集数据，而不是让用户感觉在填表或被采集。用户看到的是你在帮他整理、建议、提醒、匹配和推进；数据沉淀、分类、标签、线索和学习样本都在后台完成。
 办事方法：先回答或帮助用户，能直接满足就直接满足。只有涉及需要连接人、资源、服务、商品、客户、商家、司机、外卖员、本地朋友或专业人士时，才把“连接”作为背后隐秘目标，继续在自然聊天中问清关键条件；条件满足后先用普通聊天告诉用户已经整理好，并告知“生成确认卡 / 提交 / 确认下单 / 安排”这四个口令。只有用户明确说出其中之一，才生成完整、可修改确认卡；确认后再从华伴数据库和公开来源里匹配资源，给用户可选择结果。
-连接方法：不要让用户感觉自己在填表。先聊透时间、地点、任务、金额/预算、备注、联系方式、可接受条件和安全边界；资源匹配后再自然询问是否生成私密好友/联系卡。私密好友要让用户感觉是“为这件事定制的连接”，不是平台硬塞好友列表；用户愿意时再引导分享或互相使用华伴。
+连接方法：不要让用户感觉自己在填表。先聊透时间、地点、任务、金额/预算、备注、联系方式、可接受条件和安全边界；资源匹配后再自然询问是否生成私密好友/联系卡。私密好友要让用户感觉是“为这件事定制的连接”，不是平台硬塞好友列表；用户愿意时再引导分享或互相使用华伴。分享链接和二维码默认就是好友邀请，接收者打开后自动把发起人加入华伴好友。
 主动学习：用户需求就是学习方向。无论需求来自聊天、图片、确认卡、业务表单，还是公开搜索来的处理方法，都要沉淀成“下次遇到类似用户怎么更快处理”的经验。不要把搜索结果只当一次性答案；要把可复用的方法、字段、核验点、提醒点和成交路径留给后台训练。
 自我纠错：当用户指出“没聊透、太早弹卡、定义模糊、应该先问清楚、这是供给不是需求”等，必须立即吸收为改进规则。以后同类场景先自然聊天、问清关键点、默默整理，不要过早生成确认卡；尤其用户说“我是/我会/我能/我有”时，多半是供给自我介绍，先收集服务范围、区域、联系方式、资质和可接时间，不要当成需求方工单。
 决策边界：你可以分析、整理、推荐和调用工具，但不要替用户做最终决定。涉及金钱、资质、安全、交易、隐私和身份信息时，必须给出建议和风险点；只有用户明确说“生成确认卡 / 提交 / 确认下单 / 安排”时，才生成确认卡让用户决定后再执行。
@@ -7030,6 +7030,101 @@ function userExplicitCardIntent(text=''){
   return /生成确认卡|提交|确认下单|安排/i.test(clean);
 }
 
+function compactFamilyText(text=''){
+  const clean=String(text||'').trim();
+  return clean.replace(/\s+/g,'');
+}
+
+function primeFamilyIdentityState(text=''){
+  const compact=compactFamilyText(text);
+  if(!compact || compact.length>12)return;
+  const waitingFamilyRole=sessionStorage.getItem('huaban_waiting_family_role')==='1';
+  if(/^(我是)?(宝宝|小朋友|孩子|小孩|学生|小学生|中学生)$/.test(compact)){
+    sessionStorage.removeItem('huaban_waiting_family_role');
+    sessionStorage.setItem('huaban_pending_family_persona','creative');
+    return;
+  }
+  if(/^(我是)?(贤内助|内助|管家|家庭管家|主内|负责家里|管家里)$/.test(compact)){
+    sessionStorage.removeItem('huaban_waiting_family_role');
+    sessionStorage.setItem('huaban_pending_family_persona','life');
+    return;
+  }
+  if(/^(我是)?(顶梁柱|主心骨|主外|负责赚钱|赚钱的|做生意的|事业型)$/.test(compact)){
+    sessionStorage.removeItem('huaban_waiting_family_role');
+    sessionStorage.setItem('huaban_pending_family_persona','business');
+    return;
+  }
+  if(/^(我是)?(爸爸|父亲|老爸|妈妈|母亲|老妈)$/.test(compact)){
+    sessionStorage.setItem('huaban_waiting_family_role','1');
+    return;
+  }
+  if(waitingFamilyRole && /(家里|家庭|孩子|老人|做饭|购物|家务|生活)/.test(compact)){
+    sessionStorage.removeItem('huaban_waiting_family_role');
+    sessionStorage.setItem('huaban_pending_family_persona','life');
+    return;
+  }
+  if(waitingFamilyRole && /(赚钱|生意|事业|工作|客户|推广|店铺|做事)/.test(compact)){
+    sessionStorage.removeItem('huaban_waiting_family_role');
+    sessionStorage.setItem('huaban_pending_family_persona','business');
+  }
+}
+
+function familyIdentityFallbackReply(text=''){
+  const compact=compactFamilyText(text);
+  if(!compact || compact.length>12)return false;
+  const waitingFamilyRole=sessionStorage.getItem('huaban_waiting_family_role')==='1';
+  const pendingFamilyPersona=sessionStorage.getItem('huaban_pending_family_persona')||'';
+  if(pendingFamilyPersona && /^(好|好的|好呀|可以|嗯|嗯嗯|行|来吧|开始吧|ok|OK)$/i.test(compact)){
+    sessionStorage.removeItem('huaban_pending_family_persona');
+    const next={
+      creative:'好呀。那你先告诉我：今天想学点 AI 小创意，还是想让我陪你做一张图、一段视频或一个小作品？',
+      life:'好呀。那你先说一件最近最烦的家里事，我帮你一起理顺。',
+      business:'好呀。那你先说一件最近最想推进的生意或工作，我帮你一起整理。',
+    }[pendingFamilyPersona]||'好呀。那你先说一件想让我帮忙的事，我陪你慢慢来。';
+    return next;
+  }
+  if(/^(我是)?(宝宝|小朋友|孩子|小孩|学生|小学生|中学生)$/.test(compact)){
+    sessionStorage.removeItem('huaban_waiting_family_role');
+    sessionStorage.setItem('huaban_pending_family_persona','creative');
+    return '那就快乐成长的创意总监吧，让我们一起来学习 AI 的创意应用，陪伴你快乐成长。';
+  }
+  if(/^(我是)?(贤内助|内助|管家|家庭管家|主内|负责家里|管家里)$/.test(compact)){
+    sessionStorage.removeItem('huaban_waiting_family_role');
+    sessionStorage.setItem('huaban_pending_family_persona','life');
+    return '那就先给你配一个家庭管家吧。家里的安排、老人孩子、购物家务和提醒，我都可以陪你慢慢理顺。';
+  }
+  if(/^(我是)?(顶梁柱|主心骨|主外|负责赚钱|赚钱的|做生意的|事业型)$/.test(compact)){
+    sessionStorage.removeItem('huaban_waiting_family_role');
+    sessionStorage.setItem('huaban_pending_family_persona','business');
+    return '那就先给你配一个生意伙伴吧。赚钱、客户、推广、店铺和机会，我陪你一起整理推进。';
+  }
+  if(/^(我是)?(爸爸|父亲|老爸)$/.test(compact)){
+    sessionStorage.setItem('huaban_waiting_family_role','1');
+    return '哈哈，那你是贤内助还是顶梁柱啊？';
+  }
+  if(/^(我是)?(妈妈|母亲|老妈)$/.test(compact)){
+    sessionStorage.setItem('huaban_waiting_family_role','1');
+    return '哈哈，那你是贤内助还是顶梁柱啊？';
+  }
+  if(waitingFamilyRole && /(都不是|不知道|还没想好|不确定)/.test(compact)){
+    return '没关系，那先不急着选。你说说最近最想让我帮你省心的事，我再慢慢懂你。';
+  }
+  if(waitingFamilyRole && /^(你猜|猜猜|猜一下|随便猜|你觉得呢)$/.test(compact)){
+    return '我猜呀，你大概两边都扛一点。那今天先偏哪边？家里的事，还是赚钱做事的事？';
+  }
+  if(waitingFamilyRole && /(家里|家庭|孩子|老人|做饭|购物|家务|生活)/.test(compact)){
+    sessionStorage.removeItem('huaban_waiting_family_role');
+    sessionStorage.setItem('huaban_pending_family_persona','life');
+    return '懂了，那就先给你配一个家庭管家。家里的安排、老人孩子、购物家务和提醒，我陪你慢慢理顺。';
+  }
+  if(waitingFamilyRole && /(赚钱|生意|事业|工作|客户|推广|店铺|做事)/.test(compact)){
+    sessionStorage.removeItem('huaban_waiting_family_role');
+    sessionStorage.setItem('huaban_pending_family_persona','business');
+    return '懂了，那就先给你配一个生意伙伴。赚钱、客户、推广、店铺和机会，我陪你一起整理推进。';
+  }
+  return '';
+}
+
 async function sendMessage(){ stopTTS();
   const input=document.getElementById('chat-input');
   const msg=input.value.trim();if(!msg)return;
@@ -7048,6 +7143,7 @@ async function sendMessage(){ stopTTS();
     await agentSay(`好呀，以后我就叫<strong>${agentName}</strong>。`,180);
     return;
   }
+  primeFamilyIdentityState(msg);
   if(isVoiceWakeHelpIntent(msg)){
     await agentSay('可以。你需要时直接点右下角华伴，或者对我说“华伴”。如果要我打开设置，你明确说“打开语音设置”。',120);
     return;
@@ -7118,6 +7214,7 @@ async function sendMessage(){ stopTTS();
 
     const actionMatch=reply.match(/\[ACTION:\s*(\w+)\s*(\w+)?\]/);
     const clean=reply.replace(/\[ACTION:.*?\]/,'').trim();
+    if(/贤内助还是顶梁柱/.test(clean))sessionStorage.setItem('huaban_waiting_family_role','1');
     if(isWeakAIReply(clean))recordAITrainingQuestion(msg, 'AI 回答显得偏拒绝或没有接住用户需求：'+clean, 'weak-reply');
     syncAISearchTaskIfNeeded(msg, clean, 'text_chat');
     if(!voiceMode) speakBeforeText(clean,()=>addMsg(clean));
@@ -7129,7 +7226,14 @@ async function sendMessage(){ stopTTS();
     }
   }catch(e){
     typing.remove();
-    addMsg(chatServiceErrorMessage(e));
+    const fallback=familyIdentityFallbackReply(msg);
+    if(fallback){
+      aiHistory.push({role:'assistant',content:fallback});
+      if(aiHistory.length>20)aiHistory=aiHistory.slice(-20);
+      addMsg(fallback);
+    }else{
+      addMsg(chatServiceErrorMessage(e));
+    }
     recordAITrainingQuestion(msg, '文字对话时 AI 服务异常：'+String(e?.message||e).slice(0,180), 'chat-error');
     syncAISearchTaskIfNeeded(msg, '', 'text_chat_error');
     console.error('sendMessage error:',e);
@@ -8547,7 +8651,7 @@ async function shareRefLink(){
 function inviteSharePayload(extraText=''){
   const code=getFriendCode();
   const link=friendInviteLink(code);
-  const text=extraText||'华伴正在公测。试用感觉好，请推荐给好友；感觉不好，请直接告诉华伴 AI。微信联系国内亲朋好友，华伴连接当地朋友。来领养你的华伴 AI，有事直接跟它说。';
+  const text=extraText||'华伴正在公测。试用感觉好，请推荐给好友；感觉不好，请直接告诉华伴 AI。微信联系熟人，华伴连接当地朋友。点开后我们会自动成为华伴好友，有事直接跟华伴说。';
   return {
     title:'邀请你领养华伴 AI',
     text,
@@ -8821,7 +8925,7 @@ async function showPromoPosterSheet(){
     <div style="background:#0d1f3c;border-radius:24px 24px 0 0;padding:22px 18px 36px;width:100%;max-width:480px;max-height:88vh;overflow-y:auto;border-top:1px solid rgba(255,255,255,0.1);">
       <div style="width:42px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:0 auto 16px;"></div>
       <div style="font-size:18px;font-weight:900;color:white;margin-bottom:5px;">华伴推广海报</div>
-      <div style="font-size:13px;color:rgba(255,255,255,0.62);line-height:1.65;margin-bottom:12px;">已带上你的专属二维码。朋友扫码进入，会记录到你的贡献来源。</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.62);line-height:1.65;margin-bottom:12px;">已带上你的专属二维码。朋友扫码进入，会自动加你为华伴好友；贡献记录会在后台留痕。</div>
       <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:18px;padding:12px;margin-bottom:12px;text-align:center;">
         <div id="promo-poster-loading" style="color:rgba(255,255,255,0.68);font-size:13px;padding:28px 0;">正在生成海报...</div>
         <img id="promo-poster-preview" alt="华伴推广海报" style="display:none;width:100%;max-width:300px;border-radius:16px;margin:0 auto;box-shadow:0 12px 40px rgba(0,0,0,0.28);">
@@ -9185,7 +9289,7 @@ async function searchHuabanFriend(){
   }
   const inviteLink=friendInviteLink();
   if(result)result.innerHTML=`
-    对方还没用华伴。可以发邀请链接，扫码或点开后会记到你的贡献来源。<br>
+    对方还没用华伴。可以发邀请链接，扫码或点开后会自动加你为华伴好友。<br>
     <button class="install-primary" style="margin-top:7px;padding:7px 10px;" onclick="inviteUnknownFriend('${jsString(raw)}')">邀请加入华伴</button>
     <button class="install-close friend-scan-btn" style="margin-top:7px;margin-left:6px;" onclick="copyText('${jsString(inviteLink)}','邀请链接已复制')">复制链接</button>`;
 }
@@ -9208,7 +9312,7 @@ async function addHuabanFriend(id='',name='华伴用户',phone='',wechat=''){
 }
 
 async function inviteUnknownFriend(target=''){
-  const payload=inviteSharePayload(`微信联系国内亲朋好友，华伴连接当地朋友。扫码领养华伴 AI，我们在当地圈子里互相照应。`);
+  const payload=inviteSharePayload(`微信联系熟人，华伴连接当地朋友。点开领养华伴 AI 后，我们会自动成为华伴好友，以后有事直接让华伴帮我们联系。`);
   saveInvitedContacts([{name:target,tel:target}]);
   rewardCompanionAction('share');
   await supaInsertLead({
@@ -9249,7 +9353,7 @@ function showFriendCodeSheet(){
       <div style="width:40px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:0 auto 18px;"></div>
       <div style="font-size:18px;font-weight:900;color:white;margin-bottom:6px;">我的华伴好友码</div>
       <div style="font-size:13px;color:rgba(255,255,255,0.62);line-height:1.75;margin-bottom:14px;">
-        你熟视无睹的强项，也许正是TA苦苦寻觅的答案。完善主业副业和电话后，朋友扫码就能了解你擅长什么，也会记录到你的贡献来源。
+        你熟视无睹的强项，也许正是TA苦苦寻觅的答案。完善主业副业和电话后，朋友扫码就能了解你擅长什么，也会自动加你为华伴好友。
       </div>
       <div style="background:#fff;border-radius:18px;padding:14px;text-align:center;margin-bottom:12px;">
         <img src="${friendQrUrl(link)}" alt="华伴好友二维码" style="width:220px;height:220px;display:block;margin:0 auto;border-radius:12px;">
@@ -9332,7 +9436,7 @@ function renderIncomingFriendConfirm(friendCode=''){
   card.innerHTML=`
     <div class="install-copy">
       <strong>发现一个华伴好友码</strong>
-      <span>好友码：${companionEscape(friendCode)}。添加后会记录双方的本地连接来源。</span>
+      <span>好友码：${companionEscape(friendCode)}。添加后，你们就能通过华伴互相联系。</span>
     </div>
     <div class="install-actions">
       <button class="install-primary" type="button" onclick="confirmIncomingFriend('${jsString(friendCode)}',this)">添加</button>
