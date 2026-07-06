@@ -733,7 +733,7 @@ body.theme-night .agent-age-seconds{color:#62ddb2;}
 .agent-setup-avatar{width:48px;height:48px;border-radius:13px;background:#f1fbf6;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;box-shadow:0 0 0 1px rgba(0,0,0,.04);}
 .agent-setup-title{font-size:15px;font-weight:800;color:var(--wx-text);}
 .agent-setup-sub{font-size:11px;color:#888;margin-top:2px;}
-.agent-persona-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 10px;}
+.agent-persona-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:0 0 10px;}
 .agent-persona-card{border:1px solid #ddd;border-radius:11px;background:#fff;color:#333;text-align:left;padding:9px 8px;cursor:pointer;min-width:0;box-shadow:0 1px 4px rgba(0,0,0,.03);}
 .agent-persona-card strong{display:block;font-size:13px;line-height:1.25;color:#1d1d1d;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .agent-persona-card span{display:block;font-size:11px;line-height:1.35;color:#777;}
@@ -1604,32 +1604,42 @@ const AGENT_PERSONAS={
   business:{
     key:'business',
     icon:'💼',
-    label:'事业帮手',
+    label:'生意伙伴',
     defaultName:'小成',
-    defaultTitle:'总裁助理',
-    short:'赚钱、宣传、获客',
-    titles:['总裁助理','事业助手','品牌顾问','电商助手','名片助理'],
-    prompt:'优先理解用户的赚钱、宣传、获客、个人网站、独立电商、个人店铺、个人名片、推广文案、报价表、客户跟进和商业资料整理需求。先帮用户把想法变成可执行结果；需要连接客户、商家、服务者或资源时，再慢慢问清条件并生成确认卡。'
+    defaultTitle:'生意助理',
+    short:'负责生意',
+    titles:['生意助理','总裁助理','品牌顾问','电商助手','名片助理'],
+    prompt:'优先理解家里负责生意的人：赚钱、宣传、获客、个人网站、独立电商、个人店铺、个人名片、推广文案、报价表、客户跟进和商业资料整理。先帮用户把想法变成可执行结果；需要连接客户、商家、服务者或资源时，再慢慢问清条件并生成确认卡。'
   },
   life:{
     key:'life',
     icon:'🏡',
-    label:'生活管家',
+    label:'家庭管家',
     defaultName:'小安',
-    defaultTitle:'生活管家',
-    short:'家庭、出行、学习',
-    titles:['生活管家','家庭助理','学生助理','日程管家','出行管家'],
-    prompt:'优先理解家庭事务、老人孩子、家务、购物、出行、提醒、学生学习规划、生活安排和日常管理需求。能直接给建议就先给建议；需要找人、找服务、匹配资源时，再问清时间、地点、预算、备注和联系方式。'
+    defaultTitle:'家庭管家',
+    short:'负责琐事',
+    titles:['家庭管家','生活管家','家庭助理','日程管家','出行管家'],
+    prompt:'优先理解家里负责家庭琐事的人：老人孩子、家务、购物、出行、提醒、账单、维修、生活安排和日常管理。能直接给建议就先给建议；需要找人、找服务、匹配资源时，再问清时间、地点、预算、备注和联系方式。'
   },
   emotion:{
     key:'emotion',
     icon:'🫶',
-    label:'情感陪伴',
+    label:'快乐成长',
     defaultName:'小暖',
-    defaultTitle:'贴心陪伴',
-    short:'倾听、娱乐、陪聊',
-    titles:['贴心陪伴','情绪树洞','娱乐搭子','开心顾问','倾听伙伴'],
-    prompt:'优先理解用户的陪聊、倾听、情绪安放、娱乐节目搜索推荐、讲笑话、聊天陪伴和温柔建议需求。先让用户感觉被理解；需要活动、朋友、资源或线下连接时，再自然补齐条件。'
+    defaultTitle:'成长陪伴',
+    short:'负责开心',
+    titles:['成长陪伴','学习搭子','开心顾问','娱乐搭子','情绪树洞'],
+    prompt:'优先理解孩子、学生和需要快乐成长的人：学习规划、兴趣培养、娱乐节目搜索推荐、讲笑话、情绪安放、聊天陪伴、成长建议和温柔鼓励。先让用户感觉被理解；需要活动、朋友、资源或线下连接时，再自然补齐条件。'
+  },
+  creative:{
+    key:'creative',
+    icon:'🎬',
+    label:'创意总监',
+    defaultName:'小创',
+    defaultTitle:'创意总监',
+    short:'图片、视频、产品',
+    titles:['创意总监','视频导演','设计顾问','产品策划','灵感搭子'],
+    prompt:'优先理解用户的创意、图片生成、视频脚本、宣传片、海报、产品设计、产品命名、包装、页面方案、卖点提炼和内容传播需求。核心姿态是“你负责创意，我来完成”：先把用户的模糊想法变成可执行方案、脚本、提示词、分镜、文案或设计结构；需要调用图片、视频、设计、发布或资源协作工具时，再自然问清风格、用途、尺寸、受众和交付要求。'
   }
 };
 
@@ -1742,8 +1752,8 @@ function renderAgentSetupCard(){
     <div class="agent-setup-head">
       <div class="agent-setup-avatar" id="agent-setup-preview">${agentAvatarMarkup()}</div>
       <div>
-        <div class="agent-setup-title">先选我优先帮你什么</div>
-        <div class="agent-setup-sub">事业、生活、情感，后面都能再改</div>
+        <div class="agent-setup-title">家庭套餐，先选我优先帮谁</div>
+        <div class="agent-setup-sub">负责生意、家庭琐事、快乐成长、创意，后面都能再改</div>
       </div>
     </div>
     <input id="agent-setup-persona" type="hidden" value="${companionEscape(persona.key)}">
@@ -4210,7 +4220,7 @@ async function handleValuePrompt(type){
 async function beginAgentAdoption(){
   document.getElementById('adopt-welcome-card')?.remove();
   renderAgentSetupCard();
-  await agentSay('好呀，先选我优先帮你什么，再给我取个名字、选个头像吧。领养之后，我会长大帮你做更多事情。',120);
+  await agentSay('好呀，家庭套餐可以一家人用。先选我优先负责生意、家庭琐事、快乐成长，还是创意。再给我取个名字、选个头像吧。',120);
 }
 
 function renderQuickGuideCard(){
@@ -6817,6 +6827,7 @@ function buildPrompt(){
 形象：${agentEmoji}
 当前优先方向：${personaProfile.label}
 方向理解：${personaProfile.prompt}
+家庭套餐理解：华伴可以被一家人使用，不同成员可以偏向负责生意、家庭琐事、快乐成长或创意生产。对外仍然表现为一个会理解和办事的华伴 AI，不要把它讲成多个功能菜单；根据用户身份和场景自然切换侧重。
 产品骨架：用户直觉里只有一个华伴 AI。所有商业化系统都在后台运行；接机、包车、外卖、接单、商家使用等都只是 AI 背后调用的工具，或审核后给使用者使用的工具。
 核心定位：除了需要与被需要，生活不该被打扰。华伴是一款有脑、有手的 AI，也是一个更出色的你。在华伴，每个人都可以被帮助，也可以被需要。生活，是发现用户的真实需求并尽力满足用户；事业，是帮助用户发现机会、连接客户、提升成交，逐步实现商业目标。
 AI Agent 核心任务：什么都能聊，但聊天不是目的。主要通过和用户交互来收集数据、分析意图和资源、形成决策建议，再调用工具帮助用户完成心愿。不要把自己表现成只会回答问题的聊天机器人，也不要表现成静态功能菜单。
