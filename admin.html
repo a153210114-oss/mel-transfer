@@ -295,6 +295,33 @@ body {
   font-size:13px;
   line-height:1.7;
 }
+.launch-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px;
+  margin-bottom:14px;
+}
+.launch-card{
+  border:1px solid var(--border);
+  border-radius:14px;
+  background:linear-gradient(135deg,rgba(0,212,255,.08),rgba(0,200,150,.045));
+  padding:14px;
+}
+.launch-card-title{font-size:15px;font-weight:900;color:var(--text);line-height:1.35;}
+.launch-card-tag{display:inline-flex;margin-top:8px;padding:3px 8px;border-radius:999px;background:rgba(0,212,255,.12);color:var(--accent);font-size:11px;font-weight:800;}
+.launch-card-copy{margin-top:10px;color:var(--text2);font-size:12px;line-height:1.65;min-height:84px;white-space:pre-wrap;}
+.launch-card-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+.launch-card-actions .action-btn{background:rgba(255,255,255,.03);}
+.launch-checklist{
+  margin-bottom:14px;
+  border:1px solid rgba(0,200,150,.22);
+  background:rgba(0,200,150,.06);
+  border-radius:14px;
+  padding:14px;
+}
+.launch-checklist-title{font-size:14px;font-weight:900;color:var(--text);margin-bottom:8px;}
+.launch-checklist ol{margin-left:18px;color:var(--text2);font-size:12px;line-height:1.8;}
+@media(max-width:900px){.launch-grid{grid-template-columns:1fr;}}
 @media(max-width:720px){.promo-rewrite-grid{grid-template-columns:1fr;}}
 .training-layout {
   display: grid;
@@ -934,6 +961,15 @@ body {
     </div>
   </div>
   <div class="content">
+    <div class="launch-checklist">
+      <div class="launch-checklist-title">今日推广执行</div>
+      <ol>
+        <li>先选一条主线，复制文案，人工发布到允许的群、朋友圈或小红书。</li>
+        <li>有人问，就让对方打开链接领养华伴 AI；感觉好请推荐，感觉不好请吐槽。</li>
+        <li>把咨询、领养、分享、服务者资料和反感点记录回来，明天继续改。</li>
+      </ol>
+    </div>
+    <div class="launch-grid" id="promotion-launch-grid"></div>
     <div class="card">
       <div id="outreach-refresh-status" style="display:none;margin-bottom:12px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:rgba(0,212,255,.08);color:var(--text2);font-size:12px;"></div>
       <div class="promo-rewrite-grid" id="promo-rewrite-panel">
@@ -2797,6 +2833,62 @@ function copyOutreachText(index){
   navigator.clipboard?.writeText(text).then(()=>alert('已复制推广文案')).catch(()=>alert(text));
 }
 
+const PROMOTION_LAUNCH_LINES=[
+  {
+    key:'student_free',
+    title:'年轻人 / 留学生',
+    tag:'小红书 · 留学生群 · 学校/租房群',
+    landing:'https://www.huabanapp.com/?ref=student_free',
+    copy:'不想被红点、广告和推荐流拖着走？\n\n华伴 AI+，你主动，它才出现。\n学习、生活、行程、情绪和创意，都可以先跟华伴聊。\n\n一个安静、有用、听你指挥的 AI 工具。\nhttps://www.huabanapp.com/?ref=student_free'
+  },
+  {
+    key:'family_ai',
+    title:'家庭用户 / 爸爸妈妈',
+    tag:'妈妈群 · 家长群 · 朋友圈',
+    landing:'https://www.huabanapp.com/?ref=family_ai',
+    copy:'全家用 AI，就用华伴 AI+。\n\n爸爸妈妈宝宝都能用。家务安排、提醒、学习、联系家人，都可以先跟华伴说。\n\n一家人的悄悄话，私密，不被消息列表淹没。\nhttps://www.huabanapp.com/?ref=family_ai'
+  },
+  {
+    key:'supplier_income',
+    title:'事业 / 小生意',
+    tag:'司机 · 餐饮 · 维修 · 服务者社群',
+    landing:'https://www.huabanapp.com/?ref=supplier_income',
+    copy:'让更多需求找到你。\n\n华伴能当你的事业助手：帮你把能力、产品和服务整理清楚，打磨介绍，生成推广内容，记录线索。\n\n让事业成型，并推向更大的市场。\nhttps://www.huabanapp.com/?ref=supplier_income'
+  }
+];
+
+function renderPromotionLaunchGrid(){
+  const grid=document.getElementById('promotion-launch-grid');
+  if(!grid)return;
+  grid.innerHTML=PROMOTION_LAUNCH_LINES.map((line,index)=>`
+    <div class="launch-card">
+      <div class="launch-card-title">${escapeHtml(line.title)}</div>
+      <div class="launch-card-tag">${escapeHtml(line.tag)}</div>
+      <div class="launch-card-copy">${escapeHtml(line.copy)}</div>
+      <div class="launch-card-actions">
+        <button class="action-btn" onclick="copyPromotionLaunchText(${index})">复制</button>
+        <button class="action-btn" onclick="rewritePromotionLaunchText(${index})">改写</button>
+        <a class="action-btn" href="${escapeHtml(line.landing)}" target="_blank" style="text-decoration:none;">打开</a>
+      </div>
+    </div>
+  `).join('');
+}
+
+function copyPromotionLaunchText(index){
+  const text=PROMOTION_LAUNCH_LINES[index]?.copy||'';
+  navigator.clipboard?.writeText(text).then(()=>alert('已复制今日推广文案')).catch(()=>alert(text));
+}
+
+function rewritePromotionLaunchText(index){
+  const line=PROMOTION_LAUNCH_LINES[index];
+  if(!line)return;
+  document.getElementById('promo-rewrite-source').value=line.copy;
+  const tone=document.getElementById('promo-rewrite-tone');
+  if(tone)tone.value=line.key==='supplier_income'?'supplier':line.key==='family_ai'?'moments':'wechat';
+  focusPromoRewrite();
+  setTimeout(rewritePromoCopy,120);
+}
+
 function focusPromoRewrite(){
   showSection('outreach');
   setTimeout(()=>{
@@ -2863,6 +2955,7 @@ function setOutreachStatus(message='', type='info'){
 }
 
 async function loadOutreachTasks(showNotice=false){
+  renderPromotionLaunchGrid();
   const filter=document.getElementById('outreach-filter')?.value||'';
   const tbody=document.getElementById('outreach-body');
   if(!tbody)return;
