@@ -3,20 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>华伴 AI+｜一家人用上 AI，不被时代落下</title>
-<meta name="description" content="华伴 AI+ 是一款为海外华人而生的 AI 智能体。一个有脑、有手、有温度的家庭 AI：陪爸爸妈妈和宝宝一起学习、生活、做事，不被时代落下。">
+<title>华伴 AI+｜一家人都能用的 AI 工具</title>
+<meta name="description" content="华伴 AI+ 是一款为海外华人而生的 AI 工具。一个有脑、有手、有温度的家庭 AI：陪爸爸妈妈和宝宝一起学习、生活、做事。">
 <meta name="keywords" content="华伴, Huaban, 华伴AI, 海外华人AI, 海外生活帮手, 华人出行, 华人服务, 本地好友, 墨尔本华人, AI生活管家, AI事业助手">
 <link rel="canonical" href="https://www.huabanapp.com/">
 <link rel="icon" href="assets/brand/icon-192.png">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/brand/apple-touch-icon.png">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="华伴">
-<meta property="og:title" content="华伴 AI+｜一家人用上 AI，不被时代落下">
+<meta property="og:title" content="华伴 AI+｜一家人都能用的 AI 工具">
 <meta property="og:description" content="一个有脑、有手、有温度的家庭 AI。爸爸妈妈和宝宝，都可以先跟华伴聊聊。">
 <meta property="og:url" content="https://www.huabanapp.com/">
 <meta property="og:image" content="https://www.huabanapp.com/assets/brand/huaban-logo-v1.png">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="华伴 AI+｜一家人用上 AI，不被时代落下">
+<meta name="twitter:title" content="华伴 AI+｜一家人都能用的 AI 工具">
 <meta name="twitter:description" content="一个有脑、有手、有温度的家庭 AI。爸爸妈妈和宝宝，都可以先跟华伴聊聊。">
 <script type="application/ld+json">
 {
@@ -27,7 +27,7 @@
   "applicationCategory": "LifestyleApplication",
   "operatingSystem": "Web",
   "url": "https://www.huabanapp.com/",
-  "description": "华伴 AI+ 是一款为海外华人而生的 AI 智能体，陪一家人用上 AI，不被时代落下。",
+  "description": "华伴 AI+ 是一款为海外华人而生的 AI 工具，陪全家用 AI。",
   "offers": {
     "@type": "Offer",
     "price": "0",
@@ -420,9 +420,100 @@ footer {
   flex-wrap: wrap;
   font-size: 13px;
 }
+.identity-home {
+  width: min(920px, calc(100vw - 32px));
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 48px 0 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.identity-logo {
+  width: 86px;
+  height: 86px;
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 16px 44px rgba(16,32,51,0.11);
+  object-fit: contain;
+}
+.identity-home h1 {
+  margin-top: 24px;
+  max-width: 760px;
+}
+.identity-tabs {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 28px;
+}
+.identity-tab {
+  min-height: 44px;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 0 18px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 950;
+  cursor: pointer;
+}
+.identity-tab.active {
+  border-color: transparent;
+  color: #03150e;
+  background: linear-gradient(135deg, #2bd18e, #41c5ef);
+  box-shadow: 0 12px 28px rgba(22,183,123,0.18);
+}
+.identity-panel {
+  width: min(760px, 100%);
+  margin-top: 24px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: rgba(255,255,255,0.82);
+  padding: 28px;
+  text-align: left;
+  box-shadow: 0 18px 50px rgba(16,32,51,0.08);
+}
+.identity-panel h2 {
+  margin: 0;
+  font-size: clamp(24px, 4vw, 36px);
+  line-height: 1.22;
+}
+.identity-panel p {
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.82;
+}
+.identity-list {
+  display: grid;
+  gap: 10px;
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.identity-list li {
+  border: 1px solid rgba(15,40,70,0.09);
+  border-radius: 14px;
+  background: #f8fbfa;
+  padding: 13px 14px;
+  color: #25394e;
+  line-height: 1.65;
+}
+.identity-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+}
 @media (max-width: 860px) {
   .nav-inner { min-height: 62px; }
   .nav-link { display: none; }
+  .nav-actions .btn:not(.primary) { display: none; }
   .hero { grid-template-columns: 1fr; min-height: auto; padding-top: 34px; }
   .phone-wrap { order: -1; }
   .phone { max-width: 320px; }
@@ -431,147 +522,109 @@ footer {
   .qr { width: min(260px, 100%); }
   .ai-summon { right: 14px; bottom: 14px; padding-right: 10px; }
   .ai-summon span { display: none; }
+  .identity-home { padding-top: 32px; justify-content: flex-start; }
+  .identity-logo { width: 74px; height: 74px; border-radius: 21px; }
+  .identity-panel { padding: 22px; }
+  .identity-actions .btn { width: 100%; }
 }
 </style>
 </head>
 <body>
-<nav class="nav">
-  <div class="nav-inner">
-    <a class="brand" href="/ai?ref=logo_summon" aria-label="召唤华伴 AI">
-      <img src="assets/brand/huaban-logo-v1.png" alt="华伴 logo">
-      <span>华伴</span>
-    </a>
-    <div class="nav-actions">
-      <a class="nav-link" href="#family">家庭</a>
-      <a class="nav-link" href="#what">能做什么</a>
-      <a class="nav-link" href="video.html">视频</a>
-      <a class="btn" href="/ai">打开 AI</a>
-      <a class="btn" href="app-download.html">下载</a>
-      <a class="btn primary" href="/ai">体验华伴 AI+</a>
-    </div>
-  </div>
-</nav>
-
 <main>
-  <section class="hero">
-    <div>
-      <div class="eyebrow">华伴 AI+</div>
-      <h1>一家人用上 AI，不被时代落下。</h1>
-      <p class="hero-copy">华伴不是一排复杂功能，而是一个有脑、有手、有温度的 AI 智能体。先像家人一样聊一句，它会慢慢懂你是谁、需要什么。</p>
-      <p class="hero-copy">爸爸、妈妈、宝宝，都可以拥有适合自己的华伴：生活有人照看，事业有人一起推进，学习和创意也有人陪。</p>
-      <div class="hero-actions">
-        <a class="btn primary" href="/ai">立即体验华伴 AI+</a>
-        <a class="btn" href="app-download.html?ref=official_hero">下载 / 添加到屏幕</a>
-        <a class="btn" href="video.html?ref=official_hero">观看15秒视频</a>
-        <a class="btn" href="#family">看看一家人怎么用</a>
-      </div>
-      <div class="hero-points" aria-label="华伴家庭 AI 角色">
-        <div class="point"><strong>爸爸妈妈</strong><span>先聊聊你在家里是贤内助，还是顶梁柱。</span></div>
-        <div class="point"><strong>宝宝学生</strong><span>快乐成长的创意总监，陪你学习 AI 的创意应用。</span></div>
-        <div class="point"><strong>一家人的悄悄话</strong><span>私密，不被淹没。需要谁，就让华伴找谁。</span></div>
-        <div class="point"><strong>不被打扰</strong><span>没有一排排红点，有事再出现。</span></div>
-      </div>
+  <section class="identity-home" aria-label="华伴 AI+ 首页">
+    <img class="identity-logo" src="assets/brand/huaban-logo-v1.png" alt="华伴">
+    <h1>我能用华伴 AI 做什么？</h1>
+    <div class="identity-tabs" role="tablist" aria-label="选择身份">
+      <button class="identity-tab active" type="button" data-role="student">年轻人 / 留学生</button>
+      <button class="identity-tab" type="button" data-role="family">爸爸妈妈</button>
+      <button class="identity-tab" type="button" data-role="supplier">事业 / 小生意</button>
+      <button class="identity-tab" type="button" data-role="creator">创意工作者</button>
     </div>
-    <div class="phone-wrap">
-      <div class="phone" aria-label="华伴 AI 对话预览">
-        <div class="screen">
-          <div class="phone-head"><span>9:41</span><span>5G 100%</span></div>
-          <div class="ai-card">
-            <img src="assets/brand/huaban-logo-v1.png" alt="华伴">
-            <strong>华伴 AI+</strong>
-            <p>哈哈，这是谁呀？爸爸妈妈还是宝宝呀。</p>
-          </div>
-          <div class="bubble user">爸爸</div>
-          <div class="bubble ai">哈哈，那你是贤内助还是顶梁柱啊？</div>
-          <div class="bubble user">宝宝</div>
-          <div class="bubble ai">那就快乐成长的创意总监吧，让我们一起来学习 AI 的创意应用。</div>
-        </div>
+    <article class="identity-panel" aria-live="polite">
+      <h2 id="identityTitle"></h2>
+      <p id="identityLead"></p>
+      <ul class="identity-list" id="identityList"></ul>
+      <div class="identity-actions">
+        <a class="btn primary" id="identityAction" href="/ai?ref=student_free">打开华伴 AI+</a>
+        <a class="btn" href="app-download.html?ref=identity_home">下载 / 添加到屏幕</a>
       </div>
-    </div>
-  </section>
-
-  <section class="section" id="family">
-    <h2>一家人，各有各的华伴</h2>
-    <p class="section-lead">华伴不会一上来塞给你一堆功能。它先听你是谁，再根据回答推荐适合你的 AI 角色。</p>
-    <div class="cards">
-      <article class="card">
-        <div class="card-icon">🏡</div>
-        <h3>家庭管家</h3>
-        <p>适合主内、负责家里的人。老人孩子、购物家务、出行提醒、生活安排，都可以慢慢交给华伴一起理顺。</p>
-      </article>
-      <article class="card" id="business">
-        <div class="card-icon">💼</div>
-        <h3>生意伙伴</h3>
-        <p>适合顶梁柱、负责赚钱的人。客户、推广、店铺、机会、文档表格和计划，华伴陪你一起推进。</p>
-      </article>
-      <article class="card">
-        <div class="card-icon">🌱</div>
-        <h3>快乐成长</h3>
-        <p>适合孩子、学生，也适合想重新学习的人。陪你学 AI、找灵感、讲笑话、做计划，轻轻松松成长。</p>
-      </article>
-      <article class="card">
-        <div class="card-icon">🎬</div>
-        <h3>创意总监</h3>
-        <p>适合做图片、视频、产品、设计和宣传内容的人。你负责创意，华伴陪你把想法变成作品。</p>
-      </article>
-    </div>
-  </section>
-
-  <section class="section" id="what">
-    <h2>华伴能够做什么</h2>
-    <p class="section-lead">先聊天，再帮你整理。能直接回答就直接回答；需要继续推进时，再让你确认。</p>
-    <div class="cards">
-      <article class="card" id="life">
-        <div class="card-icon">🏠</div>
-        <h3>生活有人照看</h3>
-        <p>出行、维修、购物、提醒、学习、行程和家庭安排，遇到生活问题先告诉华伴。</p>
-      </article>
-      <article class="card">
-        <div class="card-icon">🔐</div>
-        <h3>一家人的悄悄话</h3>
-        <p>私密，不被淹没。微信联系熟人，华伴连接当地朋友；你要联系谁，直接告诉华伴。</p>
-      </article>
-      <article class="card">
-        <div class="card-icon">🧠</div>
-        <h3>想法有人整理</h3>
-        <p>学习、事业、创意、情绪和目标，都可以先聊出来。华伴帮你判断重点，推进下一步。</p>
-      </article>
-      <article class="card">
-        <div class="card-icon">🛡️</div>
-        <h3>少打扰，更安心</h3>
-        <p>不铺开复杂菜单，不制造红点焦虑。需要时出现，其余时间安静守在你身边。</p>
-      </article>
-    </div>
-  </section>
-
-  <section class="section">
-    <div class="cta">
-      <div>
-        <h2>先跟华伴 AI+ 聊一句</h2>
-        <p>不用找功能，不用研究菜单。打开后，它会先问：这是谁呀？爸爸妈妈还是宝宝呀。</p>
-        <div class="hero-actions">
-          <a class="btn primary" href="/ai">打开华伴 AI+</a>
-          <a class="btn" href="app-download.html?ref=official_cta">下载 / 添加到屏幕</a>
-        </div>
-      </div>
-      <div class="qr">
-        <img src="assets/brand/huaban-qr-logo.png" alt="华伴二维码">
-        <strong>扫码体验华伴</strong>
-      </div>
-    </div>
+    </article>
   </section>
 </main>
 
-<a class="ai-summon" href="/ai?ref=floating_summon" aria-label="召唤华伴 AI">
-  <img src="assets/brand/huaban-logo-v1.png" alt="">
-  <span>叫华伴</span>
-</a>
-
 <footer>
   <div class="footer-inner">
-    <span>华伴 Huaban · 有脑、有手的 AI</span>
+    <span>华伴 AI+ · 一个有脑、有手的 AI 工具</span>
     <span>huabanapp.com</span>
   </div>
 </footer>
+<script>
+const identityCopy = {
+  student: {
+    title: '不想被红点、广告和推荐流拖着走？',
+    lead: '华伴 AI+，你主动，它才出现。一个安静、有用、听你指挥的 AI 工具。',
+    href: '/ai?ref=student_free',
+    items: [
+      '学习、生活、行程、情绪和创意，都可以先跟华伴聊。',
+      '不铺开复杂页面，不把你拽进碎片信息里。',
+      '想静静做自己想做的事，华伴帮你整理下一步。'
+    ]
+  },
+  family: {
+    title: '全家用 AI，就用华伴 AI+。',
+    lead: '爸爸妈妈宝宝都能用。它会先问你是谁，再推荐适合你的 AI 角色。',
+    href: '/ai?ref=family_ai',
+    items: [
+      '爸爸妈妈可以用它安排家庭、生活、提醒和本地事务。',
+      '宝宝和学生可以用它学习 AI、找灵感、快乐成长。',
+      '一家人的悄悄话，私密，不被一排排红点淹没。'
+    ]
+  },
+  supplier: {
+    title: '让更多需求找到你。',
+    lead: '华伴能当你的事业助手：帮你把能力、产品和服务整理清楚，打磨介绍，生成推广内容，记录线索，让事业成型，并推向更大的市场。',
+    href: '/ai?ref=supplier_income',
+    items: [
+      '把你能提供的服务、商品、城市、时间、价格和联系方式整理清楚。',
+      '帮你生成名片、推广文案、海报话术、客户回复和业务表格。',
+      '有人需要时，华伴帮你被看见；有线索时，帮你提醒、跟进、整理下一步。'
+    ]
+  },
+  creator: {
+    title: '你负责创意，华伴陪你完成。',
+    lead: '做图片、视频、产品、文案、个人网站和推广内容，都可以让华伴当创意总监。',
+    href: '/ai?ref=creative_director',
+    items: [
+      '把一个想法整理成脚本、海报、视频文案或产品说明。',
+      '帮你把生活、生意和表达变成可以传播的内容。',
+      '灵感来了就说，华伴帮你把它落到下一步。'
+    ]
+  }
+};
+
+function renderIdentity(role) {
+  const copy = identityCopy[role] || identityCopy.student;
+  document.getElementById('identityTitle').textContent = copy.title;
+  document.getElementById('identityLead').textContent = copy.lead;
+  document.getElementById('identityList').innerHTML = copy.items.map(item => `<li>${item}</li>`).join('');
+  document.getElementById('identityAction').href = copy.href;
+  document.querySelectorAll('.identity-tab').forEach(tab => {
+    tab.classList.toggle('active', tab.dataset.role === role);
+  });
+}
+
+document.querySelectorAll('.identity-tab').forEach(tab => {
+  tab.addEventListener('click', () => renderIdentity(tab.dataset.role));
+});
+
+const refRole = new URLSearchParams(location.search).get('ref');
+const roleByRef = {
+  student_free: 'student',
+  family_ai: 'family',
+  supplier_income: 'supplier',
+  creative_director: 'creator'
+};
+renderIdentity(roleByRef[refRole] || 'student');
+</script>
 </body>
 </html>

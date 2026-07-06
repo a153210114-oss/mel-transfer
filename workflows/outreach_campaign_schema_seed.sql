@@ -38,55 +38,80 @@ insert into public.outreach_tasks (
   title, copy_short, copy_long, landing_url, compliance_notes, daily_target, metrics, fields
 ) values
 (
-  '微信朋友圈/微信群人工发布',
+  '小红书/留学生群/校园社群人工发布',
   null,
-  'Australia',
-  'Melbourne',
+  'Global',
+  null,
   'user',
   'B_manual_review',
   'needs_review',
-  '墨尔本用户公测招募',
-  '快来领你的 AI，有趣又有用。华伴是你的生活帮手、工作助理和休闲陪伴。有事直接说，它会帮你整理需求，找到靠谱的人。',
-  '华伴开始墨尔本公测啦。快来领养你的生活管家、工作助理、休闲陪伴的小 AI 吧。它现在先从墨尔本出行和华人互助开始练本领，你可以直接跟它说：我要用车、想找人帮忙、愿意提供服务、想吐槽建议。网址：https://www.huabanapp.com/',
-  'https://www.huabanapp.com/?ref=wechat_melbourne_beta',
-  '微信群不能自动群发，只能由管理员人工选择合适群并遵守群规。',
-  '{"review_tasks":5,"copy_variants":2,"manual_posts":2,"reply_messages":8,"feedback_records":2}'::jsonb,
+  '年轻海外华人/留学生推广',
+  '不想被红点、广告和推荐流拖着走？华伴 AI+，你主动，它才出现。一个安静、有用、听你指挥的 AI 工具。',
+  '不想被红点、广告和推荐流拖着走？
+本来只想办点事，却一头扎进信息碎片里？
+
+华伴 AI+，一家人都能用的 AI 工具。
+你主动，它才出现；你说想做什么，它帮你整理、提醒、找人、推进。
+
+适合留学生、年轻海外华人、独居生活、学习规划和 AI 创意应用。
+
+入口：https://www.huabanapp.com/?ref=student_free
+试用感觉好，请推荐给好友；感觉不好，请告诉华伴。',
+  'https://www.huabanapp.com/?ref=student_free',
+  '小红书、校园群和微信群不能自动群发，只能人工选择合适入口并遵守群规。',
+  '{"review_tasks":8,"copy_variants":3,"manual_posts":3,"reply_messages":8,"feedback_records":2}'::jsonb,
   '{"reviewed":0,"copy_done":0,"posted":0,"replied":0,"feedback_recorded":0}'::jsonb,
-  '{"allowed_actions":["draft_copy","manual_post","record_clicks"],"forbidden_actions":["auto_join_group","auto_spam","private_message_blast"]}'::jsonb
+  '{"segment":"student_free","channels":["xiaohongshu","student_groups","wechat"],"allowed_actions":["draft_copy","manual_post","record_clicks"],"forbidden_actions":["auto_join_group","auto_spam","private_message_blast"]}'::jsonb
 ),
 (
-  'Facebook 华人群人工发布',
-  'https://www.facebook.com/search/groups',
-  'Australia',
-  'Melbourne',
-  'mixed',
+  '华人妈妈群/家长群/朋友圈人工发布',
+  null,
+  'Global',
+  null,
+  'user',
   'B_manual_review',
   'needs_review',
-  '墨尔本 Facebook 华人群推广',
-  '在墨尔本有事不用到处问。把需求告诉华伴 AI，它会帮你整理、搜索公开线索、核验来源，再匹配可能靠谱的人。',
-  '华伴 AI 正在墨尔本公测。它不是只会聊天，而是会帮海外华人整理需求、找公开线索、连接靠谱的人。现在先支持出行用车、本地帮忙、服务者入驻和反馈建议。欢迎体验：https://www.huabanapp.com/',
-  'https://www.huabanapp.com/?ref=facebook_melbourne_beta',
-  '不自动加群，不自动发帖；只生成给管理员审核的发布草稿。',
-  '{"review_tasks":3,"copy_variants":2,"manual_posts":1,"reply_messages":5,"feedback_records":1}'::jsonb,
+  '家庭用户推广',
+  '全家用 AI，就用华伴 AI+。爸爸妈妈宝宝都能用，一个有脑、有手、有温度的家庭 AI 工具。',
+  '全家用 AI，就用华伴 AI+。
+
+爸爸、妈妈、宝宝，都可以先跟华伴聊一句。
+它会慢慢懂你是谁、需要什么：家庭管家、生意伙伴、快乐成长、创意总监，都能自然切换。
+
+没有一排排红点，不催促，不替你决定。需要时出现，不需要时安静待着。
+
+入口：https://www.huabanapp.com/?ref=family_ai
+欢迎全家一起试试。',
+  'https://www.huabanapp.com/?ref=family_ai',
+  '家庭群、家长群和朋友圈只能人工发布，不制造焦虑，不夸大功能。',
+  '{"review_tasks":8,"copy_variants":3,"manual_posts":3,"reply_messages":8,"feedback_records":2}'::jsonb,
   '{"reviewed":0,"copy_done":0,"posted":0,"replied":0,"feedback_recorded":0}'::jsonb,
-  '{"allowed_actions":["draft_copy","manual_post"],"forbidden_actions":["auto_join_group","scrape_private_group","auto_spam"]}'::jsonb
+  '{"segment":"family_ai","channels":["wechat_mom_groups","parent_groups","moments"],"allowed_actions":["draft_copy","manual_post","record_clicks"],"forbidden_actions":["fear_marketing","auto_spam","private_message_blast"]}'::jsonb
 ),
 (
-  '服务者招募人工发布',
+  '司机/维修/餐饮/服务者社群人工发布',
   null,
   'Global',
   null,
   'supplier',
   'B_manual_review',
   'needs_review',
-  '海外华人服务者招募',
-  '如果你在海外为华人提供接送机、包车、翻译、律师、会计、电工、跑腿或本地生活服务，欢迎加入华伴城市服务网络。',
-  '华伴正在建立海外华人城市服务网络。如果你能提供接送机、包车、旅游、翻译、律师、会计、电工、维修、跑腿或本地帮办服务，可以申请成为服务者。华伴不抽佣，不赚差价，只帮需要的人遇见可靠的人。申请入口：https://www.huabanapp.com/',
-  'https://www.huabanapp.com/?ref=supplier_recruit',
-  '涉及律师、会计、电工等专业服务，必须进入资质核验和人工审核。',
-  '{"review_tasks":5,"copy_variants":2,"manual_posts":2,"reply_messages":6,"feedback_records":2}'::jsonb,
+  '小生意/手艺人推广',
+  '你的手艺，不该只被熟人知道。告诉华伴你会什么，有人需要时，让你被看见。被需要，也可以变成收入。',
+  '你的手艺，不该只被熟人知道。
+
+会开车、会修东西、会做饭、会教孩子、会报税、会翻译、会做设计、会跑腿？
+这些在海外不是小事，可能正是别人苦苦寻觅的答案。
+
+告诉华伴你会什么、在哪、什么时候方便。有人真正需要时，华伴会帮你被看见。
+不刷屏，不乱发广告。被需要，也可以变成收入。
+
+入口：https://www.huabanapp.com/?ref=supplier_income',
+  'https://www.huabanapp.com/?ref=supplier_income',
+  '不承诺收入；专业服务必须进入资质核验和人工审核。',
+  '{"review_tasks":10,"copy_variants":3,"manual_posts":4,"reply_messages":10,"feedback_records":3}'::jsonb,
   '{"reviewed":0,"copy_done":0,"posted":0,"replied":0,"feedback_recorded":0}'::jsonb,
-  '{"allowed_actions":["draft_copy","manual_post","qualification_review"],"forbidden_actions":["promise_income","claim_official_certification_without_review"]}'::jsonb
+  '{"segment":"supplier_income","channels":["driver_groups","repair_groups","restaurant_groups","service_groups"],"allowed_actions":["draft_copy","manual_post","qualification_review"],"forbidden_actions":["promise_income","claim_official_certification_without_review","auto_spam"]}'::jsonb
 )
 on conflict (title, source_name) do update set
   source_url=excluded.source_url,

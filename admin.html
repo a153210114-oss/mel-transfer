@@ -431,6 +431,9 @@ body {
     <div class="nav-item" onclick="showSection('ai-training')">
       <span class="nav-icon">🎓</span> AI 训练营
     </div>
+    <div class="nav-item" onclick="showSection('prompt-library')">
+      <span class="nav-icon">💬</span> 提示词库
+    </div>
   </div>
 
   <div class="nav-section">
@@ -1227,6 +1230,76 @@ body {
   </div>
 </div>
 
+<!-- ══ 提示词库 ══ -->
+<div class="section" id="section-prompt-library">
+  <div class="topbar">
+    <div>
+      <div class="page-title">提示词库</div>
+      <div class="page-sub">用户看见“可以这样说”，AI 记住“应该怎么做”</div>
+    </div>
+    <div class="topbar-actions">
+      <select class="input" id="prompt-role-filter" onchange="loadPromptLibrary()" style="width:150px;">
+        <option value="">全部身份</option>
+        <option value="student">年轻/留学生</option>
+        <option value="family">家庭</option>
+        <option value="business">事业</option>
+        <option value="creator">创意</option>
+        <option value="general">通用</option>
+      </select>
+      <button class="btn btn-ghost" onclick="loadPromptLibrary()">↻ 刷新</button>
+      <button class="btn btn-primary" onclick="copyPromptLibraryForAI()">复制给 AI</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="label">用户可见</div>
+        <div class="value" id="prompt-visible-count" style="color:var(--green)">-</div>
+        <div class="delta">降低使用门槛</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">AI 内部</div>
+        <div class="value" id="prompt-internal-count" style="color:var(--purple)">-</div>
+        <div class="delta">训练行为边界</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">事业提示</div>
+        <div class="value" id="prompt-business-count" style="color:var(--gold)">-</div>
+        <div class="delta">帮助需求找到用户</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">状态</div>
+        <div class="value" id="prompt-source-status" style="color:var(--accent);font-size:22px;">内置</div>
+        <div class="delta">执行 SQL 后读取数据库</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">提示词条目</div>
+        <span class="tag">visible_to_user 分开控制</span>
+      </div>
+      <div style="overflow:auto;">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>身份</th>
+              <th>展示</th>
+              <th>标题</th>
+              <th>提示词</th>
+              <th>AI 行为</th>
+              <th>优先级</th>
+            </tr>
+          </thead>
+          <tbody id="prompt-library-body">
+            <tr><td colspan="6" style="text-align:center;color:var(--text3);padding:36px;">加载中...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="coach-note" style="margin-top:12px;">用户端只适合展示“你可以这样说”；AI 内部规则只用于理解意图、追问关键问题、避免过早弹卡。</div>
+  </div>
+</div>
+
 <!-- ══ Token监控 ══ -->
 <div class="section" id="section-token-usage">
   <div class="topbar">
@@ -1440,6 +1513,7 @@ function showSection(name) {
     'ops-team': loadOpsTeam,
     dispatch: loadDispatch,
     'ai-training': loadAITraining,
+    'prompt-library': loadPromptLibrary,
     'token-usage': loadTokenUsage,
     finance: loadFinance
   };
@@ -1756,6 +1830,167 @@ async function copyTrainingAnswer() {
     document.getElementById('training-selected-status').textContent = '已复制';
   } catch(e) {
     document.getElementById('training-selected-status').textContent = '复制失败';
+  }
+}
+
+// ── Prompt Library ──
+function defaultPromptLibrary(){
+  return [
+    {
+      role_type:'student',
+      visible_to_user:true,
+      title:'学习生活先整理',
+      prompt_text:'帮我整理这周学习和生活，先告诉我最该做哪三件事。',
+      intent:'planning',
+      expected_ai_behavior:'先安抚用户的混乱感，再按时间、重要性和可执行性整理 3 个优先动作；不要弹卡。',
+      priority:10,
+      is_active:true
+    },
+    {
+      role_type:'student',
+      visible_to_user:true,
+      title:'创意作品起步',
+      prompt_text:'我想做一个作品/视频/图片，帮我出主意并列步骤。',
+      intent:'creative_start',
+      expected_ai_behavior:'先问用途和受众；如果信息足够，给标题、结构、步骤和素材建议。',
+      priority:20,
+      is_active:true
+    },
+    {
+      role_type:'family',
+      visible_to_user:true,
+      title:'家庭事务安排',
+      prompt_text:'帮我安排一家人的事情，提醒我别漏掉重点。',
+      intent:'family_management',
+      expected_ai_behavior:'先问家庭角色、时间和最急的事；整理提醒、分工和下一步。',
+      priority:10,
+      is_active:true
+    },
+    {
+      role_type:'family',
+      visible_to_user:true,
+      title:'一家人的悄悄话',
+      prompt_text:'我要联系家人，帮我直接找到 TA，不要被消息列表打扰。',
+      intent:'private_family_contact',
+      expected_ai_behavior:'强调私密、不被淹没；直接帮助联系目标对象，用户想不起是谁时再弹好友列表。',
+      priority:20,
+      is_active:true
+    },
+    {
+      role_type:'business',
+      visible_to_user:true,
+      title:'事业介绍整理',
+      prompt_text:'帮我整理一下我能提供什么，让更多需求找到我。',
+      intent:'supply_profile',
+      expected_ai_behavior:'识别为供给侧；追问城市、服务范围、价格、可接时间、联系方式和资质，不要当成普通需求工单。',
+      priority:10,
+      is_active:true
+    },
+    {
+      role_type:'business',
+      visible_to_user:true,
+      title:'推广内容生成',
+      prompt_text:'帮我写一段客户看得懂的介绍，再做成名片和推广文案。',
+      intent:'business_promotion',
+      expected_ai_behavior:'先提炼卖点、目标客户和可信证据；输出短介绍、名片文案、海报标题和客户回复话术。',
+      priority:20,
+      is_active:true
+    },
+    {
+      role_type:'creator',
+      visible_to_user:true,
+      title:'视频脚本',
+      prompt_text:'帮我把这个想法变成一个短视频脚本。',
+      intent:'video_script',
+      expected_ai_behavior:'先问时长、平台、受众和风格；给分镜、旁白、字幕和画面建议。',
+      priority:10,
+      is_active:true
+    },
+    {
+      role_type:'general',
+      visible_to_user:false,
+      title:'卡片弹出边界',
+      prompt_text:'用户没有明确说“生成确认卡 / 提交 / 确认下单 / 安排”时，不要弹出确认卡。',
+      intent:'card_boundary',
+      expected_ai_behavior:'默认用聊天追问和整理；只有信息基本完整且用户明确说出口令，才生成可修改确认卡。',
+      priority:1,
+      is_active:true
+    },
+    {
+      role_type:'general',
+      visible_to_user:false,
+      title:'模糊需求处理',
+      prompt_text:'用户说得模糊时，只问一个最关键的问题。',
+      intent:'clarify_one_question',
+      expected_ai_behavior:'不要一次问一堆；先判断缺少的关键字段，提出一个最短问题。',
+      priority:2,
+      is_active:true
+    },
+    {
+      role_type:'business',
+      visible_to_user:false,
+      title:'供给侧识别',
+      prompt_text:'用户说“我是、我会、我能、我有、我提供、我卖、我可以帮”时，优先识别为供给侧。',
+      intent:'supply_detection',
+      expected_ai_behavior:'短句承接，后台沉淀供给画像；自然追问区域、范围、资质、联系方式、可接时间。',
+      priority:3,
+      is_active:true
+    }
+  ];
+}
+
+function promptRoleLabel(role){
+  return {student:'年轻/留学生',family:'家庭',business:'事业',creator:'创意',general:'通用'}[role]||role||'通用';
+}
+
+function promptVisibleBadge(value){
+  return value ? '<span class="badge badge-completed">用户可见</span>' : '<span class="badge badge-inactive">AI 内部</span>';
+}
+
+let lastPromptLibraryRows = [];
+
+async function loadPromptLibrary(){
+  const filter=document.getElementById('prompt-role-filter')?.value||'';
+  const tbody=document.getElementById('prompt-library-body');
+  let rows=[];
+  let fallback=false;
+  try{
+    let q='prompt_library?is_active=eq.true&order=priority.asc,created_at.asc&limit=200';
+    if(filter) q += `&role_type=eq.${encodeURIComponent(filter)}`;
+    rows=await supaFetch(q);
+    if(!Array.isArray(rows) || !rows.length) throw new Error('empty prompt library');
+    document.getElementById('prompt-source-status').textContent='数据库';
+  }catch(e){
+    fallback=true;
+    rows=defaultPromptLibrary().filter(row=>!filter || row.role_type===filter);
+    document.getElementById('prompt-source-status').textContent='内置';
+  }
+  lastPromptLibraryRows=rows;
+  const allRows=fallback?defaultPromptLibrary():rows;
+  document.getElementById('prompt-visible-count').textContent=allRows.filter(row=>row.visible_to_user).length;
+  document.getElementById('prompt-internal-count').textContent=allRows.filter(row=>!row.visible_to_user).length;
+  document.getElementById('prompt-business-count').textContent=allRows.filter(row=>row.role_type==='business').length;
+  const banner=fallback?`<tr><td colspan="6" style="color:var(--gold);font-size:12px;padding:12px 16px;background:rgba(245,166,35,.08);">当前显示内置提示词。执行 <code>workflows/prompt_library_schema_seed.sql</code> 后，这里会读取数据库提示词库。</td></tr>`:'';
+  tbody.innerHTML=banner+rows.map(row=>`
+    <tr>
+      <td>${escapeHtml(promptRoleLabel(row.role_type))}</td>
+      <td>${promptVisibleBadge(row.visible_to_user)}</td>
+      <td><strong>${escapeHtml(row.title||'')}</strong><div style="font-size:11px;color:var(--text3);margin-top:4px;">${escapeHtml(row.intent||'')}</div></td>
+      <td style="min-width:220px;">${escapeHtml(row.prompt_text||'')}</td>
+      <td style="min-width:260px;color:var(--text2);line-height:1.6;">${escapeHtml(row.expected_ai_behavior||'')}</td>
+      <td>${escapeHtml(row.priority??'')}</td>
+    </tr>
+  `).join('');
+}
+
+async function copyPromptLibraryForAI(){
+  const rows=lastPromptLibraryRows.length?lastPromptLibraryRows:defaultPromptLibrary();
+  const text=rows.map(row=>`【${promptRoleLabel(row.role_type)}｜${row.visible_to_user?'用户可见':'AI内部'}】${row.title}\n用户说法：${row.prompt_text}\nAI行为：${row.expected_ai_behavior}`).join('\n\n');
+  try{
+    await navigator.clipboard.writeText(text);
+    alert('已复制提示词库，可喂给 AI 或用于训练营。');
+  }catch(e){
+    alert(text);
   }
 }
 
@@ -2503,43 +2738,43 @@ const OUTREACH_LEVEL_LABELS={
 function defaultOutreachTasks(){
   return [
     {
-      title:'华伴公测招募',
-      source_name:'微信朋友圈/微信群人工发布',
+      title:'年轻海外华人/留学生推广',
+      source_name:'小红书/留学生群/校园社群人工发布',
       city:'Global',
       country:'Global',
       audience:'user',
       channel_level:'B_manual_review',
       status:'needs_review',
-      copy_short:'华伴开始公测啦。它不是普通问答 AI，而是一个能帮你办事的小伙伴。你只管说出心愿，华伴会帮你整理、判断、推进。',
-      copy_long:'华伴开始公测啦。\n\n它不是普通问答 AI，而是一个能帮你办事的小伙伴。\n\n跟我聊，生活的繁琐交给我，还自己一个高品质生活。\n跟我聊，生意的困难变轻松，让更多需要你的人找到你。\n跟我聊，心里的话有人接住，能当树洞，也能当参谋。\n\n你只管说出心愿，华伴会帮你整理、判断、推进。\n\n公测入口：https://www.huabanapp.com/\n欢迎试用，也欢迎狠狠吐槽。',
-      landing_url:'https://www.huabanapp.com/?ref=wechat_beta',
-      compliance_notes:'微信群不能自动群发，只能人工选择合适群并遵守群规。'
+      copy_short:'不想被红点、广告和推荐流拖着走？华伴 AI+，你主动，它才出现。一个安静、有用、听你指挥的 AI 工具。',
+      copy_long:'不想被红点、广告和推荐流拖着走？\n本来只想办点事，却一头扎进信息碎片里？\n\n华伴 AI+，一家人都能用的 AI 工具。\n你主动，它才出现；你说想做什么，它帮你整理、提醒、找人、推进。\n\n适合留学生、年轻海外华人、独居生活、学习规划和 AI 创意应用。\n\n入口：https://www.huabanapp.com/?ref=student_free\n试用感觉好，请推荐给好友；感觉不好，请告诉华伴。',
+      landing_url:'https://www.huabanapp.com/?ref=student_free',
+      compliance_notes:'小红书、校园群和微信群不能自动群发，只能人工选择合适入口并遵守群规。'
     },
     {
-      title:'海外华人生活事业帮手',
-      source_name:'Facebook 华人群人工发布',
+      title:'家庭用户推广',
+      source_name:'华人妈妈群/家长群/朋友圈人工发布',
       city:'Global',
       country:'Global',
-      audience:'mixed',
+      audience:'user',
       channel_level:'B_manual_review',
       status:'needs_review',
-      copy_short:'人在海外，生活和事业遇到事，不用被信息带着跑。把心愿告诉华伴，它会帮你整理、判断、推进。',
-      copy_long:'人在海外，生活和事业遇到事，不用被信息带着跑。\n\n把心愿告诉华伴，它会帮你整理、判断、推进。\n生活的繁琐、生意的困难、心里的话，都可以先跟华伴聊聊。\n\n公测入口：https://www.huabanapp.com/',
-      landing_url:'https://www.huabanapp.com/?ref=facebook_beta',
-      compliance_notes:'不自动加群，不自动发帖。'
+      copy_short:'全家用 AI，就用华伴 AI+。爸爸妈妈宝宝都能用，一个有脑、有手、有温度的家庭 AI 工具。',
+      copy_long:'全家用 AI，就用华伴 AI+。\n\n爸爸、妈妈、宝宝，都可以先跟华伴聊一句。\n它会慢慢懂你是谁、需要什么：家庭管家、生意伙伴、快乐成长、创意总监，都能自然切换。\n\n没有一排排红点，不催促，不替你决定。需要时出现，不需要时安静待着。\n\n入口：https://www.huabanapp.com/?ref=family_ai\n欢迎全家一起试试。',
+      landing_url:'https://www.huabanapp.com/?ref=family_ai',
+      compliance_notes:'家庭群、家长群和朋友圈只能人工发布，不制造焦虑，不夸大功能。'
     },
     {
-      title:'海外服务者/商家招募',
-      source_name:'服务者招募人工发布',
+      title:'小生意/手艺人推广',
+      source_name:'司机/维修/餐饮/服务者社群人工发布',
       city:'Global',
       country:'Global',
       audience:'supplier',
       channel_level:'B_manual_review',
       status:'needs_review',
-      copy_short:'去中心化，不抽佣。如果你在海外提供商品、餐饮、配送或服务，华伴可以帮你被更多需要的人看见。',
-      copy_long:'去中心化，不抽佣。\n\n如果你在海外提供商品、餐饮、配送或服务，华伴可以帮你被更多需要的人看见。\n\n你告诉华伴你能提供什么，它会帮你整理服务内容，让更多真正需要的人找到你。\n\n入口：https://www.huabanapp.com/',
-      landing_url:'https://www.huabanapp.com/?ref=supplier_recruit',
-      compliance_notes:'专业服务必须进入资质核验和人工审核。'
+      copy_short:'你的手艺，不该只被熟人知道。告诉华伴你会什么，有人需要时，让你被看见。被需要，也可以变成收入。',
+      copy_long:'你的手艺，不该只被熟人知道。\n\n会开车、会修东西、会做饭、会教孩子、会报税、会翻译、会做设计、会跑腿？\n这些在海外不是小事，可能正是别人苦苦寻觅的答案。\n\n告诉华伴你会什么、在哪、什么时候方便。有人真正需要时，华伴会帮你被看见。\n不刷屏，不乱发广告。被需要，也可以变成收入。\n\n入口：https://www.huabanapp.com/?ref=supplier_income',
+      landing_url:'https://www.huabanapp.com/?ref=supplier_income',
+      compliance_notes:'不承诺收入；专业服务必须进入资质核验和人工审核。'
     }
   ];
 }
