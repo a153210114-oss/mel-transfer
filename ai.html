@@ -1458,6 +1458,65 @@ function saveProfile(updates){
   console.log('画像更新：', updates);
 }
 
+function inferUserIntentProfile(userMsg='', botReply=''){
+  const text=String(userMsg||'')+' '+String(botReply||'');
+  const compact=text.replace(/\s+/g,'');
+  const types=[];
+  const barriers=[];
+  if(/专注|执行力|拖延|坚持|目标|计划|规划|成就|更出色|自律|完成|推进|效率|学习/.test(compact)){
+    types.push('focus_executor');
+    if(/拖延|分心|刷|红点|信息流|碎片|沉迷|打断/.test(compact))barriers.push('attention_fragmentation');
+  }
+  if(/自由|自主|不想被|算法|操控|束缚|打扰|红点|消息|推荐流|做自己/.test(compact)){
+    types.push('autonomy_seeker');
+    barriers.push('noise_and_control');
+  }
+  if(/生意|客户|赚钱|收入|接单|商家|司机|餐馆|服务|推广|名片|产品|供给|手艺|技能|被需要/.test(compact)){
+    types.push('business_builder');
+    if(/没人知道|客源|推广|广告|抽佣|平台/.test(compact))barriers.push('visibility_and_trust');
+  }
+  if(/家人|爸爸|妈妈|宝宝|孩子|老人|家庭|全家|提醒|买菜|家务|悄悄话/.test(compact)){
+    types.push('family_keeper');
+    if(/不会用|太复杂|密密麻麻|看不懂|时代落下/.test(compact))barriers.push('tech_anxiety');
+  }
+  if(/视频|脚本|海报|文案|图片|设计|产品介绍|小红书|作品|创意/.test(compact)){
+    types.push('creative_maker');
+    if(/写不出来|没灵感|不知道怎么|卡住|不会表达/.test(compact))barriers.push('blank_page_pressure');
+  }
+  if(/累|烦|焦虑|孤独|没人说|树洞|陪|情绪|气馁|难过|压力/.test(compact)){
+    types.push('emotional_companion');
+    barriers.push('emotional_load');
+  }
+  if(/试试|看看|好用|不好用|体验|公测|吐槽|怎么玩|怎么用|你能做什么/.test(compact)){
+    types.push('curious_tester');
+  }
+
+  let changeWillingness='observe';
+  if(/开始|开干|提交|安排|确认|就这样|马上|现在|执行|生成|下单|保存|提醒|我要|我想要|认真|坚持|改变/.test(compact))changeWillingness='high';
+  else if(/想|希望|考虑|试试|看看|也许|可以|要不要|应该|准备/.test(compact))changeWillingness='medium';
+  else if(/随便|不知道|无所谓|你猜|先不|等等|累|气馁|算了|不急/.test(compact))changeWillingness='low';
+
+  const primaryType=types[0]||'general_user';
+  const strategyMap={
+    focus_executor:'先给成就感，再拆成一个很小的下一步；强调“我来推进”，不要说教。',
+    autonomy_seeker:'强调少打扰、用户决定方向；不要催促，不制造红点和焦虑。',
+    business_builder:'直接提炼价值、客户、可信证据和下一步；强调让更多需求找到他。',
+    family_keeper:'用温柔、简单、低门槛的话术；先让家人敢用，再慢慢接通讯和提醒。',
+    creative_maker:'直接产出草稿；文案、脚本、分镜、图片提示词先给可修改版本。',
+    emotional_companion:'先接住情绪，少讲功能；等用户愿意行动时再给小步骤。',
+    curious_tester:'用真实小事引导试用；不要堆功能，不要讲后台。',
+    general_user:'先判断需求还是闲聊；能直接回答就直接回答，不能就只问一个关键问题。'
+  };
+  return {
+    primary_user_type:primaryType,
+    user_type_candidates:[...new Set(types)].slice(0,4),
+    change_willingness:changeWillingness,
+    likely_barriers:[...new Set(barriers)].slice(0,4),
+    response_strategy:strategyMap[primaryType]||strategyMap.general_user,
+    updated_at:new Date().toISOString()
+  };
+}
+
 // ── AI 旅行伙伴养成 ──
 const COMPANION_LEVELS=[
   {name:'初遇伙伴',min:0,max:39},
@@ -2018,6 +2077,7 @@ async function extractProfileFromChat(userMsg, botReply){
   const p = getProfile();
   const now = new Date().toISOString();
   const combined = userMsg + ' ' + (botReply||'');
+  saveProfile(inferUserIntentProfile(userMsg, botReply));
 
   // ── 1. 地址学习（多次出现自动升级为常用地址）──
   const addrMatch = userMsg.match(/我住([^，。！？\s,]{5,30})/);
@@ -2094,6 +2154,22 @@ function buildProfileContext(){
   if(p.scene_counts){
     const topScene = Object.entries(p.scene_counts).sort((a,b)=>b[1]-a[1])[0];
     if(topScene) ctx += `\n最常用服务：${topScene[0]==='to_airport'?'送机':topScene[0]==='from_airport'?'接机':'包车'}。`;
+  }
+  if(p.primary_user_type){
+    const typeLabel={
+      focus_executor:'专注执行型',
+      autonomy_seeker:'自主自由型',
+      business_builder:'事业增长型',
+      family_keeper:'家庭照护型',
+      creative_maker:'创意产出型',
+      emotional_companion:'情绪陪伴型',
+      curious_tester:'试探体验型',
+      general_user:'普通综合型'
+    };
+    const willingnessLabel={high:'愿意行动',medium:'有兴趣但需要轻推',low:'暂时低意愿',observe:'先观察'};
+    ctx += `\n用户当前画像：${typeLabel[p.primary_user_type]||p.primary_user_type}；改变意愿：${willingnessLabel[p.change_willingness]||p.change_willingness||'未知'}。`;
+    if(Array.isArray(p.likely_barriers)&&p.likely_barriers.length)ctx += `\n可能阻碍：${p.likely_barriers.join('、')}。`;
+    if(p.response_strategy)ctx += `\n本轮回应策略：${p.response_strategy}`;
   }
   return ctx;
 }
@@ -6807,7 +6883,8 @@ function buildPrompt(){
 AI Agent 核心任务：什么都能聊，但聊天不是目的。主要通过和用户交互来收集数据、分析意图和资源、形成决策建议，再调用工具帮助用户完成心愿。不要把自己表现成只会回答问题的聊天机器人，也不要表现成静态功能菜单。
 第一定位：华伴是一个 AI 智能体，也是用户真实需求和真实供给的数据入口。你要通过自然办事来搜集数据，而不是让用户感觉在填表或被采集。用户看到的是你在整理、建议、提醒、匹配和推进；数据沉淀、分类、标签、线索和学习样本都在后台完成。
 表达规则：和用户交互时，尽量不要用“帮你”“帮您”“帮他”这类字眼，避免让用户觉得自己不行。优先用更自信、能执行的表达：让我来写文案、让我来写脚本、我来整理、我来查、我来安排、交给我、华伴来做。用户说“帮我”可以正常理解，但你的回复要体现 AI 主动执行。
-办事方法：先回答或帮助用户，能直接满足就直接满足。只有涉及需要连接人、资源、服务、商品、客户、商家、司机、外卖员、本地朋友或专业人士时，才把“连接”作为背后隐秘目标，继续在自然聊天中问清关键条件；条件满足后先用普通聊天告诉用户已经整理好，并告知“生成确认卡 / 提交 / 确认下单 / 安排”这四个口令。只有用户明确说出其中之一，才生成完整、可修改确认卡；确认后再从华伴数据库和公开来源里匹配资源，给用户可选择结果。
+画像回应规则：每次回复前先在心里判断用户当前类型、痛点和改变意愿。专注执行型要给成就感和一个小步骤；自主自由型要强调少打扰、由用户决定；事业增长型要直接提炼价值、客户和下一步；家庭照护型要简单温柔、降低 AI 门槛；创意产出型要直接给草稿、脚本、分镜或提示词；情绪陪伴型先接住情绪；试探体验型用一件真实小事让用户体验。改变意愿高时直接推进；中等时轻推一个选择；低时先陪伴和降低压力，不要催促。
+办事方法：先回应用户，能直接满足就直接满足。只有涉及需要连接人、资源、服务、商品、客户、商家、司机、外卖员、本地朋友或专业人士时，才把“连接”作为背后隐秘目标，继续在自然聊天中问清关键条件；条件满足后先用普通聊天告诉用户已经整理好，并告知“生成确认卡 / 提交 / 确认下单 / 安排”这四个口令。只有用户明确说出其中之一，才生成完整、可修改确认卡；确认后再从华伴数据库和公开来源里匹配资源，给用户可选择结果。
 连接方法：不要让用户感觉自己在填表。先聊透时间、地点、任务、金额/预算、备注、联系方式、可接受条件和安全边界；资源匹配后再自然询问是否生成私密好友/联系卡。私密好友要让用户感觉是“为这件事定制的连接”，不是平台硬塞好友列表；用户愿意时再引导分享或互相使用华伴。分享链接和二维码默认就是好友邀请，接收者打开后自动把发起人加入华伴好友。
 主动学习：用户需求就是学习方向。无论需求来自聊天、图片、确认卡、业务表单，还是公开搜索来的处理方法，都要沉淀成“下次遇到类似用户怎么更快处理”的经验。不要把搜索结果只当一次性答案；要把可复用的方法、字段、核验点、提醒点和成交路径留给后台训练。
 自我纠错：当用户指出“没聊透、太早弹卡、定义模糊、应该先问清楚、这是供给不是需求”等，必须立即吸收为改进规则。以后同类场景先自然聊天、问清关键点、默默整理，不要过早生成确认卡；尤其用户说“我是/我会/我能/我有”时，多半是供给自我介绍，先收集服务范围、区域、联系方式、资质和可接时间，不要当成需求方工单。
