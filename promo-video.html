@@ -251,6 +251,27 @@ h1 {
   font-size: 11px;
   font-weight: 900;
 }
+.preset-switch {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.preset-btn {
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,0.05);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 10px 8px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 900;
+}
+.preset-btn.active {
+  border-color: rgba(34,211,238,0.72);
+  background: linear-gradient(135deg, rgba(22,199,132,0.28), rgba(34,211,238,0.18));
+  color: #e6fffb;
+}
 .panel-body {
   padding: 18px;
 }
@@ -391,6 +412,7 @@ h1 {
   .topbar { flex-direction: column; align-items: flex-start; }
   .actions { width: 100%; }
   .actions .btn { flex: 1; }
+  .preset-switch { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 </style>
 </head>
@@ -400,8 +422,8 @@ h1 {
     <div class="brand">
       <img src="assets/brand/huaban-logo-v1.png" alt="华伴">
       <div>
-        <h1 id="pageTitle">华伴宣传片脚本</h1>
-        <p class="sub" id="pageSub">18 秒主推版 · 无需配乐 · 生活 / 生意 / 情感 / 扫码领养</p>
+        <h1 id="pageTitle">华伴推广视频脚本</h1>
+        <p class="sub" id="pageSub">15 秒主推版 · 按人群切换 · 可复制给视频生成工具</p>
       </div>
     </div>
     <div class="actions">
@@ -436,9 +458,10 @@ h1 {
           <div class="panel-title" id="panelTitle">脚本内容</div>
           <p class="sub" id="panelSub">可直接复制给视频生成工具或剪辑工具。</p>
         </div>
-        <span class="pill">18 秒</span>
+        <span class="pill" id="durationPill">15 秒</span>
       </div>
       <div class="panel-body">
+        <div class="preset-switch" id="presetSwitch"></div>
         <div class="tagline" id="tagline"></div>
         <div class="user-video-tool" id="userVideoTool">
           <div class="tool-title">用手机里的视频推广自己</div>
@@ -462,45 +485,84 @@ h1 {
 </div>
 
 <script>
-const HUABAN_VIDEO_SCRIPT = {
-  tagline: "生活跟我聊，繁琐交给我，还自己一个高品质生活。生意跟我聊，让更多需要你的人找到你。情感跟我聊，能当树洞也能当参谋",
-  bgmSuggestion: "无需配乐 (不添加背景音乐)",
-  scenes: [
-    {
-      id: 1,
-      duration: 4.5,
-      subtitle: "生活跟我聊，繁琐交给我，还自己一个高品质生活",
-      narration: "人在海外，琐事太累？生活跟我聊，繁琐交给我。帮您轻松打理一切，还自己一个高品质生活。",
-      visualPrompt: "Cinematic transition from a cluttered table with overseas bills and documents to a pristine modern living room bathed in golden sunlight, relaxing green plants, and a hot steaming cup of tea.",
-      bg: "linear-gradient(135deg,#fef3c7,#064e3b)"
-    },
-    {
-      id: 2,
-      duration: 4.5,
-      subtitle: "生意跟我聊，让更多需要你的人找到你",
-      narration: "做生意，愁客源？生意跟我聊。直接面对真实客户，让更多真正需要你的人轻松找到你。",
-      visualPrompt: "High-end dynamic neon-accented maps graphic with pulsing locator pins. A digital mock-up of customer requests matching direct with trustworthy service providers instantly.",
-      bg: "linear-gradient(135deg,#0f172a,#0e7490)"
-    },
-    {
-      id: 3,
-      duration: 4.5,
-      subtitle: "情感跟我聊，能当树洞也能当参谋",
-      narration: "寂寞、迷茫，无人诉说？情感跟我聊。能当守护隐私的秘密树洞，也能当出谋划策的聪明参谋。",
-      visualPrompt: "Cozy bedroom interior at night, soft starry sky visible through the window, warm fairy lights, a smartphone showing heartwarming chat bubble interactions, cozy aesthetic, slow pan.",
-      bg: "linear-gradient(135deg,#312e81,#0f172a)"
-    },
-    {
-      id: 4,
-      duration: 4.5,
-      subtitle: "华伴：海外华人生活管家 • 事业助手 • 贴心伴侣",
-      narration: "用华伴，做自己。有趣、更有用。现在就扫码领养您的专属华伴 AI 吧！",
-      visualPrompt: "Sleek and polished branding card with the name '华伴', glowing neon green outlines, and a clean high-contrast scan QR code in the center, premium animation style.",
-      bg: "linear-gradient(135deg,#ecfeff,#dcfce7)",
-      final: true
-    }
-  ]
+const VIDEO_PRESETS = {
+  main: {
+    label: "主推",
+    tagline: "我能用华伴 AI 做什么？不被信息打扰，全家用 AI，让更多需求找到你。",
+    bgmSuggestion: "无需配乐；建议用清爽、有希望感的人声旁白。",
+    scenes: [
+      {
+        id: 1,
+        duration: 3.8,
+        subtitle: "我能用华伴 AI 做什么？",
+        narration: "不用翻菜单，不用被红点和推荐流拖走。有事先跟华伴说。",
+        visualPrompt: "A clean smartphone screen replacing a noisy app wall, minimal Chinese AI assistant interface, calm and premium, overseas Chinese lifestyle context.",
+        bg: "linear-gradient(135deg,#0f172a,#0e7490)"
+      },
+      {
+        id: 2,
+        duration: 3.7,
+        subtitle: "全家用 AI，不被时代落下",
+        narration: "爸爸妈妈宝宝都能用。生活、学习、提醒和联系家人，都可以先聊。",
+        visualPrompt: "Warm family table with phones showing a friendly AI assistant, soft morning light, private family communication, clean and safe feeling.",
+        bg: "linear-gradient(135deg,#fef3c7,#047857)"
+      },
+      {
+        id: 3,
+        duration: 3.7,
+        subtitle: "让更多需求找到你",
+        narration: "华伴帮你整理能力、产品和服务，让事业成型，并推向更大的市场。",
+        visualPrompt: "Small business owner in an overseas city, service profile turning into customer leads, elegant map lines and contact cards, trustworthy.",
+        bg: "linear-gradient(135deg,#111827,#0f766e)"
+      },
+      {
+        id: 4,
+        duration: 3.8,
+        subtitle: "打开华伴 AI+",
+        narration: "年轻人、爸爸妈妈、事业型用户和创意工作者，都能找到自己的用法。",
+        visualPrompt: "Brand card with Huaban logo and QR code, clean app icon, premium green cyan lighting, high contrast scan-ready QR code.",
+        bg: "linear-gradient(135deg,#ecfeff,#dcfce7)",
+        final: true
+      }
+    ]
+  },
+  student: {
+    label: "年轻/留学",
+    tagline: "不想被红点、广告和推荐流拖着走？华伴 AI+，你主动，它才出现。",
+    bgmSuggestion: "轻快、安静、有一点电子感。",
+    scenes: [
+      {id:1,duration:3.8,subtitle:"本来只想办点事",narration:"却一头扎进推荐流和碎片信息里。",visualPrompt:"Overseas student opening a phone, chaotic app notifications fading into a quiet AI chat screen.",bg:"linear-gradient(135deg,#1e1b4b,#0f172a)"},
+      {id:2,duration:3.7,subtitle:"华伴，等你主动叫它",narration:"学习、生活、行程、情绪和创意，都可以先跟华伴聊。",visualPrompt:"Minimal AI chat interface organizing study tasks, calendar, creative notes, calm desk at night.",bg:"linear-gradient(135deg,#0f172a,#0e7490)"},
+      {id:3,duration:3.7,subtitle:"少一点打扰，多一点自己",narration:"它帮你整理重点，不把你拖进无意义的热闹。",visualPrompt:"Quiet student room, task list becoming clear, notification red dots disappearing, peaceful focus.",bg:"linear-gradient(135deg,#064e3b,#1d4ed8)"},
+      {id:4,duration:3.8,subtitle:"试试华伴 AI+",narration:"一个安静、有用、听你指挥的 AI 工具。",visualPrompt:"Huaban logo QR card, young overseas Chinese aesthetic, clean app-like poster.",bg:"linear-gradient(135deg,#ecfeff,#dcfce7)",final:true}
+    ]
+  },
+  family: {
+    label: "家庭",
+    tagline: "全家用 AI，就用华伴 AI+。带家人学会用 AI，不被时代落下。",
+    bgmSuggestion: "温暖、轻柔、适合家庭感。",
+    scenes: [
+      {id:1,duration:3.8,subtitle:"全家用 AI",narration:"爸爸妈妈宝宝都能用，不用一上来研究复杂功能。",visualPrompt:"Warm overseas Chinese family at home, simple AI assistant on phone, safe and friendly.",bg:"linear-gradient(135deg,#fef3c7,#166534)"},
+      {id:2,duration:3.7,subtitle:"家里的事，先跟华伴说",narration:"提醒、学习、行程、购物和联系家人，都能慢慢理顺。",visualPrompt:"Family schedule, reminders, school notes and grocery list neatly organized by AI.",bg:"linear-gradient(135deg,#0f766e,#0f172a)"},
+      {id:3,duration:3.7,subtitle:"一家人的悄悄话",narration:"私密，不被一排排红点淹没。想联系谁，直接告诉华伴。",visualPrompt:"Private family chat bubbles in a clean AI interface, no notification clutter, soft protective glow.",bg:"linear-gradient(135deg,#312e81,#0f172a)"},
+      {id:4,duration:3.8,subtitle:"带家人试试华伴",narration:"一个有脑、有手、有温度的家庭 AI 工具。",visualPrompt:"Huaban family AI QR poster, warm home lighting, scan-ready QR code.",bg:"linear-gradient(135deg,#ecfeff,#dcfce7)",final:true}
+    ]
+  },
+  business: {
+    label: "事业",
+    tagline: "让更多需求找到你。华伴帮你整理事业、记录线索、生成推广内容。",
+    bgmSuggestion: "坚定、轻商务、节奏清楚。",
+    scenes: [
+      {id:1,duration:3.8,subtitle:"你会的，不该只被熟人知道",narration:"司机、餐饮、维修、家教、设计、翻译，都是别人可能正在找的答案。",visualPrompt:"Overseas Chinese small business and service providers, real people, hands-on work, warm documentary feeling.",bg:"linear-gradient(135deg,#111827,#0f766e)"},
+      {id:2,duration:3.7,subtitle:"让更多需求找到你",narration:"告诉华伴你做什么、在哪、什么时候方便。",visualPrompt:"AI turns messy service notes into a clean business card and customer-friendly introduction.",bg:"linear-gradient(135deg,#0f172a,#0e7490)"},
+      {id:3,duration:3.7,subtitle:"让事业成型",narration:"介绍、名片、推广文案、客户线索和跟进，都可以让华伴帮你整理。",visualPrompt:"Business dashboard with leads, profile card, poster copy, follow-up reminders, premium but simple.",bg:"linear-gradient(135deg,#1e293b,#14532d)"},
+      {id:4,duration:3.8,subtitle:"先把自己说清楚",narration:"打开华伴 AI+，让真正需要的人找到你。",visualPrompt:"Huaban QR code business promotion card, clean green cyan branding, trustworthy overseas Chinese business tone.",bg:"linear-gradient(135deg,#ecfeff,#dcfce7)",final:true}
+    ]
+  }
 };
+
+let activePreset = "main";
+let HUABAN_VIDEO_SCRIPT = VIDEO_PRESETS[activePreset];
 
 const qrPath = "assets/brand/huaban-qr-logo.png";
 let current = 0;
@@ -508,6 +570,27 @@ let playing = false;
 let timer = null;
 const fromUser = new URLSearchParams(location.search).get("from") === "user";
 let selectedBusinessVideoFile = null;
+
+function renderPresetSwitch() {
+  const switcher = document.getElementById("presetSwitch");
+  switcher.innerHTML = Object.keys(VIDEO_PRESETS).map(key => `
+    <button class="preset-btn ${key === activePreset ? "active" : ""}" type="button" onclick="setPreset('${key}')">${VIDEO_PRESETS[key].label}</button>
+  `).join("");
+}
+
+function setPreset(key) {
+  activePreset = VIDEO_PRESETS[key] ? key : "main";
+  HUABAN_VIDEO_SCRIPT = VIDEO_PRESETS[activePreset];
+  current = 0;
+  playing = false;
+  clearInterval(timer);
+  document.getElementById("playBtn").textContent = "播放预览";
+  document.getElementById("tagline").textContent = HUABAN_VIDEO_SCRIPT.tagline;
+  document.getElementById("scriptBox").value = makeScriptText();
+  document.getElementById("durationPill").textContent = `${Math.round(totalDuration())} 秒`;
+  renderPresetSwitch();
+  render();
+}
 
 function applyModeText() {
   if (!fromUser) return;
@@ -588,10 +671,9 @@ Visual Prompt: ${scene.visualPrompt}`).join("\n\n")}`;
 function userVideoShareCopy() {
   return `这是我的服务/作品介绍。
 
-生活跟我聊，繁琐交给我。
-生意跟我聊，让更多需要的人找到你。
+让更多需求找到你。
 
-华伴 AI 可以帮你整理需求、介绍服务、连接真正需要的人。
+华伴 AI+ 可以帮你整理能力、产品和服务，生成推广内容，记录客户线索。
 公测入口：https://www.huabanapp.com/`;
 }
 
@@ -666,6 +748,7 @@ function formatTime(sec) {
 document.getElementById("tagline").textContent = HUABAN_VIDEO_SCRIPT.tagline;
 document.getElementById("scriptBox").value = makeScriptText();
 applyModeText();
+renderPresetSwitch();
 render();
 </script>
 </body>
