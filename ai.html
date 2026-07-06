@@ -4006,8 +4006,8 @@ function renderValuePromptCard(){
   card.innerHTML=`
     <div class="install-copy">
       <strong>一个安全、实用的当地圈子</strong>
-      <span>不是替代熟人聊天，而是解决本地连接。</span>
-      <span style="margin-top:8px;display:block;">• 原有圈子的杂乱少一点<br>• 不用承担分组负担<br>• 找服务、找搭子、推广生意都能聊</span>
+      <span>微信联系国内亲朋好友，华伴连接当地朋友。</span>
+      <span style="margin-top:8px;display:block;">• 不用天天盯着好友列表和红点<br>• 想联系谁，直接告诉华伴<br>• 找服务、找搭子、推广生意，都放在本地圈子里</span>
     </div>
     <div class="install-actions">
       <button class="install-primary value-action" type="button" onclick="handleValuePrompt('friends')">加好友</button>
@@ -5360,7 +5360,7 @@ async function startDeliveryOrder(text=''){
 async function openLocalPeopleIntent(sourceText=''){
   const text=String(sourceText||'').trim();
   if(!text){
-    await agentSay('微信联系原来的熟人圈，华伴连接当地朋友。你可以扫码加、搜手机号，也可以邀请对方领养华伴。',120);
+    await agentSay('微信联系原来的熟人圈，华伴连接当地朋友。平时不铺开好友列表，不用盯红点；你要联系谁，直接告诉我。我先帮你准备扫码、搜索和名片。',120);
     renderFriendAddCard();
     return;
   }
@@ -8261,11 +8261,17 @@ function getFriendCode(){
 function friendInviteLink(code=getFriendCode(), cardBy='', meta={}){
   const safe=encodeURIComponent(String(code||getFriendCode()).trim());
   const by=String(cardBy||'').trim();
+  const user=getUserProfile();
+  const profileMeta={
+    name:meta.name||user.name||'',
+    industry:meta.industry||user.industry||'',
+    phone:meta.phone||user.phone||''
+  };
   const q=new URLSearchParams({ref:by||safe,friend:String(code||getFriendCode()).trim()});
   if(by)q.set('card_by',by);
-  if(meta.name)q.set('card_name',String(meta.name).slice(0,24));
-  if(meta.industry)q.set('card_industry',String(meta.industry).slice(0,32));
-  if(meta.phone)q.set('card_phone',String(meta.phone).slice(0,32));
+  if(profileMeta.name)q.set('card_name',String(profileMeta.name).slice(0,24));
+  if(profileMeta.industry)q.set('card_industry',String(profileMeta.industry).slice(0,32));
+  if(profileMeta.phone)q.set('card_phone',String(profileMeta.phone).slice(0,32));
   return `https://www.huabanapp.com/ai?${q.toString()}`;
 }
 
@@ -8767,15 +8773,16 @@ function renderFriendAddCard(){
   card.innerHTML=`
     <div class="install-copy">
       <strong>添加本地好友</strong>
-      <span>扫码加、搜手机号，或者邀请对方领养华伴。每个好友码都会记录贡献来源。</span>
+      <span>扫码加、搜手机号，或者邀请对方领养华伴。每个好友码都是你的名片和贡献记录。</span>
       <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
         <input id="friend-search-input" inputmode="tel" placeholder="手机号 / 微信 / 好友码"
           style="flex:1 1 150px;min-width:0;height:38px;border:1px solid #ddd;border-radius:8px;background:#f7f7f7;color:#191919;font:14px/1 inherit;padding:0 10px;outline:none;">
         <button class="install-primary" type="button" onclick="searchHuabanFriend()">搜索</button>
       </div>
       <div id="friend-search-result" style="margin-top:9px;font-size:12px;color:#888;line-height:1.55;">我的好友码：${companionEscape(code)}</div>
-      <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:11px;">
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:11px;">
         <button class="install-primary" type="button" onclick="showFriendCodeSheet()" style="height:36px;padding:0 8px;white-space:nowrap;">我的二维码</button>
+        <button class="install-primary" type="button" onclick="openUserIdentityEditor()" style="height:36px;padding:0 8px;background:#f1f1f1;color:#4f5964;white-space:nowrap;">完善名片</button>
         <button class="install-primary" type="button" onclick="scanFriendCode()" style="height:36px;padding:0 8px;background:#f1f1f1;color:#4f5964;white-space:nowrap;">扫一扫</button>
         <button class="install-primary" type="button" onclick="pickContactsForInvite()" style="height:36px;padding:0 8px;background:#f1f1f1;color:#4f5964;white-space:nowrap;">通讯录</button>
       </div>
