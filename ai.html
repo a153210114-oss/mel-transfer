@@ -4632,7 +4632,7 @@ const CORE_TOOL_ITEMS=[
   {key:'install',icon:'📱',label:'桌面'},
   {key:'region',icon:'📍',label:'定位'},
   {key:'customize-agent',icon:'🎭',label:'定制AI'},
-  {key:'payment',icon:'💳',label:'支付'},
+  {key:'payment',icon:'💳',label:'支付/打赏'},
 ];
 
 function businessModuleMenuItems(){
@@ -4804,7 +4804,7 @@ function runMoreAction(key,label){
   if(key==='partner'){openFounderRecruitmentStartup(true);return;}
   if(runBusinessModule(key))return;
   rewardCompanionAction('try_feature');
-  const serviceMap={pickup:'接机',dropoff:'送机',charter:'包车','tour-charter':'旅游包车','group-tour':'旅游拼团',rental:'租车',payment:'支付',friends:'交友',agency:'中介服务',translation:'翻译',lawyer:'律师',accountant:'会计','other-help':'同城帮办'};
+  const serviceMap={pickup:'接机',dropoff:'送机',charter:'包车','tour-charter':'旅游包车','group-tour':'旅游拼团',rental:'租车',payment:'支付/打赏',friends:'交友',agency:'中介服务',translation:'翻译',lawyer:'律师',accountant:'会计','other-help':'同城帮办'};
   if(key==='voice'){toggleMic();return;}
   if(key==='market'){window.location.href='plaza.html';return;}
   if(key==='driver'){switchToDriver();return;}
@@ -4818,6 +4818,7 @@ function runMoreAction(key,label){
   if(key==='promo-video'){openPromoVideoTool();return;}
   if(key==='install'){showInstallPrompt(true);return;}
   if(key==='customize-agent'){openAgentCustomizer();return;}
+  if(key==='payment'){openPaymentTipCard();return;}
   const activeKeys=['pickup','dropoff','charter','tour-charter','group-tour','rental','agency','translation','lawyer','accountant','other-help'];
   if(!activeKeys.includes(key)){
     showComingSoon(label);
@@ -4931,7 +4932,12 @@ async function openFeatureByKey(key,label,options={}){
     await say('可以，你可以给我改名字、身份和形象。');
     return;
   }
-  if(key==='payment'||key==='friends'){
+  if(key==='payment'){
+    openPaymentTipCard(options.sourceText||'');
+    await say('我先帮你整理支付或打赏草稿。确认后会进入记录，等支付通道接好就能直接完成。');
+    return;
+  }
+  if(key==='friends'){
     await showComingSoon(label,{silent:alreadyRendered});
     return;
   }
@@ -4941,6 +4947,100 @@ async function openFeatureByKey(key,label,options={}){
 function openPromoVideoTool(){
   rewardCompanionAction('try_feature');
   window.location.href='promo-video.html?from=user';
+}
+
+function inferPaymentAmount(text=''){
+  const raw=String(text||'');
+  const match=raw.match(/(?:\$|A\$|澳币|刀)?\s*(\d+(?:\.\d{1,2})?)/i);
+  if(!match)return '';
+  const value=Number(match[1]);
+  return Number.isFinite(value)&&value>0?String(value):'';
+}
+
+function inferPaymentKind(text=''){
+  const raw=String(text||'');
+  if(/打赏|赞赏|支持|请.*咖啡|谢谢/i.test(raw))return 'tip';
+  if(/订阅|会员|月费|年费|升级/i.test(raw))return 'subscription';
+  if(/押金|定金|预付|付款|支付|转账|收款|付钱/i.test(raw))return 'payment';
+  return 'tip';
+}
+
+function paymentKindLabel(kind=''){
+  return {tip:'打赏',payment:'支付',subscription:'订阅'}[kind]||'打赏';
+}
+
+function openPaymentTipCard(sourceText=''){
+  document.getElementById('payment-tip-card')?.remove();
+  rewardCompanionAction('try_feature');
+  const amount=inferPaymentAmount(sourceText);
+  const kind=inferPaymentKind(sourceText);
+  const p=getPassenger();
+  const user=getUserProfile();
+  const card=document.createElement('section');
+  card.className='confirm-card work-order-card';
+  card.id='payment-tip-card';
+  card.innerHTML=`
+    <div style="font-size:14px;font-weight:900;color:white;margin-bottom:8px;">💳 支付/打赏草稿</div>
+    <div style="font-size:12px;color:rgba(255,255,255,0.58);line-height:1.65;margin-bottom:12px;">先记录意愿，不会自动扣款。支付通道接好后，这里会变成确认支付。</div>
+    <label>类型</label>
+    <select id="pay-kind" style="width:100%;margin-top:6px;">
+      ${['tip','payment','subscription'].map(item=>`<option value="${item}" ${item===kind?'selected':''}>${paymentKindLabel(item)}</option>`).join('')}
+    </select>
+    <label style="display:block;margin-top:12px;">金额</label>
+    <input id="pay-amount" inputmode="decimal" placeholder="例如 5 / 20 / 99" value="${companionEscape(amount)}">
+    <label style="display:block;margin-top:12px;">用途/备注</label>
+    <textarea id="pay-note" placeholder="例如：打赏华伴、支付服务费、订阅商家工具">${companionEscape(sourceText||'')}</textarea>
+    <label style="display:block;margin-top:12px;">联系方式</label>
+    <input id="pay-contact" placeholder="手机 / 微信 / 邮箱" value="${companionEscape(p.phone||user.phone||p.wechat||'')}">
+    <div style="font-size:11px;color:rgba(255,255,255,0.42);line-height:1.6;margin-top:10px;">华伴坚持去中心化，不抽佣。涉及服务交易时，请双方确认清楚金额、内容和安全。</div>
+    <div class="confirm-btns">
+      <button class="confirm-btn secondary" onclick="document.getElementById('payment-tip-card')?.remove()">先不要</button>
+      <button class="confirm-btn primary" onclick="submitPaymentTipIntent()">确认记录</button>
+    </div>`;
+  chatArea.appendChild(card);
+  scrollBottom();
+}
+
+async function submitPaymentTipIntent(){
+  const card=document.getElementById('payment-tip-card');
+  const kind=document.getElementById('pay-kind')?.value||'tip';
+  const amount=Number(String(document.getElementById('pay-amount')?.value||'').replace(/[^\d.]/g,''));
+  const note=String(document.getElementById('pay-note')?.value||'').trim();
+  const contact=String(document.getElementById('pay-contact')?.value||'').trim();
+  if(!amount||amount<=0){
+    await agentSay('金额还没写清楚。你填一下金额，我再帮你记录。',80);
+    return;
+  }
+  const label=paymentKindLabel(kind);
+  const currency=currentRegion.currency||'AUD';
+  card?.remove();
+  const message=`${label}意向：${currency} ${amount}\n备注：${note||'未填写'}\n联系方式：${contact||'未填写'}`;
+  await supaInsertLead({
+    lead_type:'payment',
+    channel:'payment_tip_plugin',
+    need_type:`payment_${kind}`,
+    name:getPassenger().name||getUserProfile().name||'华伴用户',
+    contact,
+    city:currentRegion.city||'',
+    country:currentRegion.country||'',
+    message,
+    status:'pending',
+    next_action:'connect_payment_provider_and_confirm_with_user',
+    fields:{
+      event:'payment_intent',
+      payment_kind:kind,
+      payment_label:label,
+      amount,
+      currency,
+      note,
+      contact,
+      provider_status:'not_connected_yet',
+      user_confirmation_required:true,
+      no_auto_charge:true
+    }
+  }).catch(e=>console.warn('payment intent sync failed',e));
+  rewardCompanionAction('try_feature');
+  await agentSay(`收到，${label} ${currency} ${amount} 我先帮你记下了。现在不会扣款；等支付通道接好后，我会让你确认后再支付。`,120);
 }
 
 function openMediaChoiceSheet(){
