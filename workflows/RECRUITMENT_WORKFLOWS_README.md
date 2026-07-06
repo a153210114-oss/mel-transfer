@@ -15,6 +15,8 @@
 - `LD_02_source_registry_workflow.md`：入口库登记、搜索、分流和合规边界规则
 - `outreach_campaign_schema_seed.sql`：华伴推广任务队列表和第一批推广任务种子
 - `promotion_copy_materials_schema_seed.sql`：华伴推广文案素材库，沉淀官网、海报、短视频、社群投放和 AI 改写可复用文案
+- `VIDEO_SERIES_VISUAL_CIS.md`：华伴视频系列视觉 CIS，规定人物辨识度、痛点画面、旁白标准和生成提示词模板
+- `VIDEO_ONE_SCRIPT_TO_FINAL_WORKFLOW.md`：一稿成片工作流，把一个剧本扩展成角色卡、镜头表、旁白、字幕、视频提示词和质检清单
 - `prompt_library_schema_seed.sql`：华伴提示词库，区分用户可见提示词和 AI 内部训练规则
 - `PG_01_promotion_agent_playbook.md`：推广 Agent 开工手册，按年轻/留学生、家庭、小生意/手艺人三条线分工投放
 - `LD_03_outreach_campaign_workflow.md`：入口推广工作流，区分自动发布、人工确认和只观察
@@ -89,6 +91,8 @@ POST /webhook/huaban/user-recruit
 - LD_03 推广任务只能对自有或明确授权入口自动发布；微信群、Facebook 群、论坛等默认只生成待人工确认任务，不能自动群发。
 - PG_01 把推广分成三条线：年轻海外华人/留学生、家庭用户、小生意/手艺人。Agent 负责找入口、分人群、生成任务、文案和二维码；人工负责确认、发布、回复和记录反馈。
 - 推广文案素材库负责长期沉淀表达清晰、能打中痛点的文案；推广任务和视频脚本可以从素材库挑选再改写，不要每次从零生成。
+- 视频系列必须按 `VIDEO_SERIES_VISUAL_CIS.md` 执行：人物鲜明、痛点可见、旁白有力，不能做只有漂亮画面没有真实冲突的泛 AI 广告。
+- 单条视频进入制作前，必须先按 `VIDEO_ONE_SCRIPT_TO_FINAL_WORKFLOW.md` 生成“一稿成片包”；只写故事、不写镜头和提示词，不进入制作。
 - 提示词库用于降低用户使用门槛，同时让 AI 记住关键行为边界：先聊天、只问一个关键问题、不要过早弹卡，用户明确说“生成确认卡 / 提交 / 确认下单 / 安排”后再生成确认卡。
 - LD_04 人工客服每天按推广任务领取、文案微调、人工发布、回复咨询和复盘记录执行，并用完成率衡量。
 - OPS_01 通过后台招募运营团队，按岗位分配任务，使用腾讯会议/Zoom/Google Meet 链接组织晨会、复盘会和周会，并按完成率考核。
