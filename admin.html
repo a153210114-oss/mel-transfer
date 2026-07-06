@@ -975,11 +975,11 @@ body {
       <div class="promo-rewrite-grid" id="promo-rewrite-panel">
         <div>
           <div style="font-size:13px;font-weight:800;color:var(--text);margin-bottom:8px;">推广原文</div>
-          <textarea class="input textarea" id="promo-rewrite-source" style="min-height:188px;">找人太难 → 华伴帮你找靠谱的人
-服务真假难辨 → 华伴帮你整理来源和核验点
-有生意没人知道 → 华伴帮你介绍给更多需要的人
+          <textarea class="input textarea" id="promo-rewrite-source" style="min-height:188px;">找人太难 → 华伴来找靠谱的人
+服务真假难辨 → 华伴来整理来源和核验点
+有生意没人知道 → 华伴让更多需求找到你
 不想翻菜单 → 有事直接跟华伴说
-人在海外不熟路 → 华伴帮你接住本地生活需求</textarea>
+人在海外不熟路 → 华伴来接住本地生活需求</textarea>
           <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
             <select class="input" id="promo-rewrite-tone" style="flex:1;min-width:150px;">
               <option value="wechat">微信群公测</option>
@@ -1560,12 +1560,12 @@ function showSection(name) {
 const TICKER_SETTINGS_KEY='huaban_ticker_settings';
 const DEFAULT_TICKER_SETTINGS={
   introLines:[
-    '找人太难 → 我帮你找靠谱的人',
-    '服务真假难辨 → 我帮你看到靠谱选择',
-    '有生意没人知道 → 我帮你介绍给更多需要的人',
+    '找人太难 → 我来找靠谱的人',
+    '服务真假难辨 → 我来筛靠谱选择',
+    '有生意没人知道 → 我来介绍给更多需要的人',
     '不想翻菜单 → 有事直接跟我说',
-    '人在海外不熟路 → 我帮你接住本地生活需求',
-    '临时需要帮忙 → 我帮你找到可用选择'
+    '人在海外不熟路 → 我来接住本地生活需求',
+    '临时需要帮忙 → 我来找到可用选择'
   ],
   adoptionLines:[
     '用户 0402****** 领养华伴 AI 成功',
@@ -1723,7 +1723,7 @@ const BUILTIN_TRAINING_ITEMS = [
     context: '来自微信群沟通截图：对方问有没有合作方式负责人联系；推荐话术应强调智能合约、无需中间联系、客户直接对接、不抽佣。',
     source: 'coach-script',
     status: 'trained',
-    coachAnswer: '可以这样回答：有合作方式。华伴不是中间抽佣平台，而是让你的产品和服务进入华伴的后台工具体系。用户需要时，华伴会按需求帮他找到合适资源；双方通过确认卡和智能合约形成约定，客户可以直接联系你或与你确认服务，华伴不抽佣。你只需要提供产品说明、服务范围、联系方式和必要资质，我们审核后把它接入华伴。',
+    coachAnswer: '可以这样回答：有合作方式。华伴不是中间抽佣平台，而是让你的产品和服务进入华伴的后台工具体系。用户需要时，华伴会按需求找到合适资源；双方通过确认卡和智能合约形成约定，客户可以直接联系你或与你确认服务，华伴不抽佣。你只需要提供产品说明、服务范围、联系方式和必要资质，我们审核后把它接入华伴。',
     personaNote: '话术要短、稳、像人说话。不要说平台功能、插件、板块。重点说：智能合约、不用找负责人反复联系、直接对接客户、不抽佣、放产品和联系方式即可。',
     createdAt: '2026-07-05T13:05:00+10:00',
     updatedAt: '2026-07-05T13:05:00+10:00'
@@ -1876,7 +1876,7 @@ function defaultPromptLibrary(){
       role_type:'student',
       visible_to_user:true,
       title:'学习生活先整理',
-      prompt_text:'帮我整理这周学习和生活，先告诉我最该做哪三件事。',
+      prompt_text:'整理这周学习和生活，先告诉我最该做哪三件事。',
       intent:'planning',
       expected_ai_behavior:'先安抚用户的混乱感，再按时间、重要性和可执行性整理 3 个优先动作；不要弹卡。',
       priority:10,
@@ -1886,7 +1886,7 @@ function defaultPromptLibrary(){
       role_type:'student',
       visible_to_user:true,
       title:'创意作品起步',
-      prompt_text:'我想做一个作品/视频/图片，帮我出主意并列步骤。',
+      prompt_text:'我想做一个作品/视频/图片，先出主意并列步骤。',
       intent:'creative_start',
       expected_ai_behavior:'先问用途和受众；如果信息足够，给标题、结构、步骤和素材建议。',
       priority:20,
@@ -1896,7 +1896,7 @@ function defaultPromptLibrary(){
       role_type:'family',
       visible_to_user:true,
       title:'家庭事务安排',
-      prompt_text:'帮我安排一家人的事情，提醒我别漏掉重点。',
+      prompt_text:'安排一家人的事情，提醒我别漏掉重点。',
       intent:'family_management',
       expected_ai_behavior:'先问家庭角色、时间和最急的事；整理提醒、分工和下一步。',
       priority:10,
@@ -1906,7 +1906,7 @@ function defaultPromptLibrary(){
       role_type:'family',
       visible_to_user:true,
       title:'一家人的悄悄话',
-      prompt_text:'我要联系家人，帮我直接找到 TA，不要被消息列表打扰。',
+      prompt_text:'我要联系家人，直接找到 TA，不要被消息列表打扰。',
       intent:'private_family_contact',
       expected_ai_behavior:'强调私密、不被淹没；直接帮助联系目标对象，用户想不起是谁时再弹好友列表。',
       priority:20,
@@ -1916,7 +1916,7 @@ function defaultPromptLibrary(){
       role_type:'business',
       visible_to_user:true,
       title:'事业介绍整理',
-      prompt_text:'帮我整理一下我能提供什么，让更多需求找到我。',
+      prompt_text:'整理一下我能提供什么，让更多需求找到我。',
       intent:'supply_profile',
       expected_ai_behavior:'识别为供给侧；追问城市、服务范围、价格、可接时间、联系方式和资质，不要当成普通需求工单。',
       priority:10,
@@ -1926,7 +1926,7 @@ function defaultPromptLibrary(){
       role_type:'business',
       visible_to_user:true,
       title:'推广内容生成',
-      prompt_text:'帮我写一段客户看得懂的介绍，再做成名片和推广文案。',
+      prompt_text:'写一段客户看得懂的介绍，再做成名片和推广文案。',
       intent:'business_promotion',
       expected_ai_behavior:'先提炼卖点、目标客户和可信证据；输出短介绍、名片文案、海报标题和客户回复话术。',
       priority:20,
@@ -1936,7 +1936,7 @@ function defaultPromptLibrary(){
       role_type:'creator',
       visible_to_user:true,
       title:'视频脚本',
-      prompt_text:'帮我把这个想法变成一个短视频脚本。',
+      prompt_text:'把这个想法变成一个短视频脚本。',
       intent:'video_script',
       expected_ai_behavior:'先问时长、平台、受众和风格；给分镜、旁白、字幕和画面建议。',
       priority:10,
@@ -2782,7 +2782,7 @@ function defaultOutreachTasks(){
       channel_level:'B_manual_review',
       status:'needs_review',
       copy_short:'不想被红点、广告和推荐流拖着走？华伴 AI+，你主动，它才出现。一个安静、有用、听你指挥的 AI 工具。',
-      copy_long:'不想被红点、广告和推荐流拖着走？\n本来只想办点事，却一头扎进信息碎片里？\n\n华伴 AI+，一家人都能用的 AI 工具。\n你主动，它才出现；你说想做什么，它帮你整理、提醒、找人、推进。\n\n适合留学生、年轻海外华人、独居生活、学习规划和 AI 创意应用。\n\n入口：https://www.huabanapp.com/?ref=student_free\n试用感觉好，请推荐给好友；感觉不好，请告诉华伴。',
+      copy_long:'不想被红点、广告和推荐流拖着走？\n本来只想办点事，却一头扎进信息碎片里？\n\n华伴 AI+，一家人都能用的 AI 工具。\n你主动，它才出现；你说想做什么，它来整理、提醒、找人、推进。\n\n适合留学生、年轻海外华人、独居生活、学习规划和 AI 创意应用。\n\n入口：https://www.huabanapp.com/?ref=student_free\n试用感觉好，请推荐给好友；感觉不好，请告诉华伴。',
       landing_url:'https://www.huabanapp.com/?ref=student_free',
       compliance_notes:'小红书、校园群和微信群不能自动群发，只能人工选择合适入口并遵守群规。'
     },
@@ -2808,7 +2808,7 @@ function defaultOutreachTasks(){
       channel_level:'B_manual_review',
       status:'needs_review',
       copy_short:'你的手艺，不该只被熟人知道。告诉华伴你会什么，有人需要时，让你被看见。被需要，也可以变成收入。',
-      copy_long:'你的手艺，不该只被熟人知道。\n\n会开车、会修东西、会做饭、会教孩子、会报税、会翻译、会做设计、会跑腿？\n这些在海外不是小事，可能正是别人苦苦寻觅的答案。\n\n告诉华伴你会什么、在哪、什么时候方便。有人真正需要时，华伴会帮你被看见。\n不刷屏，不乱发广告。被需要，也可以变成收入。\n\n入口：https://www.huabanapp.com/?ref=supplier_income',
+      copy_long:'你的手艺，不该只被熟人知道。\n\n会开车、会修东西、会做饭、会教孩子、会报税、会翻译、会做设计、会跑腿？\n这些在海外不是小事，可能正是别人苦苦寻觅的答案。\n\n告诉华伴你会什么、在哪、什么时候方便。有人真正需要时，华伴让你被看见。\n不刷屏，不乱发广告。被需要，也可以变成收入。\n\n入口：https://www.huabanapp.com/?ref=supplier_income',
       landing_url:'https://www.huabanapp.com/?ref=supplier_income',
       compliance_notes:'不承诺收入；专业服务必须进入资质核验和人工审核。'
     }
@@ -2853,7 +2853,7 @@ const PROMOTION_LAUNCH_LINES=[
     title:'事业 / 小生意',
     tag:'司机 · 餐饮 · 维修 · 服务者社群',
     landing:'https://www.huabanapp.com/?ref=supplier_income',
-    copy:'让更多需求找到你。\n\n华伴能当你的事业助手：帮你把能力、产品和服务整理清楚，打磨介绍，生成推广内容，记录线索。\n\n让事业成型，并推向更大的市场。\nhttps://www.huabanapp.com/?ref=supplier_income'
+    copy:'让更多需求找到你。\n\n华伴能当你的事业助手：把能力、产品和服务整理清楚，打磨介绍，生成推广内容，记录线索。\n\n让事业成型，并推向更大的市场。\nhttps://www.huabanapp.com/?ref=supplier_income'
   }
 ];
 
@@ -2920,9 +2920,9 @@ function rewritePromoCopy(){
   const tone=document.getElementById('promo-rewrite-tone')?.value||'wechat';
   const lines=normalizePromoLines(source);
   const painPoints=lines.length?lines:[
-    '找人太难 → 华伴帮你找靠谱的人',
-    '服务真假难辨 → 华伴帮你整理来源和核验点',
-    '有生意没人知道 → 华伴帮你介绍给更多需要的人'
+    '找人太难 → 华伴来找靠谱的人',
+    '服务真假难辨 → 华伴来整理来源和核验点',
+    '有生意没人知道 → 华伴让更多需求找到你'
   ];
   const url='https://www.huabanapp.com/';
   const body=painPoints.map(line=>{
@@ -2930,11 +2930,11 @@ function rewritePromoCopy(){
     return pain&&sell?`- ${pain}：${sell}`:`- ${line}`;
   }).join('\n');
   const templates={
-    wechat:`华伴开始公测啦。\n\n它不是普通问答 AI，而是一个能帮你办事的小伙伴：\n${body}\n\n你只管说出心愿，华伴会帮你整理、判断、推进。生活、事业、情感，都可以先跟华伴聊聊。\n\n公测入口：${url}\n欢迎试用，也欢迎狠狠吐槽。`,
-    moments:`快来领你的华伴 AI。\n\n${painPoints.slice(0,3).map(line=>line.replace('→','，')).join('\n')}\n\n你只管说出心愿，华伴帮你整理、判断、推进。\n${url}`,
-    supplier:`去中心化，不抽佣。\n\n如果你在海外提供商品、餐饮、配送或服务，华伴可以帮你被更多需要的人看见。\n\n${body}\n\n你告诉华伴你能提供什么，它会帮你整理服务内容，让更多真正需要的人找到你。\n${url}`,
-    driver:`去中心化，不抽佣。\n\n墨尔本司机/车队看这里。\n\n${body}\n\n如果你能接送机、包车、旅游用车或临时用车，华伴可以帮你连接更多真实需求。\n\n你告诉华伴车型、区域和联系方式，通过审核后就能开通司机端。\n${url}`,
-    slogan:`快来领你的华伴 AI，有趣又有用。\n你只管说，华伴替你找人、找服务、找机会。\n${url}`
+    wechat:`华伴开始公测啦。\n\n它不是普通问答 AI，而是一个能办事的小伙伴：\n${body}\n\n你只管说出心愿，华伴来整理、判断、推进。生活、事业、情感，都可以先跟华伴聊聊。\n\n公测入口：${url}\n欢迎试用，也欢迎狠狠吐槽。`,
+    moments:`快来领你的华伴 AI。\n\n${painPoints.slice(0,3).map(line=>line.replace('→','，')).join('\n')}\n\n你只管说出心愿，华伴来整理、判断、推进。\n${url}`,
+    supplier:`去中心化，不抽佣。\n\n如果你在海外提供商品、餐饮、配送或服务，华伴可以让更多需要的人看见你。\n\n${body}\n\n你告诉华伴你能提供什么，它会整理服务内容，让更多真正需要的人找到你。\n${url}`,
+    driver:`去中心化，不抽佣。\n\n墨尔本司机/车队看这里。\n\n${body}\n\n如果你能接送机、包车、旅游用车或临时用车，华伴可以连接更多真实需求。\n\n你告诉华伴车型、区域和联系方式，通过审核后就能开通司机端。\n${url}`,
+    slogan:`快来领你的华伴 AI，有趣又有用。\n你只管说，找人、找服务、找机会，交给华伴。\n${url}`
   };
   document.getElementById('promo-rewrite-output').value=templates[tone]||templates.wechat;
 }

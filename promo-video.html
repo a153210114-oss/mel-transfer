@@ -478,7 +478,7 @@ h1 {
         </div>
         <div class="scene-list" id="sceneList"></div>
         <textarea class="script" id="scriptBox" readonly></textarea>
-        <div class="note">这里先帮你把想法整理成可执行素材。需要生成图片或视频时，可复制每幕的 visualPrompt 到生成工具继续制作。</div>
+        <div class="note">这里先把想法整理成可执行素材。需要生成图片或视频时，可复制每幕的 visualPrompt 到生成工具继续制作。</div>
       </div>
     </div>
   </div>
@@ -511,7 +511,7 @@ const VIDEO_PRESETS = {
         id: 3,
         duration: 3.7,
         subtitle: "让更多需求找到你",
-        narration: "华伴帮你整理能力、产品和服务，让事业成型，并推向更大的市场。",
+        narration: "华伴来整理能力、产品和服务，让事业成型，并推向更大的市场。",
         visualPrompt: "Small business owner in an overseas city, service profile turning into customer leads, elegant map lines and contact cards, trustworthy.",
         bg: "linear-gradient(135deg,#111827,#0f766e)"
       },
@@ -533,7 +533,7 @@ const VIDEO_PRESETS = {
     scenes: [
       {id:1,duration:3.8,subtitle:"本来只想办点事",narration:"却一头扎进推荐流和碎片信息里。",visualPrompt:"Overseas student opening a phone, chaotic app notifications fading into a quiet AI chat screen.",bg:"linear-gradient(135deg,#1e1b4b,#0f172a)"},
       {id:2,duration:3.7,subtitle:"华伴，等你主动叫它",narration:"学习、生活、行程、情绪和创意，都可以先跟华伴聊。",visualPrompt:"Minimal AI chat interface organizing study tasks, calendar, creative notes, calm desk at night.",bg:"linear-gradient(135deg,#0f172a,#0e7490)"},
-      {id:3,duration:3.7,subtitle:"少一点打扰，多一点自己",narration:"它帮你整理重点，不把你拖进无意义的热闹。",visualPrompt:"Quiet student room, task list becoming clear, notification red dots disappearing, peaceful focus.",bg:"linear-gradient(135deg,#064e3b,#1d4ed8)"},
+      {id:3,duration:3.7,subtitle:"少一点打扰，多一点自己",narration:"它来整理重点，不把你拖进无意义的热闹。",visualPrompt:"Quiet student room, task list becoming clear, notification red dots disappearing, peaceful focus.",bg:"linear-gradient(135deg,#064e3b,#1d4ed8)"},
       {id:4,duration:3.8,subtitle:"试试华伴 AI+",narration:"一个安静、有用、听你指挥的 AI 工具。",visualPrompt:"Huaban logo QR card, young overseas Chinese aesthetic, clean app-like poster.",bg:"linear-gradient(135deg,#ecfeff,#dcfce7)",final:true}
     ]
   },
@@ -550,21 +550,21 @@ const VIDEO_PRESETS = {
   },
   business: {
     label: "事业",
-    tagline: "让更多需求找到你。华伴帮你整理事业、记录线索、生成推广内容。",
+    tagline: "让更多需求找到你。华伴来整理事业、记录线索、生成推广内容。",
     bgmSuggestion: "坚定、轻商务、节奏清楚。",
     scenes: [
       {id:1,duration:3.8,subtitle:"你会的，不该只被熟人知道",narration:"司机、餐饮、维修、家教、设计、翻译，都是别人可能正在找的答案。",visualPrompt:"Overseas Chinese small business and service providers, real people, hands-on work, warm documentary feeling.",bg:"linear-gradient(135deg,#111827,#0f766e)"},
       {id:2,duration:3.7,subtitle:"让更多需求找到你",narration:"告诉华伴你做什么、在哪、什么时候方便。",visualPrompt:"AI turns messy service notes into a clean business card and customer-friendly introduction.",bg:"linear-gradient(135deg,#0f172a,#0e7490)"},
-      {id:3,duration:3.7,subtitle:"让事业成型",narration:"介绍、名片、推广文案、客户线索和跟进，都可以让华伴帮你整理。",visualPrompt:"Business dashboard with leads, profile card, poster copy, follow-up reminders, premium but simple.",bg:"linear-gradient(135deg,#1e293b,#14532d)"},
+      {id:3,duration:3.7,subtitle:"让事业成型",narration:"介绍、名片、推广文案、客户线索和跟进，都可以交给华伴整理。",visualPrompt:"Business dashboard with leads, profile card, poster copy, follow-up reminders, premium but simple.",bg:"linear-gradient(135deg,#1e293b,#14532d)"},
       {id:4,duration:3.8,subtitle:"先把自己说清楚",narration:"打开华伴 AI+，让真正需要的人找到你。",visualPrompt:"Huaban QR code business promotion card, clean green cyan branding, trustworthy overseas Chinese business tone.",bg:"linear-gradient(135deg,#ecfeff,#dcfce7)",final:true}
     ]
   },
   creative: {
     label: "创意",
-    tagline: "你负责创意，华伴帮你整理成文案、图片提示词、分镜和短视频脚本。",
+    tagline: "你负责创意，华伴来写文案、图片提示词、分镜和短视频脚本。",
     bgmSuggestion: "轻快、有灵感、适合创作工作流。",
     scenes: [
-      {id:1,duration:3.8,subtitle:"先把想法说出来",narration:"不用一开始就完美。你说一句模糊的想法，华伴先帮你抓住重点。",visualPrompt:"A creator speaking an idea into a clean AI chat interface, messy notes becoming clear keywords, warm desk lighting.",bg:"linear-gradient(135deg,#111827,#4338ca)"},
+      {id:1,duration:3.8,subtitle:"先把想法说出来",narration:"不用一开始就完美。你说一句模糊的想法，华伴先抓住重点。",visualPrompt:"A creator speaking an idea into a clean AI chat interface, messy notes becoming clear keywords, warm desk lighting.",bg:"linear-gradient(135deg,#111827,#4338ca)"},
       {id:2,duration:3.7,subtitle:"变成能用的文案",narration:"标题、卖点、口播、朋友圈和小红书文案，都可以先整理出来。",visualPrompt:"Chinese copywriting cards, headline options and short social media captions arranged neatly on a phone screen.",bg:"linear-gradient(135deg,#0f766e,#0f172a)"},
       {id:3,duration:3.7,subtitle:"再变成画面和分镜",narration:"华伴继续拆成图片提示词、镜头节奏和视频脚本。",visualPrompt:"Storyboard frames, image generation prompts, video timeline, clean creative production workspace.",bg:"linear-gradient(135deg,#1e293b,#7c3aed)"},
       {id:4,duration:3.8,subtitle:"你的作品，可以开始了",narration:"文案、图片、视频，一步一步从想法变成作品。",visualPrompt:"Huaban AI creative production card, polished poster and short video preview, creator-friendly clean interface.",bg:"linear-gradient(135deg,#ecfeff,#dcfce7)",final:true}
@@ -684,7 +684,7 @@ function userVideoShareCopy() {
 
 让更多需求找到你。
 
-华伴 AI+ 可以帮你整理能力、产品和服务，生成推广内容，记录客户线索。
+华伴 AI+ 可以整理能力、产品和服务，生成推广内容，记录客户线索。
 公测入口：https://www.huabanapp.com/`;
 }
 
