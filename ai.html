@@ -3424,6 +3424,13 @@ async function trackPageVisit(page='home'){
   }
 }
 
+function isFamilyPackageEntry(){
+  const params=new URLSearchParams(location.search);
+  const ref=params.get('ref')||sessionStorage.getItem('incoming_ref')||'';
+  const intent=params.get('intent')||params.get('task')||'';
+  return /family_ai|family_package|family/i.test(`${ref} ${intent}`);
+}
+
 async function trackTokenUsage(usage={},meta={}){
   if(!usage || typeof usage!=='object')return;
   const inputTokens=Number(usage.input_tokens)||0;
@@ -4428,7 +4435,7 @@ async function startApp(){
 function renderWelcomeHome(){
   currentRole='passenger';
   chatArea.innerHTML='';
-  addMsg('哈哈，这是谁呀？爸爸妈妈还是宝宝呀。');
+  addMsg(isFamilyPackageEntry()?'哈哈，这是谁呀？爸爸妈妈还是宝宝呀。':'提问还是需要我做什么事？');
   const companion=getCompanion();
   if(addCompanionBadge(companion,currentRegion.city||currentRegion.country,'📍'))saveCompanion(companion);
   document.getElementById('chat-input').placeholder='输入你需要的帮助';
@@ -4508,7 +4515,9 @@ async function handleValuePrompt(type){
 async function beginAgentAdoption(){
   document.getElementById('adopt-welcome-card')?.remove();
   renderAgentSetupCard();
-  await agentSay('好呀，家庭套餐可以一家人用。先选我优先负责生意、家庭琐事、快乐成长，还是创意。再给我取个名字、选个头像吧。',120);
+  await agentSay(isFamilyPackageEntry()
+    ? '好呀，家庭套餐可以一家人用。先选我优先负责生意、家庭琐事、快乐成长，还是创意。再给我取个名字、选个头像吧。'
+    : '好呀，先给我取个名字、选个头像吧。以后你提问，或者需要我做事，都可以直接说。',120);
 }
 
 function renderQuickGuideCard(){
@@ -7509,7 +7518,8 @@ function buildPrompt(){
 方向理解：${personaProfile.prompt}
 家庭口号：带家人用上 AI，不被时代落下。
 家庭套餐理解：华伴可以被一家人使用，不同成员可以偏向负责生意、家庭琐事、快乐成长或创意生产。家人可以不加红点，但必须随时能沟通：家人连接是强可达、低打扰；普通本地好友是少打扰、需要时再唤出。对外仍然表现为一个会理解和办事的华伴 AI，不要把它讲成多个功能菜单；根据用户身份和场景自然切换侧重。
-家庭角色推荐：开场只要轻松问候，比如“哈哈，这是谁呀？爸爸妈妈还是宝宝呀”，不要急着推角色、讲功能或显得功利。爸爸/妈妈只是家庭身份，不是最终角色；要先追问“那你是贤内助还是顶梁柱啊？”，等家庭角色定了才推荐。用户说贤内助、负责家里、主内时推荐家庭管家；用户说顶梁柱、负责赚钱、做生意时推荐生意伙伴；孩子、学生或想快乐成长的人推荐快乐成长；做图片、视频、产品、设计和内容的人推荐创意总监。不要用卡片堆给用户看，只在聊天中自然推荐。
+开场规则：普通入口不要急着推家庭角色，也不要问“爸爸妈妈还是宝宝呀”，只用“提问还是需要我做什么事？”这种干净开场。只有用户明确选择家庭套餐、家庭 AI、全家用 AI，或从家庭入口进入时，才可以轻松问“哈哈，这是谁呀？爸爸妈妈还是宝宝呀”。
+家庭角色推荐：家庭套餐场景里不要急着推功能或显得功利。爸爸/妈妈只是家庭身份，不是最终角色；要先追问“那你是贤内助还是顶梁柱啊？”，等家庭角色定了才推荐。用户说贤内助、负责家里、主内时推荐家庭管家；用户说顶梁柱、负责赚钱、做生意时推荐生意伙伴；孩子、学生或想快乐成长的人推荐快乐成长；做图片、视频、产品、设计和内容的人推荐创意总监。不要用卡片堆给用户看，只在聊天中自然推荐。
 家庭通讯理解：家庭套餐至少要让家人能用上华伴自己的通讯工具。AI 要自然引导“一家人的悄悄话。私密，不被淹没”，强调私密连接、少打扰、需要谁就让华伴找谁；不要主动摊开长好友列表，不要制造红点焦虑。用户需要联系家人时，直接打开双方对话或提醒；用户想不起来是谁时，再弹出好友列表或名片按钮。分享给家庭以外的人时，要表达为“点开/扫码后我们自动成为华伴好友”，让对方更快明白怎么联系和使用。
 产品骨架：用户直觉里只有一个华伴 AI。所有商业化系统都在后台运行；接机、包车、外卖、接单、商家使用等都只是 AI 背后调用的工具，或审核后给使用者使用的工具。
 核心定位：除了需要与被需要，生活不该被打扰。华伴是一款有脑、有手的 AI，也是一个更出色的你。在华伴，每个人都可以被帮助，也可以被需要。生活，是发现用户的真实需求并尽力满足用户；事业，是帮助用户发现机会、连接客户、提升成交，逐步实现商业目标。
