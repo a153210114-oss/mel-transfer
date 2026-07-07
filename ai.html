@@ -3018,6 +3018,7 @@ async function sendVoiceMessage(text){
     const actionMatch = reply.match(/\[ACTION:\s*(\w+)\s*(\w+)?\]/);
     const clean = reply.replace(/\[ACTION:.*?\]/,'').trim();
     if(isWeakAIReply(clean))recordAITrainingQuestion(text, 'AI 回答显得偏拒绝或没有接住用户需求：'+clean, 'weak-reply');
+    selfAuditAIReply(corrected||text, clean, data.huaban_usage||{});
     syncAISearchTaskIfNeeded(corrected, clean, 'voice_chat');
     syncLocalLifeTravelLearning(corrected, clean, 'voice_chat');
 
@@ -4691,7 +4692,9 @@ async function askAIContextReply(userText='', systemAdd='', feature='context_rep
   if(!res.ok)throw new Error('AI reply failed');
   const data=await res.json();
   trackTokenUsage(data.huaban_usage,{feature,source:'contextual_local_flow'}).catch(()=>{});
-  return (data.content?.[0]?.text||'').replace(/\[ACTION:.*?\]/g,'').trim();
+  const reply=(data.content?.[0]?.text||'').replace(/\[ACTION:.*?\]/g,'').trim();
+  selfAuditAIReply(userText, reply, data.huaban_usage||{});
+  return reply;
 }
 
 async function explainLocalServiceSources(text='', options={}){
@@ -7832,6 +7835,142 @@ function recordAITrainingQuestion(question, context='', source='chat-error'){
   }
 }
 
+function normalizeTrainingText(text=''){
+  return String(text||'')
+    .replace(/<[^>]*>/g,' ')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+
+function lastUserMessages(count=6){
+  return aiHistory
+    .filter(item=>item&&item.role==='user'&&String(item.content||'').trim())
+    .slice(-count)
+    .map(item=>String(item.content||'').trim());
+}
+
+function isUserCorrectionOrFrustration(text=''){
+  const clean=normalizeTrainingText(text);
+  return /(不对|错了|搞错|前面|刚才|已经说了|说过了|记不住|为啥|为什么|不是|别问|别再问|别分析|写死|死话术|智障|弱智|气死|哭晕|用户跑光|没有用|没反应|不行|还是一样|露馅|看光|删了你|马上删)/i.test(clean);
+}
+
+function answerLeaksInternalProcess(reply=''){
+  const clean=normalizeTrainingText(reply);
+  return /(系统提示|内部规则|后台流程|工具调用|模型路由|搜索词|搜索矩阵|线索任务|情报任务|工单|数据库|训练样本|沉淀|飞轮|供给侧|需求侧|我会如何做|我的步骤|执行逻辑|后台搜索任务|公开搜索词|进入训练营|记录到训练营)/i.test(clean);
+}
+
+function answerRepeatsMissingInfo(userText='', reply=''){
+  const user=normalizeTrainingText(userText);
+  const answer=normalizeTrainingText(reply);
+  if(!user||!answer)return false;
+  const historyText=lastUserMessages(8).join(' ');
+  const hasDateTime=/\d{1,2}月\d{1,2}|星期|周[一二三四五六日天]|\d{1,2}[号日]|\d{1,2}[点:：时]|上午|中午|下午|晚上|凌晨/.test(historyText);
+  const hasAirportTrip=/接机|送机|机场|起飞|落地|着陆|航班|从家出发|出关|上车/.test(historyText);
+  const answerAsksAlreadyKnown=/(哪天|几点|日期|时间|接机还是送机|是接机还是送机|再贴一遍|再发一遍|你是.*接机.*送机)/.test(answer);
+  const userComplainsMemory=/(已经说了|说过了|前面|刚才|记不住|不贴了)/.test(user);
+  return (hasDateTime&&hasAirportTrip&&answerAsksAlreadyKnown)||userComplainsMemory;
+}
+
+function answerLooksWrongResource(userText='', reply=''){
+  const user=normalizeTrainingText(userText);
+  const answer=normalizeTrainingText(reply);
+  if(!user||!answer)return false;
+  if(/电工|水管|维修|跳闸|断电|漏水/.test(user)&&/(专车|接送|奥迪|Q7|餐馆|China Bar|外卖|司机)/i.test(answer))return true;
+  if(/接机|送机|机场/.test(user)&&/(餐馆|China Bar|电工|水管|律师|会计)/i.test(answer))return true;
+  return false;
+}
+
+function answerFailedToAdvance(userText='', reply=''){
+  const user=normalizeTrainingText(userText);
+  const answer=normalizeTrainingText(reply);
+  if(!user||!answer)return false;
+  const userWantsProgress=/(预约|预订|安排|确认|确定|提交|下单|继续|赶紧|快|现在|马上|找好了吗|然后呢)/.test(user);
+  const answerOnlyExplains=/(需要继续时|你明确说|才会生成确认卡|我先整理|交给我处理|我会继续|稍后再试|服务暂时繁忙|网络有点不稳)/.test(answer);
+  return userWantsProgress&&answerOnlyExplains;
+}
+
+function buildSelfAuditSuggestion(reason='', userText='', reply=''){
+  const history=lastUserMessages(8).join('｜');
+  if(reason==='internal_leak'){
+    return '规则：不要把内部流程、搜索词、训练营、数据库、工具调用说给用户。只给自然结果、可选项和一个关键追问；没有结果就坦诚说暂时没有可直接联系对象。';
+  }
+  if(reason==='known_info_repeated'){
+    return '规则：回答前先读最近上下文。用户已经给过日期、时间、地点、接送机方向时，不要重复索要；把已知信息整理成当前任务继续推进。';
+  }
+  if(reason==='wrong_resource'){
+    return '规则：匹配资源必须与用户需求类别一致。找电工不能给司机、餐馆；找接送机不能给餐馆或维修。华伴用户优先，但类别不匹配就静默跳过，继续公开搜索。';
+  }
+  if(reason==='no_progress'){
+    return '规则：用户说预约、安排、确认、继续、赶紧、现在时，要推进到下一步；信息足够就进入对应工具或确认卡，信息不足只问一个关键问题。不要反复复述触发口令。';
+  }
+  if(reason==='user_correction'){
+    return '规则：用户指出错误或不满时，先承认并根据上下文修正，不要再次重复原话术。必要时只补问一个关键问题，然后继续做事。';
+  }
+  return '规则：从这次对话中总结可复用修正。下次遇到类似表达，先理解用户真实意图，再自然推进，不展示内部过程。';
+}
+
+function recordAgentSelfAuditIssue({reason='', userText='', reply='', source='self-audit'}={}){
+  const user=normalizeTrainingText(userText);
+  const answer=normalizeTrainingText(reply);
+  if(!user&&!answer)return;
+  const reasonLabel={
+    internal_leak:'回答暴露内部流程',
+    known_info_repeated:'重复追问已知信息',
+    wrong_resource:'匹配到错误资源',
+    no_progress:'用户要推进但没有推进',
+    user_correction:'用户纠错或强烈不满'
+  }[reason]||'AI 自检发现问题';
+  const question=[
+    reasonLabel,
+    user?`用户：${user.slice(0,260)}`:'',
+    answer?`AI：${answer.slice(0,360)}`:'',
+    lastUserMessages(5).length?`最近上下文：${lastUserMessages(5).join(' / ').slice(0,520)}`:''
+  ].filter(Boolean).join('\n');
+  const context=[
+    'AI 自检生成，需教官审核后才写入规则。',
+    buildSelfAuditSuggestion(reason,user,answer),
+    '只在触及规则时补充或修改规则；不要因为一次普通闲聊就改规则。'
+  ].join('\n');
+  recordAITrainingQuestion(question, context, source);
+  supaInsertLead({
+    lead_type:'system',
+    channel:'ai_self_audit',
+    name:'华伴AI自检',
+    contact:'',
+    city:currentRegion.city||'',
+    country:currentRegion.country||'',
+    status:'new',
+    stage:'needs_coach_review',
+    need_type:'self_audit_'+reason,
+    message:question,
+    next_action:'coach_review_then_update_prompt_rule_if_needed',
+    fields:{
+      event:'ai_self_audit_issue',
+      reason,
+      user_text:user,
+      ai_reply:answer,
+      recent_user_messages:lastUserMessages(8),
+      suggested_rule:buildSelfAuditSuggestion(reason,user,answer),
+      apply_rule_only_after_admin_review:true,
+      user_visible:false
+    }
+  }).catch(e=>console.warn('self audit sync failed',e));
+}
+
+function selfAuditAIReply(userText='', reply='', usage={}){
+  const cleanReply=normalizeTrainingText(reply);
+  const cleanUser=normalizeTrainingText(userText);
+  if(!cleanUser&&!cleanReply)return;
+  const issues=[];
+  if(answerLeaksInternalProcess(cleanReply))issues.push('internal_leak');
+  if(answerRepeatsMissingInfo(cleanUser,cleanReply))issues.push('known_info_repeated');
+  if(answerLooksWrongResource(cleanUser,cleanReply))issues.push('wrong_resource');
+  if(answerFailedToAdvance(cleanUser,cleanReply))issues.push('no_progress');
+  if(isUserCorrectionOrFrustration(cleanUser))issues.push('user_correction');
+  if(usage&&usage.audit_approved===false)issues.push('no_progress');
+  [...new Set(issues)].slice(0,2).forEach(reason=>recordAgentSelfAuditIssue({reason,userText:cleanUser,reply:cleanReply,source:'self-audit'}));
+}
+
 function isWeakAIReply(reply){
   return /我只做|不知道|无法回答|不能帮助|不支持|暂时不能|抱歉.*(不能|无法)|超出.*范围/i.test(String(reply||''));
 }
@@ -8048,6 +8187,7 @@ async function sendMessage(){ stopTTS();
     const clean=reply.replace(/\[ACTION:.*?\]/,'').trim();
     if(/贤内助还是顶梁柱/.test(clean))sessionStorage.setItem('huaban_waiting_family_role','1');
     if(isWeakAIReply(clean))recordAITrainingQuestion(msg, 'AI 回答显得偏拒绝或没有接住用户需求：'+clean, 'weak-reply');
+    selfAuditAIReply(msg, clean, data.huaban_usage||{});
     syncAISearchTaskIfNeeded(msg, clean, 'text_chat');
     syncLocalLifeTravelLearning(msg, clean, 'text_chat');
     if(!voiceMode) speakBeforeText(clean,()=>addMsg(clean));
