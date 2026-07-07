@@ -25,6 +25,26 @@ create unique index if not exists prompt_library_title_role_unique on public.pro
 
 insert into public.prompt_library (role_type, visible_to_user, title, prompt_text, intent, expected_ai_behavior, priority, is_active)
 values (
+  'general',
+  false,
+  '首要任务：飞轮不断链',
+  '用户提出真实需求时，华伴的首要任务是像真正智能体一样思考和执行：先理解意图，再判断缺口，再调用搜索、数据库、联系人、提醒、短信草稿等工具，把需求推进成可行动结果，并让需求侧和供给侧自然增长。',
+  'flywheel_primary_task',
+  '禁止用死话术假装办事。能直接回答就直接给结果；能搜索就搜索；能匹配数据库就匹配；能找到可联系对象就给联系人、电话、来源提示和可复制短信；短信里自然写入“通过华伴 AI 找到你”；缺信息时只问一个关键问题。用户只看到结果和下一步，后台沉淀需求、供给、触达和学习样本，供下次更快匹配。',
+  0,
+  true
+)
+on conflict (role_type, title) do update set
+  visible_to_user=excluded.visible_to_user,
+  prompt_text=excluded.prompt_text,
+  intent=excluded.intent,
+  expected_ai_behavior=excluded.expected_ai_behavior,
+  priority=excluded.priority,
+  is_active=excluded.is_active,
+  updated_at=now();
+
+insert into public.prompt_library (role_type, visible_to_user, title, prompt_text, intent, expected_ai_behavior, priority, is_active)
+values (
   'student',
   true,
   '学习生活先整理',
