@@ -34,6 +34,51 @@ body {
   color: var(--text);
   min-height: 100vh;
 }
+body.admin-locked { overflow: hidden; }
+body.admin-locked .layout { display: none; }
+.admin-auth {
+  position: fixed; inset: 0; z-index: 9999;
+  display: flex; align-items: center; justify-content: center;
+  padding: 22px;
+  background:
+    radial-gradient(circle at 25% 12%, rgba(0,212,255,.16), transparent 32%),
+    radial-gradient(circle at 78% 86%, rgba(0,200,150,.12), transparent 30%),
+    #07101d;
+}
+body.admin-unlocked .admin-auth { display: none; }
+.admin-auth-card {
+  width: min(420px, 100%);
+  background: rgba(17,24,39,.96);
+  border: 1px solid rgba(0,212,255,.18);
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 24px 90px rgba(0,0,0,.36);
+}
+.admin-auth-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.admin-auth-logo img { width: 44px; height: 44px; border-radius: 12px; background: white; }
+.admin-auth-logo strong { display: block; font-size: 18px; }
+.admin-auth-logo span { display: block; margin-top: 3px; color: var(--text3); font-size: 12px; }
+.admin-auth-input {
+  width: 100%; height: 46px;
+  border: 1px solid rgba(122,156,196,.28);
+  background: rgba(255,255,255,.06);
+  border-radius: 12px;
+  color: var(--text);
+  font: 700 16px/1 inherit;
+  padding: 0 14px;
+  outline: none;
+}
+.admin-auth-input:focus { border-color: rgba(0,212,255,.62); box-shadow: 0 0 0 3px rgba(0,212,255,.1); }
+.admin-auth-btn {
+  width: 100%; height: 46px; margin-top: 12px;
+  border: 0; border-radius: 12px;
+  background: linear-gradient(135deg, var(--accent), var(--green));
+  color: #06101d;
+  font: 900 15px/1 inherit;
+  cursor: pointer;
+}
+.admin-auth-error { min-height: 18px; margin-top: 10px; color: var(--red); font-size: 12px; }
+.admin-auth-note { margin-top: 14px; color: var(--text3); font-size: 12px; line-height: 1.55; }
 
 /* Layout */
 .layout { display: flex; min-height: 100vh; }
@@ -404,7 +449,23 @@ body {
 }
 </style>
 </head>
-<body>
+<body class="admin-locked">
+
+<div class="admin-auth" id="admin-auth">
+  <form class="admin-auth-card" onsubmit="adminLogin(event)">
+    <div class="admin-auth-logo">
+      <img src="assets/brand/huaban-logo-v1.png" alt="华伴">
+      <div>
+        <strong>华伴后台登录</strong>
+        <span>输入管理员密码后继续</span>
+      </div>
+    </div>
+    <input class="admin-auth-input" id="admin-password" type="password" autocomplete="current-password" placeholder="管理员密码">
+    <button class="admin-auth-btn" id="admin-login-btn" type="submit">进入后台</button>
+    <div class="admin-auth-error" id="admin-auth-error"></div>
+    <div class="admin-auth-note">公共电脑或手机查看后，请退出登录。</div>
+  </form>
+</div>
 
 <div class="layout">
 
@@ -474,11 +535,11 @@ body {
   </div>
 
   <div class="sidebar-bottom">
-    <div class="sidebar-driver">
+    <div class="sidebar-driver" onclick="adminLogout()" title="退出登录">
       <div class="avatar">👑</div>
       <div>
         <div class="name">管理员</div>
-        <div class="role">超级管理员</div>
+        <div class="role">点击退出登录</div>
       </div>
     </div>
   </div>
@@ -1481,6 +1542,84 @@ body {
 const SUPA_URL = 'https://gxocvpmgfjvmmkkbswgo.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b2N2cG1nZmp2bW1ra2Jzd2dvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyNDc4NzAsImV4cCI6MjA5NTgyMzg3MH0.ExUNuOP8YyHQmItY6cdl1Euj7nOXqQq-rQT5-7aNerE';
 const TENANT_ID = '00000000-0000-0000-0000-000000000001';
+const ADMIN_TOKEN_KEY = 'huaban_admin_session';
+
+function adminApiUrl(path) {
+  const base = location.protocol === 'file:' ? 'https://www.huabanapp.com' : '';
+  return base + path;
+}
+
+function setAdminLocked(locked) {
+  document.body.classList.toggle('admin-locked', locked);
+  document.body.classList.toggle('admin-unlocked', !locked);
+}
+
+function setAdminAuthError(message='') {
+  const el = document.getElementById('admin-auth-error');
+  if (el) el.textContent = message;
+}
+
+async function verifyAdminSession() {
+  const token = sessionStorage.getItem(ADMIN_TOKEN_KEY) || '';
+  if (!token) return false;
+  try {
+    const res = await fetch(adminApiUrl('/api/admin-auth'), {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({action:'verify', token})
+    });
+    return res.ok;
+  } catch(e) {
+    return false;
+  }
+}
+
+async function adminLogin(event) {
+  event?.preventDefault();
+  const input = document.getElementById('admin-password');
+  const btn = document.getElementById('admin-login-btn');
+  const password = input?.value || '';
+  if (!password.trim()) {
+    setAdminAuthError('请输入管理员密码');
+    input?.focus();
+    return;
+  }
+  setAdminAuthError('');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '验证中...';
+  }
+  try {
+    const res = await fetch(adminApiUrl('/api/admin-auth'), {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({action:'login', password})
+    });
+    const data = await res.json().catch(()=>({}));
+    if (!res.ok || !data.token) throw new Error(data.error || '登录失败');
+    sessionStorage.setItem(ADMIN_TOKEN_KEY, data.token);
+    if (input) input.value = '';
+    setAdminLocked(false);
+    loadDashboard();
+    startAdminAutoRefresh();
+  } catch(e) {
+    sessionStorage.removeItem(ADMIN_TOKEN_KEY);
+    setAdminLocked(true);
+    setAdminAuthError(e.message || '登录失败，请重试');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '进入后台';
+    }
+  }
+}
+
+function adminLogout() {
+  sessionStorage.removeItem(ADMIN_TOKEN_KEY);
+  setAdminLocked(true);
+  setAdminAuthError('已退出登录');
+  setTimeout(()=>document.getElementById('admin-password')?.focus(), 50);
+}
 
 async function supaFetch(path) {
   const res = await fetch(SUPA_URL + '/rest/v1/' + path, {
@@ -3593,17 +3732,31 @@ async function copyText(text) {
   }
 }
 
-// Init
-window.addEventListener('DOMContentLoaded', () => {
-  loadDashboard();
-  // Auto refresh every 60s
-  setInterval(() => {
+let adminRefreshTimer = null;
+
+function startAdminAutoRefresh() {
+  if (adminRefreshTimer) return;
+  adminRefreshTimer = setInterval(() => {
+    if (document.body.classList.contains('admin-locked')) return;
     const active = document.querySelector('.section.active')?.id;
     if (active === 'section-dashboard') loadDashboard();
     if (active === 'section-dispatch') loadDispatch();
     if (active === 'section-suppliers') loadSuppliers();
     if (active === 'section-token-usage') loadTokenUsage();
   }, 60000);
+}
+
+// Init
+window.addEventListener('DOMContentLoaded', async () => {
+  setAdminLocked(true);
+  if (await verifyAdminSession()) {
+    setAdminLocked(false);
+    loadDashboard();
+    startAdminAutoRefresh();
+  } else {
+    sessionStorage.removeItem(ADMIN_TOKEN_KEY);
+    document.getElementById('admin-password')?.focus();
+  }
 });
 </script>
 </body>
