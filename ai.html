@@ -4583,6 +4583,34 @@ function localServiceCandidateMatchesPost(item={}, post={}){
   return true;
 }
 
+function localServiceUrlPath(url=''){
+  try{return new URL(url).pathname.replace(/\/+$/,'')||'/';}catch(e){return '';}
+}
+
+function localServiceUrlHost(url=''){
+  try{return new URL(url).hostname.replace(/^www\./,'').toLowerCase();}catch(e){return '';}
+}
+
+function isGenericLocalServiceDirectory(item={}){
+  const url=item.sourceUrl||'';
+  const host=localServiceUrlHost(url);
+  const path=localServiceUrlPath(url);
+  const label=`${item.name||''} ${item.source||''} ${item.sourceLabel||''}`;
+  const genericHosts=['hipages.com.au','servicetasker.com.au','airtasker.com','airtasker.com.au','yellowpages.com.au','oneflare.com.au'];
+  const rootOrCategory=!path||path==='/'||path.split('/').filter(Boolean).length<=1;
+  return rootOrCategory&&(genericHosts.includes(host)||/渠道|平台|目录|首页|directory|marketplace|service channel|tradie service/i.test(label));
+}
+
+function localServiceCandidateIsDisplayable(item={}){
+  if(item.phone)return true;
+  if(!item.sourceUrl)return false;
+  if(isGenericLocalServiceDirectory(item))return false;
+  const label=`${item.name||''} ${item.source||''} ${item.sourceLabel||''}`;
+  if(/渠道|平台|目录|首页|directory|marketplace|service channel|tradie service/i.test(label))return false;
+  const path=localServiceUrlPath(item.sourceUrl);
+  return Boolean(path&&path!=='/'&&path.split('/').filter(Boolean).length>=2);
+}
+
 async function fetchLocalServiceCandidates(post={}){
   const apiPayload={
     text:post.text||'',
@@ -4618,7 +4646,7 @@ async function fetchLocalServiceCandidates(post={}){
           })).filter(item=>{
             if(/华伴主动学习|主动学习|AI训练|训练样本/i.test(`${item.name} ${item.source}`))return false;
             if(!localServiceCandidateMatchesPost(item,post))return false;
-            return Boolean(item.phone||item.sourceUrl);
+            return localServiceCandidateIsDisplayable(item);
           });
         }
         post.searchQueries=data.searchQueries||[];
@@ -4688,15 +4716,8 @@ async function renderLocalServiceCandidates(post={}, candidates=[]){
   if(!candidates.length)return false;
   const withPhone=candidates.filter(item=>item.phone);
   if(!withPhone.length){
-    const withSource=candidates.filter(item=>item.sourceUrl);
-    if(!withSource.length)return false;
-    await agentSay(`
-      <strong>暂时还没有可直接拨打的号码。</strong><br>
-      ${withSource.slice(0,3).map((item,idx)=>`${idx+1}. ${companionEscape(item.name)} · ${companionEscape(item.sourceLabel||'公开入口')}<br><a href="${companionEscape(item.sourceUrl)}" target="_blank" style="color:var(--wx-green);font-weight:800;">打开来源</a>`).join('<br><br>')}
-      <div style="margin-top:8px;color:var(--wx-subtext,#607080);font-size:12px;">有可联系号码后，我再把短信草稿整理好。</div>
-    `,80);
     savePendingLocalService(post);
-    return true;
+    return false;
   }
   const first=withPhone[0];
   const sms=buildLocalServiceSmsDraft(post,first);

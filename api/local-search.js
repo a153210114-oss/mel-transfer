@@ -175,13 +175,57 @@ function parseOpenAIText(data = {}) {
   return chunks.join('\n');
 }
 
+function urlHost(url = '') {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '').toLowerCase();
+  } catch (e) {
+    return '';
+  }
+}
+
+function urlPath(url = '') {
+  try {
+    return new URL(url).pathname.replace(/\/+$/, '') || '/';
+  } catch (e) {
+    return '';
+  }
+}
+
+function isGenericDirectoryHomepage(url = '', name = '') {
+  const host = urlHost(url);
+  const path = urlPath(url);
+  if (!host) return false;
+  const genericHosts = new Set([
+    'hipages.com.au',
+    'servicetasker.com.au',
+    'airtasker.com',
+    'airtasker.com.au',
+    'yellowpages.com.au',
+    'oneflare.com.au'
+  ]);
+  const rootOrCategory = !path || path === '/' || path.split('/').filter(Boolean).length <= 1;
+  const genericName = /渠道|平台|目录|首页|directory|marketplace|service channel|tradie service/i.test(String(name || ''));
+  return rootOrCategory && (genericHosts.has(host) || genericName);
+}
+
+function isConcreteProviderCandidate(item = {}) {
+  if (item.phone) return true;
+  const sourceUrl = item.sourceUrl || '';
+  if (!sourceUrl) return false;
+  const label = `${item.name || ''} ${item.source || ''} ${item.sourceLabel || ''}`;
+  if (isGenericDirectoryHomepage(sourceUrl, label)) return false;
+  if (/渠道|平台|目录|首页|directory|marketplace|service channel|tradie service/i.test(label)) return false;
+  const path = urlPath(sourceUrl);
+  return Boolean(path && path !== '/' && path.split('/').filter(Boolean).length >= 2);
+}
+
 function normalizeWebResult(item = {}, ctx = {}) {
   const raw = [item.name, item.phone, item.description, item.source, item.sourceUrl, item.url].filter(Boolean).join(' ');
   if (!hasServiceMatch(raw, ctx.kind)) return null;
   const phone = extractPublicPhone(raw);
   const sourceUrl = cleanText(item.sourceUrl || item.url);
   if (!phone && !sourceUrl) return null;
-  return {
+  const normalized = {
     id: item.id || `web-${sourceUrl || phone}`,
     name: cleanText(item.name) || `${ctx.city || ''}${serviceLabel(ctx.kind)}线索`,
     phone,
@@ -195,13 +239,14 @@ function normalizeWebResult(item = {}, ctx = {}) {
     reasons: [phone ? '公开页面含电话' : '公开页面待核验', `服务匹配${serviceLabel(ctx.kind)}`],
     message: cleanText(item.description)
   };
+  return isConcreteProviderCandidate(normalized) ? normalized : null;
 }
 
 function isUsableCandidate(item = {}) {
   if (!item || item.score <= 0) return false;
   if (/华伴主动学习|主动学习|AI训练|训练样本/i.test(String(item.name || ''))) return false;
   if (/agent_learning|learn_/i.test(`${item.source || ''} ${item.message || ''}`)) return false;
-  return Boolean(item.phone || item.sourceUrl);
+  return isConcreteProviderCandidate(item);
 }
 
 async function fetchStoredRows() {
