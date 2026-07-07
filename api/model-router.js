@@ -48,38 +48,38 @@ function detectTaskType(messages = [], fallback = 'chat') {
 
 const ROUTE_PRESETS = {
   director: {
-    provider: process.env.HUABAN_MODEL_DIRECTOR_PROVIDER || process.env.HUABAN_MODEL_REASONING_PROVIDER || 'anthropic',
-    model: process.env.HUABAN_MODEL_DIRECTOR || process.env.HUABAN_MODEL_REASONING || process.env.ANTHROPIC_DIRECTOR_MODEL || process.env.ANTHROPIC_REASONING_MODEL || 'claude-haiku-4-5-20251001',
+    provider: process.env.HUABAN_MODEL_DIRECTOR_PROVIDER || process.env.HUABAN_MODEL_REASONING_PROVIDER || 'openai',
+    model: process.env.HUABAN_MODEL_DIRECTOR || process.env.HUABAN_MODEL_REASONING || process.env.OPENAI_DIRECTOR_MODEL || process.env.OPENAI_REASONING_MODEL || 'gpt-5.5',
     costTier: 'medium',
   },
   casual_chat: {
-    provider: process.env.HUABAN_MODEL_FAST_PROVIDER || 'anthropic',
-    model: process.env.HUABAN_MODEL_FAST || process.env.ANTHROPIC_FAST_MODEL || 'claude-haiku-4-5-20251001',
+    provider: process.env.HUABAN_MODEL_FAST_PROVIDER || 'openai',
+    model: process.env.HUABAN_MODEL_FAST || process.env.OPENAI_FAST_MODEL || 'gpt-5.4-mini',
     costTier: 'low',
   },
   chat: {
-    provider: process.env.HUABAN_MODEL_DEFAULT_PROVIDER || 'anthropic',
-    model: process.env.HUABAN_MODEL_DEFAULT || process.env.ANTHROPIC_CHAT_MODEL || 'claude-haiku-4-5-20251001',
+    provider: process.env.HUABAN_MODEL_DEFAULT_PROVIDER || 'openai',
+    model: process.env.HUABAN_MODEL_DEFAULT || process.env.OPENAI_CHAT_MODEL || 'gpt-5.4-mini',
     costTier: 'low',
   },
   supply_intel: {
-    provider: process.env.HUABAN_MODEL_INTENT_PROVIDER || 'anthropic',
-    model: process.env.HUABAN_MODEL_INTENT || process.env.ANTHROPIC_INTENT_MODEL || 'claude-haiku-4-5-20251001',
+    provider: process.env.HUABAN_MODEL_INTENT_PROVIDER || 'openai',
+    model: process.env.HUABAN_MODEL_INTENT || process.env.OPENAI_INTENT_MODEL || 'gpt-5.4-mini',
     costTier: 'low',
   },
   booking_action: {
-    provider: process.env.HUABAN_MODEL_ACTION_PROVIDER || 'anthropic',
-    model: process.env.HUABAN_MODEL_ACTION || process.env.ANTHROPIC_ACTION_MODEL || 'claude-haiku-4-5-20251001',
+    provider: process.env.HUABAN_MODEL_ACTION_PROVIDER || 'openai',
+    model: process.env.HUABAN_MODEL_ACTION || process.env.OPENAI_ACTION_MODEL || 'gpt-5.4-mini',
     costTier: 'low',
   },
   search_verify: {
-    provider: process.env.HUABAN_MODEL_SEARCH_PROVIDER || 'anthropic',
-    model: process.env.HUABAN_MODEL_SEARCH || process.env.ANTHROPIC_SEARCH_MODEL || 'claude-haiku-4-5-20251001',
+    provider: process.env.HUABAN_MODEL_SEARCH_PROVIDER || 'openai',
+    model: process.env.HUABAN_MODEL_SEARCH || process.env.OPENAI_SEARCH_MODEL || 'gpt-5.5',
     costTier: 'medium',
   },
   complex_planning: {
-    provider: process.env.HUABAN_MODEL_REASONING_PROVIDER || 'anthropic',
-    model: process.env.HUABAN_MODEL_REASONING || process.env.ANTHROPIC_REASONING_MODEL || 'claude-haiku-4-5-20251001',
+    provider: process.env.HUABAN_MODEL_REASONING_PROVIDER || 'openai',
+    model: process.env.HUABAN_MODEL_REASONING || process.env.OPENAI_REASONING_MODEL || 'gpt-5.5',
     costTier: 'medium',
   },
   vision_understanding: {

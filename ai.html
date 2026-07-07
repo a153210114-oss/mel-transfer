@@ -4675,12 +4675,10 @@ async function renderLocalServiceCandidates(post={}, candidates=[]){
   if(!withPhone.length){
     const withSource=candidates.filter(item=>item.sourceUrl);
     if(!withSource.length)return false;
-    const queries=(post.searchQueries||post.searchEngine?.searchQueries||[]).slice(0,4);
     await agentSay(`
-      <strong>我先找到了可查入口，还没有直接可拨电话。</strong><br>
+      <strong>暂时还没有可直接拨打的号码。</strong><br>
       ${withSource.slice(0,3).map((item,idx)=>`${idx+1}. ${companionEscape(item.name)} · ${companionEscape(item.sourceLabel||'公开入口')}<br><a href="${companionEscape(item.sourceUrl)}" target="_blank" style="color:var(--wx-green);font-weight:800;">打开来源</a>`).join('<br><br>')}
-      ${queries.length?`<br><br><strong>下一步搜索词：</strong><br>${queries.map(q=>`· ${companionEscape(q)}`).join('<br>')}`:''}
-      <div style="margin-top:8px;color:var(--wx-subtext,#607080);font-size:12px;">我会继续查电话和资质；找到可联系号码再把短信写好。</div>
+      <div style="margin-top:8px;color:var(--wx-subtext,#607080);font-size:12px;">有可联系号码后，我再把短信草稿整理好。</div>
     `,80);
     savePendingLocalService(post);
     return true;
