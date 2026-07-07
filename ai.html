@@ -4528,14 +4528,14 @@ async function handleLocalServiceContinuation(text='', options={}){
 用户在追问刚才的本地服务搜索是否只有这些结果。请像真正办事的华伴一样回答，不要报错，不要甩锅。
 必须表达：
 - 现在还没有可直接拨打并且适合展示的号码；
-- 不把内部学习记录或未核验信息当结果给用户；
-- 继续查公开来源和资质，找到电话后写短信草稿；
+- 不把内部学习记录、无关行业或未核验信息当结果给用户；
+- 已按真实需求继续查公开来源；有适合展示的号码再给短信草稿；
 - 如果缺位置，只问一个关键位置。
 当前结构化需求：${JSON.stringify(pending)}
 回复不超过 3 句。`, 'local_service_continuation_no_result');
-    await agentSay(reply||'还没完。我不会把没核验的内部记录当结果给你；现在继续查可直接联系的号码，找到后把短信草稿给你复制。',80);
+    await agentSay(reply||'还没完。无关行业我不会再给你看；有合适的可联系号码，我再把短信草稿整理好。',80);
   }catch(e){
-    await agentSay('还没完。我不会把没核验的内部记录当结果给你；现在继续查可直接联系的号码，找到后把短信草稿给你复制。',80);
+    await agentSay('还没完。无关行业我不会再给你看；有合适的可联系号码，我再把短信草稿整理好。',80);
   }
   return true;
 }
@@ -4604,6 +4604,7 @@ async function fetchLocalServiceCandidates(post={}){
         if(Array.isArray(data.candidates)&&data.candidates.length){
           post.searchQueries=data.searchQueries||[];
           post.searchEngine=data;
+          post.searchMode=data.searchMode||'';
           return data.candidates.map(item=>({
             name:item.name||'本地服务线索',
             phone:item.phone||'',
@@ -4622,6 +4623,7 @@ async function fetchLocalServiceCandidates(post={}){
         }
         post.searchQueries=data.searchQueries||[];
         post.searchEngine=data;
+        post.searchMode=data.searchMode||'';
       }
     }
   }catch(e){

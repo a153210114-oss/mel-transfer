@@ -155,6 +155,48 @@ function normalizeLead(row = {}, ctx = {}) {
   };
 }
 
+function parseJsonObject(text = '') {
+  const raw = String(text || '').trim();
+  try { return JSON.parse(raw); } catch(e) {}
+  const match = raw.match(/\{[\s\S]*\}/);
+  if (!match) return null;
+  try { return JSON.parse(match[0]); } catch(e) {}
+  return null;
+}
+
+function parseOpenAIText(data = {}) {
+  if (data.output_text) return data.output_text;
+  const chunks = [];
+  for (const item of data.output || []) {
+    for (const part of item.content || []) {
+      if ((part.type === 'output_text' || part.type === 'text') && part.text) chunks.push(part.text);
+    }
+  }
+  return chunks.join('\n');
+}
+
+function normalizeWebResult(item = {}, ctx = {}) {
+  const raw = [item.name, item.phone, item.description, item.source, item.sourceUrl, item.url].filter(Boolean).join(' ');
+  if (!hasServiceMatch(raw, ctx.kind)) return null;
+  const phone = extractPublicPhone(raw);
+  const sourceUrl = cleanText(item.sourceUrl || item.url);
+  if (!phone && !sourceUrl) return null;
+  return {
+    id: item.id || `web-${sourceUrl || phone}`,
+    name: cleanText(item.name) || `${ctx.city || ''}${serviceLabel(ctx.kind)}线索`,
+    phone,
+    city: ctx.city || '',
+    country: ctx.country || '',
+    source: cleanText(item.source) || sourceUrl || '公开搜索结果',
+    sourceUrl,
+    sourceLabel: '公开搜索结果',
+    status: '待核验',
+    score: phone ? 68 : 52,
+    reasons: [phone ? '公开页面含电话' : '公开页面待核验', `服务匹配${serviceLabel(ctx.kind)}`],
+    message: cleanText(item.description)
+  };
+}
+
 function isUsableCandidate(item = {}) {
   if (!item || item.score <= 0) return false;
   if (/华伴主动学习|主动学习|AI训练|训练样本/i.test(String(item.name || ''))) return false;
@@ -186,9 +228,67 @@ async function fetchStoredRows() {
 }
 
 async function optionalWebSearch(ctx = {}) {
-  // Search providers can be connected later without changing the front-end contract.
-  // Supported future envs: SERPAPI_KEY, GOOGLE_CSE_ID + GOOGLE_API_KEY, BING_SEARCH_KEY.
-  return [];
+  if (!process.env.OPENAI_API_KEY) return [];
+  const area = ctx.place || ctx.city || 'Melbourne';
+  const label = serviceLabel(ctx.kind);
+  const englishKind = {
+    electrician: 'electrician electrical repair',
+    plumber: 'plumber plumbing repair',
+    cleaner: 'cleaner cleaning service',
+    gardener: 'gardener garden service',
+    removalist: 'removalist moving service',
+    delivery: 'courier delivery service'
+  }[ctx.kind] || 'local service';
+  const prompt = `
+You are Huaban's public web search worker. Search the public web for real, contactable local service providers.
+
+Need: ${label}
+Area: ${area}
+City: ${ctx.city}
+Country: ${ctx.country}
+Original user text: ${ctx.text}
+
+Rules:
+- Return only providers or public directory pages that clearly match "${label}" / "${englishKind}".
+- Do not include unrelated drivers, restaurants, travel services, or generic businesses.
+- Prefer pages with phone numbers, official websites, directories, or public listings.
+- Do not invent phone numbers.
+- Return JSON only:
+{"results":[{"name":"","phone":"","source":"","sourceUrl":"","description":""}]}
+`;
+  try {
+    const response = await fetch('https://api.openai.com/v1/responses', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: process.env.OPENAI_SEARCH_MODEL || process.env.OPENAI_CHAT_MODEL || 'gpt-5.4-mini',
+        input: prompt,
+        tools: [{ type: 'web_search_preview' }],
+        max_output_tokens: 1400
+      })
+    });
+    if (!response.ok) return [];
+    const data = await response.json();
+    const parsed = parseJsonObject(parseOpenAIText(data));
+    const results = Array.isArray(parsed?.results) ? parsed.results : [];
+    const seen = new Set();
+    return results
+      .map(item => normalizeWebResult(item, ctx))
+      .filter(Boolean)
+      .filter(item => {
+        const key = item.phone || item.sourceUrl || item.name;
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .slice(0, 5);
+  } catch (error) {
+    console.warn('optional web search skipped:', error?.message || error);
+    return [];
+  }
 }
 
 module.exports = async function handler(req, res) {
@@ -212,12 +312,13 @@ module.exports = async function handler(req, res) {
     const ctx = { text, city, country, place, kind };
     const searchQueries = buildSearchQueries(ctx);
     const rows = await fetchStoredRows();
-    const candidates = rows
+    const storedCandidates = rows
       .map((row) => normalizeLead(row, ctx))
       .filter(isUsableCandidate)
       .sort((a, b) => b.score - a.score)
       .slice(0, 8);
-    const webResults = await optionalWebSearch(ctx);
+    const webResults = storedCandidates.length ? [] : await optionalWebSearch(ctx);
+    const candidates = storedCandidates.length ? storedCandidates : webResults;
     res.status(200).json({
       ok: true,
       query: text,
@@ -229,6 +330,7 @@ module.exports = async function handler(req, res) {
       searchQueries,
       candidates,
       webResults,
+      searchMode: storedCandidates.length ? 'huaban_first' : 'public_web',
       hasContact: candidates.some((item) => item.phone),
       nextAction: candidates.some((item) => item.phone)
         ? 'show_candidates_and_sms'
