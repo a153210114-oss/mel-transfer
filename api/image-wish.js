@@ -29,18 +29,24 @@ module.exports = async function handler(req, res) {
 
 请只返回 JSON，不要解释。字段：
 {
-  "wishType": "need_paid | need_free | offer_free | sell",
+  "wishType": "need_paid | need_free | offer_paid | offer_free | sell",
   "category": "旅游转让 | 拼团补位 | 票券/名额转让 | 维修上门 | 本地找人 | 接送陪同 | 翻译沟通 | 临时跑腿 | 其他互助",
   "city": "城市或地区",
   "text": "整理后的任务说明，保留日期、地点、服务内容、亮点、限制、备注等关键信息",
   "budget": "价格/预算/可议/免费/未知",
   "title": "一句短标题",
+  "providerName": "图片中出现的服务者/商家/机构名，没有则空字符串",
+  "phone": "图片中出现的电话，没有则空字符串",
+  "website": "图片中出现的网址，没有则空字符串",
+  "qualification": "图片中出现的注册号、执照号、资质号或保险信息，没有则空字符串",
   "confidence": 0.0
 }
 
 规则：
 - 如果是广告海报、行程变更、客户行程有变、需要出掉行程、拼团补位、票券名额转让，优先 wishType=sell 或 need_paid，category=旅游转让/拼团补位/票券/名额转让。
-- 如果是找电工、水管、维修、跑腿、搬运、上门检查，优先 wishType=need_paid。
+- 如果是用户在找电工、水管、维修、跑腿、搬运、上门检查，优先 wishType=need_paid。
+- 如果图片本身是服务者名片、商家广告、招牌、联系方式、资质展示，优先 wishType=offer_paid；category 按服务内容填写，例如电工/维修填“维修上门”。
+- 名片类图片要尽量读出 providerName、phone、website、qualification；看不清的字段留空，不要猜。
 - 如果看不清，text 里说明“图片部分信息不清楚，请补充...”。
 - 不要编造图片中没有的联系电话。`;
 

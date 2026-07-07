@@ -2892,6 +2892,9 @@ async function sendVoiceMessage(text){
     await agentSay('可以。用 Safari 打开华伴，点分享按钮，再选“添加到主屏幕”。安卓一般点浏览器菜单，再选“添加到主屏幕”。',120);
     return;
   }
+  if(await handleCollectedSupplyLead(corrected,{voice:true})){
+    return;
+  }
   if(await explainLocalServiceSources(corrected,{voice:true})){
     return;
   }
@@ -3879,6 +3882,97 @@ function inferSupplierTypeFromText(text=''){
     (/入驻|进驻|接单|加入华伴|成为服务者|提供服务|商家|商户/i.test(clean)
       ? {value:'supplier_onboarding',label:'商户/服务者入驻意向',category:'入驻申请'}
       : null);
+}
+
+function extractSupplyQualification(text=''){
+  const clean=String(text||'');
+  const matches=[
+    clean.match(/(?:政府注册号|注册号|执照号|牌照号|资质号|licen[cs]e|registration|REC|RCC)\s*[:：]?\s*([A-Z]{2,5}\s*\d{3,8}|\d{5,12})/i),
+    clean.match(/\b(?:REC|RCC)\s*[:：]?\s*[A-Z]?\d{3,8}\b/i),
+    clean.match(/\bABN\s*[:：]?\s*\d{2}\s*\d{3}\s*\d{3}\s*\d{3}\b/i)
+  ].filter(Boolean);
+  if(!matches.length)return '';
+  return String(matches[0][0]||matches[0][1]||'').replace(/\s+/g,' ').trim();
+}
+
+function detectCollectedSupplyLead(text='', extra={}){
+  const clean=String(text||'').trim();
+  if(!clean)return null;
+  const type=inferSupplierTypeFromText(clean);
+  if(!type)return null;
+  const phone=extractPublicPhone(clean)||extractPublicPhone(extra.phone||'');
+  const qualification=extractSupplyQualification(clean)||extractSupplyQualification(extra.qualification||'');
+  const website=(clean.match(/https?:\/\/[^\s，。]+|(?:www\.)?[a-z0-9-]+\.[a-z]{2,}(?:\.[a-z]{2,})?(?:\/[^\s，。]*)?/i)||[])[0]||extra.website||'';
+  const looksLikeCollected=Boolean(phone||qualification||website||extra.providerName||extra.fromImage);
+  const isDemand=/我要找|想找|找个|找一个|需要|有没有|推荐|请个|约个/i.test(clean);
+  if(!looksLikeCollected||isDemand&&!phone&&!qualification&&!extra.fromImage)return null;
+  let name=extra.providerName||'';
+  if(!name){
+    const nameMatch=clean.match(/([\u4e00-\u9fa5A-Za-z0-9\s]{2,24}(?:电工|水管|维修|清洁|园丁|搬家|司机|会计|律师|餐馆|外卖|配送|家教|翻译))/i);
+    name=nameMatch?nameMatch[1].trim():(type.label||'供给线索');
+  }
+  return {
+    ...type,
+    name,
+    phone,
+    website,
+    qualification,
+    city:intelCityFromText(clean)||extra.city||currentRegion.city||currentRegion.country,
+    text:clean
+  };
+}
+
+async function syncCollectedSupplyLead(lead={}, source='user_collected_supply'){
+  if(!lead?.typeValue)return null;
+  const message=[
+    `用户补充供给线索：${lead.serviceType||lead.category||'供给'}`,
+    `名称：${lead.name||'待核验'}`,
+    `电话：${lead.phone||'待补充'}`,
+    `城市：${lead.city||currentRegion.city||''}`,
+    `资质：${lead.qualification||'待核验'}`,
+    `网址：${lead.website||'待核验'}`,
+    `原文：${lead.text||''}`
+  ].join('\n');
+  return supaInsertLead({
+    lead_type:'supply',
+    channel:source,
+    name:lead.name||'供给线索',
+    contact:lead.phone||lead.website||lead.qualification||'待核验',
+    city:lead.city||currentRegion.city||'',
+    country:currentRegion.country||'',
+    message,
+    need_type:lead.typeValue,
+    stage:'collected_supply_candidate',
+    status:'new',
+    next_action:'verify_contact_qualification_and_match_future_demand',
+    fields:{
+      source,
+      provider_name:lead.name||'',
+      provider_phone:lead.phone||'',
+      provider_website:lead.website||'',
+      qualification:lead.qualification||'',
+      service_type:lead.serviceType||'',
+      service_type_code:lead.typeValue||'',
+      category:lead.category||'',
+      intro:lead.text||'',
+      qualification_status:lead.qualification?'pending_registry_check':'pending',
+      user_visible:false,
+      can_match_future_demand:true
+    }
+  });
+}
+
+async function handleCollectedSupplyLead(text='', options={}){
+  const lead=detectCollectedSupplyLead(text, options);
+  if(!lead)return false;
+  syncCollectedSupplyLead(lead,options.source||'user_collected_supply').catch(e=>console.warn('collected supply sync failed',e));
+  const bits=[
+    lead.name||lead.serviceType||'这条线索',
+    lead.phone?`电话 ${lead.phone}`:'',
+    lead.qualification?`资质 ${lead.qualification}`:''
+  ].filter(Boolean).join('，');
+  await agentSay(`收到，${bits}我记下了。下次有人找${lead.serviceType||'这类服务'}，我会先拿来核验匹配。`,120);
+  return true;
 }
 
 function professionalVerificationPolicy(supply={}){
@@ -7063,7 +7157,7 @@ function resizeImageForRecognition(file){
 function normalizeImageWishDraft(draft={}){
   const category=draft.category||'其他互助';
   let wishType=draft.wishType||'need_paid';
-  if(!['need_free','need_paid'].includes(wishType))wishType='need_paid';
+  if(!['need_free','need_paid','offer_paid','offer_free','sell'].includes(wishType))wishType='need_paid';
   const text=[
     draft.title?`标题：${draft.title}`:'',
     draft.text||'图片需求已识别，请补充说明。'
@@ -7073,8 +7167,43 @@ function normalizeImageWishDraft(draft={}){
     category,
     city:draft.city||currentRegion.city||currentRegion.country||'本地',
     text,
-    budget:draft.budget||''
+    budget:draft.budget||'',
+    title:draft.title||'',
+    providerName:draft.providerName||'',
+    phone:draft.phone||'',
+    website:draft.website||'',
+    qualification:draft.qualification||''
   };
+}
+
+async function syncImageSupplyLead(draft={}){
+  const combined=[
+    draft.providerName,
+    draft.title,
+    draft.category,
+    draft.text,
+    draft.phone,
+    draft.website,
+    draft.qualification
+  ].filter(Boolean).join(' ');
+  const lead=detectCollectedSupplyLead(combined,{
+    fromImage:true,
+    providerName:draft.providerName||draft.title||'',
+    phone:draft.phone||'',
+    website:draft.website||'',
+    qualification:draft.qualification||'',
+    city:draft.city||currentRegion.city||''
+  });
+  if(!lead)return false;
+  await syncCollectedSupplyLead(lead,'image_supply_intel');
+  const bits=[
+    lead.name||lead.serviceType||'这条线索',
+    lead.phone?`电话 ${lead.phone}`:'',
+    lead.qualification?`资质 ${lead.qualification}`:'',
+    lead.website?`网址 ${lead.website}`:''
+  ].filter(Boolean).join('，');
+  await agentSay(`收到，${bits}我收录了。以后有人找${lead.serviceType||'这类服务'}，我会先拿来核验匹配。`,120);
+  return true;
 }
 
 function renderReminderSuggestionCard(draft={}){
@@ -7116,6 +7245,19 @@ async function analyzeImageToWishWall(file,label){
     const data=await res.json();
     trackTokenUsage(data.huaban_usage,{feature:'image_wish',source:'image_upload'}).catch(()=>{});
     const draft=normalizeImageWishDraft(data.draft||{});
+    if(/^offer_|sell/.test(draft.wishType||'')){
+      recordAgentLearning('supply_image',{
+        post:draft,
+        city:draft.city,
+        user_text:draft.text,
+        result:'已从图片整理供给线索',
+        next_action:'核验联系方式、资质和服务范围后用于需求匹配'
+      },'image-supply-learning');
+      thinking.remove();
+      if(await syncImageSupplyLead(draft))return;
+      await agentSay('图片里的供给信息我看到了，但联系方式或服务类型还不够清楚。你把电话、服务内容或资质号补一句，我继续收录。',120);
+      return;
+    }
     recordAgentLearning('work_order',{
       post:draft,
       city:draft.city,
@@ -7791,6 +7933,9 @@ async function sendMessage(){ stopTTS();
   }
   if(isAddHomeHelpIntent(msg)){
     await agentSay('可以。用 Safari 打开华伴，点分享按钮，再选“添加到主屏幕”。安卓一般点浏览器菜单，再选“添加到主屏幕”。',120);
+    return;
+  }
+  if(await handleCollectedSupplyLead(msg,{voice:false})){
     return;
   }
   if(await explainLocalServiceSources(msg,{voice:false})){
