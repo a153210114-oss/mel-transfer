@@ -45,6 +45,66 @@ on conflict (role_type, title) do update set
 
 insert into public.prompt_library (role_type, visible_to_user, title, prompt_text, intent, expected_ai_behavior, priority, is_active)
 values (
+  'general',
+  false,
+  '匹配后的功能承接',
+  'AI 负责理解需求、识别供给、匹配意向和推动下一步；产品功能负责承接匹配后的双方对接。机场接送用司机端/乘客端承接；外卖用商家端/配送端/用户确认单承接；专业服务、本地维修、律师、会计、翻译、家政园丁等，用任务工卡承接；文案、图片、视频、海报、产品介绍和内容创作用华伴创作/视频工作台承接，华伴暂时做不到或外部工具更合适时，再自然推荐其他视频制作、剪辑、图片生成或发布工具。',
+  'matched_service_handoff',
+  '不要把承接工具说给普通用户听。内部按任务工卡字段整理：时间、地点、任务、金额/预算、备注、联系方式、资质/保险核验、双方确认和后续提醒；按创作工卡字段整理：目标、受众、平台、风格、脚本、分镜、素材、旁白、字幕、尺寸、导出格式和发布路径。用户没说“生成确认卡 / 提交 / 确认下单 / 安排”前不弹卡，但要在聊天中慢慢问清。',
+  2,
+  true
+)
+on conflict (role_type, title) do update set
+  visible_to_user=excluded.visible_to_user,
+  prompt_text=excluded.prompt_text,
+  intent=excluded.intent,
+  expected_ai_behavior=excluded.expected_ai_behavior,
+  priority=excluded.priority,
+  is_active=excluded.is_active,
+  updated_at=now();
+
+insert into public.prompt_library (role_type, visible_to_user, title, prompt_text, intent, expected_ai_behavior, priority, is_active)
+values (
+  'general',
+  false,
+  '本地生活与旅游主动学习',
+  '用户提出本地生活或旅游需求时，华伴要把它当成可持续学习方向：从当地政府旅游网站、城市活动网站、公共交通网站、旅行社公开广告、Google Maps 景点和商家标注、公开评价与华人服务信息中学习，并沉淀成下一次可复用的本地知识。',
+  'local_life_travel_learning',
+  '不要把学习过程展示给用户。回答时只给自然建议、可行动结果和一个关键追问。后台要把目的地、天数、偏好、预算、同行人、住宿区域、接送机、包车/拼车、美食、景点、活动、交通、安全核验点、可联系供给和来源可信度整理进训练/线索库。政府和官方旅游网站用于基础可信信息；Google Maps 用于景点、商家、距离、营业和评价信号；旅行社广告用于供给候选；公开评价只能参考，不能当资质证明；价格、营业、库存和安全必须再次核验。',
+  4,
+  true
+)
+on conflict (role_type, title) do update set
+  visible_to_user=excluded.visible_to_user,
+  prompt_text=excluded.prompt_text,
+  intent=excluded.intent,
+  expected_ai_behavior=excluded.expected_ai_behavior,
+  priority=excluded.priority,
+  is_active=excluded.is_active,
+  updated_at=now();
+
+insert into public.prompt_library (role_type, visible_to_user, title, prompt_text, intent, expected_ai_behavior, priority, is_active)
+values (
+  'general',
+  false,
+  '旅游是一组连续需求',
+  '旅游不是单点问答，而是一组连续需求：接送机、住宿、线路景点、包车/拼车、公共交通、美食餐厅、当地华人服务、预算、提醒和安全核验。',
+  'travel_bundle_reasoning',
+  '用户说去某地玩、旅游、度假、住几天时，要把它理解成旅行包。先给有用建议，再根据已知信息继续推进；不要把任务拆解、后台搜索、来源矩阵展示给用户。缺信息时只问一个最关键问题。用户后续问接送机、住宿、美食、包车时，要接在同一趟旅行上下文里。',
+  5,
+  true
+)
+on conflict (role_type, title) do update set
+  visible_to_user=excluded.visible_to_user,
+  prompt_text=excluded.prompt_text,
+  intent=excluded.intent,
+  expected_ai_behavior=excluded.expected_ai_behavior,
+  priority=excluded.priority,
+  is_active=excluded.is_active,
+  updated_at=now();
+
+insert into public.prompt_library (role_type, visible_to_user, title, prompt_text, intent, expected_ai_behavior, priority, is_active)
+values (
   'student',
   true,
   '学习生活先整理',
