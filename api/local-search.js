@@ -71,6 +71,10 @@ function hasServiceMatch(raw = '', kind = 'local_service') {
   return (map[kind] || /服务|service|tradie|维修|repair|handyman/i).test(raw);
 }
 
+function requiresStrictServiceMatch(kind = 'local_service') {
+  return ['electrician', 'plumber', 'cleaner', 'gardener', 'removalist', 'delivery'].includes(kind);
+}
+
 function sourceLabel(row = {}) {
   const channel = cleanText(row.channel);
   const status = cleanText(row.status);
@@ -115,11 +119,15 @@ function scoreLead(row = {}, ctx = {}) {
     return { score: 0, reasons: [], phone: '' };
   }
   const raw = [row.name, row.contact, row.channel, row.need_type, row.message, row.city, row.country, JSON.stringify(fields)].filter(Boolean).join(' ');
+  const serviceMatched = hasServiceMatch(raw, ctx.kind);
+  if (requiresStrictServiceMatch(ctx.kind) && !serviceMatched) {
+    return { score: 0, reasons: [], phone: '' };
+  }
   let score = 0;
   const reasons = [];
   const phone = extractPublicPhone(raw);
   if (phone) { score += 25; reasons.push('有公开电话'); }
-  if (hasServiceMatch(raw, ctx.kind)) { score += 30; reasons.push(`服务匹配${serviceLabel(ctx.kind)}`); }
+  if (serviceMatched) { score += 30; reasons.push(`服务匹配${serviceLabel(ctx.kind)}`); }
   if (ctx.city && raw.toLowerCase().includes(String(ctx.city).toLowerCase())) { score += 15; reasons.push(`城市匹配${ctx.city}`); }
   if (ctx.place && raw.toLowerCase().includes(String(ctx.place).toLowerCase())) { score += 15; reasons.push(`位置接近${ctx.place}`); }
   if (/official_registry|qualification|verified|approved|public_register/i.test(raw)) { score += 10; reasons.push('可做资质核验'); }

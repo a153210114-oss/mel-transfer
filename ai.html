@@ -2892,9 +2892,6 @@ async function sendVoiceMessage(text){
     await agentSay('可以。用 Safari 打开华伴，点分享按钮，再选“添加到主屏幕”。安卓一般点浏览器菜单，再选“添加到主屏幕”。',120);
     return;
   }
-  if(await handleLocalServiceDemand(corrected,{voice:true})){
-    return;
-  }
   if(await explainLocalServiceSources(corrected,{voice:true})){
     return;
   }
@@ -2905,6 +2902,9 @@ async function sendVoiceMessage(text){
     return;
   }
   if(await continueLocalServiceDemand(corrected,{voice:true})){
+    return;
+  }
+  if(await handleLocalServiceDemand(corrected,{voice:true})){
     return;
   }
   if(isPlatformGuideIntent(corrected)){
@@ -4425,7 +4425,7 @@ function isLocalServiceUrgencyFollowup(text=''){
 }
 
 function isLocalServiceContinuationQuestion(text=''){
-  return /(完啦|完了|就这样|这就没有|没有了|还有吗|然后呢|继续|接着|下一步|怎么办|咋办|怎么联系|电话呢|号码呢|没电话)/i.test(String(text||''));
+  return /(完啦|完了|就这样|这就没有|没有了|还有吗|然后呢|继续|接着|下一步|怎么办|咋办|怎么联系|电话呢|号码呢|没电话|没有看到|没看到|不是.*(电工|水管|清洁|园丁|搬家|搬运|跑腿|服务)|不对|错了|不匹配|不是我要的)/i.test(String(text||''));
 }
 
 async function handleLocalServiceUrgency(text='', options={}){
@@ -4571,6 +4571,18 @@ function localServiceLeadMatches(lead={}, post={}){
   return sameCity && serviceMatch && extractPublicPhone(raw);
 }
 
+function localServiceCandidateMatchesPost(item={}, post={}){
+  const raw=[item.name,item.source,item.sourceLabel,item.status,(item.reasons||[]).join(' '),item.message,item.note].filter(Boolean).join(' ');
+  const category=`${post.category||''} ${post.text||''}`;
+  if(/电工|跳闸|断电|电路|electrician|electrical/i.test(category))return /电工|跳闸|断电|电路|electrician|electrical/i.test(raw);
+  if(/水管|漏水|管道|plumber/i.test(category))return /水管|漏水|管道|plumber/i.test(raw);
+  if(/清洁|clean/i.test(category))return /清洁|clean/i.test(raw);
+  if(/园丁|花园|garden/i.test(category))return /园丁|花园|garden/i.test(raw);
+  if(/搬家|搬运/i.test(category))return /搬家|搬运|removal/i.test(raw);
+  if(/跑腿|配送|delivery|courier/i.test(category))return /跑腿|配送|delivery|courier/i.test(raw);
+  return true;
+}
+
 async function fetchLocalServiceCandidates(post={}){
   const apiPayload={
     text:post.text||'',
@@ -4604,6 +4616,7 @@ async function fetchLocalServiceCandidates(post={}){
             reasons:item.reasons||[]
           })).filter(item=>{
             if(/华伴主动学习|主动学习|AI训练|训练样本/i.test(`${item.name} ${item.source}`))return false;
+            if(!localServiceCandidateMatchesPost(item,post))return false;
             return Boolean(item.phone||item.sourceUrl);
           });
         }
@@ -4688,7 +4701,7 @@ async function renderLocalServiceCandidates(post={}, candidates=[]){
   const reasonText=(first.reasons||[]).slice(0,3).join('、');
   const more=withPhone.slice(1).map((item,idx)=>`<br>${idx+2}. ${companionEscape(item.name)}：<a href="tel:${companionEscape(item.phone)}" style="color:var(--wx-green);font-weight:800;">${companionEscape(item.phone)}</a>`).join('');
   await agentSay(`
-    <strong>收到，我先找到一个可联系对象。</strong><br>
+    <strong>我先找到一个${companionEscape(post.category||'本地服务')}相关的可联系对象。</strong><br>
     ${companionEscape(first.name)}：<a href="tel:${companionEscape(first.phone)}" style="color:var(--wx-green);font-weight:800;">${companionEscape(first.phone)}</a><br>
     <span style="color:var(--wx-subtext,#607080);font-size:12px;">来源：${companionEscape(first.sourceLabel||'已收录线索')} · ${companionEscape(first.source)} · ${companionEscape(first.status||'待核验')}${reasonText?` · 匹配：${companionEscape(reasonText)}`:''}</span>${more}<br><br>
     <strong>短信草稿：</strong><br>
@@ -4737,6 +4750,7 @@ async function continueLocalServiceDemand(text='', options={}){
 
 async function handleLocalServiceDemand(text='', options={}){
   if(!isLocalServiceDemand(text))return false;
+  if(readPendingLocalService()&&isLocalServiceContinuationQuestion(text))return false;
   const clean=String(text||'').trim();
   const draft=buildWishWallDraft(clean);
   const post={
@@ -7756,9 +7770,6 @@ async function sendMessage(){ stopTTS();
     await agentSay('可以。用 Safari 打开华伴，点分享按钮，再选“添加到主屏幕”。安卓一般点浏览器菜单，再选“添加到主屏幕”。',120);
     return;
   }
-  if(await handleLocalServiceDemand(msg,{voice:false})){
-    return;
-  }
   if(await explainLocalServiceSources(msg,{voice:false})){
     return;
   }
@@ -7769,6 +7780,9 @@ async function sendMessage(){ stopTTS();
     return;
   }
   if(await continueLocalServiceDemand(msg,{voice:false})){
+    return;
+  }
+  if(await handleLocalServiceDemand(msg,{voice:false})){
     return;
   }
   if(isPlatformGuideIntent(msg)){
