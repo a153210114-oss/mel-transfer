@@ -105,6 +105,15 @@ function buildSearchQueries({ text = '', city = 'Melbourne', place = '', kind = 
 
 function scoreLead(row = {}, ctx = {}) {
   const fields = row.fields || {};
+  if (
+    row.lead_type === 'system' ||
+    row.channel === 'agent_learning' ||
+    fields.user_visible === false ||
+    fields.event === 'agent_learning' ||
+    /华伴主动学习|主动学习|AI训练|训练样本/i.test(String(row.name || ''))
+  ) {
+    return { score: 0, reasons: [], phone: '' };
+  }
   const raw = [row.name, row.contact, row.channel, row.need_type, row.message, row.city, row.country, JSON.stringify(fields)].filter(Boolean).join(' ');
   let score = 0;
   const reasons = [];
@@ -136,6 +145,13 @@ function normalizeLead(row = {}, ctx = {}) {
     reasons: scored.reasons,
     message: row.message || ''
   };
+}
+
+function isUsableCandidate(item = {}) {
+  if (!item || item.score <= 0) return false;
+  if (/华伴主动学习|主动学习|AI训练|训练样本/i.test(String(item.name || ''))) return false;
+  if (/agent_learning|learn_/i.test(`${item.source || ''} ${item.message || ''}`)) return false;
+  return Boolean(item.phone || item.sourceUrl);
 }
 
 async function fetchStoredRows() {
@@ -190,7 +206,7 @@ module.exports = async function handler(req, res) {
     const rows = await fetchStoredRows();
     const candidates = rows
       .map((row) => normalizeLead(row, ctx))
-      .filter((item) => item.score > 0)
+      .filter(isUsableCandidate)
       .sort((a, b) => b.score - a.score)
       .slice(0, 8);
     const webResults = await optionalWebSearch(ctx);

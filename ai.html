@@ -2898,6 +2898,9 @@ async function sendVoiceMessage(text){
   if(await explainLocalServiceSources(corrected,{voice:true})){
     return;
   }
+  if(await handleLocalServiceContinuation(corrected,{voice:true})){
+    return;
+  }
   if(await handleLocalServiceUrgency(corrected,{voice:true})){
     return;
   }
@@ -4421,6 +4424,10 @@ function isLocalServiceUrgencyFollowup(text=''){
   return /(赶紧|快点|马上|立刻|现在|急|着急|很急|尽快|asap|urgent|emergency)/i.test(String(text||''));
 }
 
+function isLocalServiceContinuationQuestion(text=''){
+  return /(完啦|完了|就这样|这就没有|没有了|还有吗|然后呢|继续|接着|下一步|怎么办|咋办|怎么联系|电话呢|号码呢|没电话)/i.test(String(text||''));
+}
+
 async function handleLocalServiceUrgency(text='', options={}){
   const pending=readPendingLocalService();
   if(!pending||!isLocalServiceUrgencyFollowup(text))return false;
@@ -4510,6 +4517,29 @@ async function explainLocalServiceSources(text='', options={}){
   return true;
 }
 
+async function handleLocalServiceContinuation(text='', options={}){
+  const pending=readPendingLocalService();
+  if(!pending||!isLocalServiceContinuationQuestion(text))return false;
+  const candidates=await fetchLocalServiceCandidates(pending).catch(()=>[]);
+  if(await renderLocalServiceCandidates(pending,candidates))return true;
+  syncAISearchTaskIfNeeded(pending.text, '用户追问本地服务搜索下一步；当前没有直接可联系号码，需要继续核验公开来源。', 'local_service_user_followup_no_result');
+  try{
+    const reply=await askAIContextReply(text,`
+用户在追问刚才的本地服务搜索是否只有这些结果。请像真正办事的华伴一样回答，不要报错，不要甩锅。
+必须表达：
+- 现在还没有可直接拨打并且适合展示的号码；
+- 不把内部学习记录或未核验信息当结果给用户；
+- 继续查公开来源和资质，找到电话后写短信草稿；
+- 如果缺位置，只问一个关键位置。
+当前结构化需求：${JSON.stringify(pending)}
+回复不超过 3 句。`, 'local_service_continuation_no_result');
+    await agentSay(reply||'还没完。我不会把没核验的内部记录当结果给你；现在继续查可直接联系的号码，找到后把短信草稿给你复制。',80);
+  }catch(e){
+    await agentSay('还没完。我不会把没核验的内部记录当结果给你；现在继续查可直接联系的号码，找到后把短信草稿给你复制。',80);
+  }
+  return true;
+}
+
 function extractPublicPhone(text=''){
   const source=String(text||'');
   const candidates=source.match(/(?:\+?61|0)\s?\d[\d\s().-]{7,}\d/g)||[];
@@ -4572,7 +4602,10 @@ async function fetchLocalServiceCandidates(post={}){
             status:item.status||'待核验',
             score:item.score||0,
             reasons:item.reasons||[]
-          })).filter(item=>item.phone||item.sourceUrl||item.source);
+          })).filter(item=>{
+            if(/华伴主动学习|主动学习|AI训练|训练样本/i.test(`${item.name} ${item.source}`))return false;
+            return Boolean(item.phone||item.sourceUrl);
+          });
         }
         post.searchQueries=data.searchQueries||[];
         post.searchEngine=data;
@@ -4640,10 +4673,12 @@ async function renderLocalServiceCandidates(post={}, candidates=[]){
   if(!candidates.length)return false;
   const withPhone=candidates.filter(item=>item.phone);
   if(!withPhone.length){
+    const withSource=candidates.filter(item=>item.sourceUrl);
+    if(!withSource.length)return false;
     const queries=(post.searchQueries||post.searchEngine?.searchQueries||[]).slice(0,4);
     await agentSay(`
       <strong>我先找到了可查入口，还没有直接可拨电话。</strong><br>
-      ${candidates.slice(0,3).map((item,idx)=>`${idx+1}. ${companionEscape(item.name)} · ${companionEscape(item.sourceLabel||'公开入口')}${item.sourceUrl?`<br><a href="${companionEscape(item.sourceUrl)}" target="_blank" style="color:var(--wx-green);font-weight:800;">打开来源</a>`:''}`).join('<br><br>')}
+      ${withSource.slice(0,3).map((item,idx)=>`${idx+1}. ${companionEscape(item.name)} · ${companionEscape(item.sourceLabel||'公开入口')}<br><a href="${companionEscape(item.sourceUrl)}" target="_blank" style="color:var(--wx-green);font-weight:800;">打开来源</a>`).join('<br><br>')}
       ${queries.length?`<br><br><strong>下一步搜索词：</strong><br>${queries.map(q=>`· ${companionEscape(q)}`).join('<br>')}`:''}
       <div style="margin-top:8px;color:var(--wx-subtext,#607080);font-size:12px;">我会继续查电话和资质；找到可联系号码再把短信写好。</div>
     `,80);
@@ -7727,6 +7762,9 @@ async function sendMessage(){ stopTTS();
     return;
   }
   if(await explainLocalServiceSources(msg,{voice:false})){
+    return;
+  }
+  if(await handleLocalServiceContinuation(msg,{voice:false})){
     return;
   }
   if(await handleLocalServiceUrgency(msg,{voice:false})){
