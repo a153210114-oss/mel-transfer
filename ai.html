@@ -3058,10 +3058,13 @@ async function sendVoiceMessage(text){
     if(actionMatch){
       await delay(800);
       handleAction(actionMatch[1], actionMatch[2]);
+    }else{
+      await maybeAdvanceRideOrderFromConversation(corrected, clean);
     }
   } catch(e){
     typing.remove();
     addMsg(chatServiceErrorMessage(e));
+    await maybeAdvanceRideOrderFromConversation(corrected||text, '');
     recordAITrainingQuestion(text, '语音对话时 AI 服务异常：'+String(e?.message||e).slice(0,180), 'voice-error');
     syncAISearchTaskIfNeeded(corrected||text, '', 'voice_chat_error');
     isSpeaking = false;
@@ -3530,9 +3533,17 @@ async function supaInsertLead(data){
   }catch(primaryError){
     try{
       return await supaInsert('user_leads', {
+        tenant_id: payload.tenant_id,
+        lead_type: payload.lead_type,
+        channel: payload.channel,
+        need_type: payload.need_type,
+        name: payload.name,
+        contact: payload.contact,
+        message: payload.message,
         city:payload.city,
         country:payload.country,
-        status:`${payload.channel||payload.need_type||'lead'}:${payload.status||'new'}`
+        status:`${payload.channel||payload.need_type||'lead'}:${payload.status||'new'}`,
+        fields: payload.fields
       });
     }catch(secondaryError){
       try{
@@ -6831,6 +6842,163 @@ function buildTransactionAgreement(post={}, wo={}){
   };
 }
 
+function huabanUnifiedOrderType(post={}, wo={}){
+  const text=`${post.flow||''} ${post.category||''} ${post.text||''} ${wo.task||''}`;
+  if(post.flow==='delivery_order'||/外卖|送餐|配送|点餐|餐馆|餐厅|中餐|盒饭|便当|奶茶|买菜/i.test(text))return 'delivery';
+  if(/商城|商品|零售|买东西|卖东西|电商|网店|二手|团购|代购|蜂蜜|茶叶|保健品|产品/i.test(text))return 'retail';
+  if(/接机|送机|包车|用车|司机|航班|机场|旅游|租车|行程/i.test(text))return 'travel';
+  if(/律师|会计|电工|水管|维修|清洁|园丁|家政|搬家|搬运|跑腿|翻译|报税|税务|上门/i.test(text))return 'local_service';
+  return 'service';
+}
+
+function huabanUnifiedOrderTitle(post={}, wo={}){
+  const type=huabanUnifiedOrderType(post,wo);
+  const label={
+    delivery:'外卖配送订单',
+    retail:'商品零售订单',
+    travel:'出行/旅游订单',
+    local_service:'本地服务订单',
+    service:'服务订单'
+  }[type]||'华伴订单';
+  const task=String(wo.task||post.text||'').replace(/\s+/g,' ').slice(0,48);
+  return task ? `${label} · ${task}` : label;
+}
+
+function buildTypeSpecificOrderPayload(orderType, post={}, wo={}){
+  const baseText=`${post.category||''} ${post.text||''} ${wo.task||''}`;
+  if(orderType==='delivery'){
+    return {
+      template:'delivery_order_v1',
+      item:wo.task,
+      quantity:wo.quantity||'',
+      taste:wo.taste||'',
+      allergy:wo.allergy||'',
+      merchant_preference:wo.merchant_preference||'',
+      delivery_time:wo.time,
+      delivery_address:wo.place,
+      budget:wo.amount,
+      payment_method:wo.payment_method||'双方确认',
+      notes:wo.remark,
+      merchant_status:'waiting_match',
+      courier_status:'waiting_match'
+    };
+  }
+  if(orderType==='retail'){
+    return {
+      template:'retail_order_v1',
+      product_name:wo.task,
+      specification:'',
+      quantity:wo.quantity||'待确认',
+      unit_price:'',
+      total_budget:wo.amount,
+      delivery_method:/自提|pickup/i.test(baseText)?'自提':'配送/自提待确认',
+      delivery_address:wo.place,
+      merchant_preference:'',
+      inventory_status:'待商家确认',
+      payment_method:wo.payment_method||'双方确认',
+      after_sales_note:'退换、保修、配送损耗和额外费用由双方确认'
+    };
+  }
+  if(orderType==='local_service'){
+    return {
+      template:'local_service_order_v1',
+      service_name:wo.task,
+      service_address:wo.place,
+      service_time:wo.time,
+      budget:wo.amount,
+      urgency:/急|马上|现在|尽快|紧急/i.test(baseText)?'urgent':'normal',
+      qualification_required:/律师|会计|电工|水管|报税|税务|持牌|保险/i.test(baseText),
+      verification_note:'如涉及持牌、保险或监管要求，需在接单前核验',
+      materials_or_photos:[],
+      payment_method:wo.payment_method||'双方确认',
+      service_scope_note:wo.remark
+    };
+  }
+  if(orderType==='travel'){
+    return {
+      template:'travel_order_v1',
+      trip_type:/接机/i.test(baseText)?'接机':(/送机/i.test(baseText)?'送机':(/包车/i.test(baseText)?'包车':'出行/旅游')),
+      pickup_address:wo.place,
+      dropoff_address:'',
+      scheduled_time:wo.time,
+      vehicle_preference:'',
+      passenger_count:'',
+      luggage_count:'',
+      flight_or_route:'',
+      budget:wo.amount,
+      payment_method:wo.payment_method||'双方确认',
+      notes:wo.remark
+    };
+  }
+  return {
+    template:'service_order_v1',
+    task:wo.task,
+    place:wo.place,
+    time:wo.time,
+    amount:wo.amount,
+    payment_method:wo.payment_method||'双方确认',
+    notes:wo.remark
+  };
+}
+
+async function syncUnifiedHuabanOrder(post={}){
+  const wo=post.workOrder||inferWorkOrderFields(post);
+  const agreement=buildTransactionAgreement(post,wo);
+  const matchingPreference=detectMatchingPreference(`${post.text||''} ${wo.remark||''} ${wo.amount||''}`);
+  const orderType=huabanUnifiedOrderType(post,wo);
+  const typePayload=buildTypeSpecificOrderPayload(orderType,post,wo);
+  const now=new Date().toISOString();
+  const orderNo=agreement.order_no||`HB-${Date.now().toString(36).toUpperCase()}`;
+  return supaInsert('huaban_orders',{
+    tenant_id:TENANT_ID,
+    order_no:orderNo,
+    order_type:orderType,
+    source_channel:post.flow==='delivery_order'?'delivery_order':'agent_work_order',
+    title:huabanUnifiedOrderTitle(post,wo),
+    description:String(post.text||wo.task||'').slice(0,1200),
+    buyer_name:getPassenger().name||'华伴用户',
+    buyer_contact:post.contact||betaContact(),
+    city:post.city||currentRegion.city||'',
+    country:currentRegion.country||'',
+    address:wo.place||'',
+    scheduled_at:wo.time||'',
+    amount_text:wo.amount||'',
+    currency:currentRegion.currency||'',
+    status:'pending_supplier',
+    user_confirmed_at:wo.user_confirmed?now:null,
+    supplier_confirmed_at:null,
+    agreement_version:agreement.terms_version||'transaction_terms_v1_20260709',
+    work_order:wo,
+    transaction_agreement:agreement,
+    matching_preference:matchingPreference,
+    performance_proof:{
+      photos:[],
+      google_maps:[],
+      navigation:[],
+      chat_records:[],
+      timeline:[{event:'user_confirmed',at:now,note:'用户确认订单/工卡'}]
+    },
+    referral_chain:{
+      referrer_code:getFriendCode(),
+      source:'huaban_ai_work_order',
+      recommendation_loop:'需求方确认 -> 匹配供给 -> 供给方接单 -> 履约完成 -> 贡献记录'
+    },
+    fields:{
+      post,
+      agent_decision:buildAgentDecision(post,wo),
+      order_template:typePayload.template,
+      type_payload:typePayload,
+      delivery_order:orderType==='delivery'?typePayload:null,
+      retail_order:orderType==='retail'?typePayload:null,
+      local_service_order:orderType==='local_service'?typePayload:null,
+      travel_order:orderType==='travel'?typePayload:null,
+      supplier_status:'waiting_match',
+      buyer_status:'confirmed',
+      contract_part:'work_order_and_confirmation_snapshot'
+    }
+  });
+}
+
 function inferWorkOrderFields(post={}){
   const text=String(post.text||'');
   const amountText=String(post.budget||'');
@@ -7049,6 +7217,7 @@ async function confirmWorkOrder(id){
     next_action:workOrderNextAction(post)
   },post.flow==='delivery_order'?'delivery-confirm-card':'work-order-confirm-card');
   syncWorkOrder(post).catch(e=>console.warn('work order sync failed',e));
+  syncUnifiedHuabanOrder(post).catch(e=>console.warn('unified order sync failed',e));
   syncWishWallPost({...post,source:'work_order_confirmed'}).catch(e=>console.warn('intel task sync failed',e));
   await agentSay('收到，已确认。我会继续安排；如果还缺关键信息，我再问你。',140);
 }
@@ -8597,6 +8766,8 @@ async function sendMessage(){ stopTTS();
     if(actionMatch){
       await delay(800);
       handleAction(actionMatch[1],actionMatch[2]);
+    }else{
+      await maybeAdvanceRideOrderFromConversation(msg, clean);
     }
   }catch(e){
     typing.remove();
@@ -8608,10 +8779,52 @@ async function sendMessage(){ stopTTS();
     }else{
       addMsg(chatServiceErrorMessage(e));
     }
+    await maybeAdvanceRideOrderFromConversation(msg, '');
     recordAITrainingQuestion(msg, '文字对话时 AI 服务异常：'+String(e?.message||e).slice(0,180), 'chat-error');
     syncAISearchTaskIfNeeded(msg, '', 'text_chat_error');
     console.error('sendMessage error:',e);
   }
+}
+
+function rideOrderContextText(currentUserText='', aiReply=''){
+  return [
+    ...aiHistory.slice(-10).map(item=>String(item?.content||'')),
+    currentUserText,
+    aiReply
+  ].join(' ');
+}
+
+function wantsRideOrderAdvance(text=''){
+  return /(安排|预约|预订|生成确认卡|确认卡|确认下单|提交|下单|按订单|订单处理|先确定|继续安排|继续推进|找好了吗|确定送机|确定接机)/i.test(text);
+}
+
+function hasRideOrderContext(text=''){
+  return /(接机|送机|去机场|从机场|机场|图拉马林|Tullamarine|航班|起飞|落地|着陆|出关|上车|包车|用车|司机)/i.test(text);
+}
+
+function hasOpenRideOrderUI(){
+  return Boolean(
+    document.querySelector('.vehicle-card') ||
+    Array.from(document.querySelectorAll('.confirm-card')).some(card=>
+      /行程确认|订单确认|车型|机场|出发地|目的地|司机到达|上车时间/.test(card.innerText||'')
+    )
+  );
+}
+
+async function maybeAdvanceRideOrderFromConversation(userText='', aiReply=''){
+  const ctx=rideOrderContextText(userText, aiReply);
+  if(!wantsRideOrderAdvance(ctx)||!hasRideOrderContext(ctx)||hasOpenRideOrderUI())return false;
+  if(currentRole!=='passenger')currentRole='passenger';
+  detectRoundTrip(ctx);
+  extractInfo(ctx);
+  if(!S.direction){
+    if(/去机场|飞|起飞|赶飞机|送机/i.test(ctx))S.direction='to_airport';
+    else if(/落地|着陆|抵达|到达|出关|接机|从机场/i.test(ctx))S.direction='from_airport';
+  }
+  if(!S.direction&&S.trip_type!=='charter')return false;
+  await delay(700);
+  await handleAction('show_vehicles', S.trip_type==='charter'?'charter':S.direction);
+  return true;
 }
 
 function chatServiceErrorMessage(error){
@@ -8932,7 +9145,7 @@ async function showConfirmCard(){
 
   const div=document.createElement('div');div.className='confirm-card';
   div.innerHTML=`
-    <div style="font-size:14px;font-weight:900;color:white;margin-bottom:12px;">📋 行程确认</div>
+    <div style="font-size:14px;font-weight:900;color:white;margin-bottom:12px;">📋 ${dirText}订单确认</div>
     <div class="confirm-row"><span class="confirm-label">类型</span><span class="confirm-value">${dirText}</span></div>
     <div class="confirm-row"><span class="confirm-label">机场</span><span class="confirm-value">${regionAirport().name}</span></div>
     <div class="confirm-row"><span class="confirm-label">日期</span><span class="confirm-value">${S.date?(()=>{const d=new Date(S.date+'T00:00:00');return d.getMonth()+1+'月'+d.getDate()+'日';})():'未填'}</span></div>
@@ -12144,11 +12357,13 @@ function showAddressInputCard(label, addrs) {
   scrollBottom();
   setTimeout(()=>{
     initAddressAutocomplete();
+    setTimeout(repairAddressInputFallback, 500);
     document.getElementById('addr-input')?.focus();
   }, 300);
 }
 
 function confirmManualAddress() {
+  repairAddressInputFallback();
   const val = document.getElementById('addr-input')?.value.trim();
   if (!val) { alert('请输入地址'); return; }
   useGPSAddr(val, null);
@@ -12179,6 +12394,15 @@ function initAddressAutocomplete() {
         saveAddress(place.formatted_address);
       }
     });
+  });
+}
+
+function repairAddressInputFallback() {
+  document.querySelectorAll('.address-autocomplete').forEach(input => {
+    if (input.disabled) {
+      input.disabled = false;
+      input.placeholder = '输入地址...';
+    }
   });
 }
 
@@ -12217,6 +12441,7 @@ async function showAddressInput(label, onConfirm) {
 
   setTimeout(() => {
     initAddressAutocomplete();
+    setTimeout(repairAddressInputFallback, 500);
     document.getElementById('addr-input')?.focus();
   }, 300);
 
@@ -12232,6 +12457,7 @@ function useAddress(addr, el) {
 }
 
 async function confirmAddress() {
+  repairAddressInputFallback();
   const val = document.getElementById('addr-input')?.value.trim();
   if (!val) { alert('请输入地址'); return; }
   S.address = val;

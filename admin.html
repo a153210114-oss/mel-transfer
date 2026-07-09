@@ -488,6 +488,9 @@ body.admin-unlocked .admin-auth { display: none; }
     <div class="nav-item" onclick="showSection('delivery')">
       <span class="nav-icon">🍱</span> 外卖平台
     </div>
+    <div class="nav-item" onclick="showSection('orders')">
+      <span class="nav-icon">🧾</span> 统一订单池
+    </div>
   </div>
 
   <div class="nav-section">
@@ -836,6 +839,61 @@ body.admin-unlocked .admin-auth { display: none; }
           </thead>
           <tbody id="delivery-orders-body">
             <tr><td colspan="7" style="text-align:center;color:var(--text3);padding:40px;">加载中...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 统一订单池 ══ -->
+<div class="section" id="section-orders">
+  <div class="topbar">
+    <div>
+      <div class="page-title">统一订单池</div>
+      <div class="page-sub">外层流程统一，订单内容按类型使用不同模板</div>
+    </div>
+    <div class="topbar-actions">
+      <select class="input" id="unified-order-type-filter" onchange="loadUnifiedOrders()" style="width:150px;">
+        <option value="">全部类型</option>
+        <option value="retail">商品零售</option>
+        <option value="local_service">本地服务</option>
+        <option value="delivery">外卖配送</option>
+        <option value="travel">出行旅游</option>
+        <option value="service">其他服务</option>
+      </select>
+      <select class="input" id="unified-order-status-filter" onchange="loadUnifiedOrders()" style="width:150px;">
+        <option value="">全部状态</option>
+        <option value="pending_supplier">待匹配/待接单</option>
+        <option value="supplier_confirmed">供给方已接</option>
+        <option value="in_progress">履约中</option>
+        <option value="completed">已完成</option>
+        <option value="cancelled">已取消</option>
+      </select>
+      <button class="btn btn-ghost" onclick="loadUnifiedOrders()">↻ 刷新</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="card">
+      <div class="card-body" style="font-size:12px;color:var(--text2);line-height:1.7;border-bottom:1px solid var(--border);padding-bottom:16px;margin-bottom:8px;">
+        这里统一的是状态流和合同化节点：匹配供给、接单确认、履约中、完成。订单内容不强行统一，商品零售、本地服务、外卖、出行分别使用自己的字段模板。
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>订单</th>
+              <th>类型</th>
+              <th>用户</th>
+              <th>内容</th>
+              <th>时间/地点</th>
+              <th>金额</th>
+              <th>状态</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="unified-orders-body">
+            <tr><td colspan="8" style="text-align:center;color:var(--text3);padding:40px;">加载中...</td></tr>
           </tbody>
         </table>
       </div>
@@ -1893,6 +1951,7 @@ function showSection(name) {
     dashboard: loadDashboard,
     trips: loadTrips,
     delivery: loadDeliveryOrders,
+    orders: loadUnifiedOrders,
     drivers: loadDrivers,
     passengers: loadPassengers,
     suppliers: loadSuppliers,
@@ -2116,6 +2175,29 @@ function statusBadge(status) {
     cancelled:       ['badge-cancelled',  '✕ 已取消'],
   };
   const [cls, label] = map[status] || ['badge-inactive', status];
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+
+function unifiedOrderTypeLabel(type='service') {
+  const map = {
+    retail: '🛒 商品零售',
+    local_service: '🛠️ 本地服务',
+    delivery: '🍱 外卖配送',
+    travel: '🚗 出行旅游',
+    service: '🧩 其他服务'
+  };
+  return map[type] || type || '其他服务';
+}
+
+function unifiedOrderStatusBadge(status='pending_supplier') {
+  const map = {
+    pending_supplier: ['badge-pending', '⏳ 待匹配/待接单'],
+    supplier_confirmed: ['badge-confirmed', '✅ 供给方已接'],
+    in_progress: ['badge-inprogress', '🛣️ 履约中'],
+    completed: ['badge-completed', '✓ 已完成'],
+    cancelled: ['badge-cancelled', '✕ 已取消']
+  };
+  const [cls, label] = map[status] || ['badge-inactive', status || '未知'];
   return `<span class="badge ${cls}">${label}</span>`;
 }
 
@@ -2999,6 +3081,133 @@ async function updateDeliveryStatus(id, table='beta_leads', status='matching') {
     }
   }
   alert('更新失败：' + (lastError?.message || '没有找到这条订单'));
+}
+
+// ── Unified Orders ──
+function unifiedOrderPayload(order={}) {
+  const fields = order.fields || {};
+  return fields.type_payload || fields.delivery_order || fields.retail_order || fields.local_service_order || fields.travel_order || {};
+}
+
+function unifiedOrderSummary(order={}) {
+  const p = unifiedOrderPayload(order);
+  const wo = order.work_order || {};
+  const type = order.order_type || 'service';
+  if (type === 'delivery') {
+    return {
+      main: p.item || wo.task || order.title || '-',
+      sub: [p.quantity, p.taste, p.allergy, p.merchant_preference].filter(Boolean).join(' · ') || p.notes || ''
+    };
+  }
+  if (type === 'retail') {
+    return {
+      main: p.product_name || wo.task || order.title || '-',
+      sub: [p.specification, p.quantity, p.delivery_method, p.inventory_status].filter(Boolean).join(' · ')
+    };
+  }
+  if (type === 'local_service') {
+    return {
+      main: p.service_name || wo.task || order.title || '-',
+      sub: [p.urgency === 'urgent' ? '急单' : '', p.qualification_required ? '需资质核验' : '', p.service_scope_note].filter(Boolean).join(' · ')
+    };
+  }
+  if (type === 'travel') {
+    return {
+      main: p.trip_type || wo.task || order.title || '-',
+      sub: [p.flight_or_route, p.vehicle_preference, p.passenger_count ? `${p.passenger_count}人` : ''].filter(Boolean).join(' · ')
+    };
+  }
+  return {main: wo.task || order.title || '-', sub: wo.remark || order.description || ''};
+}
+
+function unifiedOrderPlaceTime(order={}) {
+  const p = unifiedOrderPayload(order);
+  const wo = order.work_order || {};
+  const time = p.delivery_time || p.service_time || p.scheduled_time || order.scheduled_at || wo.time || '-';
+  const place = p.delivery_address || p.service_address || p.pickup_address || order.address || wo.place || '-';
+  return {time, place};
+}
+
+async function loadUnifiedOrders() {
+  const typeFilter = document.getElementById('unified-order-type-filter')?.value || '';
+  const statusFilter = document.getElementById('unified-order-status-filter')?.value || '';
+  const tbody = document.getElementById('unified-orders-body');
+  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:30px;">加载中...</td></tr>';
+  try {
+    let q = `huaban_orders?tenant_id=eq.${TENANT_ID}&order=created_at.desc&limit=100`;
+    if (typeFilter) q += `&order_type=eq.${typeFilter}`;
+    if (statusFilter) q += `&status=eq.${statusFilter}`;
+    const orders = await supaFetch(q);
+    if (!orders.length) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:40px;">暂无统一订单</td></tr>';
+      return;
+    }
+    tbody.innerHTML = orders.map(order => {
+      const summary = unifiedOrderSummary(order);
+      const placeTime = unifiedOrderPlaceTime(order);
+      const supplier = order.supplier_name || order.supplier_contact || '<span style="color:var(--text3)">待匹配</span>';
+      return `<tr>
+        <td>
+          <div style="font-family:monospace;font-size:11px;color:var(--text3);">${escapeHtml(order.order_no || ('HB-'+String(order.id||'').slice(-6).toUpperCase()))}</div>
+          <div style="font-size:11px;color:var(--text3);">${fmtDateShort(order.created_at)}</div>
+        </td>
+        <td><span class="tag">${unifiedOrderTypeLabel(order.order_type)}</span></td>
+        <td>
+          <div style="font-weight:700;">${escapeHtml(order.buyer_name || '华伴用户')}</div>
+          <div style="font-size:11px;color:var(--text3);font-family:monospace;">${escapeHtml(order.buyer_contact || '')}</div>
+        </td>
+        <td>
+          <div style="font-weight:800;max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(summary.main)}</div>
+          <div style="font-size:11px;color:var(--text3);max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(summary.sub)}</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:3px;">供给：${supplier}</div>
+        </td>
+        <td>
+          <div style="font-size:12px;color:var(--text);max-width:190px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(placeTime.place)}</div>
+          <div style="font-size:11px;color:var(--text3);">${escapeHtml(placeTime.time)}</div>
+        </td>
+        <td style="font-weight:800;color:var(--gold);">${escapeHtml(order.amount_text || order.work_order?.amount || '-')}</td>
+        <td>${unifiedOrderStatusBadge(order.status)}</td>
+        <td>
+          <button class="action-btn" onclick="updateUnifiedOrderStatus('${order.id}','supplier_confirmed')">接单</button>
+          <button class="action-btn" onclick="updateUnifiedOrderStatus('${order.id}','in_progress')" style="margin-left:4px;">履约</button>
+          <button class="action-btn success" onclick="updateUnifiedOrderStatus('${order.id}','completed')" style="margin-left:4px;">完成</button>
+          <button class="action-btn danger" onclick="updateUnifiedOrderStatus('${order.id}','cancelled')" style="margin-left:4px;">取消</button>
+        </td>
+      </tr>`;
+    }).join('');
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="8" style="color:var(--red);padding:20px;line-height:1.7;">${escapeHtml(e.message)}<br>如果提示 relation huaban_orders 不存在，请先执行 workflows/huaban_orders_schema.sql。</td></tr>`;
+  }
+}
+
+async function updateUnifiedOrderStatus(id, status='supplier_confirmed') {
+  const now = new Date().toISOString();
+  const payload = {status};
+  if (status === 'supplier_confirmed') payload.supplier_confirmed_at = now;
+  if (status === 'in_progress') payload.started_at = now;
+  if (status === 'completed') payload.completed_at = now;
+  if (status === 'cancelled') payload.cancelled_at = now;
+  try {
+    const rows = await supaFetch(`huaban_orders?id=eq.${id}&select=performance_proof,fields`);
+    const current = rows && rows[0] ? rows[0] : {};
+    payload.performance_proof = {
+      ...(current.performance_proof || {}),
+      timeline: [
+        ...((current.performance_proof || {}).timeline || []),
+        {event:status, at:now, note:'后台状态推进'}
+      ]
+    };
+    payload.fields = {
+      ...(current.fields || {}),
+      supplier_status: status === 'supplier_confirmed' ? 'confirmed' : ((current.fields || {}).supplier_status || 'waiting_match'),
+      order_status_updated_by: 'admin',
+      order_status_updated_at: now
+    };
+    await supaPatch(`huaban_orders?id=eq.${id}`, payload);
+    loadUnifiedOrders();
+  } catch(e) {
+    alert('更新失败：' + e.message);
+  }
 }
 
 // ── Drivers ──

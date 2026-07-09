@@ -127,8 +127,8 @@ function selectRoute(taskType = 'chat') {
     if (process.env.OPENAI_API_KEY) {
       provider = 'openai';
       model = taskType === 'vision_understanding'
-        ? (process.env.OPENAI_VISION_MODEL || process.env.OPENAI_CHAT_MODEL || 'gpt-5.4-mini')
-        : (process.env.OPENAI_CHAT_MODEL || 'gpt-5.4-mini');
+        ? (process.env.OPENAI_VISION_MODEL || process.env.OPENAI_CHAT_MODEL || 'gpt-4o-mini')
+        : (process.env.OPENAI_CHAT_MODEL || 'gpt-4o-mini');
     } else {
       provider = 'anthropic';
       model = process.env.ANTHROPIC_CHAT_MODEL || 'claude-haiku-4-5-20251001';
@@ -578,18 +578,40 @@ async function createVisionMessage({ content, maxTokens = 700, taskType = 'visio
       usage: usagePayload(response, route, 'image-wish'),
     };
   }
-  const client = getAnthropicClient();
-  if (!client) throw new Error('Anthropic API key missing');
-  const response = await client.messages.create({
-    model: route.model,
-    max_tokens: maxTokens,
-    messages: [{ role: 'user', content }],
-  });
-  return {
-    response,
-    route,
-    usage: usagePayload(response, route, 'image-wish'),
-  };
+  try {
+    const client = getAnthropicClient();
+    if (!client) throw new Error('Anthropic API key missing');
+    const response = await client.messages.create({
+      model: route.model,
+      max_tokens: maxTokens,
+      messages: [{ role: 'user', content }],
+    });
+    return {
+      response,
+      route,
+      usage: usagePayload(response, route, 'image-wish'),
+    };
+  } catch (primaryError) {
+    if (!process.env.OPENAI_API_KEY) throw primaryError;
+    const fallbackRoute = {
+      ...route,
+      provider: 'openai',
+      model: process.env.OPENAI_VISION_MODEL || process.env.OPENAI_CHAT_MODEL || 'gpt-4o-mini',
+      requestedProvider: route.provider,
+      providerReady: true,
+      reason: `${route.reason || 'vision_payload'}_fallback_openai`,
+    };
+    const response = await createOpenAIVision({ route: fallbackRoute, content, maxTokens });
+    return {
+      response,
+      route: fallbackRoute,
+      usage: {
+        ...usagePayload(response, fallbackRoute, 'image-wish'),
+        fallback_from: route.provider,
+        fallback_reason: String(primaryError?.message || primaryError).slice(0, 180),
+      },
+    };
+  }
 }
 
 module.exports = {
