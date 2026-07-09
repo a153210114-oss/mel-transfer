@@ -510,6 +510,41 @@ footer {
   gap: 12px;
   margin-top: 24px;
 }
+.identity-form {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+.identity-field {
+  display: grid;
+  gap: 6px;
+}
+.identity-field label {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 900;
+}
+.identity-field input {
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--ink);
+  font: 15px/1.4 inherit;
+  padding: 0 13px;
+  outline: none;
+}
+.identity-field input:focus {
+  border-color: rgba(22,183,123,0.55);
+  box-shadow: 0 0 0 4px rgba(22,183,123,0.11);
+}
+.identity-note {
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.7;
+}
 @media (max-width: 860px) {
   .nav-inner { min-height: 62px; }
   .nav-link { display: none; }
@@ -533,19 +568,19 @@ footer {
 <main>
   <section class="identity-home" aria-label="华伴 AI+ 首页">
     <img class="identity-logo" src="assets/brand/huaban-logo-v1.png" alt="华伴">
-    <h1>我能用华伴 AI 做什么？</h1>
-    <div class="identity-tabs" role="tablist" aria-label="选择身份">
-      <button class="identity-tab active" type="button" data-role="student">年轻人 / 留学生</button>
-      <button class="identity-tab" type="button" data-role="family">爸爸妈妈</button>
-      <button class="identity-tab" type="button" data-role="supplier">事业 / 小生意</button>
-      <button class="identity-tab" type="button" data-role="creator">创意工作者</button>
+    <h1 id="siteMainTitle">华伴是什么</h1>
+    <p class="section-lead" id="siteMainSubtitle" style="text-align:center;margin-top:14px;">华伴帮你被需要，也帮你找到真正需要的。</p>
+    <div class="identity-tabs" role="tablist" aria-label="选择华伴入口">
+      <button class="identity-tab active" type="button" data-role="business">事业帮手</button>
+      <button class="identity-tab" type="button" data-role="life">生活管家</button>
     </div>
     <article class="identity-panel" aria-live="polite">
       <h2 id="identityTitle"></h2>
       <p id="identityLead"></p>
       <ul class="identity-list" id="identityList"></ul>
+      <div id="identityExtra"></div>
       <div class="identity-actions">
-        <a class="btn primary" id="identityAction" href="/ai?ref=student_free">打开华伴 AI+</a>
+        <a class="btn primary" id="identityAction" href="/ai?ref=business_helper">打开华伴 AI+</a>
         <a class="btn" href="app-download.html?ref=identity_home">下载 / 添加到屏幕</a>
       </div>
     </article>
@@ -559,58 +594,117 @@ footer {
   </div>
 </footer>
 <script>
-const identityCopy = {
-  student: {
-    title: '不想被红点、广告和推荐流拖着走？',
-    lead: '华伴 AI+，你主动，它才出现。一个安静、有用、听你指挥的 AI 工具。',
-    href: '/ai?ref=student_free',
+const SUPA_URL = 'https://gxocvpmgfjvmmkkbswgo.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b2N2cG1nZmp2bW1ra2Jzd2dvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyNDc4NzAsImV4cCI6MjA5NTgyMzg3MH0.ExUNuOP8YyHQmItY6cdl1Euj7nOXqQq-rQT5-7aNerE';
+let identityCopy = {
+  business: {
+    title: '你，值得被更多人需要',
+    lead: '简单到只要输入手机号和您的行业，就能够让客户精准找到你。',
+    href: '/ai?ref=business_helper',
+    mode: 'business',
     items: [
-      '学习、生活、行程、情绪和创意，都可以先跟华伴聊。',
-      '不铺开复杂页面，不把你拽进碎片信息里。',
-      '想静静做自己想做的事，下一步交给华伴整理。'
+      '适合服务者、商家、司机、翻译、律师、会计、租车、旅游包车、本地帮办和商品供应方。',
+      '华伴会把你的行业、城市、服务范围和联系方式整理成可匹配资料。',
+      '如果希望展示更多信息，请添加华伴人工客服咨询。'
     ]
   },
-  family: {
-    title: '全家用 AI，就用华伴 AI+。',
-    lead: '爸爸妈妈宝宝都能用。它会先问你是谁，再推荐适合你的 AI 角色。',
-    href: '/ai?ref=family_ai',
+  life: {
+    title: '精准找到需求',
+    lead: '不再迷失在信息碎片的海洋中。',
+    href: '/ai?ref=life_butler',
+    mode: 'life',
     items: [
-      '爸爸妈妈可以用它安排家庭、生活、提醒和本地事务。',
-      '宝宝和学生可以用它学习 AI、找灵感、快乐成长。',
-      '一家人的悄悄话，私密，不被一排排红点淹没。'
-    ]
-  },
-  supplier: {
-    title: '让更多需求找到你。',
-    lead: '华伴能当你的事业助手：把能力、产品和服务整理清楚，打磨介绍，生成推广内容，记录线索，让事业成型，并推向更大的市场。',
-    href: '/ai?ref=supplier_income',
-    items: [
-      '把你能提供的服务、商品、城市、时间、价格和联系方式整理清楚。',
-      '名片、推广文案、海报话术、客户回复和业务表格，交给华伴生成。',
-      '有人需要时，华伴让你被看见；有线索时，华伴提醒、跟进、整理下一步。'
-    ]
-  },
-  creator: {
-    title: '你负责创意，华伴陪你完成。',
-    lead: '做图片、视频、产品、文案、个人网站和推广内容，都可以让华伴当创意总监。',
-    href: '/ai?ref=creative_director',
-    items: [
-      '把一个想法整理成脚本、海报、视频文案或产品说明。',
-      '把生活、生意和表达变成可以传播的内容。',
-      '灵感来了就说，华伴把它落到下一步。'
+      '你是否有这样的经历：拿起手机想打电话，想去微信、小红书、抖音搜索，却被各种“猜你喜欢”带偏了。',
+      '把需求告诉华伴，TA 会精准咬住目标直到完成。',
+      '还给你更多时间和精力去陪伴家人，他们需要你！'
     ]
   }
 };
 
+async function loadPublishedSiteCopy() {
+  try {
+    const res = await fetch(`${SUPA_URL}/rest/v1/beta_leads?channel=eq.site_page_settings&order=created_at.desc&limit=1&select=fields`, {
+      headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` }
+    });
+    if (!res.ok) return;
+    const rows = await res.json();
+    const settings = rows?.[0]?.fields?.settings;
+    if (!settings || typeof settings !== 'object') return;
+    if (settings.homeVersion === 'dual_entry' && settings.mainTitle) document.getElementById('siteMainTitle').textContent = settings.mainTitle;
+    if (settings.homeVersion === 'dual_entry' && settings.mainSubtitle) document.getElementById('siteMainSubtitle').textContent = settings.mainSubtitle;
+    if (settings.homeVersion === 'dual_entry' && settings.roles) {
+      identityCopy = {
+        ...identityCopy,
+        ...Object.fromEntries(Object.entries(settings.roles).map(([role, copy]) => [
+          role,
+          { ...identityCopy[role], ...copy, href: identityCopy[role]?.href || '/ai' }
+        ]))
+      };
+    }
+  } catch(e) {}
+}
+
 function renderIdentity(role) {
-  const copy = identityCopy[role] || identityCopy.student;
+  const copy = identityCopy[role] || identityCopy.business;
   document.getElementById('identityTitle').textContent = copy.title;
   document.getElementById('identityLead').textContent = copy.lead;
   document.getElementById('identityList').innerHTML = copy.items.map(item => `<li>${item}</li>`).join('');
   document.getElementById('identityAction').href = copy.href;
+  document.getElementById('identityExtra').innerHTML = copy.mode === 'business' ? `
+    <div class="identity-form">
+      <div class="identity-field">
+        <label for="businessPhone">手机号</label>
+        <input id="businessPhone" inputmode="tel" placeholder="填写手机号，让客户找到你">
+      </div>
+      <div class="identity-field">
+        <label for="businessIndustry">行业</label>
+        <input id="businessIndustry" placeholder="例如：电工 / 接送机 / 会计 / 中餐馆">
+      </div>
+      <button class="btn primary" type="button" onclick="submitBusinessEntry()">保存，让客户找到我</button>
+      <div class="identity-note">想展示更多资料、价格、作品、菜单或资质，可进入华伴 AI 后告诉华伴。</div>
+    </div>` : `
+    <div class="identity-form">
+      <div class="identity-field">
+        <label for="lifeNeed">现在想解决什么</label>
+        <input id="lifeNeed" placeholder="例如：找电工、安排接机、做一周行程">
+      </div>
+      <button class="btn primary" type="button" onclick="startLifeNeed()">把需求告诉华伴</button>
+    </div>`;
   document.querySelectorAll('.identity-tab').forEach(tab => {
     tab.classList.toggle('active', tab.dataset.role === role);
   });
+}
+
+async function submitBusinessEntry() {
+  const phone = document.getElementById('businessPhone')?.value.trim();
+  const industry = document.getElementById('businessIndustry')?.value.trim();
+  if (!phone || !industry) {
+    alert('先填写手机号和行业。');
+    return;
+  }
+  try {
+    await fetch(`${SUPA_URL}/rest/v1/beta_leads`, {
+      method: 'POST',
+      headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      body: JSON.stringify({
+        lead_type: 'supply',
+        channel: 'homepage_business_helper',
+        need_type: 'business_entry',
+        name: industry,
+        contact: phone,
+        status: 'new',
+        stage: 'homepage_minimal_entry',
+        message: `官网事业帮手录入\n手机号：${phone}\n行业：${industry}`,
+        fields: { phone, industry, minimal_entry: true, source: 'homepage_dual_entry' }
+      })
+    });
+  } catch(e) {}
+  alert('已经记录。华伴会先按手机号和行业为你建立基础资料。');
+}
+
+function startLifeNeed() {
+  const text = document.getElementById('lifeNeed')?.value.trim();
+  location.href = `/ai?ref=life_butler${text ? `&q=${encodeURIComponent(text)}` : ''}`;
 }
 
 document.querySelectorAll('.identity-tab').forEach(tab => {
@@ -619,12 +713,13 @@ document.querySelectorAll('.identity-tab').forEach(tab => {
 
 const refRole = new URLSearchParams(location.search).get('ref');
 const roleByRef = {
-  student_free: 'student',
-  family_ai: 'family',
-  supplier_income: 'supplier',
-  creative_director: 'creator'
+  business_helper: 'business',
+  supplier_income: 'business',
+  life_butler: 'life',
+  student_free: 'life',
+  family_ai: 'life'
 };
-renderIdentity(roleByRef[refRole] || 'student');
+loadPublishedSiteCopy().finally(() => renderIdentity(roleByRef[refRole] || 'business'));
 </script>
 </body>
 </html>
