@@ -641,18 +641,25 @@ let identityCopy = {
 async function loadPublishedSiteCopy() {
   try {
     const res = await fetch(`${SUPA_URL}/rest/v1/beta_leads?channel=eq.site_page_settings&order=created_at.desc&limit=1&select=fields`, {
-      headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` }
+      cache: 'no-store',
+      headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, 'Cache-Control': 'no-cache' }
     });
     if (!res.ok) return;
     const rows = await res.json();
     const settings = rows?.[0]?.fields?.settings;
     if (!settings || typeof settings !== 'object') return;
-    if (settings.homeVersion === 'dual_entry' && settings.mainTitle) document.getElementById('siteMainTitle').textContent = settings.mainTitle;
-    if (settings.homeVersion === 'dual_entry' && settings.mainSubtitle) document.getElementById('siteMainSubtitle').textContent = settings.mainSubtitle;
-    if (settings.homeVersion === 'dual_entry' && settings.roles) {
+    const isDualEntry = !settings.homeVersion || settings.homeVersion === 'dual_entry';
+    if (!isDualEntry) return;
+    if (settings.mainTitle) document.getElementById('siteMainTitle').textContent = settings.mainTitle;
+    if (settings.mainSubtitle) document.getElementById('siteMainSubtitle').textContent = settings.mainSubtitle;
+    if (settings.roles) {
+      const mappedRoles = {
+        business: settings.roles.business || settings.roles.supplier || settings.roles.creator,
+        life: settings.roles.life || settings.roles.family || settings.roles.student
+      };
       identityCopy = {
         ...identityCopy,
-        ...Object.fromEntries(Object.entries(settings.roles).map(([role, copy]) => [
+        ...Object.fromEntries(Object.entries(mappedRoles).filter(([, copy]) => copy).map(([role, copy]) => [
           role,
           { ...identityCopy[role], ...copy, href: identityCopy[role]?.href || '/ai' }
         ]))

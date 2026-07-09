@@ -2134,6 +2134,7 @@ async function loadSitePages(){
 
 async function saveSitePages(){
   const settings={
+    homeVersion:'dual_entry',
     mainTitle:(document.getElementById('site-main-title')?.value||DEFAULT_SITE_PAGES.mainTitle).trim(),
     mainSubtitle:(document.getElementById('site-main-subtitle')?.value||'').trim(),
     roles:{},
