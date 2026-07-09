@@ -10,17 +10,17 @@
 <meta name="apple-mobile-web-app-title" content="华伴">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#f7f7f7">
-<title>华伴｜海外华人 AI 伙伴</title>
-<meta name="description" content="从旅行开始，共同成长。华伴用普通话帮海外华人整理出行、本地服务和生活需求，让需要的人遇见可靠的人。">
+<title>华伴｜免费智能匹配供需关系的轻社交通讯工具</title>
+<meta name="description" content="华伴是一款为海外华人而生的轻社交通讯工具，免费智能匹配供需关系。找人、找服务、找机会，先跟华伴说。">
 <link rel="canonical" href="https://www.huabanapp.com/ai">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="华伴">
-<meta property="og:title" content="华伴｜海外华人 AI 伙伴">
-<meta property="og:description" content="从旅行开始，共同成长。华伴用普通话帮海外华人整理出行、本地服务和生活需求，让需要的人遇见可靠的人。">
+<meta property="og:title" content="华伴｜免费智能匹配供需关系的轻社交通讯工具">
+<meta property="og:description" content="找人、找服务、找机会，先跟华伴说。华伴免费智能匹配供需关系。">
 <meta property="og:url" content="https://www.huabanapp.com/ai">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="华伴｜海外华人 AI 伙伴">
-<meta name="twitter:description" content="从旅行开始，共同成长。华伴用普通话帮海外华人整理出行、本地服务和生活需求，让需要的人遇见可靠的人。">
+<meta name="twitter:title" content="华伴｜免费智能匹配供需关系的轻社交通讯工具">
+<meta name="twitter:description" content="找人、找服务、找机会，先跟华伴说。华伴免费智能匹配供需关系。">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -867,7 +867,7 @@ body.more-open .chat-area{padding-bottom:390px;}
   <div class="brand-lockup" onclick="summonAI('logo')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();summonAI('logo')}" aria-label="召唤华伴 AI">
     <img class="brand-logo" src="assets/brand/huaban-logo-v1.png" alt="华伴 logo">
   </div>
-  <div class="brand-positioning">有脑、有手的AI</div>
+  <div class="brand-positioning">智能匹配供需关系</div>
   <div id="voice-indicator" style="display:none;font-size:11px;color:rgba(255,59,48,0.9);animation:mp 0.8s ease-in-out infinite;">🔴 录音中</div>
   <button class="region-btn ai-hidden-control" id="region-btn" onclick="changeRegion()" aria-label="切换地区" title="切换地区"><i class="region-dot"></i><span id="region-label">正在定位</span>⌄</button>
   <button class="ai-hidden-control" id="share-btn" onclick="shareRefLink()" aria-label="分享" title="分享" style="background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;">＋</button>
@@ -4490,7 +4490,7 @@ function renderAdoptWelcomeCard(){
     <img src="assets/brand/huaban-logo-v1.png" alt="华伴 AI">
     <div class="install-copy">
       <strong>华伴是什么</strong>
-      <span>华伴帮你被需要，也帮你找到真正需要的。</span>
+      <span>让更多需要你的人发现你，也让你的需要被更多人发现。</span>
     </div>
     <div class="install-actions">
       <button class="install-primary" type="button" onclick="event.stopPropagation();beginAgentAdoption();">点击领养</button>
@@ -4506,7 +4506,7 @@ function renderValuePromptCard(){
   card.innerHTML=`
     <div class="install-copy">
       <strong>选择你现在更需要的华伴</strong>
-      <span>佛系一点：把需求告诉华伴，TA 精准咬住目标直到完成。积极一点：输入手机号和行业，让客户精准找到你。</span>
+      <span>佛系一点：无需在搜索结果里徒劳无果。积极一点：让更多需要你的人发现你。</span>
     </div>
     <div class="install-actions">
       <button class="install-primary value-action" type="button" onclick="handleValuePrompt('business')">事业帮手</button>
@@ -4520,12 +4520,12 @@ async function handleValuePrompt(type){
   rewardCompanionAction('try_feature');
   if(type==='life'){
     addMsg('我想用生活管家',true);
-    await agentSay('精准找到需求，不再迷失在信息碎片的海洋中。你直接说现在想解决什么，我会咬住目标往下推进。',120);
+    await agentSay('无需费时费力在一堆搜索结果中徒劳无果，也不会被带偏。你直接说现在想解决什么，我会咬住目标往下推进。',120);
     return;
   }
   if(type==='business'){
     addMsg('我想用事业帮手',true);
-    await agentSay('你，值得被更多人需要。简单到只要输入手机号和您的行业，就能够让客户精准找到你。你可以直接告诉我：手机号和行业。想展示更多资料，也可以告诉我。',120);
+    await agentSay('让更多需要你的人发现你。简单到只要输入手机号和行业，我就能先把你的服务范围整理清楚。你可以直接告诉我：手机号和行业；想展示更多资料，也可以继续说。',120);
     showSupplierApplicationSheet();
   }
 }

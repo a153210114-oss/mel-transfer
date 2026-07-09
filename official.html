@@ -3,21 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>华伴 AI+｜一家人都能用的 AI 工具</title>
-<meta name="description" content="华伴 AI+ 是一款为海外华人而生的 AI 工具。一个有脑、有手、有温度的家庭 AI：陪爸爸妈妈和宝宝一起学习、生活、做事。">
-<meta name="keywords" content="华伴, Huaban, 华伴AI, 海外华人AI, 海外生活帮手, 华人出行, 华人服务, 本地好友, 墨尔本华人, AI生活管家, AI事业助手">
+<title>华伴 AI+｜免费智能匹配供需关系的轻社交通讯工具</title>
+<meta name="description" content="华伴 AI+ 是一款为海外华人而生的轻社交通讯工具，免费智能匹配供需关系。找人、找服务、找机会，先跟华伴说。">
+<meta name="keywords" content="华伴, Huaban, 华伴AI, 海外华人AI, 供需匹配, 轻社交通讯工具, 海外生活帮手, 华人服务, 本地好友, 墨尔本华人, AI生活管家, AI事业助手">
 <link rel="canonical" href="https://www.huabanapp.com/">
 <link rel="icon" href="assets/brand/icon-192.png">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/brand/apple-touch-icon.png">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="华伴">
-<meta property="og:title" content="华伴 AI+｜一家人都能用的 AI 工具">
-<meta property="og:description" content="一个有脑、有手、有温度的家庭 AI。爸爸妈妈和宝宝，都可以先跟华伴聊聊。">
+<meta property="og:title" content="华伴 AI+｜免费智能匹配供需关系的轻社交通讯工具">
+<meta property="og:description" content="找人、找服务、找机会，先跟华伴说。华伴免费智能匹配供需关系。">
 <meta property="og:url" content="https://www.huabanapp.com/">
 <meta property="og:image" content="https://www.huabanapp.com/assets/brand/huaban-logo-v1.png">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="华伴 AI+｜一家人都能用的 AI 工具">
-<meta name="twitter:description" content="一个有脑、有手、有温度的家庭 AI。爸爸妈妈和宝宝，都可以先跟华伴聊聊。">
+<meta name="twitter:title" content="华伴 AI+｜免费智能匹配供需关系的轻社交通讯工具">
+<meta name="twitter:description" content="找人、找服务、找机会，先跟华伴说。华伴免费智能匹配供需关系。">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -27,7 +27,7 @@
   "applicationCategory": "LifestyleApplication",
   "operatingSystem": "Web",
   "url": "https://www.huabanapp.com/",
-  "description": "华伴 AI+ 是一款为海外华人而生的 AI 工具，陪全家用 AI。",
+  "description": "华伴 AI+ 是一款为海外华人而生的轻社交通讯工具，免费智能匹配供需关系。",
   "offers": {
     "@type": "Offer",
     "price": "0",
@@ -450,6 +450,17 @@ footer {
   justify-content: center;
   margin-top: 28px;
 }
+.identity-tab-wrap {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+}
+.identity-tab-subtitle {
+  font-size: 13px;
+  font-weight: 900;
+  color: var(--accent);
+  line-height: 1.35;
+}
 .identity-tab {
   min-height: 44px;
   border: 1px solid var(--line);
@@ -568,11 +579,17 @@ footer {
 <main>
   <section class="identity-home" aria-label="华伴 AI+ 首页">
     <img class="identity-logo" src="assets/brand/huaban-logo-v1.png" alt="华伴">
-    <h1 id="siteMainTitle">华伴是什么</h1>
-    <p class="section-lead" id="siteMainSubtitle" style="text-align:center;margin-top:14px;">华伴帮你被需要，也帮你找到真正需要的。</p>
+    <h1 id="siteMainTitle">免费智能匹配供需关系的轻社交通讯工具</h1>
+    <p class="section-lead" id="siteMainSubtitle" style="text-align:center;margin-top:14px;">无需费时费力在一堆搜索结果中徒劳无果，也不会被带偏。</p>
     <div class="identity-tabs" role="tablist" aria-label="选择华伴入口">
-      <button class="identity-tab active" type="button" data-role="business">事业帮手</button>
-      <button class="identity-tab" type="button" data-role="life">生活管家</button>
+      <div class="identity-tab-wrap">
+        <div class="identity-tab-subtitle">让更多需要你的人发现你</div>
+        <button class="identity-tab active" type="button" data-role="business">事业帮手</button>
+      </div>
+      <div class="identity-tab-wrap">
+        <div class="identity-tab-subtitle">也让你的需要被更多人发现</div>
+        <button class="identity-tab" type="button" data-role="life">生活管家</button>
+      </div>
     </div>
     <article class="identity-panel" aria-live="polite">
       <h2 id="identityTitle"></h2>
@@ -589,7 +606,7 @@ footer {
 
 <footer>
   <div class="footer-inner">
-    <span>华伴 AI+ · 一个有脑、有手的 AI 工具</span>
+    <span>华伴 AI+ · 免费智能匹配供需关系的轻社交通讯工具</span>
     <span>huabanapp.com</span>
   </div>
 </footer>
@@ -598,8 +615,8 @@ const SUPA_URL = 'https://gxocvpmgfjvmmkkbswgo.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b2N2cG1nZmp2bW1ra2Jzd2dvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyNDc4NzAsImV4cCI6MjA5NTgyMzg3MH0.ExUNuOP8YyHQmItY6cdl1Euj7nOXqQq-rQT5-7aNerE';
 let identityCopy = {
   business: {
-    title: '你，值得被更多人需要',
-    lead: '简单到只要输入手机号和您的行业，就能够让客户精准找到你。',
+    title: '让更多需要你的人发现你',
+    lead: '简单到只要输入手机号和行业，华伴就能先把你的服务范围整理清楚。',
     href: '/ai?ref=business_helper',
     mode: 'business',
     items: [
@@ -614,7 +631,7 @@ let identityCopy = {
     href: '/ai?ref=life_butler',
     mode: 'life',
     items: [
-      '你是否有这样的经历：拿起手机想打电话，想去微信、小红书、抖音搜索，却被各种“猜你喜欢”带偏了。',
+      '无需费时费力在一堆搜索结果中徒劳无果，也不会被带偏。',
       '把需求告诉华伴，TA 会精准咬住目标直到完成。',
       '还给你更多时间和精力去陪伴家人，他们需要你！'
     ]
