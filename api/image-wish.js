@@ -10,10 +10,16 @@ function safeJson(text) {
 }
 
 module.exports = async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') {
+    return res.status(204).end();
+  }
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!process.env.ANTHROPIC_API_KEY && !process.env.OPENAI_API_KEY) {
     return res.status(500).json({ error: 'Image service is not configured' });
   }
 
@@ -39,6 +45,16 @@ module.exports = async function handler(req, res) {
   "phone": "图片中出现的电话，没有则空字符串",
   "website": "图片中出现的网址，没有则空字符串",
   "qualification": "图片中出现的注册号、执照号、资质号或保险信息，没有则空字符串",
+  "scenario": "business | life | study | travel | reminder | social | other",
+  "writeTarget": "supply_lead | demand_lead | reminder | management_form | note",
+  "reminderTimeText": "图片中明确出现的提醒/出发/截止时间，没有则空字符串",
+  "formFields": {
+    "goal": "图片对应的目标或事项",
+    "place": "地点或服务区域",
+    "time": "时间/日期/周期",
+    "people": "相关人员",
+    "nextStep": "下一步建议"
+  },
   "confidence": 0.0
 }
 
@@ -47,6 +63,7 @@ module.exports = async function handler(req, res) {
 - 如果是用户在找电工、水管、维修、跑腿、搬运、上门检查，优先 wishType=need_paid。
 - 如果图片本身是服务者名片、商家广告、招牌、联系方式、资质展示，优先 wishType=offer_paid；category 按服务内容填写，例如电工/维修填“维修上门”。
 - 名片类图片要尽量读出 providerName、phone、website、qualification；看不清的字段留空，不要猜。
+- 如果是课表、作业、账单、行程、预约、会议、备忘、聊天截图，请整理成生活/学习/业务管理表单；有明确时间则 writeTarget=reminder。
 - 如果看不清，text 里说明“图片部分信息不清楚，请补充...”。
 - 不要编造图片中没有的联系电话。`;
 

@@ -121,8 +121,19 @@ function selectRoute(taskType = 'chat') {
   const requestedProvider = preset.provider;
   const providerKey = PROVIDER_ALLOW_ENV[requestedProvider];
   const providerReady = !providerKey || Boolean(process.env[providerKey] || (requestedProvider === 'gemini' && process.env.GOOGLE_API_KEY));
-  const provider = providerReady ? requestedProvider : 'anthropic';
-  const model = providerReady ? preset.model : (process.env.ANTHROPIC_CHAT_MODEL || 'claude-haiku-4-5-20251001');
+  let provider = requestedProvider;
+  let model = preset.model;
+  if (!providerReady) {
+    if (process.env.OPENAI_API_KEY) {
+      provider = 'openai';
+      model = taskType === 'vision_understanding'
+        ? (process.env.OPENAI_VISION_MODEL || process.env.OPENAI_CHAT_MODEL || 'gpt-5.4-mini')
+        : (process.env.OPENAI_CHAT_MODEL || 'gpt-5.4-mini');
+    } else {
+      provider = 'anthropic';
+      model = process.env.ANTHROPIC_CHAT_MODEL || 'claude-haiku-4-5-20251001';
+    }
+  }
   return {
     taskType,
     provider,
@@ -255,6 +266,45 @@ async function createOpenAIText({ route, system, messages, maxTokens }) {
   if (!response.ok) {
     const message = await response.text();
     throw new Error(`OpenAI text failed: ${response.status} ${message.slice(0, 240)}`);
+  }
+  const data = await response.json();
+  return {
+    id: data.id || '',
+    content: [{ type: 'text', text: parseOpenAIText(data) }],
+    usage: data.usage || {},
+    raw_provider_response: data,
+  };
+}
+
+async function createOpenAIVision({ route, content, maxTokens }) {
+  if (!process.env.OPENAI_API_KEY) throw new Error('OpenAI API key missing');
+  const blocks = [];
+  for (const part of content || []) {
+    if (part?.type === 'text') {
+      blocks.push({ type: 'input_text', text: part.text || '' });
+    }
+    if (part?.type === 'image' && part.source?.type === 'base64') {
+      blocks.push({
+        type: 'input_image',
+        image_url: `data:${part.source.media_type};base64,${part.source.data}`,
+      });
+    }
+  }
+  const response = await fetch('https://api.openai.com/v1/responses', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: route.model,
+      input: [{ role: 'user', content: blocks }],
+      max_output_tokens: maxTokens,
+    }),
+  });
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(`OpenAI vision failed: ${response.status} ${message.slice(0, 240)}`);
   }
   const data = await response.json();
   return {
@@ -520,8 +570,13 @@ async function createTextMessage({ system = '', messages = [], maxTokens = 600, 
 
 async function createVisionMessage({ content, maxTokens = 700, taskType = 'vision_understanding' }) {
   const route = { ...selectRoute(taskType), reason: 'vision_payload' };
-  if (route.provider !== 'anthropic') {
-    throw new Error('Vision route currently requires Anthropic provider');
+  if (route.provider === 'openai') {
+    const response = await createOpenAIVision({ route, content, maxTokens });
+    return {
+      response,
+      route,
+      usage: usagePayload(response, route, 'image-wish'),
+    };
   }
   const client = getAnthropicClient();
   if (!client) throw new Error('Anthropic API key missing');

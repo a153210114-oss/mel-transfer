@@ -504,11 +504,17 @@ body.admin-unlocked .admin-auth { display: none; }
     <div class="nav-item" onclick="showSection('sources')">
       <span class="nav-icon">🗂️</span> 中文入口库
     </div>
+    <div class="nav-item" onclick="showSection('project-research')">
+      <span class="nav-icon">🔬</span> 项目研究员
+    </div>
     <div class="nav-item" onclick="showSection('outreach')">
       <span class="nav-icon">📣</span> 推广任务
     </div>
     <div class="nav-item" onclick="showSection('ticker')">
       <span class="nav-icon">🔁</span> 滚动屏管理
+    </div>
+    <div class="nav-item" onclick="showSection('site-pages')">
+      <span class="nav-icon">🌐</span> 官网管理
     </div>
     <div class="nav-item" onclick="showSection('ops-team')">
       <span class="nav-icon">👥</span> 运营团队
@@ -592,6 +598,11 @@ body.admin-unlocked .admin-auth { display: none; }
         <strong>中文入口库</strong>
         <span>网站、平台、搜索引擎和政府资质入口</span>
       </div>
+      <div class="admin-quick-card" onclick="showSection('project-research')">
+        <div class="quick-icon">🔬</div>
+        <strong>项目研究员</strong>
+        <span>把华伴自己的市场、产品和推广问题交给深度研究</span>
+      </div>
       <div class="admin-quick-card" onclick="showSection('outreach')">
         <div class="quick-icon">📣</div>
         <strong>推广任务</strong>
@@ -601,6 +612,11 @@ body.admin-unlocked .admin-auth { display: none; }
         <div class="quick-icon">🔁</div>
         <strong>滚动屏管理</strong>
         <span>管理首页介绍滚动屏和领养动态默认文案</span>
+      </div>
+      <div class="admin-quick-card" onclick="showSection('site-pages')">
+        <div class="quick-icon">🌐</div>
+        <strong>官网管理</strong>
+        <span>编辑首页身份文案，发布后官网读取</span>
       </div>
       <div class="admin-quick-card" onclick="showSection('token-usage')">
         <div class="quick-icon">🧮</div>
@@ -924,6 +940,7 @@ body.admin-unlocked .admin-auth { display: none; }
         <option value="approved">已通过</option>
         <option value="rejected">已驳回</option>
       </select>
+      <button class="btn" onclick="openSupplyLeadEntrySheet()">+ 录入供给</button>
       <button class="btn btn-ghost" onclick="loadSuppliers()">↻ 刷新</button>
     </div>
   </div>
@@ -1125,6 +1142,66 @@ body.admin-unlocked .admin-auth { display: none; }
   </div>
 </div>
 
+<!-- ══ 官网管理 ══ -->
+<div class="section" id="section-site-pages">
+  <div class="topbar">
+    <div>
+      <div class="page-title">官网管理</div>
+      <div class="page-sub">首页身份文案 / 发布页面</div>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn btn-primary" onclick="saveSitePages()">发布</button>
+      <button class="btn btn-ghost" onclick="loadSitePages()">刷新</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-header">
+        <div class="card-title">首页主标题</div>
+        <span class="tag" id="site-pages-status">未加载</span>
+      </div>
+      <div class="card-body">
+        <input class="input" id="site-main-title" style="width:100%;margin-bottom:10px;" placeholder="我能用华伴 AI 做什么？">
+        <textarea class="input textarea" id="site-main-subtitle" style="min-height:72px;" placeholder="一句副标题，可留空"></textarea>
+      </div>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <div class="card-header"><div class="card-title">年轻人 / 留学生</div><span class="tag">student</span></div>
+        <div class="card-body">
+          <input class="input" id="site-student-title" style="width:100%;margin-bottom:10px;" placeholder="标题">
+          <textarea class="input textarea" id="site-student-lead" style="min-height:90px;" placeholder="说明"></textarea>
+          <textarea class="input textarea" id="site-student-items" style="min-height:120px;margin-top:10px;" placeholder="一行一个要点"></textarea>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">爸爸妈妈 / 家庭</div><span class="tag">family</span></div>
+        <div class="card-body">
+          <input class="input" id="site-family-title" style="width:100%;margin-bottom:10px;" placeholder="标题">
+          <textarea class="input textarea" id="site-family-lead" style="min-height:90px;" placeholder="说明"></textarea>
+          <textarea class="input textarea" id="site-family-items" style="min-height:120px;margin-top:10px;" placeholder="一行一个要点"></textarea>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">事业 / 小生意</div><span class="tag">supplier</span></div>
+        <div class="card-body">
+          <input class="input" id="site-supplier-title" style="width:100%;margin-bottom:10px;" placeholder="标题">
+          <textarea class="input textarea" id="site-supplier-lead" style="min-height:90px;" placeholder="说明"></textarea>
+          <textarea class="input textarea" id="site-supplier-items" style="min-height:120px;margin-top:10px;" placeholder="一行一个要点"></textarea>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">创意工作者</div><span class="tag">creator</span></div>
+        <div class="card-body">
+          <input class="input" id="site-creator-title" style="width:100%;margin-bottom:10px;" placeholder="标题">
+          <textarea class="input textarea" id="site-creator-lead" style="min-height:90px;" placeholder="说明"></textarea>
+          <textarea class="input textarea" id="site-creator-items" style="min-height:120px;margin-top:10px;" placeholder="一行一个要点"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ══ 运营团队 ══ -->
 <div class="section" id="section-ops-team">
   <div class="topbar">
@@ -1233,6 +1310,143 @@ body.admin-unlocked .admin-auth { display: none; }
       <div class="card">
         <div class="card-header"><div class="card-title">🚗 进行中</div></div>
         <div class="card-body" id="dispatch-active">加载中...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 项目研究员 ══ -->
+<div class="section" id="section-project-research">
+  <div class="topbar">
+    <div>
+      <div class="page-title">项目研究员</div>
+      <div class="page-sub">先服务华伴项目本身：市场、产品、推广、资源验证和决策建议</div>
+    </div>
+    <div class="topbar-actions">
+      <select class="input" id="research-filter" onchange="loadProjectResearch()" style="width:130px;">
+        <option value="">全部状态</option>
+        <option value="open">待研究</option>
+        <option value="running">研究中</option>
+        <option value="done">已完成</option>
+      </select>
+      <button class="btn btn-ghost" onclick="loadProjectResearch()">↻ 刷新</button>
+      <button class="btn btn-primary" onclick="saveProjectResearchTask()">+ 新建任务</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="label">研究定位</div>
+        <div class="value" style="color:var(--accent);font-size:22px;">内部</div>
+        <div class="delta">不展示给普通用户</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">适合问题</div>
+        <div class="value" style="color:var(--gold);font-size:22px;">复杂</div>
+        <div class="delta">需要来源、比较和判断</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">输出结果</div>
+        <div class="value" style="color:var(--green);font-size:22px;">决策</div>
+        <div class="delta">结论、证据、下一步动作</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">执行方式</div>
+        <div class="value" style="color:var(--purple);font-size:22px;">研究部</div>
+        <div class="delta">ChatGPT Deep Research / 人工复核</div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">新建研究任务</div>
+          <span class="tag">给华伴自己用</span>
+        </div>
+        <div class="card-body">
+          <div class="coach-field">
+            <div class="coach-label">研究类型</div>
+            <select class="input" id="research-type">
+              <option value="market">市场/城市机会</option>
+              <option value="product">产品功能决策</option>
+              <option value="promotion">推广获客</option>
+              <option value="supply">供给侧资源</option>
+              <option value="verification">资质/可信度验证</option>
+              <option value="strategy">商业策略</option>
+            </select>
+          </div>
+          <div class="coach-field">
+            <div class="coach-label">标题</div>
+            <input class="input" id="research-title" placeholder="例如：墨尔本华人电工供给侧从哪里收录">
+          </div>
+          <div class="coach-field">
+            <div class="coach-label">要研究的问题</div>
+            <textarea class="input textarea" id="research-question" placeholder="把问题说清楚：研究对象、地区、人群、希望得到什么判断。"></textarea>
+          </div>
+          <div class="coach-field">
+            <div class="coach-label">希望输出</div>
+            <textarea class="input textarea" id="research-output" style="min-height:90px;" placeholder="例如：列出来源、可信度、可直接导入的线索、人工跟进任务、推荐下一步。"></textarea>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn btn-primary" onclick="saveProjectResearchTask()">保存任务</button>
+            <button class="btn btn-ghost" onclick="copyProjectResearchPrompt()">复制研究指令</button>
+          </div>
+          <div class="coach-note" style="margin-top:12px;">复制后可以粘贴到 ChatGPT Deep Research。研究完成后，把结论贴回右侧保存，华伴就能沉淀成自己的决策资料。</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">研究结论归档</div>
+          <span class="tag" id="research-selected-status">未选择</span>
+        </div>
+        <div class="card-body">
+          <div class="coach-field">
+            <div class="coach-label">当前任务</div>
+            <div class="input" id="research-selected-view" style="min-height:58px;line-height:1.6;color:var(--text2);">请选择下方任务，或先新建一个。</div>
+          </div>
+          <div class="coach-field">
+            <div class="coach-label">研究结论</div>
+            <textarea class="input textarea" id="research-conclusion" placeholder="贴入 Deep Research 或人工研究后的结论。"></textarea>
+          </div>
+          <div class="coach-field">
+            <div class="coach-label">证据 / 来源</div>
+            <textarea class="input textarea" id="research-sources" style="min-height:90px;" placeholder="保留关键链接、来源名称、政府/平台/公开目录等证据。"></textarea>
+          </div>
+          <div class="coach-field">
+            <div class="coach-label">下一步动作</div>
+            <textarea class="input textarea" id="research-next-actions" style="min-height:90px;" placeholder="例如：写入入口库、生成供给侧线索、人工联系、做产品功能、暂缓。"></textarea>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn btn-primary" onclick="saveProjectResearchResult()">保存结论</button>
+            <button class="btn btn-ghost" onclick="copySelectedResearchPrompt()">复制当前任务指令</button>
+            <button class="btn btn-ghost" onclick="markProjectResearchRunning()">标记研究中</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:18px;">
+      <div class="card-header">
+        <div class="card-title">研究任务池</div>
+        <span class="tag">结论服务华伴决策</span>
+      </div>
+      <div style="overflow:auto;">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>标题</th>
+              <th>类型</th>
+              <th>状态</th>
+              <th>问题</th>
+              <th>更新时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="project-research-body">
+            <tr><td colspan="6" style="text-align:center;color:var(--text3);padding:36px;">加载中...</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -1683,8 +1897,10 @@ function showSection(name) {
     passengers: loadPassengers,
     suppliers: loadSuppliers,
     sources: loadSourceRegistry,
+    'project-research': loadProjectResearch,
     outreach: loadOutreachTasks,
     ticker: loadTickerSettings,
+    'site-pages': loadSitePages,
     'ops-team': loadOpsTeam,
     dispatch: loadDispatch,
     'ai-training': loadAITraining,
@@ -1797,6 +2013,95 @@ async function resetTickerSettings(){
     message:'首页滚动屏配置恢复默认',
     fields:{settings:{...DEFAULT_TICKER_SETTINGS,updated_at:new Date().toISOString()}}
   });
+}
+
+// ── Official Site Pages ──
+const DEFAULT_SITE_PAGES={
+  mainTitle:'我能用华伴 AI 做什么？',
+  mainSubtitle:'一款为海外华人而生的 AI 工具：全家用 AI，不被时代落下。',
+  roles:{
+    student:{
+      title:'不想被红点、广告和推荐流拖着走？',
+      lead:'华伴 AI+，你主动，它才出现。一个安静、有用、听你指挥的 AI 工具。',
+      items:['学习、生活、行程、情绪和创意，都可以先跟华伴聊。','不铺开复杂页面，不把你拽进碎片信息里。','想静静做自己想做的事，下一步交给华伴整理。']
+    },
+    family:{
+      title:'全家用 AI，就用华伴 AI+。',
+      lead:'爸爸妈妈宝宝都能用。它会先问你是谁，再推荐适合你的 AI 角色。',
+      items:['爸爸妈妈可以用它安排家庭、生活、提醒和本地事务。','宝宝和学生可以用它学习 AI、找灵感、快乐成长。','一家人的悄悄话，私密，不被一排排红点淹没。']
+    },
+    supplier:{
+      title:'让更多需求找到你。',
+      lead:'华伴能当你的事业助手：把能力、产品和服务整理清楚，打磨介绍，生成推广内容，记录线索，让事业成型，并推向更大的市场。',
+      items:['把你能提供的服务、商品、城市、时间、价格和联系方式整理清楚。','名片、推广文案、海报话术、客户回复和业务表格，交给华伴生成。','有人需要时，华伴让你被看见；有线索时，华伴提醒、跟进、整理下一步。']
+    },
+    creator:{
+      title:'你负责创意，华伴陪你完成。',
+      lead:'做图片、视频、产品、文案、个人网站和推广内容，都可以让华伴当创意总监。',
+      items:['把一个想法整理成脚本、海报、视频文案或产品说明。','把生活、生意和表达变成可以传播的内容。','灵感来了就说，华伴把它落到下一步。']
+    }
+  }
+};
+
+function siteTextareaLines(id){
+  return (document.getElementById(id)?.value||'').split('\n').map(v=>v.trim()).filter(Boolean).slice(0,8);
+}
+
+function fillSiteRole(role, data={}){
+  const source=data||DEFAULT_SITE_PAGES.roles[role]||{};
+  const title=document.getElementById(`site-${role}-title`);
+  const lead=document.getElementById(`site-${role}-lead`);
+  const items=document.getElementById(`site-${role}-items`);
+  if(title)title.value=source.title||'';
+  if(lead)lead.value=source.lead||'';
+  if(items)items.value=(source.items||[]).join('\n');
+}
+
+async function loadSitePages(){
+  let settings=null;
+  const status=document.getElementById('site-pages-status');
+  try{
+    const rows=await supaFetch('beta_leads?channel=eq.site_page_settings&order=created_at.desc&limit=1&select=fields,created_at');
+    settings=rows?.[0]?.fields?.settings||null;
+    if(status)status.textContent=settings?'已读取线上':'使用默认';
+  }catch(e){
+    if(status)status.textContent='读取失败，使用默认';
+  }
+  const data=settings||DEFAULT_SITE_PAGES;
+  document.getElementById('site-main-title').value=data.mainTitle||DEFAULT_SITE_PAGES.mainTitle;
+  document.getElementById('site-main-subtitle').value=data.mainSubtitle||DEFAULT_SITE_PAGES.mainSubtitle;
+  ['student','family','supplier','creator'].forEach(role=>fillSiteRole(role,data.roles?.[role]||DEFAULT_SITE_PAGES.roles[role]));
+}
+
+async function saveSitePages(){
+  const settings={
+    mainTitle:(document.getElementById('site-main-title')?.value||DEFAULT_SITE_PAGES.mainTitle).trim(),
+    mainSubtitle:(document.getElementById('site-main-subtitle')?.value||'').trim(),
+    roles:{},
+    updated_at:new Date().toISOString()
+  };
+  ['student','family','supplier','creator'].forEach(role=>{
+    settings.roles[role]={
+      title:(document.getElementById(`site-${role}-title`)?.value||'').trim(),
+      lead:(document.getElementById(`site-${role}-lead`)?.value||'').trim(),
+      items:siteTextareaLines(`site-${role}-items`)
+    };
+  });
+  await supaInsert('beta_leads',{
+    tenant_id:TENANT_ID,
+    lead_type:'config',
+    channel:'site_page_settings',
+    name:'官网页面配置',
+    city:'Global',
+    country:'Global',
+    need_type:'site_page_settings',
+    status:'active',
+    stage:'admin_published',
+    message:'官网首页身份文案配置',
+    fields:{settings}
+  });
+  document.getElementById('site-pages-status').textContent='已发布';
+  alert('官网文案已发布。刷新官网首页后生效。');
 }
 
 // Status badge helper
@@ -2167,6 +2472,223 @@ async function copyPromptLibraryForAI(){
     alert('已复制提示词库，可喂给 AI 或用于训练营。');
   }catch(e){
     alert(text);
+  }
+}
+
+// ── Project Research ──
+let lastProjectResearchRows = [];
+let selectedProjectResearchId = null;
+
+function researchTypeLabel(type){
+  return {
+    market:'市场/城市机会',
+    product:'产品功能决策',
+    promotion:'推广获客',
+    supply:'供给侧资源',
+    verification:'资质/可信度验证',
+    strategy:'商业策略'
+  }[type] || type || '项目研究';
+}
+
+function researchStatusBadge(status){
+  const map = {
+    open: ['badge-pending', '待研究'],
+    running: ['badge-enroute', '研究中'],
+    done: ['badge-completed', '已完成']
+  };
+  const item = map[status] || map.open;
+  return `<span class="badge ${item[0]}">${item[1]}</span>`;
+}
+
+function buildProjectResearchPrompt(task = {}) {
+  const title = task.title || document.getElementById('research-title')?.value.trim() || '华伴项目研究任务';
+  const type = task.type || document.getElementById('research-type')?.value || 'strategy';
+  const question = task.question || document.getElementById('research-question')?.value.trim() || '';
+  const output = task.output || document.getElementById('research-output')?.value.trim() || '';
+  return `你是华伴项目的深度研究员。请围绕下面任务做深度研究，要求有来源、有判断、有下一步动作。
+
+项目背景：
+华伴是一款服务海外华人的 AI 智能体。前台是一个干净的 AI 入口，后台用于理解用户需求、收集供需线索、验证资源、匹配服务、生成确认卡、推进生活和事业任务。当前先从墨尔本公测，未来要复制到更多国家和城市。
+
+研究类型：${researchTypeLabel(type)}
+研究标题：${title}
+核心问题：
+${question || '请先根据标题拆解研究问题。'}
+
+请输出：
+1. 关键结论，先给可以直接决策的判断。
+2. 公开来源和证据，尽量包含官网、政府公开网站、平台目录、行业入口或可信新闻。
+3. 可直接写入华伴数据库的线索类型：供给侧、需求侧、入口库、推广渠道、功能机会。
+4. 风险和不确定性，哪些需要人工复核。
+5. 推荐下一步动作，按今天可做、本周可做、暂缓观察分类。
+${output ? `\n我希望重点得到：\n${output}` : ''}
+
+注意：
+- 不要写空泛战略口号，要能服务华伴产品和推广决策。
+- 遇到专业资质、金融、法律、医疗等高风险内容，必须注明需要人工或官方渠道核验。
+- 结论要适合保存进华伴后台，供后续运营执行。`;
+}
+
+async function copyTextToClipboard(text, fallbackTitle = '复制内容') {
+  try {
+    await navigator.clipboard.writeText(text);
+    alert('已复制。');
+  } catch (e) {
+    alert(`${fallbackTitle}：\n\n${text}`);
+  }
+}
+
+async function copyProjectResearchPrompt(){
+  await copyTextToClipboard(buildProjectResearchPrompt(), '研究指令');
+}
+
+async function copySelectedResearchPrompt(){
+  const row = lastProjectResearchRows.find(item => item.id === selectedProjectResearchId);
+  if(!row) return copyProjectResearchPrompt();
+  await copyTextToClipboard(buildProjectResearchPrompt(row.fields || {}), '研究指令');
+}
+
+async function loadProjectResearch(){
+  const tbody = document.getElementById('project-research-body');
+  const filter = document.getElementById('research-filter')?.value || '';
+  if(!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:36px;">加载中...</td></tr>';
+  try{
+    let q = 'beta_leads?channel=eq.project_deep_research&order=created_at.desc&limit=120&select=id,name,message,status,fields,created_at,updated_at';
+    if(filter) q += `&status=eq.${encodeURIComponent(filter)}`;
+    const rows = await supaFetch(q);
+    lastProjectResearchRows = Array.isArray(rows) ? rows : [];
+  }catch(e){
+    lastProjectResearchRows = [];
+  }
+  if(!lastProjectResearchRows.length){
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:36px;">暂无研究任务。先新建一个华伴自己的问题。</td></tr>';
+    selectProjectResearch(null);
+    return;
+  }
+  if(!lastProjectResearchRows.some(row => row.id === selectedProjectResearchId)){
+    selectedProjectResearchId = lastProjectResearchRows[0].id;
+  }
+  tbody.innerHTML = lastProjectResearchRows.map(row => {
+    const fields = row.fields || {};
+    return `<tr>
+      <td><strong>${escapeHtml(fields.title || row.name || '未命名研究')}</strong></td>
+      <td>${escapeHtml(researchTypeLabel(fields.type))}</td>
+      <td>${researchStatusBadge(row.status || 'open')}</td>
+      <td style="min-width:260px;color:var(--text2);line-height:1.5;">${escapeHtml(fields.question || row.message || '').slice(0, 180)}</td>
+      <td>${fmtDateShort(row.updated_at || row.created_at)}</td>
+      <td><button class="btn btn-ghost" onclick="selectProjectResearch('${escapeHtml(row.id)}')">查看</button></td>
+    </tr>`;
+  }).join('');
+  selectProjectResearch(selectedProjectResearchId, false);
+}
+
+function selectProjectResearch(id, render = true){
+  selectedProjectResearchId = id;
+  const row = lastProjectResearchRows.find(item => item.id === id);
+  const fields = row?.fields || {};
+  document.getElementById('research-selected-status').textContent = row ? ({open:'待研究',running:'研究中',done:'已完成'}[row.status] || '待研究') : '未选择';
+  document.getElementById('research-selected-view').textContent = row ? `${fields.title || row.name || '未命名研究'}\n${fields.question || row.message || ''}` : '请选择下方任务，或先新建一个。';
+  document.getElementById('research-conclusion').value = fields.conclusion || '';
+  document.getElementById('research-sources').value = fields.sources || '';
+  document.getElementById('research-next-actions').value = fields.nextActions || '';
+  if(render) loadProjectResearch();
+}
+
+async function saveProjectResearchTask(){
+  const type = document.getElementById('research-type')?.value || 'strategy';
+  const title = document.getElementById('research-title')?.value.trim();
+  const question = document.getElementById('research-question')?.value.trim();
+  const output = document.getElementById('research-output')?.value.trim();
+  if(!title || !question){
+    alert('先写标题和要研究的问题。');
+    return;
+  }
+  const fields = {
+    type,
+    title,
+    question,
+    output,
+    prompt: buildProjectResearchPrompt({type,title,question,output}),
+    internalOnly: true,
+    researchRole: '华伴项目研究员'
+  };
+  try{
+    const inserted = await supaInsert('beta_leads', {
+      tenant_id: TENANT_ID,
+      lead_type: 'project_research',
+      channel: 'project_deep_research',
+      need_type: `research_${type}`,
+      name: title,
+      message: question,
+      status: 'open',
+      stage: 'research_task_created',
+      fields
+    });
+    selectedProjectResearchId = inserted?.[0]?.id || selectedProjectResearchId;
+    document.getElementById('research-title').value = '';
+    document.getElementById('research-question').value = '';
+    document.getElementById('research-output').value = '';
+    await loadProjectResearch();
+    alert('研究任务已保存。');
+  }catch(e){
+    alert('保存失败：' + e.message);
+  }
+}
+
+async function updateProjectResearch(status, patch = {}){
+  const row = lastProjectResearchRows.find(item => item.id === selectedProjectResearchId);
+  if(!row) {
+    alert('先选择一个研究任务。');
+    return;
+  }
+  const fields = {
+    ...(row.fields || {}),
+    ...patch,
+    updatedByAdminAt: new Date().toISOString()
+  };
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/beta_leads?id=eq.${encodeURIComponent(row.id)}`, {
+    method:'PATCH',
+    headers:{
+      apikey: SUPABASE_ANON_KEY,
+      Authorization:`Bearer ${SUPABASE_ANON_KEY}`,
+      'Content-Type':'application/json',
+      Prefer:'return=representation'
+    },
+    body:JSON.stringify({
+      status,
+      stage: status === 'done' ? 'research_result_saved' : 'research_running',
+      fields
+    })
+  });
+  const text = await res.text();
+  const payload = text ? JSON.parse(text) : null;
+  if(!res.ok) throw new Error(payload?.message || text || '更新失败');
+  await loadProjectResearch();
+}
+
+async function markProjectResearchRunning(){
+  try{
+    await updateProjectResearch('running');
+    alert('已标记为研究中。');
+  }catch(e){
+    alert('更新失败：' + e.message);
+  }
+}
+
+async function saveProjectResearchResult(){
+  const conclusion = document.getElementById('research-conclusion')?.value.trim();
+  const sources = document.getElementById('research-sources')?.value.trim();
+  const nextActions = document.getElementById('research-next-actions')?.value.trim();
+  if(!conclusion){
+    alert('先贴入研究结论。');
+    return;
+  }
+  try{
+    await updateProjectResearch('done', { conclusion, sources, nextActions });
+    alert('研究结论已归档。');
+  }catch(e){
+    alert('保存失败：' + e.message);
   }
 }
 
@@ -2797,6 +3319,123 @@ function supplierLeadVisibleByType(lead={}, filter='actionable') {
   if (!filter) return true;
   if (filter === 'actionable') return type !== 'adoption';
   return type === filter;
+}
+
+const ADMIN_SUPPLY_TYPES = [
+  ['ride','出行用车'],
+  ['travel','旅游服务'],
+  ['local_service','本地服务'],
+  ['professional','专业服务'],
+  ['restaurant','餐饮商家'],
+  ['delivery','外卖/跑腿配送'],
+  ['goods','商品销售'],
+  ['ecommerce','电商商家'],
+  ['creator','创作/视频/设计'],
+  ['other','其他供给']
+];
+
+function openSupplyLeadEntrySheet(){
+  document.getElementById('admin-supply-entry-modal')?.remove();
+  const overlay=document.createElement('div');
+  overlay.id='admin-supply-entry-modal';
+  overlay.className='modal-overlay show';
+  overlay.style.display='flex';
+  overlay.style.zIndex='4600';
+  overlay.onclick=(event)=>{if(event.target===overlay)overlay.remove();};
+  overlay.innerHTML=`
+    <div class="modal-sheet" style="max-width:560px;">
+      <div class="modal-handle"></div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px;">
+        <div>
+          <div style="font-size:18px;font-weight:900;color:var(--text);">录入供给侧</div>
+          <div style="font-size:12px;color:var(--text3);margin-top:4px;">主动搜索到的资源，或用户/商家被动提交的资料，都进入这里。</div>
+        </div>
+        <button class="btn btn-ghost" onclick="document.getElementById('admin-supply-entry-modal')?.remove()">关闭</button>
+      </div>
+      <div class="two-col" style="gap:10px;">
+        <div><div class="coach-label">行业分类</div><select class="input" id="admin-supply-type">${ADMIN_SUPPLY_TYPES.map(([v,l])=>`<option value="${v}">${l}</option>`).join('')}</select></div>
+        <div><div class="coach-label">录入来源</div><select class="input" id="admin-supply-source"><option value="active_search">主动搜索</option><option value="user_submitted">用户提交</option><option value="merchant_submitted">商家提交</option><option value="api_partner">ERP/API 对接</option></select></div>
+      </div>
+      <div class="two-col" style="gap:10px;margin-top:10px;">
+        <div><div class="coach-label">名称/商家/个人</div><input class="input" id="admin-supply-name" placeholder="例如：墨尔本华人电工"></div>
+        <div><div class="coach-label">联系方式</div><input class="input" id="admin-supply-contact" placeholder="手机 / 微信 / 邮箱"></div>
+      </div>
+      <div class="two-col" style="gap:10px;margin-top:10px;">
+        <div><div class="coach-label">城市</div><input class="input" id="admin-supply-city" value="Melbourne"></div>
+        <div><div class="coach-label">服务范围</div><input class="input" id="admin-supply-area" placeholder="机场附近 / 东南区 / 全城"></div>
+      </div>
+      <div class="two-col" style="gap:10px;margin-top:10px;">
+        <div><div class="coach-label">价格/收费方式</div><input class="input" id="admin-supply-price" placeholder="上门费 / 起步价 / 面议"></div>
+        <div><div class="coach-label">可接时间</div><input class="input" id="admin-supply-availability" placeholder="周末 / 晚间 / 24小时"></div>
+      </div>
+      <div style="margin-top:10px;"><div class="coach-label">说明</div><textarea class="input textarea" id="admin-supply-intro" placeholder="服务内容、经验、特色、可服务对象。"></textarea></div>
+      <div class="two-col" style="gap:10px;margin-top:10px;">
+        <div><div class="coach-label">来源链接</div><input class="input" id="admin-supply-source-url" placeholder="官网 / 公开页面 / 平台链接"></div>
+        <div><div class="coach-label">资质/核验</div><input class="input" id="admin-supply-license" placeholder="执照号 / 注册号 / 待核验"></div>
+      </div>
+      <div style="margin-top:10px;"><div class="coach-label">ERP / 电商 API 接口</div><input class="input" id="admin-supply-api" placeholder="接口文档、系统名称、对接联系人；没有可留空"></div>
+      <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="saveAdminSupplyLead()">保存录入</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('admin-supply-entry-modal')?.remove()">取消</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+async function saveAdminSupplyLead(){
+  const type=document.getElementById('admin-supply-type')?.value||'other';
+  const source=document.getElementById('admin-supply-source')?.value||'active_search';
+  const name=document.getElementById('admin-supply-name')?.value.trim();
+  const contact=document.getElementById('admin-supply-contact')?.value.trim();
+  const city=document.getElementById('admin-supply-city')?.value.trim()||'Melbourne';
+  const area=document.getElementById('admin-supply-area')?.value.trim();
+  const price=document.getElementById('admin-supply-price')?.value.trim();
+  const availability=document.getElementById('admin-supply-availability')?.value.trim();
+  const intro=document.getElementById('admin-supply-intro')?.value.trim();
+  const sourceUrl=document.getElementById('admin-supply-source-url')?.value.trim();
+  const license=document.getElementById('admin-supply-license')?.value.trim();
+  const api=document.getElementById('admin-supply-api')?.value.trim();
+  if(!name){alert('请填写名称');return;}
+  const typeLabel=(ADMIN_SUPPLY_TYPES.find(item=>item[0]===type)||[])[1]||type;
+  try{
+    await supaInsert('beta_leads',{
+      tenant_id:TENANT_ID,
+      lead_type:'supply',
+      channel:source==='active_search'?'active_supply_search':'passive_supply_entry',
+      need_type:type,
+      name,
+      contact:contact||'待补充',
+      city,
+      country:'',
+      status:'new',
+      stage:'supply_lead_entered',
+      message:`供给侧录入\n分类：${typeLabel}\n城市：${city}\n范围：${area||'待补充'}\n价格：${price||'待补充'}\n可接时间：${availability||'待补充'}\n说明：${intro||'待补充'}\n来源：${sourceUrl||source}\n资质：${license||'待核验'}\nERP/API：${api||'未提供'}`,
+      fields:{
+        source,
+        industry_taxonomy:type,
+        service_type:typeLabel,
+        service_area:area,
+        price_text:price,
+        availability,
+        intro,
+        source_url:sourceUrl,
+        license,
+        public_verification_url:sourceUrl,
+        erp_or_ecommerce_api:api,
+        api_integration_ready:Boolean(api),
+        active_search_import:source==='active_search',
+        passive_entry:source!=='active_search',
+        matching_ready:Boolean(contact&&city&&type),
+        admin_review_required:true,
+        recommendation_loop:'供给录入 -> 审核核验 -> 匹配需求 -> 履约后沉淀信用'
+      }
+    });
+    document.getElementById('admin-supply-entry-modal')?.remove();
+    alert('供给侧已录入，进入待审核。');
+    loadSuppliers();
+  }catch(e){
+    alert('保存失败：'+e.message);
+  }
 }
 
 const SOURCE_TYPE_LABELS = {
