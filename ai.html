@@ -1214,10 +1214,10 @@ body.theme-light .visual-guide-actions .guide-skip{background:rgba(0,0,0,.06);co
             <div style="font-size:11px;color:rgba(255,255,255,0.42);margin-bottom:5px;">当前定位</div>
             <div id="profile-location-city" style="font-size:15px;color:#85e8ff;font-weight:900;">正在定位</div>
           </div>
-          <button onclick="refreshProfileLocationNow()" style="border:1px solid rgba(133,232,255,0.32);background:rgba(133,232,255,0.12);color:#85e8ff;border-radius:12px;padding:10px 13px;font-size:13px;font-weight:800;font-family:inherit;cursor:pointer;">重新定位</button>
+          <button onclick="refreshProfileLocationNow(this)" style="border:1px solid rgba(133,232,255,0.32);background:rgba(133,232,255,0.12);color:#85e8ff;border-radius:12px;padding:10px 13px;font-size:13px;font-weight:800;font-family:inherit;cursor:pointer;">重新定位</button>
         </div>
         <div id="profile-location-detail" style="font-size:12px;color:rgba(255,255,255,0.55);line-height:1.65;">还没有拿到详细地址。</div>
-        <button onclick="handleLocationAddressIntent('当前定位保存进地址簿，标记为:当前位置')" style="width:100%;margin-top:10px;padding:11px;border:1px solid rgba(7,193,96,0.34);background:rgba(7,193,96,0.18);border-radius:12px;color:white;font-size:13px;font-weight:900;font-family:inherit;cursor:pointer;">保存到地址簿</button>
+        <button onclick="handleProfileSaveLocation(this)" style="width:100%;margin-top:10px;padding:11px;border:1px solid rgba(7,193,96,0.34);background:rgba(7,193,96,0.18);border-radius:12px;color:white;font-size:13px;font-weight:900;font-family:inherit;cursor:pointer;">保存到地址簿</button>
       </div>
     </div>
 
@@ -1695,25 +1695,6 @@ function changeRegion(){
     const loc=results[0].geometry.location;
     await applyGeocodeResult(results[0],loc.lat(),loc.lng());
   });
-}
-
-function openLocationToolsSheet(){
-  const overlay=document.createElement('div');
-  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:3300;display:flex;align-items:flex-end;justify-content:center;';
-  overlay.innerHTML=`
-    <div style="background:#0d1f3c;border-radius:24px 24px 0 0;padding:22px 20px 40px;width:100%;max-width:480px;">
-      <div style="width:42px;height:4px;background:rgba(255,255,255,0.16);border-radius:999px;margin:0 auto 18px;"></div>
-      <div style="font-size:17px;font-weight:900;color:white;margin-bottom:6px;">📍 定位和地址</div>
-      <div style="font-size:12px;color:rgba(255,255,255,0.55);line-height:1.6;margin-bottom:14px;">查看当前位置详细地址，或保存到地址簿。华伴会根据定位自动识别国家和城市。</div>
-      <button onclick="this.closest('div[style*=fixed]').remove();handleLocationAddressIntent('定位的详细地址')"
-        style="width:100%;padding:13px 14px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:13px;color:white;font:800 14px/1 inherit;cursor:pointer;margin-bottom:9px;">查看当前详细地址</button>
-      <button onclick="this.closest('div[style*=fixed]').remove();handleLocationAddressIntent('当前定位保存进地址簿，标记为:当前位置')"
-        style="width:100%;padding:13px 14px;background:rgba(7,193,96,0.22);border:1px solid rgba(7,193,96,0.36);border-radius:13px;color:white;font:800 14px/1 inherit;cursor:pointer;margin-bottom:9px;">保存当前定位到地址簿</button>
-      <button onclick="this.closest('div[style*=fixed]').remove()"
-        style="width:100%;padding:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:13px;color:rgba(255,255,255,0.62);font:800 13px/1 inherit;cursor:pointer;">关闭</button>
-    </div>`;
-  overlay.onclick=(e)=>{ if(e.target===overlay)overlay.remove(); };
-  document.body.appendChild(overlay);
 }
 
 const S={direction:null,address:null,date:null,time:null,vehicle:null,price:null,base_price:0,surcharge:0,distance_km:0,
@@ -6982,7 +6963,7 @@ const FEATURE_INTENTS=[
   {key:'payment',label:'支付',pattern:/支付|付款|收款|付钱/i},
   {key:'local-people',label:'添加好友',pattern:/本地好友|当地朋友|当地好友|交友|找朋友|认识朋友|搭子|同城|建群|微信群|找群|一起.*(玩|走|去|吃|活动|出行)|拼团|拼车/i},
   {key:'contacts-invite',label:'通讯录添加',pattern:/通讯录|联系人|手机好友|添加好友|邀请好友|导入好友/i},
-  {key:'region',label:'定位',pattern:/定位|切换地区|切换城市|换城市|所在城市|地区/i},
+  {key:'profile',label:'个人中心',pattern:/定位|地址簿|保存.*地址|切换地区|切换城市|换城市|所在城市|地区/i},
   {key:'share',label:'分享',pattern:/分享|转发|二维码|邀请|推荐朋友/i},
   {key:'support',label:'客服',pattern:/^(客服|人工客服|AI客服|ai客服|联系华伴|帮助中心)$|找客服|联系.*客服|人工.*服务|投诉|故障反馈/i},
   {key:'reminder',label:'提醒',pattern:/提醒|闹钟|日程|行程安排|待办|叫我|到点/i},
@@ -7243,7 +7224,6 @@ const CORE_TOOL_ITEMS=[
   {key:'profile',icon:'👤',label:'个人中心'},
   {key:'share',icon:'🔗',label:'分享'},
   {key:'install',icon:'📱',label:'桌面'},
-  {key:'region',icon:'📍',label:'定位'},
   {key:'customize-agent',icon:'🎭',label:'定制AI'},
   {key:'payment',icon:'💳',label:'支付/打赏'},
 ];
@@ -7440,7 +7420,7 @@ function runMoreAction(key,label){
   if(key==='contacts-invite'){pickContactsForInvite();return;}
   if(key==='profile'){openProfile();return;}
   if(key==='manager'){openManagementSheet(buildManagementDraft(''));return;}
-  if(key==='region'){openLocationToolsSheet();return;}
+  if(key==='region'){openProfile();return;}
   if(key==='share'){shareRefLink();return;}
   if(key==='support'){openHuabanSupportSheet();return;}
   if(key==='promo-video'){openPromoVideoTool();return;}
@@ -7504,8 +7484,8 @@ async function openFeatureByKey(key,label,options={}){
     return;
   }
   if(key==='region'){
-    openLocationToolsSheet();
-    await say('好，我打开定位和地址。可以查看详细地址，也可以保存到地址簿；国家和城市我会根据当前位置自动识别。');
+    openProfile();
+    await say('我打开个人中心了。定位和地址簿都放在这里，避免两个入口重复。');
     return;
   }
   if(key==='share'){
@@ -8889,9 +8869,29 @@ function isPreciseGeocodeResult(result={},loc={}){
   return preciseType && (!accuracy || accuracy<=80);
 }
 
+let LAST_LOCATION_ERROR='';
+
+function locationErrorText(error=null){
+  if(!navigator.geolocation)return '当前浏览器不支持定位。';
+  if(!window.isSecureContext)return '浏览器要求 HTTPS 才能使用定位，请用 https://www.huabanapp.com/ai 打开。';
+  if(!error)return LAST_LOCATION_ERROR||'暂时没有拿到当前位置。';
+  if(error.code===1)return '浏览器没有给华伴定位权限。请在 Safari/Chrome 的网站设置里允许 huabanapp.com 使用位置。';
+  if(error.code===2)return '手机暂时无法获取定位信号。请确认系统定位服务已开启，并稍后重试。';
+  if(error.code===3)return '定位请求超时。请保持页面在前台，或换到信号更好的位置后重试。';
+  return error.message||'定位失败，请稍后重试。';
+}
+
 function reverseGeocodeCurrentPosition(options={}){
   return new Promise(resolve=>{
-    if(!navigator.geolocation)return resolve(null);
+    LAST_LOCATION_ERROR='';
+    if(!navigator.geolocation){
+      LAST_LOCATION_ERROR=locationErrorText();
+      return resolve(null);
+    }
+    if(!window.isSecureContext){
+      LAST_LOCATION_ERROR=locationErrorText();
+      return resolve(null);
+    }
     navigator.geolocation.getCurrentPosition(pos=>{
       const lat=pos.coords.latitude;
       const lng=pos.coords.longitude;
@@ -8909,6 +8909,7 @@ function reverseGeocodeCurrentPosition(options={}){
           updatedAt:new Date().toISOString()
         };
         localStorage.setItem('huaban_current_location',JSON.stringify(loc));
+        LAST_LOCATION_ERROR='';
         resolve(loc);
       };
       if(window.google?.maps?.Geocoder){
@@ -8923,8 +8924,12 @@ function reverseGeocodeCurrentPosition(options={}){
         });
         return;
       }
+      LAST_LOCATION_ERROR='地图解析服务还没加载完成，请稍后再试。';
       resolve(null);
-    },()=>resolve(null),{
+    },error=>{
+      LAST_LOCATION_ERROR=locationErrorText(error);
+      resolve(null);
+    },{
       enableHighAccuracy:true,
       timeout:options.timeout||15000,
       maximumAge:options.force?0:120000
@@ -8942,7 +8947,8 @@ async function handleLocationAddressIntent(text='', options={}){
   const wantsSave=/地址簿|保存|标记为|备注为|保存为|叫做|命名为|名称是/i.test(clean);
   const loc=wantsSave ? await reverseGeocodeCurrentPosition({force:true,timeout:16000}) : await ensureCurrentLocationSnapshot();
   if(!loc?.address){
-    await agentSay('我还没拿到当前位置的详细地址。请允许浏览器定位，或者在“我的地址簿”里手动新增地址。',100);
+    const reason=locationErrorText();
+    await agentSay(`${companionEscape(reason)} 也可以先在“我的地址簿”里手动新增地址。`,100);
     showAddressBookEditor();
     return true;
   }
@@ -12896,7 +12902,7 @@ async function saveCurrentLocationToAddressBookFromEditor(trigger=null){
   const loc=await reverseGeocodeCurrentPosition({force:true,timeout:16000});
   if(trigger){trigger.disabled=false;trigger.textContent='定位并填入地址';}
   if(!loc?.address){
-    alert('还没拿到当前位置。请允许浏览器定位，或手动填写详细地址。');
+    alert(locationErrorText()+' 也可以手动填写详细地址。');
     return;
   }
   const labelInput=document.getElementById('address-book-label');
@@ -13140,17 +13146,42 @@ function updateProfileLocationStatus(){
   }
 }
 
-async function refreshProfileLocationNow(){
+async function refreshProfileLocationNow(btn=null){
   const cityEl=document.getElementById('profile-location-city');
   const detailEl=document.getElementById('profile-location-detail');
+  const oldLabel=btn?.textContent||'重新定位';
+  if(btn){btn.disabled=true;btn.textContent='定位中...';}
   if(cityEl)cityEl.textContent='正在定位...';
-  if(detailEl)detailEl.textContent='请允许浏览器获取当前位置。';
-  const loc=await reverseGeocodeCurrentPosition();
-  updateProfileLocationStatus();
+  if(detailEl)detailEl.textContent='正在请求手机定位，请保持页面在前台。';
+  const loc=await reverseGeocodeCurrentPosition({force:true,timeout:16000});
+  if(btn){btn.disabled=false;btn.textContent=oldLabel;}
   if(loc?.address){
-    await agentSay(`定位已更新：${companionEscape(loc.address)}。需要的话，可以在个人中心保存到地址簿。`,80);
+    updateProfileLocationStatus();
   }else{
-    await agentSay('这次还没拿到详细定位。请检查浏览器定位权限，或者在地址簿里手动保存常用地址。',100);
+    if(cityEl)cityEl.textContent=currentRegion.city||currentRegion.country||'未定位';
+    if(detailEl)detailEl.textContent=`${locationErrorText()} 可点“保存到地址簿”手动填写。`;
+  }
+}
+
+async function handleProfileSaveLocation(btn=null){
+  const oldLabel=btn?.textContent||'保存到地址簿';
+  if(btn){btn.disabled=true;btn.textContent='定位中...';}
+  try{
+    const loc=await reverseGeocodeCurrentPosition({force:true,timeout:16000});
+    if(loc?.address){
+      fillAddressBookEditorWithLocation(loc,'当前位置');
+    }else{
+      showAddressBookEditor();
+      setTimeout(()=>{
+        const hint=document.getElementById('address-book-location-hint');
+        if(hint){
+          hint.textContent=`${locationErrorText()} 请手动填写详细地址后保存。`;
+          hint.style.display='block';
+        }
+      },160);
+    }
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent=oldLabel;}
   }
 }
 
