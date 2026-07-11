@@ -16446,9 +16446,7 @@ async function handleLocalFriendChatIntent(text=''){
   if(!isFriendContactIntent(text))return false;
   const list=localFriendStore();
   if(!list.length){
-    await agentSay('你还没有本地好友。可以扫码、搜手机号，或者把邀请链接发给对方。',100);
-    renderFriendAddCard();
-    return true;
+    return false;
   }
   const friend=findLocalFriendByText(text);
   if(friend){
@@ -16456,9 +16454,7 @@ async function handleLocalFriendChatIntent(text=''){
     openFriendConversation(friend);
     return true;
   }
-  showFriendListChoice();
-  await agentSay('我还没确认你要联系谁。你可以直接说名字；想看列表，说“打开好友列表”就行。',100);
-  return true;
+  return false;
 }
 
 function showFriendCardSheet(friend={}){
