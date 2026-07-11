@@ -77,7 +77,6 @@ button,input{font:inherit}
     </div>
     <input class="input" id="nameInput" maxlength="12" placeholder="姓名/称呼">
     <input class="input" id="industryInput" maxlength="32" placeholder="行业/强项">
-    <input class="input" id="phoneInput" maxlength="32" placeholder="手机号，用于找回身份">
   </section>
 
   <section class="card wallet">
@@ -94,6 +93,7 @@ button,input{font:inherit}
   <section class="card">
     <div class="section-title">手机号验证</div>
     <div class="hint">注重隐私和安全的用户，不怕多一步。验证码通过后，手机号才成为华伴账号的唯一身份锚点。</div>
+    <input class="input" id="phoneInput" type="tel" inputmode="tel" maxlength="32" placeholder="手机号（含国家区号，如 +61）">
     <input class="input" id="codeInput" inputmode="numeric" maxlength="6" placeholder="6 位短信验证码">
     <div class="actions">
       <button class="btn secondary" id="sendCodeBtn" onclick="sendPhoneCode()">发送验证码</button>
