@@ -482,12 +482,6 @@ body.admin-unlocked .admin-auth { display: none; }
     <div class="nav-item active" onclick="showSection('dashboard')">
       <span class="nav-icon">📊</span> 我的后台
     </div>
-    <div class="nav-item" onclick="showSection('trips')">
-      <span class="nav-icon">🚗</span> 订单管理
-    </div>
-    <div class="nav-item" onclick="showSection('delivery')">
-      <span class="nav-icon">🍱</span> 外卖平台
-    </div>
     <div class="nav-item" onclick="showSection('orders')">
       <span class="nav-icon">🧾</span> 统一订单池
     </div>
@@ -495,12 +489,6 @@ body.admin-unlocked .admin-auth { display: none; }
 
   <div class="nav-section">
     <div class="nav-label">运营</div>
-    <div class="nav-item" onclick="showSection('drivers')">
-      <span class="nav-icon">🧑‍✈️</span> 司机管理
-    </div>
-    <div class="nav-item" onclick="showSection('passengers')">
-      <span class="nav-icon">👤</span> 乘客管理
-    </div>
     <div class="nav-item" onclick="showSection('suppliers')">
       <span class="nav-icon">🧩</span> 公测线索
     </div>
@@ -581,15 +569,10 @@ body.admin-unlocked .admin-auth { display: none; }
         <strong>公测线索</strong>
         <span>查看领养、需求/供给情报、反馈和服务者申请</span>
       </div>
-      <div class="admin-quick-card" onclick="showSection('trips')">
-        <div class="quick-icon">🚗</div>
-        <strong>订单管理</strong>
-        <span>跟进接送机、包车和旅游用车订单</span>
-      </div>
-      <div class="admin-quick-card" onclick="showSection('delivery')">
-        <div class="quick-icon">🍱</div>
-        <strong>外卖平台</strong>
-        <span>用户点餐、商家接单、外卖员配送三端订单池</span>
+      <div class="admin-quick-card" onclick="showSection('orders')">
+        <div class="quick-icon">🧾</div>
+        <strong>统一订单池</strong>
+        <span>出行、本地服务、外卖配送和商品订单统一在这里流转</span>
       </div>
       <div class="admin-quick-card" onclick="showSection('ai-training')">
         <div class="quick-icon">🎓</div>
@@ -683,7 +666,7 @@ body.admin-unlocked .admin-auth { display: none; }
       <div class="card">
         <div class="card-header">
           <div class="card-title">最近订单</div>
-          <div class="card-action" onclick="showSection('trips')">查看全部 →</div>
+          <div class="card-action" onclick="showSection('orders')">查看订单池 →</div>
         </div>
         <div style="overflow-x:auto;">
           <table class="table">
@@ -708,8 +691,8 @@ body.admin-unlocked .admin-auth { display: none; }
         <!-- Online drivers -->
         <div class="card">
           <div class="card-header">
-            <div class="card-title">司机状态</div>
-            <div class="card-action" onclick="showSection('drivers')">管理</div>
+            <div class="card-title">履约供给状态</div>
+            <div class="card-action" onclick="showSection('orders')">去订单池</div>
           </div>
           <div class="card-body" id="driver-status-panel">
             <div class="loading" style="color:var(--text3);font-size:13px;">加载中...</div>
