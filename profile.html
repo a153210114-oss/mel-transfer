@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<link rel="icon" href="assets/brand/icon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/brand/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="华伴">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#071526">
+<title>个人中心 - 华伴</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Noto Sans SC","PingFang SC",Arial,sans-serif;background:#071526;color:#fff;min-height:100vh;max-width:520px;margin:0 auto;}
+button,input{font:inherit}
+.page{min-height:100vh;background:linear-gradient(180deg,#0b1b33 0%,#071526 48%,#050b13 100%);padding:14px 14px 28px}
+.top{position:sticky;top:0;z-index:20;margin:-14px -14px 12px;padding:13px 14px 10px;background:rgba(7,21,38,.88);backdrop-filter:blur(14px);display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.06)}
+.back{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.07);color:rgba(255,255,255,.86);height:36px;border-radius:12px;padding:0 12px;font-weight:800}
+.title{font-size:17px;font-weight:900;letter-spacing:0}
+.logo{width:34px;height:34px;border-radius:10px;object-fit:cover;background:#fff}
+.card{background:rgba(255,255,255,.065);border:1px solid rgba(255,255,255,.10);border-radius:18px;padding:15px;margin-bottom:12px;box-shadow:0 12px 28px rgba(0,0,0,.14)}
+.profile-head{display:flex;align-items:center;gap:12px}
+.avatar{width:54px;height:54px;border-radius:18px;background:rgba(7,193,96,.16);display:flex;align-items:center;justify-content:center;font-size:27px;overflow:hidden;flex:0 0 auto}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.name{font-size:19px;font-weight:950;line-height:1.25}
+.sub{font-size:12px;color:rgba(255,255,255,.48);line-height:1.55;margin-top:3px}
+.pill{display:inline-flex;align-items:center;gap:6px;min-height:26px;border-radius:999px;background:rgba(241,207,73,.12);border:1px solid rgba(241,207,73,.22);color:#f1cf49;font-weight:900;font-size:12px;padding:4px 9px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{border-radius:15px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.08);padding:12px}
+.stat span{display:block;color:rgba(255,255,255,.45);font-size:11px;margin-bottom:4px}
+.stat strong{font-size:23px;color:#f1cf49;line-height:1}
+.section-title{font-size:14px;font-weight:900;margin-bottom:10px;color:rgba(255,255,255,.92)}
+.hint{font-size:12px;color:rgba(255,255,255,.55);line-height:1.7}
+.wallet{background:linear-gradient(135deg,rgba(7,193,96,.16),rgba(0,159,255,.10));border-color:rgba(98,221,178,.18)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid rgba(255,255,255,.07)}
+.row:first-child{border-top:0;padding-top:0}
+.row b{font-size:13px}
+.row span{font-size:12px;color:rgba(255,255,255,.5);text-align:right;word-break:break-all}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.btn{height:42px;border:0;border-radius:13px;background:#07c160;color:#04130a;font-weight:950}
+.btn.secondary{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.82)}
+.input{width:100%;height:42px;border-radius:13px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.075);color:white;padding:0 12px;outline:0;margin-top:8px}
+.input:focus{border-color:rgba(98,221,178,.65)}
+.list{display:grid;gap:8px}
+.item{display:flex;align-items:center;gap:10px;padding:11px;border-radius:14px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.07)}
+.item-avatar{width:38px;height:38px;border-radius:13px;background:rgba(7,193,96,.14);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.item-main{min-width:0;flex:1}
+.item-main strong{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item-main em{display:block;font-style:normal;font-size:11px;color:rgba(255,255,255,.42);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.empty{font-size:12px;color:rgba(255,255,255,.45);line-height:1.7;padding:10px 0}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:rgba(0,0,0,.82);border:1px solid rgba(255,255,255,.1);border-radius:999px;padding:10px 14px;font-size:12px;color:white;z-index:50;opacity:0;pointer-events:none;transition:.2s}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<main class="page">
+  <header class="top">
+    <button class="back" onclick="location.href='ai.html'">返回</button>
+    <div class="title">个人中心</div>
+    <img class="logo" src="assets/brand/huaban-logo-v1.png" alt="">
+  </header>
+
+  <section class="card">
+    <div class="profile-head">
+      <div class="avatar" id="avatar">👤</div>
+      <div style="min-width:0;flex:1">
+        <div class="name" id="displayName">华伴用户</div>
+        <div class="sub" id="displayMeta">身份资料未完善</div>
+      </div>
+      <span class="pill" id="levelBadge">Ⅰ 一级</span>
+    </div>
+    <div class="actions">
+      <button class="btn" onclick="saveIdentity()">保存资料</button>
+      <button class="btn secondary" onclick="copyInvite()">分享身份码</button>
+    </div>
+    <input class="input" id="nameInput" maxlength="12" placeholder="姓名/称呼">
+    <input class="input" id="industryInput" maxlength="32" placeholder="行业/强项">
+    <input class="input" id="phoneInput" maxlength="32" placeholder="手机号，用于找回身份">
+  </section>
+
+  <section class="card wallet">
+    <div class="section-title">华伴身份钱包</div>
+    <div class="hint">华伴不用密码。推荐、积分、交易确认、个人数据库和未来权益，都绑定在这个身份里。日常用设备和生物识别确认，手机号用于找回。</div>
+    <div style="margin-top:12px">
+      <div class="row"><b>身份码</b><span id="friendCode">—</span></div>
+      <div class="row"><b>设备状态</b><span id="deviceState">已绑定当前设备</span></div>
+      <div class="row"><b>找回方式</b><span id="recoverState">未绑定手机号</span></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="grid2">
+      <div class="stat"><span>我的积分</span><strong id="points">0</strong></div>
+      <div class="stat"><span>本地圈子</span><strong id="friendCount">0</strong></div>
+    </div>
+    <div class="hint" id="pointsBreakdown" style="margin-top:10px">基础 0 · 一级 0 · 二级 0 · 审核中 0</div>
+  </section>
+
+  <section class="card">
+    <div class="section-title">当前定位</div>
+    <div class="hint" id="locationText">还没有定位记录。</div>
+    <div class="actions">
+      <button class="btn secondary" onclick="location.href='ai.html?intent=location'">重新定位</button>
+      <button class="btn secondary" onclick="location.href='ai.html?intent=address'">添加地址</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="section-title">好友</div>
+    <div class="list" id="friendList"></div>
+  </section>
+
+  <section class="card">
+    <div class="section-title">订单</div>
+    <div class="list" id="orderList"></div>
+  </section>
+</main>
+<div class="toast" id="toast">已保存</div>
+<script>
+const SUPA_URL='https://gxocvpmgfjvmmkkbswgo.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b2N2cG1nZmp2bW1ra2Jzd2dvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyNDc4NzAsImV4cCI6MjA5NTgyMzg3MH0.ExUNuOP8YyHQmItY6cdl1Euj7nOXqQq-rQT5-7aNerE';
+const TENANT_ID='00000000-0000-0000-0000-000000000001';
+const USER_NAME_KEY='huaban_user_name';
+const USER_AVATAR_KEY='huaban_user_avatar';
+const USER_INDUSTRY_KEY='huaban_user_industry';
+const POINTS_RULES={referral_join:20,referral_second_level_join:6};
+const LEVELS=[
+  {stage:1,name:'一级',icon:'Ⅰ',rightsMultiplier:1},
+  {stage:2,name:'二级',icon:'Ⅱ',rightsMultiplier:2},
+  {stage:3,name:'三级',icon:'Ⅲ',rightsMultiplier:4},
+  {stage:4,name:'四级',icon:'Ⅳ',rightsMultiplier:8},
+  {stage:5,name:'五级',icon:'Ⅴ',rightsMultiplier:16},
+  {stage:6,name:'六级',icon:'Ⅵ',rightsMultiplier:32},
+  {stage:7,name:'七级',icon:'Ⅶ',rightsMultiplier:64},
+  {stage:8,name:'八级',icon:'Ⅷ',rightsMultiplier:128}
+];
+function $(id){return document.getElementById(id);}
+function esc(v){return String(v||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function toast(text){const el=$('toast');el.textContent=text;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1500);}
+function getLocal(key){try{return JSON.parse(localStorage.getItem(key)||'null')}catch(e){return null}}
+function setLocal(key,val){localStorage.setItem(key,JSON.stringify(val))}
+function getProfile(){return getLocal('au_profile')||{}}
+function saveProfile(updates){const p=getProfile();Object.assign(p,updates);setLocal('au_profile',p)}
+function getPassenger(){return getLocal('au_passenger')||{}}
+function genRef(){return Math.random().toString(36).substring(2,8).toUpperCase()}
+function getFriendCode(){
+  let code=String(localStorage.getItem('huaban_device_friend_code')||getPassenger().ref||'').replace(/[^a-zA-Z0-9]/g,'').toUpperCase();
+  if(!code)code=genRef();
+  localStorage.setItem('huaban_device_friend_code',code);
+  const p=getPassenger();
+  if(String(p.ref||'').toUpperCase()!==code){p.ref=code;setLocal('au_passenger',p)}
+  return code;
+}
+function getReleaseLevel(){
+  const stage=Math.max(1,Math.min(LEVELS.length,Math.round(Math.log2(Math.max(1,Number(localStorage.getItem('huaban_contribution_release_coefficient')||'1'))))+1));
+  return LEVELS[stage-1]||LEVELS[0];
+}
+async function supaGet(path){
+  const res=await fetch(SUPA_URL+'/rest/v1/'+path,{headers:{apikey:SUPA_KEY,Authorization:'Bearer '+SUPA_KEY}});
+  if(!res.ok)return [];
+  return res.json();
+}
+async function supaInsert(table,data){
+  const res=await fetch(SUPA_URL+'/rest/v1/'+table,{method:'POST',headers:{apikey:SUPA_KEY,Authorization:'Bearer '+SUPA_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(data)});
+  return res.ok;
+}
+function normalizePhone(phone=''){return String(phone||'').replace(/[\s().-]/g,'').trim()}
+function getUser(){
+  const p=getProfile();
+  const passenger=getPassenger();
+  return {
+    name:String(localStorage.getItem(USER_NAME_KEY)||p.display_name||p.name||passenger.name||'').trim(),
+    avatar:String(localStorage.getItem(USER_AVATAR_KEY)||p.avatar||passenger.avatar||'👤').trim()||'👤',
+    industry:String(localStorage.getItem(USER_INDUSTRY_KEY)||p.industry||passenger.industry||'').trim(),
+    phone:String(passenger.phone||p.phone||'').trim()
+  };
+}
+function avatarMarkup(value){
+  const clean=String(value||'👤').trim();
+  if(clean==='logo')return '<img src="assets/brand/huaban-logo-v1.png" alt="">';
+  if(/^https?:\/\//.test(clean))return `<img src="${esc(clean)}" alt="">`;
+  return esc(clean.slice(0,4)||'👤');
+}
+function localFriendStore(){try{return JSON.parse(localStorage.getItem('huaban_local_friends')||'[]')||[]}catch(e){return[]}}
+function pendingReferralInvitesStore(){try{return JSON.parse(localStorage.getItem('huaban_pending_referral_invites')||'[]')||[]}catch(e){return[]}}
+function getLocationSnapshot(){try{return JSON.parse(localStorage.getItem('huaban_current_location')||'null')}catch(e){return null}}
+function formatDate(value=''){
+  const d=new Date(value);
+  if(Number.isNaN(d.getTime()))return '';
+  const pad=n=>String(n).padStart(2,'0');
+  return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+function renderIdentity(){
+  const user=getUser();
+  const code=getFriendCode();
+  $('avatar').innerHTML=avatarMarkup(user.avatar);
+  $('displayName').textContent=user.name||'华伴用户';
+  $('displayMeta').textContent=[user.industry,user.phone].filter(Boolean).join(' · ')||'身份资料未完善';
+  $('nameInput').value=user.name||'';
+  $('industryInput').value=user.industry||'';
+  $('phoneInput').value=user.phone||'';
+  $('friendCode').textContent=code;
+  $('recoverState').textContent=user.phone?'手机号已绑定，可用于找回':'未绑定手机号';
+  const level=getReleaseLevel();
+  $('levelBadge').textContent=`${level.icon} ${level.name}`;
+}
+async function saveIdentity(){
+  const name=$('nameInput').value.trim().slice(0,12);
+  const industry=$('industryInput').value.trim().slice(0,32);
+  const phone=$('phoneInput').value.trim().slice(0,32);
+  const avatar=getUser().avatar||'👤';
+  if(name)localStorage.setItem(USER_NAME_KEY,name);
+  if(industry)localStorage.setItem(USER_INDUSTRY_KEY,industry);
+  localStorage.setItem(USER_AVATAR_KEY,avatar);
+  saveProfile({display_name:name,industry,phone,avatar});
+  const p=getPassenger();
+  setLocal('au_passenger',{...p,name:name||p.name||'华伴用户',industry:industry||p.industry||'',phone:phone||p.phone||'',avatar,ref:getFriendCode(),logged_in:true,profile_ready:true,login_source:p.login_source||'profile_page'});
+  if(phone){
+    await supaInsert('huaban_identity_links',{
+      tenant_id:TENANT_ID,
+      phone,
+      normalized_phone:normalizePhone(phone),
+      friend_code:getFriendCode(),
+      display_name:name||'华伴用户',
+      avatar,
+      industry,
+      source:'profile_page_save',
+      source_ref:getFriendCode(),
+      link_type:'huaban_user_profile',
+      status:'active',
+      owner_code:getFriendCode(),
+      fields:{user_visible:false,identity_anchor:'phone',created_by:'huaban_profile_page',profile_ready:true}
+    }).catch(()=>false);
+  }
+  renderIdentity();
+  await loadStats();
+  toast('资料已保存');
+}
+async function copyInvite(){
+  const url=`https://www.huabanapp.com/ai.html?friend=${encodeURIComponent(getFriendCode())}&ref=${encodeURIComponent(getFriendCode())}`;
+  try{await navigator.clipboard.writeText(url);toast('分享链接已复制')}catch(e){prompt('复制分享链接',url)}
+}
+async function loadStats(){
+  const myCode=getFriendCode();
+  const user=getUser();
+  let base=0,direct=0,second=0,pending=0;
+  if(user.phone){
+    const contacts=await supaGet(`contacts?phone=eq.${encodeURIComponent(user.phone)}&tenant_id=eq.${TENANT_ID}&select=voucher_balance`).catch(()=>[]);
+    base=Number(contacts?.[0]?.voucher_balance||0)||0;
+  }
+  const events=await supaGet(`huaban_point_events?tenant_id=eq.${TENANT_ID}&owner_code=eq.${encodeURIComponent(myCode)}&order=created_at.desc&limit=300&select=points,action,status,fields,related_code`).catch(()=>[]);
+  const creditedDirect=new Set();
+  const creditedSecond=new Set();
+  (Array.isArray(events)?events:[]).forEach(row=>{
+    const pts=Number(row.points)||0;
+    const status=String(row.status||'').toLowerCase();
+    const action=String(row.action||'');
+    const refLevel=Number(row.fields?.ref_level||0);
+    const related=String(row.related_code||row.fields?.related_code||'').toUpperCase();
+    if(status==='confirmed'){
+      if(action==='referral_second_level_join'||refLevel===2){second+=pts;if(related)creditedSecond.add(related)}
+      else if(action==='referral_join'||refLevel===1){direct+=pts;if(related)creditedDirect.add(related)}
+      else base+=pts;
+    }else pending+=pts;
+  });
+  const referrals=await supaGet(`huaban_referral_events?tenant_id=eq.${TENANT_ID}&inviter_code=eq.${encodeURIComponent(myCode)}&status=eq.confirmed&order=created_at.desc&limit=300&select=referee_code,points_awarded,credit_locked`).catch(()=>[]);
+  (Array.isArray(referrals)?referrals:[]).forEach(row=>{
+    const code=String(row.referee_code||'').toUpperCase();
+    if(code&&!creditedDirect.has(code)&&!row.credit_locked){direct+=Number(row.points_awarded)||POINTS_RULES.referral_join;creditedDirect.add(code)}
+  });
+  const secondRows=await supaGet(`huaban_referral_events?tenant_id=eq.${TENANT_ID}&second_level_referrer_code=eq.${encodeURIComponent(myCode)}&status=eq.confirmed&order=created_at.desc&limit=300&select=referee_code`).catch(()=>[]);
+  (Array.isArray(secondRows)?secondRows:[]).forEach(row=>{
+    const code=String(row.referee_code||'').toUpperCase();
+    if(code&&!creditedSecond.has(code)){second+=POINTS_RULES.referral_second_level_join;creditedSecond.add(code)}
+  });
+  const pendingRemote=await supaGet(`huaban_identity_links?tenant_id=eq.${TENANT_ID}&inviter_code=eq.${encodeURIComponent(myCode)}&link_type=eq.pending_referral_invite&status=eq.active&order=created_at.desc&limit=300&select=normalized_phone,phone,display_name`).catch(()=>[]);
+  const pendingLocal=pendingReferralInvitesStore().filter(item=>String(item.status||'')!=='已绑定').length;
+  const total=base+direct+second+pending;
+  $('points').textContent=String(total);
+  $('pointsBreakdown').textContent=`基础 ${base} · 一级 ${direct} · 二级 ${second} · 审核中 ${pending} · 待绑定 ${pendingLocal+(Array.isArray(pendingRemote)?pendingRemote.length:0)}`;
+}
+async function loadFriends(){
+  const myCode=getFriendCode();
+  let list=localFriendStore();
+  const remote=await supaGet(`huaban_friendships?tenant_id=eq.${TENANT_ID}&owner_code=eq.${encodeURIComponent(myCode)}&status=eq.active&order=created_at.desc&limit=120&select=*`).catch(()=>[]);
+  if(Array.isArray(remote)){
+    remote.forEach(row=>{
+      const code=String(row.friend_code||row.fields?.friend?.code||'').toUpperCase();
+      if(!code||list.some(f=>String(f.code||'').toUpperCase()===code))return;
+      list.push({code,name:row.friend_name||row.fields?.friend?.name||`华伴好友 ${code}`,phone:row.friend_phone||'',industry:row.friend_industry||'',avatar:row.friend_avatar||'👤',source:row.source||'friendship_sync',addedAt:row.created_at});
+    });
+  }
+  $('friendCount').textContent=String(list.length);
+  $('friendList').innerHTML=list.length?list.slice(0,20).map(friend=>`
+    <div class="item">
+      <div class="item-avatar">${avatarMarkup(friend.avatar||'👤')}</div>
+      <div class="item-main"><strong>${esc(friend.name||friend.code||'华伴好友')}</strong><em>${esc(friend.industry||friend.phone||friend.code||'本地连接')} · ${esc(formatDate(friend.addedAt)||'')}</em></div>
+    </div>`).join(''):'<div class="empty">还没有好友。分享身份码或名片后，会在这里显示。</div>';
+}
+async function loadOrders(){
+  const user=getUser();
+  const queries=[];
+  if(user.phone)queries.push(`huaban_orders?tenant_id=eq.${TENANT_ID}&buyer_contact=eq.${encodeURIComponent(user.phone)}&order=created_at.desc&limit=8&select=*`);
+  if(user.name)queries.push(`huaban_orders?tenant_id=eq.${TENANT_ID}&buyer_name=eq.${encodeURIComponent(user.name)}&order=created_at.desc&limit=8&select=*`);
+  let orders=[];
+  for(const q of queries){
+    const rows=await supaGet(q).catch(()=>[]);
+    if(Array.isArray(rows))orders=orders.concat(rows);
+  }
+  const seen=new Set();
+  orders=orders.filter(row=>{const id=String(row.id||row.created_at);if(seen.has(id))return false;seen.add(id);return true}).slice(0,8);
+  $('orderList').innerHTML=orders.length?orders.map(order=>`
+    <div class="item">
+      <div class="item-avatar">📋</div>
+      <div class="item-main"><strong>${esc(order.title||order.service_title||order.need_type||'交易订单')}</strong><em>${esc(order.status||'处理中')} · ${esc(order.price_text||order.budget||'')}</em></div>
+    </div>`).join(''):'<div class="empty">还没有订单。交易双方确认后的记录会显示在这里。</div>';
+}
+function renderLocation(){
+  const loc=getLocationSnapshot();
+  if(loc?.address)$('locationText').textContent=`${loc.address}${loc.accuracy?` · 精度约 ${Math.round(Number(loc.accuracy))} 米`:''}`;
+  else $('locationText').textContent=localStorage.getItem('huaban_region_city')||'还没有定位记录。';
+}
+async function init(){
+  renderIdentity();
+  renderLocation();
+  await Promise.allSettled([loadStats(),loadFriends(),loadOrders()]);
+}
+init();
+</script>
+</body>
+</html>
