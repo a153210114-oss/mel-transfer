@@ -630,6 +630,45 @@ footer {
   color: var(--muted);
   line-height: 1.65;
 }
+.identity-subpanel {
+  margin-top: 14px;
+  border: 1px solid rgba(15,40,70,0.1);
+  border-radius: 16px;
+  background: #fff;
+  padding: 15px;
+}
+.identity-subpanel h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+.identity-subpanel p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.75;
+}
+.identity-purpose-grid {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+}
+.identity-purpose {
+  border: 1px solid rgba(15,40,70,0.09);
+  border-radius: 14px;
+  background: #f8fbfa;
+  padding: 12px;
+}
+.identity-purpose strong {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--ink);
+}
+.identity-purpose span {
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.65;
+}
 @media (max-width: 860px) {
   .nav-inner { min-height: 62px; }
   .nav-link { display: none; }
@@ -726,8 +765,8 @@ let identityCopy = {
     mode: 'plain',
     sections: [
       {
-        label: '规则机制',
-        text: '先定公平规则，再记录真实贡献；越早参与，越早留下位置。',
+        label: '规则怎么可信？',
+        text: '先定公平规则，再记录真实贡献；越早参与，越早留下可核验位置。',
         details: [
           '华伴的推广不是靠拉人头，而是先建立规则：只记录真实使用、有效反馈、真实分享、提交供给资料和促成服务。',
           '所有贡献都要可核验、可追溯、可按规则计算；越早参与，越早在规则体系里留下清晰位置。',
@@ -735,7 +774,7 @@ let identityCopy = {
         ]
       },
       {
-        label: '共识产生',
+        label: '共识怎么形成？',
         text: '用户早使用、早反馈、早分享，本身就在形成华伴共识。',
         details: [
           '共识不是一句口号，而是越来越多人真实使用、持续反馈、愿意分享，并把需求和服务资料沉淀进华伴。',
@@ -744,13 +783,35 @@ let identityCopy = {
         ]
       },
       {
-        label: '共享机制',
+        label: '共享怎么执行？',
         text: '可分配净收益的 80% 进入共享池，未来按 Web3 规则自动分配。',
         details: [
           '华伴的共享机制是：未来可分配净收益的 80% 进入共享池，面向真实贡献者。',
           '共享不按单纯拉新人数，而按真实使用、有效反馈、真实分享、供给资料和服务促成等贡献计算。',
           '最终以审核、公开规则和不可更改的 Web3 自动分配机制为准。'
         ]
+      }
+    ],
+    prospect: {
+      title: '华人先行，再多语种服务所有人',
+      text: '华伴先从华人真实场景起步：事业、生活、学习、本地服务和供需连接。规则跑通、共识形成后，再扩展多语种，让更多国家和地区的人都能用同一套公平规则进入 AI 智能化生活。'
+    },
+    purposes: [
+      {
+        title: '我想分享华伴',
+        text: '点击分享或生成海报，把华伴发给真正需要的人；系统记录真实分享、有效进入、后续使用和服务促成，对应积分与贡献权重。'
+      },
+      {
+        title: '我想使用华伴',
+        text: '直接说找本地需要你的人、找服务、整理资料或反馈问题；有效使用会沉淀为个人数据库和真实贡献记录。'
+      },
+      {
+        title: '我想反馈优化',
+        text: '把不好用、不清楚、希望新增的地方告诉华伴；有效反馈会进入优化资料，帮助决定下一版先做什么，并记录贡献积分。'
+      },
+      {
+        title: '我能提供服务',
+        text: '提交行业、联系方式、服务范围或供给资料；当本地有人需要时，华伴优先整理并尝试匹配，形成服务贡献记录。'
       }
     ]
   },
@@ -937,6 +998,23 @@ function renderIdentity(role) {
   const detailHtml=Array.isArray(copy.details)&&copy.details.length ? `
     <button class="identity-detail-toggle" type="button" onclick="toggleIdentityDetail('identityDetail',this)">${copy.detailLabel || '查看详情'}</button>
     <div class="identity-detail" id="identityDetail">${copy.details.map(item=>`<p>${item}</p>`).join('')}</div>` : '';
+  const prospectHtml=copy.prospect ? `
+    <div class="identity-subpanel">
+      <h3>${copy.prospect.title}</h3>
+      <p>${copy.prospect.text}</p>
+    </div>` : '';
+  const purposesHtml=Array.isArray(copy.purposes)&&copy.purposes.length ? `
+    <div class="identity-subpanel">
+      <h3>按你的目的使用华伴</h3>
+      <div class="identity-purpose-grid">
+        ${copy.purposes.map(item=>`
+          <div class="identity-purpose">
+            <strong>${item.title}</strong>
+            <span>${item.text}</span>
+          </div>`).join('')}
+      </div>
+    </div>` : '';
+  const plainExtraHtml=detailHtml || prospectHtml || purposesHtml ? `${detailHtml}${prospectHtml}${purposesHtml}` : '';
   document.getElementById('identityExtra').innerHTML = copy.mode === 'business' ? `
     <div class="identity-form">
       <div class="identity-field">
@@ -956,7 +1034,7 @@ function renderIdentity(role) {
         <input id="lifeNeed" placeholder="${siteFormText('needPlaceholder')}">
       </div>
       <button class="btn primary" type="button" onclick="startLifeNeed()">${siteFormText('tell')}</button>
-    </div>` : detailHtml;
+    </div>` : plainExtraHtml;
   document.querySelectorAll('.identity-tab').forEach(tab => {
     tab.classList.toggle('active', tab.dataset.role === role);
   });
