@@ -3417,6 +3417,7 @@ function wireComposerActionButton(){
 
 function toggleInputMode(){
   completeVisualGuideStep('voice_input');
+  if(FRIEND_VOICE_CALL_ACTIVE)stopFriendVoiceCall(false);
   const bar=document.getElementById('main-input-bar');
   const btn=document.getElementById('input-mode-btn');
   if(!bar||!btn)return;
@@ -3434,6 +3435,7 @@ function toggleInputMode(){
 
 function startPushToTalk(event){
   event?.preventDefault();
+  if(FRIEND_VOICE_CALL_ACTIVE)stopFriendVoiceCall(false);
   if(voiceMode)stopVoiceMode();
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){alert('请使用Safari或Chrome');return;}
@@ -3473,6 +3475,10 @@ function finishPushToTalk(shouldSend){
 
 function toggleMic(){
   completeVisualGuideStep('voice_call');
+  if(ACTIVE_FRIEND_CHAT){
+    toggleFriendVoiceCall();
+    return;
+  }
   if(!('webkitSpeechRecognition' in window)&&!('SpeechRecognition' in window)){alert('请使用Safari或Chrome');return;}
   if(voiceMode){
     stopVoiceMode();
@@ -3499,6 +3505,9 @@ function startVoiceMode(){
   if(navigator.mediaDevices?.getUserMedia){
     navigator.mediaDevices.getUserMedia({audio:true}).catch(()=>{});
   }
+  const input=document.getElementById('chat-input');
+  if(input)input.value='';
+  updateComposerAction();
   pauseWakeListening();
   voiceMode = true;
   setVoiceModeUI(true);
@@ -3553,9 +3562,8 @@ function startListeningLoop(){
       if(e.results[i].isFinal) finalText += e.results[i][0].transcript;
       else interim += e.results[i][0].transcript;
     }
-    // 实时显示interim文字
     const current = (finalText + interim).trim();
-    if(current) document.getElementById('chat-input').value = current;
+    if(current) updateVoiceStatus(`我听到：${current.slice(0,18)}${current.length>18?'...':''}`);
 
     if(finalText.trim()){
       // 有final结果：累加到pending，重置2秒定时器
@@ -16146,6 +16154,75 @@ function playLocalFriendBell(){
 let ACTIVE_FRIEND_CHAT=null;
 let AI_CHAT_SNAPSHOT='';
 let AI_TITLE_SNAPSHOT='';
+let FRIEND_VOICE_CALL_ACTIVE=false;
+
+function setFriendVoiceCallUI(active=false){
+  FRIEND_VOICE_CALL_ACTIVE=active;
+  const btn=document.getElementById('mic-btn');
+  const vi=document.getElementById('voice-indicator');
+  btn?.classList.toggle('recording',active);
+  btn?.setAttribute('aria-label',active?'结束语音通话':'发起语音通话');
+  btn?.setAttribute('title',active?'结束语音通话':'发起语音通话');
+  if(vi){
+    vi.style.display=active?'block':'none';
+    vi.textContent=active?'📞 语音通话中...':'';
+  }
+}
+
+function appendFriendSystemMessage(friend={},text=''){
+  const clean=String(text||'').trim();
+  if(!clean||!friend)return;
+  const messages=readFriendChatMessages(friend);
+  messages.push({from:'system',text:clean,at:new Date().toISOString()});
+  saveFriendChatMessages(friend,messages);
+  if(ACTIVE_FRIEND_CHAT&&friendStableKey(ACTIVE_FRIEND_CHAT)===friendStableKey(friend)){
+    chatArea.appendChild(friendChatBubble(clean,false));
+    scrollBottom();
+  }
+}
+
+async function toggleFriendVoiceCall(){
+  if(FRIEND_VOICE_CALL_ACTIVE){
+    stopFriendVoiceCall(true);
+    return;
+  }
+  await startFriendVoiceCall();
+}
+
+async function startFriendVoiceCall(){
+  const friend=ACTIVE_FRIEND_CHAT;
+  if(!friend)return false;
+  if(voiceMode)stopVoiceMode();
+  if(inputMode==='voice-input')toggleInputMode();
+  setFriendVoiceCallUI(true);
+  playLocalFriendBell();
+  const name=friendDisplayName(friend);
+  appendFriendSystemMessage(friend,`正在呼叫 ${name}。对方接听后进入语音通话；未接听时，不会把你的声音转成文字发送。`);
+  supaInsertLead({
+    lead_type:'social',
+    channel:'friend_voice_call',
+    need_type:'friend_voice_call',
+    name:getPassenger().name||'华伴用户',
+    contact:getPassenger().phone||'',
+    message:`向好友 ${name} 发起语音通话`,
+    status:'calling',
+    fields:{
+      event:'friend_voice_call_started',
+      from_code:getFriendCode(),
+      to_code:friend.code||friend.id||'',
+      friend,
+      user_visible:false
+    }
+  }).catch(()=>null);
+  return true;
+}
+
+function stopFriendVoiceCall(showMessage=true){
+  const friend=ACTIVE_FRIEND_CHAT;
+  if(!FRIEND_VOICE_CALL_ACTIVE)return;
+  setFriendVoiceCallUI(false);
+  if(showMessage&&friend)appendFriendSystemMessage(friend,'语音通话已结束。');
+}
 
 function friendChatStorageKey(friend={}){
   return `huaban_friend_chat_${friendStableKey(friend).replace(/[^a-zA-Z0-9:_-]/g,'_')}`;
@@ -16211,6 +16288,7 @@ function enterFriendChatMode(friend={}){
 function exitFriendChatToAI(){
   if(Date.now()-Number(window._friendAiOrbDraggedAt||0)<260)return;
   if(!ACTIVE_FRIEND_CHAT)return;
+  stopFriendVoiceCall(false);
   ACTIVE_FRIEND_CHAT=null;
   document.body.classList.remove('friend-chat-mode');
   setTopConversationAvatar('ai');
