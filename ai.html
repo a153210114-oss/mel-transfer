@@ -2144,10 +2144,11 @@ async function completeReferralJoinFromSavedProfile(profile={}){
   if(typeof recordFriendReferralClosedLoop!=='function')return null;
   if(!hasReferralBindableIdentity(profile))return null;
   const pending=readPendingReferral();
-  const incoming=normalizeReferralCode(pending?.code||'');
+  const refereeCode=getFriendCode();
+  const lockedFirst=normalizeReferralCode(localStorage.getItem(`huaban_first_referrer_for_${refereeCode}`)||'');
+  const incoming=normalizeReferralCode(pending?.code||lockedFirst||'');
   if(!incoming)return null;
   repairIncomingFriendCodeCollision(incoming);
-  const refereeCode=getFriendCode();
   if(!refereeCode||incoming===refereeCode)return null;
   const key=`huaban_profile_referral_closed_${incoming}_${refereeCode}`;
   const inviterMeta={
@@ -13223,9 +13224,9 @@ async function openProfile(){ stopTTS();
         const pts = rows[0].voucher_balance||0;
         const level = getReleaseLevel();
         profilePointsState = {points: pts, basePoints: pts, level, nextLevel:null};
-        document.getElementById('profile-points').textContent = pts;
         const lvlEl = document.getElementById('profile-level');
         if(lvlEl) lvlEl.textContent = `${level.icon} ${level.name}`;
+        refreshProfileFriendStats().catch(()=>null);
       }
     }).catch(()=>{});
   }else{
@@ -13300,6 +13301,24 @@ async function refreshProfileFriendStats(){
           fields:{...(row.fields||{}),ref_level:1,reconciled_from:'huaban_referral_events'}
         }).catch(()=>null);
       }
+    });
+    const friendshipRows=await supaGet(`huaban_friendships?tenant_id=eq.${TENANT_ID}&owner_code=eq.${encodeURIComponent(myCode)}&status=eq.active&order=created_at.desc&limit=300&select=friend_code,source,fields`).catch(()=>[]);
+    (Array.isArray(friendshipRows)?friendshipRows:[]).forEach(row=>{
+      const friendCode=String(row.friend_code||'').trim().toUpperCase();
+      const closedLoop=row.fields?.closed_loop===true||/qr_referral|referral/i.test(String(row.source||''));
+      if(!friendCode||friendCode===myCode||creditedDirect.has(friendCode)||!closedLoop)return;
+      const pts=POINTS_RULES.referral_join;
+      confirmed+=pts;
+      direct+=pts;
+      creditedDirect.add(friendCode);
+      recordFriendPointEvent({
+        ownerCode:myCode,
+        action:'referral_join',
+        points:pts,
+        relatedCode:friendCode,
+        reason:'好友关系补账',
+        fields:{...(row.fields||{}),ref_level:1,reconciled_from:'huaban_friendships'}
+      }).catch(()=>null);
     });
     const secondRows=await supaGet(`huaban_referral_events?tenant_id=eq.${TENANT_ID}&second_level_referrer_code=eq.${encodeURIComponent(myCode)}&status=eq.confirmed&order=created_at.desc&limit=300&select=referee_code,fields`).catch(()=>[]);
     (Array.isArray(secondRows)?secondRows:[]).forEach(row=>{
@@ -15591,6 +15610,22 @@ function normalizeLocalFriend(friend={}){
   };
 }
 
+function isGenericHuabanFriendName(name=''){
+  const clean=String(name||'').trim();
+  return !clean
+    || /^华伴用户$/i.test(clean)
+    || /^huaban user$/i.test(clean)
+    || /^华伴好友\s+[A-Z0-9]{4,}$/i.test(clean);
+}
+
+function preferFriendName(nextName='',existingName=''){
+  const next=String(nextName||'').trim();
+  const existing=String(existingName||'').trim();
+  if(next&&!isGenericHuabanFriendName(next))return next;
+  if(existing&&!isGenericHuabanFriendName(existing))return existing;
+  return next||existing;
+}
+
 function saveLocalFriend(friend={}){
   const list=localFriendStore();
   const next=normalizeLocalFriend(friend);
@@ -15605,7 +15640,7 @@ function saveLocalFriend(friend={}){
   const merged={
     ...(existing||{}),
     ...next,
-    name:next.name||existing?.name||'',
+    name:preferFriendName(next.name,existing?.name),
     avatar:next.avatar&&next.avatar!=='👤'?next.avatar:(existing?.avatar||next.avatar||'👤'),
     industry:next.industry||existing?.industry||'',
     phone:next.phone||existing?.phone||'',
@@ -15672,12 +15707,49 @@ function friendFromFriendship(row={}){
   };
 }
 
+async function enrichLocalFriendsFromIdentityLinks(){
+  const list=localFriendStore();
+  const targets=list
+    .filter(friend=>friend.code&&(isGenericHuabanFriendName(friend.name)||!friend.phone||!friend.industry))
+    .slice(0,50);
+  if(!targets.length)return [];
+  const updated=[];
+  for(const friend of targets){
+    const code=String(friend.code||'').trim().toUpperCase();
+    if(!code)continue;
+    try{
+      const rows=await supaGet(`huaban_identity_links?tenant_id=eq.${TENANT_ID}&friend_code=eq.${encodeURIComponent(code)}&status=eq.active&order=created_at.desc&limit=1&select=friend_code,display_name,phone,industry,avatar,city,country,link_type,created_at`);
+      const row=Array.isArray(rows)?rows[0]:null;
+      if(!row)continue;
+      const merged=saveLocalFriend({
+        ...friend,
+        code,
+        name:row.display_name||friend.name,
+        phone:row.phone||friend.phone||'',
+        industry:row.industry||friend.industry||'',
+        avatar:row.avatar||friend.avatar||'👤',
+        city:row.city||friend.city||'',
+        country:row.country||friend.country||'',
+        source:'identity_link_sync',
+        addMethod:friend.addMethod||friend.source||'system_sync',
+        updatedAt:row.created_at||new Date().toISOString()
+      });
+      updated.push(merged);
+    }catch(e){}
+  }
+  return updated;
+}
+
 async function supaInsertOptional(table='',data={}){
   try{return await supaInsert(table,data);}catch(e){return null;}
 }
 
 async function supaUpsertOptional(table='',data={},onConflict=''){
   try{return await supaUpsert(table,data,onConflict);}catch(e){return null;}
+}
+
+async function supaPatchOptional(path='',data={}){
+  try{return await supaPatch(path,data);}catch(e){return null;}
 }
 
 async function recordFriendPointEvent({ownerCode='',action='referral_join',points=20,relatedCode='',reason='',fields={}}={}){
@@ -15844,6 +15916,55 @@ async function recordFriendshipRows({inviterCode='',refereeCode='',inviter={},re
   return Promise.all(rows.map(row=>supaUpsertOptional('huaban_friendships',row,'tenant_id,owner_code,friend_code')));
 }
 
+async function patchReferralIdentityRows({inviterCode='',refereeCode='',inviter={},referee={},source='profile_identity_refresh',cardBy=''}={}){
+  const a=String(inviterCode||'').trim().toUpperCase();
+  const b=String(refereeCode||'').trim().toUpperCase();
+  if(!a||!b||a===b)return null;
+  const inviterName=preferFriendName(inviter.name,`华伴好友 ${a}`)||`华伴好友 ${a}`;
+  const refereeName=preferFriendName(referee.name,`华伴好友 ${b}`)||`华伴好友 ${b}`;
+  const fieldsPatch={
+    refreshed_at:new Date().toISOString(),
+    identity_refresh_source:source,
+    card_by:cardBy||'',
+    inviter:{code:a,...inviter,name:inviterName},
+    referee:{code:b,...referee,name:refereeName},
+    user_visible:true,
+    auto_friendship:true
+  };
+  const referralPatch=supaPatchOptional(
+    `huaban_referral_events?tenant_id=eq.${TENANT_ID}&inviter_code=eq.${encodeURIComponent(a)}&referee_code=eq.${encodeURIComponent(b)}`,
+    {
+      inviter_name:inviterName,
+      referee_name:refereeName,
+      inviter_phone:inviter.phone||'',
+      referee_phone:referee.phone||'',
+      inviter_avatar:inviter.avatar||'👤',
+      referee_avatar:referee.avatar||'👤'
+    }
+  );
+  const inviterFriendPatch=supaPatchOptional(
+    `huaban_friendships?tenant_id=eq.${TENANT_ID}&owner_code=eq.${encodeURIComponent(a)}&friend_code=eq.${encodeURIComponent(b)}`,
+    {
+      friend_name:refereeName,
+      friend_phone:referee.phone||'',
+      friend_industry:referee.industry||'',
+      friend_avatar:referee.avatar||'👤',
+      fields:{source,card_by:cardBy||'',closed_loop:true,user_visible:true,friend:{code:b,...referee,name:refereeName}}
+    }
+  );
+  const refereeFriendPatch=supaPatchOptional(
+    `huaban_friendships?tenant_id=eq.${TENANT_ID}&owner_code=eq.${encodeURIComponent(b)}&friend_code=eq.${encodeURIComponent(a)}`,
+    {
+      friend_name:inviterName,
+      friend_phone:inviter.phone||'',
+      friend_industry:inviter.industry||'',
+      friend_avatar:inviter.avatar||'👤',
+      fields:{source,card_by:cardBy||'',closed_loop:true,user_visible:true,friend:{code:a,...inviter,name:inviterName}}
+    }
+  );
+  return Promise.all([referralPatch,inviterFriendPatch,refereeFriendPatch]);
+}
+
 async function resolveFirstReferrerForReferee(refereeCode='', candidateCode=''){
   const referee=String(refereeCode||'').trim().toUpperCase();
   const candidate=String(candidateCode||'').trim().toUpperCase();
@@ -15971,6 +16092,7 @@ async function recordFriendReferralClosedLoop({inviterCode='',refereeCode='',inv
     }).catch(()=>null);
   }
   await recordFriendshipRows({inviterCode:a,refereeCode:b,inviter,referee,source,cardBy});
+  await patchReferralIdentityRows({inviterCode:a,refereeCode:b,inviter,referee,source,cardBy}).catch(()=>null);
   let directPointRow=null;
   let secondPointRow=null;
   if(firstRef.isFirst){
@@ -16061,6 +16183,7 @@ async function syncInboundFriendAdds({announce=false}={}){
     localStorage.setItem(marker,'1');
     added.push(friend);
   });
+  await enrichLocalFriendsFromIdentityLinks().catch(()=>[]);
   if(announce&&added.length){
     rewardCompanionAction('share',{say:`${added.length} 位新朋友通过你的二维码加入了，积分已记录`});
     await agentSay(`${added.length} 位新朋友通过你的二维码加入了，已经在好友里，积分已记录。`,100);
