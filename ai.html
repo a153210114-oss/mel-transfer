@@ -1139,7 +1139,7 @@ body.theme-light .visual-guide-actions .guide-skip{background:rgba(0,0,0,.06);co
 
 <!-- 底部输入 -->
 <div class="input-bar no-nav" id="main-input-bar">
-  <button class="mic-btn composer-tool" id="mic-btn" onclick="toggleMic()" aria-label="连续语音对话" title="连续语音对话">
+  <button class="mic-btn composer-tool" id="mic-btn" onclick="toggleMic()" aria-label="AI 语音对话" title="AI 语音对话">
     <span class="wave-icon" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
   </button>
   <button class="composer-tool" id="input-mode-btn" onclick="toggleInputMode()" aria-label="切换到语音输入" title="切换输入方式">
@@ -3493,10 +3493,12 @@ function setVoiceModeUI(active){
   if(active){
     btn?.classList.add('recording');
     btn?.setAttribute('aria-label','停止连续语音对话');
-    if(vi){ vi.style.display='block'; vi.textContent='🎙️ 连续对话中...'; }
+    btn?.setAttribute('title','停止 AI 语音对话');
+    if(vi){ vi.style.display='block'; vi.textContent='🎙️ AI 语音对话中...'; }
   }else{
     btn?.classList.remove('recording');
     btn?.setAttribute('aria-label','连续语音对话');
+    btn?.setAttribute('title',ACTIVE_FRIEND_CHAT?'发起语音通话':'AI 语音对话');
     if(vi) vi.style.display='none';
   }
 }
@@ -3511,6 +3513,10 @@ function startVoiceMode(){
   pauseWakeListening();
   voiceMode = true;
   setVoiceModeUI(true);
+  if(!sessionStorage.getItem('huaban_ai_voice_call_hint_shown')){
+    sessionStorage.setItem('huaban_ai_voice_call_hint_shown','1');
+    addMsg('AI 语音对话已开启。你直接说话，我会识别语音并回答；想发语音转文字，用旁边的语音输入。');
+  }
   startListeningLoop();
 }
 
