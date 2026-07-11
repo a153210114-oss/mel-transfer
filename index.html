@@ -631,7 +631,7 @@ footer {
         <a class="btn primary" id="identityAction" href="/ai?ref=share_growth">去试一句</a>
         <a class="btn" id="identitySecondaryAction" href="app-download.html?ref=identity_home">放到手机</a>
       </div>
-      <div class="identity-hook-note" id="siteHookNote"><strong>区块链浪潮，你错过了比特币；AI 浪潮已经到来，这一次先别只做旁观者。</strong> 华伴只记录真实使用、有效反馈、真实分享和被审核的贡献；不承诺收益，不靠拉人头，未来按公开规则共享。</div>
+      <div class="identity-hook-note" id="siteHookNote"><strong>区块链浪潮，你错失比特币；AI 浪潮席卷全球，别再错过华伴 AI。</strong> 早期使用、反馈、分享和促成服务会记录为真实贡献；最高 128 倍为贡献权重/分配权益口径，以审核和公开规则为准，不构成收益承诺。</div>
     </article>
   </section>
 </main>
@@ -653,7 +653,7 @@ const SITE_TZ_LANG=[
 ];
 const SITE_LANG_META={zh:{html:'zh-CN',label:'中文'},en:{html:'en',label:'EN'},ja:{html:'ja',label:'日本語'},ko:{html:'ko',label:'한국어'},th:{html:'th',label:'ไทย'},id:{html:'id',label:'ID'},vi:{html:'vi',label:'VI'},de:{html:'de',label:'DE'},fr:{html:'fr',label:'FR'},it:{html:'it',label:'IT'},es:{html:'es',label:'ES'},nl:{html:'nl',label:'NL'},pt:{html:'pt',label:'PT'},ar:{html:'ar',label:'AR'},tr:{html:'tr',label:'TR'},ru:{html:'ru',label:'RU'}};
 const SITE_I18N={
-  zh:{title:'服务海外华人本地生活的智能应用',subtitle:'无需费时费力在一堆搜索结果中徒劳无果，也不会被带偏。',hookNote:'区块链浪潮，你错过了比特币；AI 浪潮已经到来，这一次先别只做旁观者。 华伴只记录真实使用、有效反馈、真实分享和被审核的贡献；不承诺收益，不靠拉人头，未来按公开规则共享。',tabSubs:['真实贡献会被看见','从本地需求开始','一点就能回来'],tabBtns:['共建一程','先让它办','随手可用'],businessSub:'真实贡献会被看见',lifeSub:'从本地需求开始',businessBtn:'共建一程',lifeBtn:'先让它办',open:'现在就试',download:'放到手机',footer:'华伴 AI+ · 服务海外华人本地生活的智能应用'},
+  zh:{title:'服务海外华人本地生活的智能应用',subtitle:'无需费时费力在一堆搜索结果中徒劳无果，也不会被带偏。',hookNote:'区块链浪潮，你错失比特币；AI 浪潮席卷全球，别再错过华伴 AI。 早期使用、反馈、分享和促成服务会记录为真实贡献；最高 128 倍为贡献权重/分配权益口径，以审核和公开规则为准，不构成收益承诺。',tabSubs:['真实贡献会被看见','从本地需求开始','一点就能回来'],tabBtns:['共建一程','先让它办','随手可用'],businessSub:'真实贡献会被看见',lifeSub:'从本地需求开始',businessBtn:'共建一程',lifeBtn:'先让它办',open:'现在就试',download:'放到手机',footer:'华伴 AI+ · 服务海外华人本地生活的智能应用'},
   en:{title:'A smart local-life app for overseas Chinese',subtitle:'No more wasting time in messy search results, and no more being led off track.',hookNote:'Many people missed the blockchain wave. The AI wave is here; this time, do not stay only as a spectator. Huaban records real use, useful feedback, real sharing, and reviewed contribution only; no income promise, no headcount game, just transparent rules.',tabSubs:['Real contribution is seen','Start with local needs','One tap back'],tabBtns:['Build Together','Let It Work','Keep It Close'],businessSub:'Real contribution is seen',lifeSub:'Start with local needs',businessBtn:'Build Together',lifeBtn:'Let It Work',open:'Try Now',download:'Keep on Phone',footer:'Huaban AI+ · Smart local life for overseas Chinese',
     business:{title:'Let the right customers find you',lead:'No complicated signup. Leave your phone and industry first; add Huaban to your phone when you want timely demand alerts.',items:['For local service providers, shops, drivers, translators, lawyers, accountants, restaurants, delivery, tours, and product suppliers.','Huaban organizes your industry, city, service area, and contact details, then matches them intelligently.','No need to stare at a page. Huaban reminds you when a suitable need appears.']},
     life:{title:'Find what you really need',lead:'Stop getting lost in fragmented information.',items:['No more wasting time in a pile of search results.','Tell Huaban what you need; it keeps the goal clear and moves it forward.','Save your time and attention for your family and your life.']}},
@@ -668,17 +668,17 @@ const SITE_I18N={
 let currentIdentityRole='share';
 let identityCopy = {
   share: {
-    title: '把早期参与，留下真实记录',
-    lead: '使用、反馈、分享、带来真实需求和服务资料，都会成为可核验的贡献。华伴按规则记录，不靠拉人头，不做空口承诺。',
+    title: '区块链浪潮，你错失比特币；AI 浪潮，别再错过华伴 AI',
+    lead: 'AI 浪潮正在重塑事业、生活和学习。现在参与华伴，不是抢收益承诺，而是把真实使用、反馈、分享和服务贡献先记录下来。',
     href: '/ai?ref=share_growth',
     actionLabel: '去试一句',
     secondaryHref: 'app-download.html?ref=share_growth',
     secondaryLabel: '放到手机',
     mode: 'plain',
     items: [
-      '早期使用、有效反馈、真实推荐、提交供给资料和促成服务，都会沉淀为贡献记录。',
+      '早期使用、有效反馈、真实推荐、提交供给资料和促成服务，都会沉淀为可核验的贡献记录。',
       '可分配净收益的 80% 进入共享池，未来按不可更改的 Web3 规则自动分配。',
-      '越早参与越容易占住真实贡献位置，但所有回馈都以真实使用、审核和规则为准。'
+      '最高 128 倍为贡献权重/分配权益口径，以真实使用、审核和公开规则为准，不构成收益承诺。'
     ]
   },
   now: {
