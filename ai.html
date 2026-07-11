@@ -16160,6 +16160,14 @@ async function syncInboundFriendAdds({announce=false}={}){
     rows=rows.concat(Array.isArray(user)?user:[]);
   }catch(e){}
   const added=[];
+  const reconcileJobs=[];
+  const inviterProfile={
+    code:myCode,
+    name:getPassenger().name||getUserProfile().name||'华伴用户',
+    phone:getPassenger().phone||getUserProfile().phone||'',
+    industry:getPassenger().industry||getUserProfile().industry||'',
+    avatar:getPassenger().avatar||getUserProfile().avatar||'👤'
+  };
   rows.forEach(row=>{
     if(row.kind==='referral_event'||row.kind==='friendship'){
       const friend=row.friend;
@@ -16179,10 +16187,25 @@ async function syncInboundFriendAdds({announce=false}={}){
     const friend=friendFromInboundLead(row);
     if(!friend)return;
     saveLocalFriend(friend);
+    reconcileJobs.push(recordFriendReferralClosedLoop({
+      inviterCode:myCode,
+      refereeCode:friend.code,
+      inviter:inviterProfile,
+      referee:{
+        code:friend.code,
+        name:friend.name||`华伴好友 ${friend.code}`,
+        phone:friend.phone||'',
+        industry:friend.industry||'',
+        avatar:friend.avatar||'👤'
+      },
+      source:'friend_qr_add_reconcile',
+      cardBy:target
+    }).catch(()=>null));
     if(localStorage.getItem(marker)==='1')return;
     localStorage.setItem(marker,'1');
     added.push(friend);
   });
+  if(reconcileJobs.length)await Promise.allSettled(reconcileJobs);
   await enrichLocalFriendsFromIdentityLinks().catch(()=>[]);
   if(announce&&added.length){
     rewardCompanionAction('share',{say:`${added.length} 位新朋友通过你的二维码加入了，积分已记录`});
