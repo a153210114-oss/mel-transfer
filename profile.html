@@ -96,10 +96,10 @@ button,input{font:inherit}
     <div class="hint">注重隐私和安全的用户，不怕多一步。验证码通过后，手机号才成为华伴账号的唯一身份锚点。</div>
     <input class="input" id="codeInput" inputmode="numeric" maxlength="6" placeholder="6 位短信验证码">
     <div class="actions">
-      <button class="btn secondary" id="sendCodeBtn" onclick="sendPhoneCode()" disabled>即将开放</button>
-      <button class="btn" id="verifyCodeBtn" onclick="verifyPhoneCode()" disabled>验证并注册</button>
+      <button class="btn secondary" id="sendCodeBtn" onclick="sendPhoneCode()">发送验证码</button>
+      <button class="btn" id="verifyCodeBtn" onclick="verifyPhoneCode()">验证并注册</button>
     </div>
-    <div class="hint" id="verifyHint" style="margin-top:10px">手机号安全验证即将开放。现在可先使用华伴，系统会先把积分和关系记录在当前设备身份码下；验证开放后可一键归集到正式账号。</div>
+    <div class="hint" id="verifyHint" style="margin-top:10px">填写手机号后发送验证码。验证完成后，手机号会成为华伴账号的正式身份锚点，推荐关系和积分再归集到这个账号。</div>
   </section>
 
   <section class="card">
@@ -178,6 +178,16 @@ async function supaGet(path){
 async function supaInsert(table,data){
   const res=await fetch(SUPA_URL+'/rest/v1/'+table,{method:'POST',headers:{apikey:SUPA_KEY,Authorization:'Bearer '+SUPA_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(data)});
   return res.ok;
+}
+async function supaAuthPost(path,data){
+  const res=await fetch(SUPA_URL+'/auth/v1/'+path,{
+    method:'POST',
+    headers:{apikey:SUPA_KEY,Authorization:'Bearer '+SUPA_KEY,'Content-Type':'application/json'},
+    body:JSON.stringify(data)
+  });
+  const json=await res.json().catch(()=>({}));
+  if(!res.ok)throw new Error(json.msg||json.message||json.error_description||json.error||'手机号验证请求失败');
+  return json;
 }
 function normalizePhone(phone=''){return String(phone||'').replace(/[\s().-]/g,'').trim()}
 function normalizeReferralCode(value=''){return String(value||'').replace(/[^a-zA-Z0-9_-]/g,'').trim().toUpperCase()}
@@ -325,7 +335,7 @@ function renderIdentity(){
   const verified=isPhoneVerified(user.phone);
   $('recoverState').textContent=user.phone?(verified?'手机号已验证，可用于找回':'手机号待验证'):'未绑定手机号';
   $('accountState').textContent=verified?`已注册 · ${accountUid()}`:'未完成验证码注册';
-  $('verifyHint').textContent=verified?'当前手机号已完成验证注册。':'手机号安全验证即将开放。现在可先使用华伴，系统会先把积分和关系记录在当前设备身份码下；验证开放后可一键归集到正式账号。';
+  $('verifyHint').textContent=verified?'当前手机号已完成验证注册。':'填写手机号后发送验证码。验证完成后，手机号会成为华伴账号的正式身份锚点，推荐关系和积分再归集到这个账号。';
   const level=getReleaseLevel();
   $('levelBadge').textContent=`${level.icon} ${level.name}`;
 }
@@ -419,8 +429,6 @@ async function completeReferralJoinFromProfile(user={}){
   return result;
 }
 async function sendPhoneCode(){
-  toast('手机号安全验证即将开放');
-  return;
   await saveIdentity();
   const user=getUser();
   if(!normalizePhone(user.phone)){toast('请先填写手机号');return;}
@@ -429,13 +437,7 @@ async function sendPhoneCode(){
   btn.disabled=true;
   btn.textContent='发送中...';
   try{
-    await postJson('/api/send-code',{
-      phone:user.phone,
-      name:user.name,
-      industry:user.industry,
-      friendCode:getFriendCode(),
-      source:'profile_page'
-    });
+    await supaAuthPost('otp',{phone:normalizePhone(user.phone)});
     $('verifyHint').textContent='验证码已发送，10 分钟内有效。';
     toast('验证码已发送');
   }catch(e){
@@ -447,8 +449,6 @@ async function sendPhoneCode(){
   }
 }
 async function verifyPhoneCode(){
-  toast('手机号安全验证即将开放');
-  return;
   const user=getUser();
   const code=$('codeInput').value.trim();
   if(!normalizePhone(user.phone)){toast('请先填写手机号');return;}
@@ -458,24 +458,30 @@ async function verifyPhoneCode(){
   btn.disabled=true;
   btn.textContent='验证中...';
   try{
-    const data=await postJson('/api/verify-code',{
+    const auth=await supaAuthPost('verify',{
+      phone:normalizePhone(user.phone),
+      token:code,
+      type:'sms'
+    });
+    const data=await postJson('/api/auth-phone-sync',{
+      accessToken:auth?.access_token||auth?.session?.access_token||'',
       phone:user.phone,
-      code,
       name:user.name,
       industry:user.industry,
       friendCode:getFriendCode(),
       source:'profile_page'
-    });
+    }).catch(e=>({ok:false,error:e.message,account:{account_uid:auth?.user?.id||auth?.session?.user?.id||''}}));
     const account=data.account||{};
-    localStorage.setItem('huaban_account_uid',account.account_uid||'');
-    localStorage.setItem('huaban_account_id',account.id||'');
+    localStorage.setItem('huaban_account_uid',account.account_uid||auth?.user?.id||auth?.session?.user?.id||'');
+    localStorage.setItem('huaban_account_id',account.id||auth?.user?.id||auth?.session?.user?.id||'');
     localStorage.setItem('huaban_phone_verified_phone',normalizePhone(user.phone));
     localStorage.setItem('huaban_phone_verified_at',account.phone_verified_at||new Date().toISOString());
     const p=getPassenger();
     setLocal('au_passenger',{...p,account_uid:account.account_uid||p.account_uid||'',phone_verified:true,phone_verified_at:account.phone_verified_at||new Date().toISOString(),logged_in:true,profile_ready:true});
     $('codeInput').value='';
+    await completeReferralJoinFromProfile({name:user.name||'华伴用户',industry:user.industry,phone:user.phone,avatar:user.avatar}).catch(()=>null);
     renderIdentity();
-    toast('注册验证完成');
+    toast(data.ok===false?'验证完成，账号资料待后台同步':'注册验证完成');
   }catch(e){
     $('verifyHint').textContent=e.message||'验证码验证失败';
     toast(e.message||'验证码验证失败');
