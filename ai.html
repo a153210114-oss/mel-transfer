@@ -11687,6 +11687,7 @@ function shouldLetOpenAILead(text=''){
   const clean=String(text||'').trim();
   if(!clean)return false;
   if(ACTIVE_FRIEND_CHAT)return false;
+  if(isLocalServiceDemand(clean))return false;
   if(isOrderTrackingIntent(clean)||isLocationAddressIntent(clean))return false;
   if(detectAgentNamingIntent(clean)||isVoiceWakeHelpIntent(clean)||isAddHomeHelpIntent(clean))return false;
   if(/^(客服|人工客服|扫一扫|扫码|我的二维码|通讯录|好友列表|查看好友|个人中心|我的积分|打开个人中心|打开订单|查看订单)$/i.test(clean))return false;
@@ -16133,6 +16134,7 @@ function isFriendListFollowupIntent(text=''){
 function isFriendContactIntent(text=''){
   const clean=String(text||'').trim();
   if(!clean)return false;
+  if(isLocalServiceDemand(clean))return false;
   if(/^(找好了吗|找到了吗|找着了吗|好了没|怎么样了|然后呢|继续|继续安排|安排好了吗|有结果了吗)[？?。！!]*$/i.test(clean))return false;
   return /(联系|找|发消息给|给.*发消息|打开.*对话|跟.*聊|叫一下|提醒.*一下).{0,18}(朋友|好友|同学|司机|客户|人|[A-Za-z0-9_\u4e00-\u9fa5]{2,})/i.test(clean)
     || /^(联系|找|发消息给|打开对话)\s*[\s\S]{1,24}$/i.test(clean);
