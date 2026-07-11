@@ -1,7 +1,9 @@
-const CACHE_NAME = 'huaban-mobile-shell-v4';
+const CACHE_NAME = 'huaban-mobile-shell-v5';
 const APP_SHELL = [
   '/',
   '/index.html',
+  '/official.html',
+  '/ai.html',
   '/admin.html',
   '/manifest.json',
   '/assets/brand/huaban-logo-v1.png',

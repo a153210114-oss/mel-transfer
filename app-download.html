@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <title>下载华伴 App | 华伴</title>
-  <meta name="description" content="下载华伴 App，或把华伴添加到手机主屏幕。除了需要与被需要，生活不该被打扰。华伴 AI，一个更出色的你。">
+  <title>把华伴放到手机｜华伴</title>
+  <meta name="description" content="把华伴放到手机桌面，下次一点就能回来。找人、找服务、整理资料、反馈问题、分享华伴，都先和华伴说一句。">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="assets/brand/apple-touch-icon.png">
   <style>
@@ -48,27 +48,27 @@
     </div>
 
     <section class="hero">
-      <h1>选择你的华伴打开方式</h1>
-      <p class="lead">轻量使用，添加到手机屏幕就够了。长期使用，后续可以下载 App，语音、提醒和消息会更稳定。</p>
+      <h1>把华伴放到身边</h1>
+      <p class="lead">轻量使用，先放到手机桌面就够了。长期使用，后续 App 开放后，语音、提醒和消息会更稳定。</p>
       <div class="device" id="device-pill">正在识别设备...</div>
     </section>
 
     <section class="card">
-      <h2>方式一：添加到手机屏幕</h2>
-      <p>最快开始。无需商店审核，像 App 一样从桌面打开华伴。</p>
+      <h2>方式一：放到手机桌面</h2>
+      <p>最快开始。无需商店审核，下次一点就能回到华伴。</p>
       <div class="steps" id="pwa-steps"></div>
       <div class="actions">
-        <button class="btn" type="button" id="install-btn">添加到屏幕</button>
-        <a class="btn ghost" href="/ai">先打开华伴</a>
+        <button class="btn" type="button" id="install-btn">放到手机</button>
+        <a class="btn ghost" href="/ai">先聊一句</a>
       </div>
     </section>
 
     <section class="card">
-      <h2>方式二：下载 App</h2>
-      <p>App 适合重度使用。等 iPhone TestFlight、App Store 或 Android 安装包开放后，这里会直接显示下载入口。</p>
+      <h2>方式二：完整版本</h2>
+      <p>完整版本适合重度使用。等 iPhone TestFlight、App Store 或 Android 安装包开放后，这里会直接显示入口。</p>
       <div class="actions">
-        <a class="btn secondary hidden" id="ios-app-link" href="#">下载 iPhone App</a>
-        <a class="btn secondary hidden" id="android-app-link" href="#">下载 Android App</a>
+        <a class="btn secondary hidden" id="ios-app-link" href="#">iPhone 完整版</a>
+        <a class="btn secondary hidden" id="android-app-link" href="#">Android 完整版</a>
         <button class="btn ghost" type="button" id="copy-link-btn">复制官网链接</button>
       </div>
     </section>
@@ -98,7 +98,7 @@
         ? ['点右上角三个点|先选择在 Safari 或浏览器打开', '打开后点分享或菜单|选择添加到主屏幕', '确认添加|下次从桌面打开华伴']
         : isIos()
           ? ['点 Safari 下方分享按钮|如果不是 Safari，请先用 Safari 打开', '选择添加到主屏幕|没看到就向下滑一下', '点右上角添加|下次从桌面打开华伴']
-          : ['点添加到屏幕|安卓 Chrome 可能直接弹安装框', '选择安装应用|也可能叫添加到主屏幕', '确认添加|下次从桌面打开华伴'];
+          : ['点放到手机|安卓 Chrome 可能直接弹安装框', '选择安装应用|也可能叫添加到主屏幕', '确认添加|下次从桌面打开华伴'];
       pill.textContent=isWeChat()?'微信内浏览器':isIos()?'iPhone / iPad':isAndroid()?'Android 手机':'当前浏览器';
       box.innerHTML=steps.map((item,index)=>{
         const parts=item.split('|');

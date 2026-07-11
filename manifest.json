@@ -1,7 +1,7 @@
 {
   "name": "华伴 AI 伙伴",
   "short_name": "华伴",
-  "description": "从旅行开始，共同成长。华伴为全球华人提供出行与本地生活帮助。",
+  "description": "服务海外华人本地生活的智能应用，免费智能匹配供需关系的轻社交通讯工具。",
   "id": "/ai?source=pwa",
   "start_url": "/ai?source=pwa",
   "scope": "/",
