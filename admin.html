@@ -1206,6 +1206,28 @@ body.admin-unlocked .admin-auth { display: none; }
         <textarea class="input textarea" id="site-main-subtitle" style="min-height:72px;" placeholder="一句副标题，可留空"></textarea>
       </div>
     </div>
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-header">
+        <div class="card-title">首页固定文字</div>
+        <span class="tag">全部可编辑</span>
+      </div>
+      <div class="card-body">
+        <input class="input" id="site-browser-title" style="width:100%;margin-bottom:10px;" placeholder="浏览器标题">
+        <input class="input" id="site-tab-sub-0" style="width:100%;margin-bottom:8px;" placeholder="入口一上方小字">
+        <input class="input" id="site-tab-btn-0" style="width:100%;margin-bottom:8px;" placeholder="入口一按钮">
+        <input class="input" id="site-tab-sub-1" style="width:100%;margin-bottom:8px;" placeholder="入口二上方小字">
+        <input class="input" id="site-tab-btn-1" style="width:100%;margin-bottom:8px;" placeholder="入口二按钮">
+        <input class="input" id="site-tab-sub-2" style="width:100%;margin-bottom:8px;" placeholder="入口三上方小字">
+        <input class="input" id="site-tab-btn-2" style="width:100%;margin-bottom:8px;" placeholder="入口三按钮">
+        <input class="input" id="site-open-label" style="width:100%;margin-bottom:8px;" placeholder="主按钮默认文字">
+        <input class="input" id="site-download-label" style="width:100%;margin-bottom:8px;" placeholder="副按钮默认文字">
+        <input class="input" id="site-detail-open-label" style="width:100%;margin-bottom:8px;" placeholder="查看详情按钮文字">
+        <input class="input" id="site-detail-close-label" style="width:100%;margin-bottom:8px;" placeholder="收起详情按钮文字">
+        <input class="input" id="site-purpose-heading" style="width:100%;margin-bottom:8px;" placeholder="目的区标题">
+        <input class="input" id="site-footer-text" style="width:100%;margin-bottom:8px;" placeholder="页脚文字">
+        <textarea class="input textarea" id="site-hook-note" style="min-height:96px;" placeholder="钩子提示小字"></textarea>
+      </div>
+    </div>
     <div class="two-col">
       <div class="card">
         <div class="card-header"><div class="card-title">主钩子</div><span class="tag">share</span></div>
@@ -2063,6 +2085,18 @@ async function resetTickerSettings(){
 const DEFAULT_SITE_PAGES={
   mainTitle:'服务海外华人本地生活的智能应用',
   mainSubtitle:'无需费时费力在一堆搜索结果中徒劳无果，也不会被带偏。',
+  labels:{
+    browserTitle:'华伴 AI+｜服务海外华人本地生活的智能应用',
+    tabSubs:['真实贡献会被看见','从本地需求开始','一点就能回来'],
+    tabBtns:['共建一程','先让它办','随手可用'],
+    open:'现在就试',
+    download:'放到手机',
+    detailOpen:'查看详情',
+    detailClose:'收起详情',
+    purposeHeading:'按你的目的使用华伴',
+    footer:'华伴 AI+ · 服务海外华人本地生活的智能应用',
+    hookNote:'区块链浪潮，你错过了比特币；AI 浪潮已经到来，这一次先别只做旁观者。 越早参与，越容易留下真实贡献位置；有效使用、反馈、分享和促成服务会记录为真实贡献。最高 128 倍为贡献权重/分配权益口径，以审核和公开规则为准，不构成收益承诺。'
+  },
   roles:{
     share:{
       title:'区块链浪潮，你错过了比特币；AI 浪潮已经到来，这一次先别只做旁观者',
@@ -2115,6 +2149,35 @@ function fillSiteRole(role, data={}){
   if(title)title.value=source.title||'';
   if(lead)lead.value=source.lead||'';
   if(items)items.value=(source.items||[]).join('\n');
+}
+
+function fillSiteLabels(data={}){
+  const source={...DEFAULT_SITE_PAGES.labels,...(data||{})};
+  document.getElementById('site-browser-title').value=source.browserTitle||'';
+  (source.tabSubs||[]).slice(0,3).forEach((text,index)=>{document.getElementById(`site-tab-sub-${index}`).value=text||'';});
+  (source.tabBtns||[]).slice(0,3).forEach((text,index)=>{document.getElementById(`site-tab-btn-${index}`).value=text||'';});
+  document.getElementById('site-open-label').value=source.open||'';
+  document.getElementById('site-download-label').value=source.download||'';
+  document.getElementById('site-detail-open-label').value=source.detailOpen||'';
+  document.getElementById('site-detail-close-label').value=source.detailClose||'';
+  document.getElementById('site-purpose-heading').value=source.purposeHeading||'';
+  document.getElementById('site-footer-text').value=source.footer||'';
+  document.getElementById('site-hook-note').value=source.hookNote||'';
+}
+
+function collectSiteLabels(){
+  return {
+    browserTitle:(document.getElementById('site-browser-title')?.value||'').trim(),
+    tabSubs:[0,1,2].map(index=>(document.getElementById(`site-tab-sub-${index}`)?.value||'').trim()),
+    tabBtns:[0,1,2].map(index=>(document.getElementById(`site-tab-btn-${index}`)?.value||'').trim()),
+    open:(document.getElementById('site-open-label')?.value||'').trim(),
+    download:(document.getElementById('site-download-label')?.value||'').trim(),
+    detailOpen:(document.getElementById('site-detail-open-label')?.value||'').trim(),
+    detailClose:(document.getElementById('site-detail-close-label')?.value||'').trim(),
+    purposeHeading:(document.getElementById('site-purpose-heading')?.value||'').trim(),
+    footer:(document.getElementById('site-footer-text')?.value||'').trim(),
+    hookNote:(document.getElementById('site-hook-note')?.value||'').trim()
+  };
 }
 
 function fillSiteShare(data={}){
@@ -2176,6 +2239,7 @@ async function loadSitePages(){
   const data=settings||DEFAULT_SITE_PAGES;
   document.getElementById('site-main-title').value=data.mainTitle||DEFAULT_SITE_PAGES.mainTitle;
   document.getElementById('site-main-subtitle').value=data.mainSubtitle||DEFAULT_SITE_PAGES.mainSubtitle;
+  fillSiteLabels(data.labels||DEFAULT_SITE_PAGES.labels);
   fillSiteShare(data.roles?.share||DEFAULT_SITE_PAGES.roles.share);
 }
 
@@ -2184,6 +2248,7 @@ async function saveSitePages(){
     homeVersion:'share_growth_v1',
     mainTitle:(document.getElementById('site-main-title')?.value||DEFAULT_SITE_PAGES.mainTitle).trim(),
     mainSubtitle:(document.getElementById('site-main-subtitle')?.value||'').trim(),
+    labels:collectSiteLabels(),
     roles:{share:collectSiteShare()},
     updated_at:new Date().toISOString()
   };
