@@ -2492,6 +2492,18 @@ async function saveUserSetupCard(){
   document.getElementById('user-setup-card')?.remove();
   rewardCompanionAction('customize');
   await agentSay(saved.industry?`好呀，${companionEscape(saved.name||'朋友')}。你熟视无睹的强项，也许正是TA苦苦寻觅的答案。我会把「${companionEscape(saved.industry)}」写进你的名片，说不定哪天就来个新朋友找你哦。`:(saved.name?`好呀，${companionEscape(saved.name)}。聊得越多，我就越懂你。`:'好呀，我记住你的头像了。聊得越多，我就越懂你。'),120);
+  if(saved.industry&&saved.phone){
+    setTimeout(()=>{
+      showSupplierGrowthLoopCard({
+        name:saved.name||'',
+        industry:saved.industry||'',
+        phone:saved.phone||'',
+        source:'mutual_intro_user_card_saved'
+      });
+    },260);
+  }else{
+    setTimeout(()=>agentSay('你补上行业和联系电话后，我就能把这张名片整理成可分享版本，帮你发给真正需要的人。',100),260);
+  }
 }
 
 function renderAgentSetupCard(){
@@ -5866,6 +5878,7 @@ async function startApp(){
   // 共创相关能力不主动弹出；普通用户只看到一个华伴 AI 智能体。
   if(currentRole!=='driver')maybeShowIncomingFriendCode();
   if(currentRole!=='driver')maybeContinueHomepageBusinessEntry();
+  if(currentRole!=='driver')maybeStartMutualIntroFromQuery();
   if(currentRole!=='driver')maybeStartPartnerIntentFromQuery();
   if(currentRole!=='driver')syncInboundFriendAdds({announce:true}).catch(()=>null);
   if(currentRole!=='driver')maybeShowVisualInputGuide();
@@ -5878,6 +5891,7 @@ function renderWelcomeHome(){
   chatArea.innerHTML='';
   applyHuabanI18n();
   addMsg(isFamilyPackageEntry()?t('opening_family'):t('opening_default'));
+  renderMutualIntroCard();
   const companion=getCompanion();
   if(addCompanionBadge(companion,currentRegion.city||currentRegion.country,'📍'))saveCompanion(companion);
   document.getElementById('chat-input').placeholder=t('input_placeholder');
@@ -5890,6 +5904,7 @@ function renderWelcomeHome(){
 
 function clearWelcomeHome(){
   document.querySelector('.home-welcome')?.remove();
+  document.getElementById('mutual-intro-card')?.remove();
   document.getElementById('adopt-welcome-card')?.remove();
   document.getElementById('value-prompt-card')?.remove();
 }
@@ -5904,6 +5919,32 @@ function hasCompletedHomeIntro(){
 function markHomeIntroDone(){
   localStorage.setItem('huaban_home_intro_done','1');
   clearWelcomeHome();
+}
+
+function renderMutualIntroCard(){
+  if(hasLocalUserIdentity()||document.getElementById('mutual-intro-card'))return;
+  const card=document.createElement('section');
+  card.id='mutual-intro-card';
+  card.className='install-card intro-fade-card home-welcome';
+  card.setAttribute('aria-label','相互认识一下');
+  card.innerHTML=`
+    <img src="assets/brand/huaban-logo-v1.png" alt="华伴 AI">
+    <div class="install-copy">
+      <strong>我们先相互认识一下</strong>
+      <span>你了解华伴，我也认识你。回来后我会帮你生成名片，并协助分享给需要的人。</span>
+    </div>
+    <div class="install-actions">
+      <button class="install-primary" type="button" onclick="location.href='index.html?ref=mutual_intro'">先了解华伴</button>
+      <button class="install-primary secondary" type="button" onclick="beginUserSelfIntroFromApp()">现在介绍自己</button>
+    </div>`;
+  chatArea.appendChild(card);
+}
+
+async function beginUserSelfIntroFromApp(){
+  document.getElementById('mutual-intro-card')?.remove();
+  trackGrowthEvent('mutual_intro_started',{source:'ai_welcome_card'}).catch(()=>null);
+  await agentSay('好，我们相互认识一下。你可以先告诉我怎么称呼你、你会什么、能提供什么服务，或者你希望华伴帮你连接什么人。',120);
+  renderUserSetupCard();
 }
 
 function renderAdoptWelcomeCard(){
@@ -15722,6 +15763,25 @@ function maybeStartPartnerIntentFromQuery(){
   if(sessionStorage.getItem(key)==='1')return;
   sessionStorage.setItem(key,'1');
   setTimeout(()=>handlePartnerIntent('我想加入华伴，了解合伙人合作',{source:'partner_recruit_page'}),700);
+}
+
+function shouldStartMutualIntroFromQuery(){
+  const params=new URLSearchParams(location.search);
+  const intent=(params.get('intent')||params.get('task')||'').toLowerCase();
+  const ref=(params.get('ref')||'').toLowerCase();
+  return intent==='introduce_self'||intent==='self_intro'||ref==='mutual_intro_return';
+}
+
+function maybeStartMutualIntroFromQuery(){
+  if(!shouldStartMutualIntroFromQuery())return;
+  const key='huaban_mutual_intro_return_started';
+  if(sessionStorage.getItem(key)==='1')return;
+  sessionStorage.setItem(key,'1');
+  setTimeout(async()=>{
+    document.getElementById('mutual-intro-card')?.remove();
+    await agentSay('欢迎回来。现在轮到我认识你了：你可以简单介绍自己、你能提供什么、你希望华伴帮你连接谁。',120);
+    renderUserSetupCard();
+  },700);
 }
 
 function maybeShowIncomingFriendCode(){

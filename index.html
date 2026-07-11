@@ -1186,6 +1186,7 @@ document.querySelectorAll('.identity-tab').forEach(tab => {
 const refRole = new URLSearchParams(location.search).get('ref');
 const roleByRef = {
   share_growth: 'share',
+  mutual_intro: 'share',
   supplier_income: 'share',
   business_helper: 'now',
   local_match: 'now',
@@ -1195,7 +1196,21 @@ const roleByRef = {
   identity_pocket: 'pocket',
   app_download: 'pocket'
 };
-loadPublishedSiteCopy().finally(() => renderIdentity(roleByRef[refRole] || 'share'));
+loadPublishedSiteCopy().finally(() => {
+  renderIdentity(roleByRef[refRole] || 'share');
+  if(refRole==='mutual_intro'){
+    const primary=document.getElementById('identityAction');
+    const secondary=document.getElementById('identitySecondaryAction');
+    if(primary){
+      primary.href='/ai?ref=mutual_intro_return&intent=introduce_self';
+      primary.textContent='进入华伴，自我介绍';
+    }
+    if(secondary){
+      secondary.href='/ai?ref=mutual_intro_return&intent=introduce_self';
+      secondary.textContent='让 AI 生成名片';
+    }
+  }
+});
 </script>
 </body>
 </html>
