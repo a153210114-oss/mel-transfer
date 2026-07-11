@@ -1213,6 +1213,7 @@ body.admin-unlocked .admin-auth { display: none; }
       </div>
       <div class="card-body">
         <input class="input" id="site-browser-title" style="width:100%;margin-bottom:10px;" placeholder="浏览器标题">
+        <input class="input" id="site-version-label" style="width:100%;margin-bottom:8px;" placeholder="版本小字">
         <input class="input" id="site-tab-sub-0" style="width:100%;margin-bottom:8px;" placeholder="入口一上方小字">
         <input class="input" id="site-tab-btn-0" style="width:100%;margin-bottom:8px;" placeholder="入口一按钮">
         <input class="input" id="site-tab-sub-1" style="width:100%;margin-bottom:8px;" placeholder="入口二上方小字">
@@ -2083,18 +2084,19 @@ async function resetTickerSettings(){
 
 // ── Official Site Pages ──
 const DEFAULT_SITE_PAGES={
-  mainTitle:'服务海外华人本地生活的智能应用',
-  mainSubtitle:'无需费时费力在一堆搜索结果中徒劳无果，也不会被带偏。',
+  mainTitle:'海外华人必备智能体',
+  mainSubtitle:'智能匹配，没有佣金差价！\n聚焦目标，不再费时费力！\n智能合约，保障自愿公平。',
   labels:{
-    browserTitle:'华伴 AI+｜服务海外华人本地生活的智能应用',
-    tabSubs:['真实贡献会被看见','从本地需求开始','一点就能回来'],
+    browserTitle:'华伴 AI+｜海外华人必备智能体',
+    versionLabel:'版本 1.1：智能交易工具',
+    tabSubs:['','',''],
     tabBtns:['共建一程','先让它办','随手可用'],
     open:'现在就试',
     download:'放到手机',
     detailOpen:'查看详情',
     detailClose:'收起详情',
     purposeHeading:'按你的目的使用华伴',
-    footer:'华伴 AI+ · 服务海外华人本地生活的智能应用',
+    footer:'华伴 AI+ · 智能匹配，没有佣金差价',
     hookNote:'区块链浪潮，你错过了比特币；AI 浪潮已经到来，这一次先别只做旁观者。 越早参与，越容易留下真实贡献位置；有效使用、反馈、分享和促成服务会记录为真实贡献。最高 128 倍为贡献权重/分配权益口径，以审核和公开规则为准，不构成收益承诺。'
   },
   roles:{
@@ -2102,11 +2104,11 @@ const DEFAULT_SITE_PAGES={
       title:'区块链浪潮，你错过了比特币；AI 浪潮已经到来，这一次先别只做旁观者',
       lead:'越早加入、越早使用、越早反馈、越早分享，越容易留下真实贡献位置。',
       sections:[
-        {label:'规则怎么可信？',text:'先定公平规则，再记录真实贡献；越早参与，越早留下可核验位置。',details:['华伴的推广不是靠拉人头，而是先建立规则：只记录真实使用、有效反馈、真实分享、提交供给资料和促成服务。','所有贡献都要可核验、可追溯、可按规则计算；越早参与，越早在规则体系里留下清晰位置。','最高 128 倍属于贡献权重/分配权益口径，以真实贡献、审核和公开规则为准，不构成收益承诺。']},
-        {label:'共识怎么形成？',text:'用户早使用、早反馈、早分享，本身就在形成华伴共识。',details:['共识不是一句口号，而是越来越多人真实使用、持续反馈、愿意分享，并把需求和服务资料沉淀进华伴。','当用户觉得华伴真的能解决事业、生活、学习里的问题，华伴的网络价值就开始形成。','越早参与共识形成的人，越容易留下更完整、更早期、更可核验的贡献记录。']},
-        {label:'共享怎么执行？',text:'可分配净收益的 80% 进入共享池，未来按 Web3 规则自动分配。',details:['华伴的共享机制是：未来可分配净收益的 80% 进入共享池，面向真实贡献者。','共享不按单纯拉新人数，而按真实使用、有效反馈、真实分享、供给资料和服务促成等贡献计算。','最终以审核、公开规则和不可更改的 Web3 自动分配机制为准。']}
+        {label:'华伴智能合约',text:'把推广激励机制合约化，真实贡献按规则记录。',details:['使用、反馈、分享、推荐、提交资料和促成服务，都按规则记录贡献。','不靠拉人头，不靠口头承诺，而是让真实贡献进入可追溯、可审核、可分配的规则系统。','最高 128 倍属于贡献权重/分配权益口径，以真实贡献、审核和公开规则为准，不构成收益承诺。']},
+        {label:'交易智能合约',text:'智能匹配之后，AI 整理谈判过程，形成可确认共识。',details:['AI 收集交易双方聊天记录和谈判过程，整理服务内容、价格、时间、责任和支付方式。','双方看到同一份共识确认单，确认后再进入履约。','交易不是靠记忆和口头争论，而是把双方确认过的内容沉淀成智能合约。']},
+        {label:'公平自愿完成',text:'双方确认、履约、完成支付，一次麻烦，永久记忆。',details:['交易双方自愿确认服务内容和责任边界，华伴协助保存确认记录。','履约过程保留必要证据和状态记录，减少反复沟通和事后争议。','履约完成后再完成支付确认，让交易流程更清楚、更公平。']}
       ],
-      prospect:{title:'华伴现在能干嘛，将来要干嘛',text:'现在，华伴先帮你智能匹配本地需要你的人、服务和资源，整理资料、反馈问题、分享华伴，把事业、生活、学习里的真实任务先跑起来。将来，华伴会从华人先行扩展到多语种服务所有人，成为个人数据库、AI 机器人和智能化生活场景的入口。'},
+      prospect:{title:'华伴是什么，能做什么',text:'华伴是海外华人必备智能体，1.1 版本先做智能交易工具。它能智能匹配供需，协助交易双方收集沟通内容，整理服务内容、价格、时间、责任和支付方式，形成可确认的共识并生成智能合约；双方确认后进入履约，履约完成后再完成支付。更多生活、学习、机器人和个人数据库功能，敬请期待。'},
       purposes:[
         {title:'我想分享华伴',eventName:'referral_share_clicked',text:'点击分享或生成海报，把华伴发给真正需要的人；系统记录真实分享、有效进入、后续使用和服务促成，对应积分与贡献权重。'},
         {title:'我想使用华伴',eventName:'site_usage_intent_clicked',text:'直接说找本地需要你的人、找服务、整理资料或反馈问题；有效使用会沉淀为个人数据库和真实贡献记录。'},
@@ -2154,6 +2156,7 @@ function fillSiteRole(role, data={}){
 function fillSiteLabels(data={}){
   const source={...DEFAULT_SITE_PAGES.labels,...(data||{})};
   document.getElementById('site-browser-title').value=source.browserTitle||'';
+  document.getElementById('site-version-label').value=source.versionLabel||'';
   (source.tabSubs||[]).slice(0,3).forEach((text,index)=>{document.getElementById(`site-tab-sub-${index}`).value=text||'';});
   (source.tabBtns||[]).slice(0,3).forEach((text,index)=>{document.getElementById(`site-tab-btn-${index}`).value=text||'';});
   document.getElementById('site-open-label').value=source.open||'';
@@ -2168,6 +2171,7 @@ function fillSiteLabels(data={}){
 function collectSiteLabels(){
   return {
     browserTitle:(document.getElementById('site-browser-title')?.value||'').trim(),
+    versionLabel:(document.getElementById('site-version-label')?.value||'').trim(),
     tabSubs:[0,1,2].map(index=>(document.getElementById(`site-tab-sub-${index}`)?.value||'').trim()),
     tabBtns:[0,1,2].map(index=>(document.getElementById(`site-tab-btn-${index}`)?.value||'').trim()),
     open:(document.getElementById('site-open-label')?.value||'').trim(),

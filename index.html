@@ -458,6 +458,20 @@ footer {
   margin-top: 24px;
   max-width: 760px;
 }
+.identity-version {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 12px;
+  padding: 5px 11px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  background: rgba(255,255,255,0.72);
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.35;
+}
 .identity-tabs {
   display: flex;
   gap: 10px;
@@ -471,6 +485,7 @@ footer {
   justify-items: center;
 }
 .identity-tab-subtitle {
+  display: none;
   font-size: 13px;
   font-weight: 900;
   color: var(--accent);
@@ -694,19 +709,20 @@ footer {
 <main>
   <section class="identity-home" aria-label="华伴 AI+ 首页">
     <img class="identity-logo" src="assets/brand/huaban-logo-v1.png" alt="华伴">
-    <h1 id="siteMainTitle">服务海外华人本地生活的智能应用</h1>
-    <p class="section-lead" id="siteMainSubtitle" style="text-align:center;margin-top:14px;">无需费时费力在一堆搜索结果中徒劳无果，也不会被带偏。</p>
+    <h1 id="siteMainTitle">海外华人必备智能体</h1>
+    <div class="identity-version" id="siteVersionLabel">版本 1.1：智能交易工具</div>
+    <p class="section-lead" id="siteMainSubtitle" style="text-align:center;margin-top:14px;">智能匹配，没有佣金差价！<br>聚焦目标，不再费时费力！<br>智能合约，保障自愿公平。</p>
     <div class="identity-tabs" role="tablist" aria-label="选择华伴入口">
       <div class="identity-tab-wrap">
-        <div class="identity-tab-subtitle">真实贡献会被看见</div>
+        <div class="identity-tab-subtitle"></div>
         <button class="identity-tab active" type="button" data-role="share">共建一程</button>
       </div>
       <div class="identity-tab-wrap">
-        <div class="identity-tab-subtitle">从本地需求开始</div>
+        <div class="identity-tab-subtitle"></div>
         <button class="identity-tab" type="button" data-role="now">先让它办</button>
       </div>
       <div class="identity-tab-wrap">
-        <div class="identity-tab-subtitle">一点就能回来</div>
+        <div class="identity-tab-subtitle"></div>
         <button class="identity-tab" type="button" data-role="pocket">随手可用</button>
       </div>
     </div>
@@ -726,7 +742,7 @@ footer {
 
 <footer>
   <div class="footer-inner">
-    <span>华伴 AI+ · 服务海外华人本地生活的智能应用</span>
+    <span>华伴 AI+ · 智能匹配，没有佣金差价</span>
     <span>huabanapp.com</span>
   </div>
 </footer>
@@ -800,7 +816,7 @@ function siteTrackPageView(){
   });
 }
 const SITE_I18N={
-  zh:{title:'服务海外华人本地生活的智能应用',subtitle:'无需费时费力在一堆搜索结果中徒劳无果，也不会被带偏。',browserTitle:'华伴 AI+｜服务海外华人本地生活的智能应用',hookNote:'区块链浪潮，你错过了比特币；AI 浪潮已经到来，这一次先别只做旁观者。 越早参与，越容易留下真实贡献位置；有效使用、反馈、分享和促成服务会记录为真实贡献。最高 128 倍为贡献权重/分配权益口径，以审核和公开规则为准，不构成收益承诺。',tabSubs:['真实贡献会被看见','从本地需求开始','一点就能回来'],tabBtns:['共建一程','先让它办','随手可用'],businessSub:'真实贡献会被看见',lifeSub:'从本地需求开始',businessBtn:'共建一程',lifeBtn:'先让它办',open:'现在就试',download:'放到手机',detailOpen:'查看详情',detailClose:'收起详情',purposeHeading:'按你的目的使用华伴',footer:'华伴 AI+ · 服务海外华人本地生活的智能应用'},
+  zh:{title:'海外华人必备智能体',subtitle:'智能匹配，没有佣金差价！\n聚焦目标，不再费时费力！\n智能合约，保障自愿公平。',versionLabel:'版本 1.1：智能交易工具',browserTitle:'华伴 AI+｜海外华人必备智能体',hookNote:'区块链浪潮，你错过了比特币；AI 浪潮已经到来，这一次先别只做旁观者。 越早参与，越容易留下真实贡献位置；有效使用、反馈、分享和促成服务会记录为真实贡献。最高 128 倍为贡献权重/分配权益口径，以审核和公开规则为准，不构成收益承诺。',tabSubs:['','',''],tabBtns:['共建一程','先让它办','随手可用'],businessSub:'真实贡献会被看见',lifeSub:'从本地需求开始',businessBtn:'共建一程',lifeBtn:'先让它办',open:'现在就试',download:'放到手机',detailOpen:'查看详情',detailClose:'收起详情',purposeHeading:'按你的目的使用华伴',footer:'华伴 AI+ · 智能匹配，没有佣金差价'},
   en:{title:'A smart local-life app for overseas Chinese',subtitle:'No more wasting time in messy search results, and no more being led off track.',browserTitle:'Huaban AI+ | Smart local life for overseas Chinese',hookNote:'Many people missed the blockchain wave. The AI wave is here; this time, do not stay only as a spectator. Huaban records real use, useful feedback, real sharing, and reviewed contribution only; no income promise, no headcount game, just transparent rules.',tabSubs:['Real contribution is seen','Start with local needs','One tap back'],tabBtns:['Build Together','Let It Work','Keep It Close'],businessSub:'Real contribution is seen',lifeSub:'Start with local needs',businessBtn:'Build Together',lifeBtn:'Let It Work',open:'Try Now',download:'Keep on Phone',detailOpen:'View Details',detailClose:'Collapse',purposeHeading:'Use Huaban By Goal',footer:'Huaban AI+ · Smart local life for overseas Chinese',
     business:{title:'Let the right customers find you',lead:'No complicated signup. Leave your phone and industry first; add Huaban to your phone when you want timely demand alerts.',items:['For local service providers, shops, drivers, translators, lawyers, accountants, restaurants, delivery, tours, and product suppliers.','Huaban organizes your industry, city, service area, and contact details, then matches them intelligently.','No need to stare at a page. Huaban reminds you when a suitable need appears.']},
     life:{title:'Find what you really need',lead:'Stop getting lost in fragmented information.',items:['No more wasting time in a pile of search results.','Tell Huaban what you need; it keeps the goal clear and moves it forward.','Save your time and attention for your family and your life.']}},
@@ -824,36 +840,36 @@ let identityCopy = {
     mode: 'plain',
     sections: [
       {
-        label: '规则怎么可信？',
-        text: '先定公平规则，再记录真实贡献；越早参与，越早留下可核验位置。',
+        label: '华伴智能合约',
+        text: '把推广激励机制合约化，真实贡献按规则记录。',
         details: [
-          '华伴的推广不是靠拉人头，而是先建立规则：只记录真实使用、有效反馈、真实分享、提交供给资料和促成服务。',
-          '所有贡献都要可核验、可追溯、可按规则计算；越早参与，越早在规则体系里留下清晰位置。',
+          '使用、反馈、分享、推荐、提交资料和促成服务，都按规则记录贡献。',
+          '不靠拉人头，不靠口头承诺，而是让真实贡献进入可追溯、可审核、可分配的规则系统。',
           '最高 128 倍属于贡献权重/分配权益口径，以真实贡献、审核和公开规则为准，不构成收益承诺。'
         ]
       },
       {
-        label: '共识怎么形成？',
-        text: '用户早使用、早反馈、早分享，本身就在形成华伴共识。',
+        label: '交易智能合约',
+        text: '智能匹配之后，AI 整理谈判过程，形成可确认共识。',
         details: [
-          '共识不是一句口号，而是越来越多人真实使用、持续反馈、愿意分享，并把需求和服务资料沉淀进华伴。',
-          '当用户觉得华伴真的能解决事业、生活、学习里的问题，华伴的网络价值就开始形成。',
-          '越早参与共识形成的人，越容易留下更完整、更早期、更可核验的贡献记录。'
+          'AI 收集交易双方聊天记录和谈判过程，整理服务内容、价格、时间、责任和支付方式。',
+          '双方看到同一份共识确认单，确认后再进入履约。',
+          '交易不是靠记忆和口头争论，而是把双方确认过的内容沉淀成智能合约。'
         ]
       },
       {
-        label: '共享怎么执行？',
-        text: '可分配净收益的 80% 进入共享池，未来按 Web3 规则自动分配。',
+        label: '公平自愿完成',
+        text: '双方确认、履约、完成支付，一次麻烦，永久记忆。',
         details: [
-          '华伴的共享机制是：未来可分配净收益的 80% 进入共享池，面向真实贡献者。',
-          '共享不按单纯拉新人数，而按真实使用、有效反馈、真实分享、供给资料和服务促成等贡献计算。',
-          '最终以审核、公开规则和不可更改的 Web3 自动分配机制为准。'
+          '交易双方自愿确认服务内容和责任边界，华伴协助保存确认记录。',
+          '履约过程保留必要证据和状态记录，减少反复沟通和事后争议。',
+          '履约完成后再完成支付确认，让交易流程更清楚、更公平。'
         ]
       }
     ],
     prospect: {
-      title: '华伴现在能干嘛，将来要干嘛',
-      text: '现在，华伴先帮你智能匹配本地需要你的人、服务和资源，整理资料、反馈问题、分享华伴，把事业、生活、学习里的真实任务先跑起来。将来，华伴会从华人先行扩展到多语种服务所有人，成为个人数据库、AI 机器人和智能化生活场景的入口。'
+      title: '华伴是什么，能做什么',
+      text: '华伴是海外华人必备智能体，1.1 版本先做智能交易工具。它能智能匹配供需，协助交易双方收集沟通内容，整理服务内容、价格、时间、责任和支付方式，形成可确认的共识并生成智能合约；双方确认后进入履约，履约完成后再完成支付。更多生活、学习、机器人和个人数据库功能，敬请期待。'
     },
     purposes: [
       {
@@ -1014,9 +1030,11 @@ function cycleSiteLanguage(){
 function applySiteI18n(){
   const lang=getSiteActiveLanguage();
   document.documentElement.lang=SITE_LANG_META[lang]?.html||'en';
-  document.title=siteText('browserTitle') || (lang==='zh'?'华伴 AI+｜服务海外华人本地生活的智能应用':'Huaban AI+ | Smart local life for overseas Chinese');
+  document.title=siteText('browserTitle') || (lang==='zh'?'华伴 AI+｜海外华人必备智能体':'Huaban AI+ | Smart local life for overseas Chinese');
   document.getElementById('siteMainTitle').textContent=siteText('title');
   document.getElementById('siteMainSubtitle').textContent=siteText('subtitle');
+  const versionLabel=document.getElementById('siteVersionLabel');
+  if(versionLabel)versionLabel.textContent=siteText('versionLabel');
   const i18n=SITE_I18N[lang]||SITE_I18N.zh;
   const tabSubs=i18n.tabSubs||SITE_I18N.en.tabSubs||SITE_I18N.zh.tabSubs;
   const tabBtns=i18n.tabBtns||SITE_I18N.en.tabBtns||SITE_I18N.zh.tabBtns;
