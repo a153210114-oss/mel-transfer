@@ -114,8 +114,8 @@ button,input{font:inherit}
     <div class="section-title">当前定位</div>
     <div class="hint" id="locationText">还没有定位记录。</div>
     <div class="actions">
-      <button class="btn secondary" onclick="location.href='ai.html?intent=location'">重新定位</button>
-      <button class="btn secondary" onclick="location.href='ai.html?intent=address'">添加地址</button>
+      <button class="btn secondary" onclick="refreshLocationNow()">重新定位</button>
+      <button class="btn secondary" onclick="addManualAddress()">添加地址</button>
     </div>
   </section>
 
@@ -150,6 +150,7 @@ const LEVELS=[
 ];
 function $(id){return document.getElementById(id);}
 function esc(v){return String(v||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function jsString(v){return String(v||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,'\\n').replace(/\r/g,'');}
 function toast(text){const el=$('toast');el.textContent=text;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1500);}
 function getLocal(key){try{return JSON.parse(localStorage.getItem(key)||'null')}catch(e){return null}}
 function setLocal(key,val){localStorage.setItem(key,JSON.stringify(val))}
@@ -205,8 +206,39 @@ function avatarMarkup(value){
   return esc(clean.slice(0,4)||'👤');
 }
 function localFriendStore(){try{return JSON.parse(localStorage.getItem('huaban_local_friends')||'[]')||[]}catch(e){return[]}}
+function saveLocalFriendStore(list=[]){localStorage.setItem('huaban_local_friends',JSON.stringify(list.slice(0,200)))}
 function pendingReferralInvitesStore(){try{return JSON.parse(localStorage.getItem('huaban_pending_referral_invites')||'[]')||[]}catch(e){return[]}}
 function getLocationSnapshot(){try{return JSON.parse(localStorage.getItem('huaban_current_location')||'null')}catch(e){return null}}
+function isGenericFriendName(name=''){
+  const clean=String(name||'').trim();
+  return !clean || /^华伴用户$/i.test(clean) || /^华伴好友\s+[A-Z0-9]{4,}$/i.test(clean);
+}
+function preferFriendName(next='',old=''){
+  const n=String(next||'').trim();
+  const o=String(old||'').trim();
+  if(n&&!isGenericFriendName(n))return n;
+  if(o&&!isGenericFriendName(o))return o;
+  return n||o;
+}
+function mergeFriend(list=[],friend={}){
+  const code=String(friend.code||friend.friend_code||'').trim().toUpperCase();
+  if(!code)return list;
+  const idx=list.findIndex(item=>String(item.code||item.friend_code||'').trim().toUpperCase()===code);
+  const old=idx>=0?list[idx]:{};
+  const merged={
+    ...old,
+    ...friend,
+    code,
+    name:preferFriendName(friend.name||friend.friend_name,old.name),
+    phone:friend.phone||friend.friend_phone||old.phone||'',
+    industry:friend.industry||friend.friend_industry||old.industry||'',
+    avatar:friend.avatar||friend.friend_avatar||old.avatar||'👤',
+    addedAt:old.addedAt||friend.addedAt||friend.created_at||new Date().toISOString()
+  };
+  if(idx>=0)list.splice(idx,1);
+  list.unshift(merged);
+  return list;
+}
 function formatDate(value=''){
   const d=new Date(value);
   if(Number.isNaN(d.getTime()))return '';
@@ -373,6 +405,15 @@ async function loadStats(){
   });
   const pendingRemote=await supaGet(`huaban_identity_links?tenant_id=eq.${TENANT_ID}&inviter_code=eq.${encodeURIComponent(myCode)}&link_type=eq.pending_referral_invite&status=eq.active&order=created_at.desc&limit=300&select=normalized_phone,phone,display_name`).catch(()=>[]);
   const pendingLocal=pendingReferralInvitesStore().filter(item=>String(item.status||'')!=='已绑定').length;
+  const localReferralCodes=new Set(localFriendStore()
+    .map(friend=>String(friend.code||friend.friend_code||'').trim().toUpperCase())
+    .filter(code=>code&&code!==myCode));
+  localReferralCodes.forEach(code=>{
+    if(!creditedDirect.has(code)){
+      direct+=POINTS_RULES.referral_join;
+      creditedDirect.add(code);
+    }
+  });
   const total=base+direct+second+pending;
   $('points').textContent=String(total);
   $('pointsBreakdown').textContent=`基础 ${base} · 一级 ${direct} · 二级 ${second} · 审核中 ${pending} · 待绑定 ${pendingLocal+(Array.isArray(pendingRemote)?pendingRemote.length:0)}`;
@@ -384,16 +425,56 @@ async function loadFriends(){
   if(Array.isArray(remote)){
     remote.forEach(row=>{
       const code=String(row.friend_code||row.fields?.friend?.code||'').toUpperCase();
-      if(!code||list.some(f=>String(f.code||'').toUpperCase()===code))return;
-      list.push({code,name:row.friend_name||row.fields?.friend?.name||`华伴好友 ${code}`,phone:row.friend_phone||'',industry:row.friend_industry||'',avatar:row.friend_avatar||'👤',source:row.source||'friendship_sync',addedAt:row.created_at});
+      if(!code)return;
+      list=mergeFriend(list,{code,name:row.friend_name||row.fields?.friend?.name||`华伴好友 ${code}`,phone:row.friend_phone||'',industry:row.friend_industry||'',avatar:row.friend_avatar||'👤',source:row.source||'friendship_sync',addedAt:row.created_at});
     });
   }
+  for(const friend of list.slice(0,30)){
+    const code=String(friend.code||'').toUpperCase();
+    if(!code||(friend.phone&&friend.industry&&!isGenericFriendName(friend.name)))continue;
+    const identities=await supaGet(`huaban_identity_links?tenant_id=eq.${TENANT_ID}&friend_code=eq.${encodeURIComponent(code)}&status=eq.active&order=updated_at.desc&limit=1&select=friend_code,display_name,phone,industry,avatar,created_at`).catch(()=>[]);
+    const identity=Array.isArray(identities)?identities[0]:null;
+    if(identity){
+      list=mergeFriend(list,{code,name:identity.display_name||friend.name,phone:identity.phone||friend.phone,industry:identity.industry||friend.industry,avatar:identity.avatar||friend.avatar,source:'identity_link_sync',addedAt:friend.addedAt||identity.created_at});
+    }
+  }
+  saveLocalFriendStore(list);
   $('friendCount').textContent=String(list.length);
   $('friendList').innerHTML=list.length?list.slice(0,20).map(friend=>`
-    <div class="item">
+    <button class="item" type="button" onclick="openFriendDetail('${jsString(friend.code||'')}')" style="width:100%;text-align:left;color:inherit;font:inherit;cursor:pointer;">
       <div class="item-avatar">${avatarMarkup(friend.avatar||'👤')}</div>
       <div class="item-main"><strong>${esc(friend.name||friend.code||'华伴好友')}</strong><em>${esc(friend.industry||friend.phone||friend.code||'本地连接')} · ${esc(formatDate(friend.addedAt)||'')}</em></div>
-    </div>`).join(''):'<div class="empty">还没有好友。分享身份码或名片后，会在这里显示。</div>';
+    </button>`).join(''):'<div class="empty">还没有好友。分享身份码或名片后，会在这里显示。</div>';
+}
+function openFriendDetail(code=''){
+  const target=localFriendStore().find(friend=>String(friend.code||'').toUpperCase()===String(code||'').toUpperCase());
+  if(!target){toast('好友资料还在同步');return;}
+  document.getElementById('friendDetailSheet')?.remove();
+  const overlay=document.createElement('div');
+  overlay.id='friendDetailSheet';
+  overlay.style.cssText='position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.52);display:flex;align-items:flex-end;';
+  const friendUrl=`https://www.huabanapp.com/ai.html?friend=${encodeURIComponent(target.code||'')}&ref=${encodeURIComponent(getFriendCode())}`;
+  overlay.innerHTML=`
+    <div onclick="event.stopPropagation()" style="width:100%;max-height:72vh;overflow:auto;background:#101823;border-radius:22px 22px 0 0;border:1px solid rgba(255,255,255,.12);padding:20px;color:#f5f7fb;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;">
+        <strong style="font-size:20px;">好友资料</strong>
+        <button class="btn secondary" type="button" onclick="document.getElementById('friendDetailSheet')?.remove()" style="width:auto;padding:8px 14px;">关闭</button>
+      </div>
+      <div class="item" style="background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.1);">
+        <div class="item-avatar">${avatarMarkup(target.avatar||'👤')}</div>
+        <div class="item-main">
+          <strong>${esc(target.name||target.code||'华伴好友')}</strong>
+          <em>${esc([target.industry,target.phone,target.code].filter(Boolean).join(' · ')||'资料待完善')}</em>
+        </div>
+      </div>
+      <div class="hint" style="margin:12px 0 14px;">朋友帮你生成业务名片并在华伴应用程序上推广。对方完善资料后，系统会把身份、关系和积分继续归集到这里。</div>
+      <div class="actions">
+        <button class="btn" type="button" onclick="sessionStorage.setItem('huaban_profile_target_friend','${jsString(JSON.stringify(target))}');location.href='ai.html?intent=friend&friend=${encodeURIComponent(target.code||'')}'">回到 AI 联系 TA</button>
+        <button class="btn secondary" type="button" onclick="navigator.clipboard&&navigator.clipboard.writeText('${jsString(friendUrl)}').then(()=>toast('链接已复制')).catch(()=>prompt('复制链接','${jsString(friendUrl)}'))">复制链接</button>
+      </div>
+    </div>`;
+  overlay.addEventListener('click',()=>overlay.remove());
+  document.body.appendChild(overlay);
 }
 async function loadOrders(){
   const user=getUser();
@@ -418,10 +499,45 @@ function renderLocation(){
   if(loc?.address)$('locationText').textContent=`${loc.address}${loc.accuracy?` · 精度约 ${Math.round(Number(loc.accuracy))} 米`:''}`;
   else $('locationText').textContent=localStorage.getItem('huaban_region_city')||'还没有定位记录。';
 }
+function saveLocationSnapshot(loc){
+  const next={...(loc||{}),updatedAt:new Date().toISOString()};
+  setLocal('huaban_current_location',next);
+  if(next.city)localStorage.setItem('huaban_region_city',next.city);
+  renderLocation();
+}
+function refreshLocationNow(){
+  if(!navigator.geolocation){toast('当前浏览器不支持定位');return;}
+  $('locationText').textContent='正在定位...';
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const lat=Number(pos.coords.latitude||0);
+    const lng=Number(pos.coords.longitude||0);
+    const accuracy=Number(pos.coords.accuracy||0);
+    saveLocationSnapshot({
+      lat,
+      lng,
+      accuracy,
+      address:`${lat.toFixed(6)}, ${lng.toFixed(6)}`,
+      source:'profile_geolocation'
+    });
+    toast('定位已更新');
+  },err=>{
+    const message=err?.code===1?'浏览器没有允许位置权限':'定位失败，请手动添加地址';
+    renderLocation();
+    toast(message);
+  },{enableHighAccuracy:true,timeout:18000,maximumAge:0});
+}
+function addManualAddress(){
+  const loc=getLocationSnapshot()||{};
+  const address=prompt('请输入详细地址',loc.address||localStorage.getItem('huaban_region_city')||'');
+  if(!address||!address.trim())return;
+  saveLocationSnapshot({address:address.trim(),manual:true,source:'profile_manual_address'});
+  toast('地址已保存');
+}
 async function init(){
   renderIdentity();
   renderLocation();
-  await Promise.allSettled([loadStats(),loadFriends(),loadOrders()]);
+  await loadFriends().catch(()=>null);
+  await Promise.allSettled([loadStats(),loadOrders()]);
 }
 init();
 </script>

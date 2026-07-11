@@ -7384,7 +7384,7 @@ const CORE_TOOL_ITEMS=[
   {key:'manager',icon:'🗂️',label:'管理表'},
   {key:'local-people',icon:'👥',label:'添加好友'},
   {key:'promo-video',icon:'🎬',label:'创意制作'},
-  {key:'intro',icon:'💬',label:'介绍'},
+  {key:'intro',icon:'💬',label:'官网'},
   {key:'profile',icon:'👤',label:'个人中心'},
   {key:'share',icon:'🔗',label:'分享'},
   {key:'install',icon:'📱',label:'桌面'},
@@ -7520,7 +7520,7 @@ function renderMoreMenu(category='home'){
       ['reminder','⏰','提醒'],
       ['share','🔗','分享'],
       ['profile','👤','个人中心'],
-      ['intro','💬','介绍']
+      ['intro','💬','官网']
     ].map(item=>`<button class="more-item" onclick="runMoreAction('${item[0]}','${item[2]}')"><span class="more-item-icon">${item[1]}</span><span>${item[2]}</span></button>`).join('');
   }
 }
@@ -7578,7 +7578,7 @@ function runMoreAction(key,label){
   if(key==='market'){window.location.href='plaza.html';return;}
   if(key==='driver'){switchToDriver();return;}
   if(key==='media'||key==='camera'||key==='image'){openMediaChoiceSheet();return;}
-  if(key==='intro'){showPlatformGuide(true);return;}
+  if(key==='intro'){window.location.href='https://www.huabanapp.com/';return;}
   if(key==='smart-contract'){startSmartDealFlow('',{force:true});return;}
   if(key==='local-people'){openLocalPeopleIntent();return;}
   if(key==='contacts-invite'){pickContactsForInvite();return;}
@@ -7613,7 +7613,7 @@ async function openFeatureByKey(key,label,options={}){
   }
   if(runBusinessModule(key))return;
   if(key==='intro'){
-    await say('华伴是一款有脑、有手的 AI。你直接说事，我先整理、提醒、推荐和推进；需要继续时，你明确说“生成确认卡”“提交”“确认下单”或“安排”。');
+    window.location.href='https://www.huabanapp.com/';
     return;
   }
   if(key==='smart-contract'){
@@ -8296,13 +8296,64 @@ function smartDealTextareaRows(session={}){
   return transcript.map(item=>`${item.from||'记录'}：${item.text||''}`).join('\n');
 }
 
-function smartDealLegalPrivacyNotice(){
+function smartDealLegalPrivacyNotice(baseId='',session={}){
   return `
     <div style="margin:10px 0 12px;padding:11px 12px;border-radius:14px;background:#f7fbff;border:1px solid #cfe5f5;color:#27384a;font-size:12px;line-height:1.7;">
       <strong style="display:block;font-size:13px;color:#17212b;margin-bottom:4px;">通用法律框架与隐私边界</strong>
       本会话按“通用框架条款 + 每单共识确认”整理。当地法律、消费者保护、行业许可、税务、保险和安全要求优先；华伴只整理事实、双方确认和履约记录，不提供法律意见。交易会话中的聊天、语音转写、图片、地址、联系方式、确认记录和履约证明，会用于整理共识、匹配供给、履约、售后、争议处理和服务质量学习；涉及隐私的数据按用户授权和隐私政策处理，不涉及隐私的数据可用于平台改进。
       <div style="margin-top:6px;"><a href="terms.html" target="_blank" style="color:#087c98;font-weight:800;">服务条款</a> · <a href="privacy.html" target="_blank" style="color:#087c98;font-weight:800;">隐私政策</a></div>
+      ${baseId?`
+        <div style="display:grid;gap:7px;margin-top:9px;padding-top:9px;border-top:1px solid #d9ebf7;">
+          <label style="display:flex;gap:8px;align-items:flex-start;"><input id="${baseId}-buyer-terms" type="checkbox" ${session.buyer_terms_confirmed?'checked':''} onchange="updateSmartDealConfirmButton('${baseId}')" style="margin-top:4px;"> <span>需求方已阅读并同意服务条款、隐私政策和本单通用法律框架。</span></label>
+          <label style="display:flex;gap:8px;align-items:flex-start;"><input id="${baseId}-seller-terms" type="checkbox" ${session.seller_terms_confirmed?'checked':''} onchange="updateSmartDealConfirmButton('${baseId}')" style="margin-top:4px;"> <span>服务方已阅读并同意服务条款、隐私政策和本单通用法律框架。</span></label>
+        </div>`:''}
     </div>`;
+}
+
+function smartDealGeneratedSummary(session={}){
+  const rows=[
+    ['交易内容',session.service||session.source_text||'等待 AI 根据双方聊天内容整理'],
+    ['双方身份',`${session.buyer||'需求方待确认'} / ${session.seller||'服务方待确认'}`],
+    ['时间地点',[session.time,session.place||session.city].filter(Boolean).join(' · ')||'待确认'],
+    ['价格支付',[session.price,session.payment].filter(Boolean).join(' · ')||'待确认'],
+    ['责任边界',session.responsibility||session.notes||'待确认']
+  ];
+  return `
+    <div style="margin:0 0 12px;padding:12px;border-radius:14px;background:#f7fff9;border:1px solid #bde8ca;color:#183528;font-size:12px;line-height:1.65;">
+      <strong style="display:block;font-size:14px;color:#0f2d1e;margin-bottom:8px;">AI 整理的交易内容</strong>
+      <div style="display:grid;gap:7px;">
+        ${rows.map(([label,value])=>`
+          <div style="display:grid;grid-template-columns:72px 1fr;gap:8px;">
+            <b style="color:#27533c;">${companionEscape(label)}</b>
+            <span>${companionEscape(value)}</span>
+          </div>`).join('')}
+      </div>
+      <div style="margin-top:8px;color:#51705f;">如内容不完整，先展开下方修改；双方确认前不要生成确认单。</div>
+    </div>`;
+}
+
+function smartDealConfirmBlock(baseId='',session={}){
+  return `
+    <div style="margin:10px 0 12px;padding:11px 12px;border-radius:14px;background:#fffdf5;border:1px solid #ecd99a;color:#3b321f;font-size:12px;line-height:1.7;">
+      <strong style="display:block;font-size:13px;color:#231b0a;margin-bottom:7px;">双方确认后继续</strong>
+      <label style="display:flex;gap:8px;align-items:flex-start;margin-bottom:7px;"><input id="${baseId}-buyer-content" type="checkbox" ${session.buyer_content_confirmed?'checked':''} onchange="updateSmartDealConfirmButton('${baseId}')" style="margin-top:4px;"> <span>需求方确认：AI 整理的服务内容、价格、时间、责任和支付方式准确。</span></label>
+      <label style="display:flex;gap:8px;align-items:flex-start;"><input id="${baseId}-seller-content" type="checkbox" ${session.seller_content_confirmed?'checked':''} onchange="updateSmartDealConfirmButton('${baseId}')" style="margin-top:4px;"> <span>服务方确认：AI 整理的服务内容、价格、时间、责任和支付方式准确。</span></label>
+    </div>`;
+}
+
+function smartDealAllConfirmed(baseId=''){
+  return ['buyer-content','seller-content','buyer-terms','seller-terms']
+    .every(key=>document.getElementById(`${baseId}-${key}`)?.checked);
+}
+
+function updateSmartDealConfirmButton(baseId=''){
+  const ok=smartDealAllConfirmed(baseId);
+  const btn=document.getElementById(`${baseId}-generate-btn`);
+  if(btn){
+    btn.disabled=!ok;
+    btn.style.opacity=ok?'1':'.48';
+    btn.textContent=ok?'生成共识确认单':'双方勾选后继续';
+  }
 }
 
 function smartDealRequiredFields(session={}){
@@ -8389,33 +8440,41 @@ function openSmartDealSessionSheet(sessionOrId='', options={}){
         <button type="button" onclick="document.getElementById('smart-deal-session-sheet')?.remove()" style="width:34px;height:34px;border:0;border-radius:50%;background:#f1f1f1;color:#444;font-size:20px;">×</button>
       </div>
       ${smartDealAIRoleNotice(session)}
-      ${smartDealLegalPrivacyNotice()}
+      ${smartDealGeneratedSummary(session)}
+      ${smartDealConfirmBlock(baseId,session)}
+      ${smartDealLegalPrivacyNotice(baseId,session)}
       ${smartDealRequiredFieldNotice(session)}
-      <label class="agent-custom-field"><span>会话标题</span><input id="${baseId}-title" value="${companionEscape(session.title||'智能交易会话')}" placeholder="例如：花园清理、机场接送、二手车交易"></label>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;">
-        <label class="agent-custom-field"><span>需求方</span><input id="${baseId}-buyer" value="${companionEscape(session.buyer||'')}" placeholder="姓名/称呼/联系方式"></label>
-        <label class="agent-custom-field"><span>服务方</span><input id="${baseId}-seller" value="${companionEscape(session.seller||'')}" placeholder="姓名/称呼/联系方式"></label>
-      </div>
-      <label class="agent-custom-field"><span>双方沟通/谈判记录</span><textarea id="${baseId}-transcript" style="width:100%;min-height:120px;border:1px solid #ddd;border-radius:12px;padding:12px;font:14px/1.55 inherit;outline:none;resize:vertical;">${companionEscape(smartDealTextareaRows(session))}</textarea></label>
-      <label class="agent-custom-field"><span>服务/商品内容</span><textarea id="${baseId}-service" placeholder="做什么、交付什么、包含什么、不包含什么" style="width:100%;min-height:74px;border:1px solid #ddd;border-radius:12px;padding:12px;font:14px/1.55 inherit;outline:none;resize:vertical;">${companionEscape(session.service||'')}</textarea></label>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;">
-        <label class="agent-custom-field"><span>时间</span><input id="${baseId}-time" value="${companionEscape(session.time||'')}" placeholder="什么时候履约"></label>
-        <label class="agent-custom-field"><span>地点</span><input id="${baseId}-place" value="${companionEscape(session.place||session.city||'')}" placeholder="哪里履约/交付"></label>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;">
-        <label class="agent-custom-field"><span>价格/预算</span><input id="${baseId}-price" value="${companionEscape(session.price||'')}" placeholder="金额、报价或待报价"></label>
-        <label class="agent-custom-field"><span>支付方式</span><input id="${baseId}-payment" value="${companionEscape(session.payment||'双方确认')}" placeholder="现金/转账/PayID/微信等"></label>
-      </div>
-      <label class="agent-custom-field"><span>责任边界/备注</span><textarea id="${baseId}-responsibility" placeholder="材料、取消退款、额外费用、资质核验、安全注意事项" style="width:100%;min-height:74px;border:1px solid #ddd;border-radius:12px;padding:12px;font:14px/1.55 inherit;outline:none;resize:vertical;">${companionEscape(session.responsibility||session.notes||'')}</textarea></label>
+      <details style="margin:0 0 12px;border:1px solid #ddd;border-radius:14px;background:#fafafa;padding:10px 12px;">
+        <summary style="cursor:pointer;font-weight:900;color:#222;">交易内容需要调整时展开</summary>
+        <div style="margin-top:10px;">
+          <label class="agent-custom-field"><span>会话标题</span><input id="${baseId}-title" value="${companionEscape(session.title||'智能交易会话')}" placeholder="例如：花园清理、机场接送、二手车交易"></label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;">
+            <label class="agent-custom-field"><span>需求方</span><input id="${baseId}-buyer" value="${companionEscape(session.buyer||'')}" placeholder="姓名/称呼/联系方式"></label>
+            <label class="agent-custom-field"><span>服务方</span><input id="${baseId}-seller" value="${companionEscape(session.seller||'')}" placeholder="姓名/称呼/联系方式"></label>
+          </div>
+          <label class="agent-custom-field"><span>双方沟通/谈判记录</span><textarea id="${baseId}-transcript" style="width:100%;min-height:120px;border:1px solid #ddd;border-radius:12px;padding:12px;font:14px/1.55 inherit;outline:none;resize:vertical;">${companionEscape(smartDealTextareaRows(session))}</textarea></label>
+          <label class="agent-custom-field"><span>服务/商品内容</span><textarea id="${baseId}-service" placeholder="做什么、交付什么、包含什么、不包含什么" style="width:100%;min-height:74px;border:1px solid #ddd;border-radius:12px;padding:12px;font:14px/1.55 inherit;outline:none;resize:vertical;">${companionEscape(session.service||'')}</textarea></label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;">
+            <label class="agent-custom-field"><span>时间</span><input id="${baseId}-time" value="${companionEscape(session.time||'')}" placeholder="什么时候履约"></label>
+            <label class="agent-custom-field"><span>地点</span><input id="${baseId}-place" value="${companionEscape(session.place||session.city||'')}" placeholder="哪里履约/交付"></label>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;">
+            <label class="agent-custom-field"><span>价格/预算</span><input id="${baseId}-price" value="${companionEscape(session.price||'')}" placeholder="金额、报价或待报价"></label>
+            <label class="agent-custom-field"><span>支付方式</span><input id="${baseId}-payment" value="${companionEscape(session.payment||'双方确认')}" placeholder="现金/转账/PayID/微信等"></label>
+          </div>
+          <label class="agent-custom-field"><span>责任边界/备注</span><textarea id="${baseId}-responsibility" placeholder="材料、取消退款、额外费用、资质核验、安全注意事项" style="width:100%;min-height:74px;border:1px solid #ddd;border-radius:12px;padding:12px;font:14px/1.55 inherit;outline:none;resize:vertical;">${companionEscape(session.responsibility||session.notes||'')}</textarea></label>
+        </div>
+      </details>
       <div class="install-actions" style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:8px;">
         <button class="install-primary" type="button" onclick="saveSmartDealSessionFromSheet('${session.id}','${baseId}',false)">保存会话</button>
-        <button class="install-primary" type="button" onclick="saveSmartDealSessionFromSheet('${session.id}','${baseId}',true)">生成共识确认单</button>
+        <button class="install-primary" id="${baseId}-generate-btn" type="button" onclick="saveSmartDealSessionFromSheet('${session.id}','${baseId}',true)" disabled style="opacity:.48;">双方勾选后继续</button>
       </div>
       <button type="button" onclick="renderSmartDealResumeCard()" style="width:100%;margin-top:10px;border:0;background:#f1f1f1;color:#444;border-radius:12px;padding:12px;font:800 13px/1 inherit;">查看可接续会话</button>
       <div style="font-size:12px;color:#777;line-height:1.65;margin-top:12px;">华伴只整理双方确认过的事实和记录，不替任何一方作决定。涉及持牌、保险、税务或高金额交易，请双方自行核验资质和当地规则。</div>
     </div>`;
   overlay.addEventListener('click',()=>overlay.remove());
   document.body.appendChild(overlay);
+  updateSmartDealConfirmButton(baseId);
 }
 
 function smartDealSessionFromSheet(sessionId='',baseId=''){
@@ -8442,6 +8501,12 @@ function smartDealSessionFromSheet(sessionId='',baseId=''){
     responsibility:smartDealFieldValue(baseId,'responsibility'),
     notes:smartDealFieldValue(baseId,'responsibility'),
     transcript,
+    buyer_content_confirmed:Boolean(document.getElementById(`${baseId}-buyer-content`)?.checked),
+    seller_content_confirmed:Boolean(document.getElementById(`${baseId}-seller-content`)?.checked),
+    buyer_terms_confirmed:Boolean(document.getElementById(`${baseId}-buyer-terms`)?.checked),
+    seller_terms_confirmed:Boolean(document.getElementById(`${baseId}-seller-terms`)?.checked),
+    both_parties_confirmed:smartDealAllConfirmed(baseId),
+    confirmed_at:smartDealAllConfirmed(baseId)?(existing.confirmed_at||new Date().toISOString()):existing.confirmed_at||'',
     status:'共识整理中',
     ai_role_policy:existing.ai_role_policy||{
       role_name:'中立共识整理员',
@@ -8455,6 +8520,11 @@ function smartDealSessionFromSheet(sessionId='',baseId=''){
 
 async function saveSmartDealSessionFromSheet(sessionId='',baseId='',generate=false){
   const session=saveSmartDealSession(smartDealSessionFromSheet(sessionId,baseId));
+  if(generate&&!smartDealAllConfirmed(baseId)){
+    updateSmartDealConfirmButton(baseId);
+    await agentSay('还不能生成确认单。需要交易双方分别确认交易内容，并分别勾选同意服务条款、隐私政策和本单通用法律框架。',90);
+    return;
+  }
   document.getElementById('smart-deal-session-sheet')?.remove();
   rewardCompanionAction('try_feature',{xp:6,affection:2,say:'交易会话已保存'});
   if(generate){
