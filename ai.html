@@ -1877,21 +1877,9 @@ function contributionRiskForAction(action='', fields={}){
 }
 
 async function awardPoints(phone, action, customPts){
-  try{
-    const pts = customPts || POINTS_RULES[action] || 0;
-    if(!pts || !phone) return 0;
-    const contacts = await supaGet(`contacts?phone=eq.${phone}&tenant_id=eq.${TENANT_ID}&select=id,voucher_balance`);
-    if(!contacts||!contacts.length) return 0;
-    const current = contacts[0].voucher_balance||0;
-    const finalPts = pts;
-    const newTotal = current + finalPts;
-    await fetch(SUPA_URL+'/rest/v1/contacts?id=eq.'+contacts[0].id,{
-      method:'PATCH',
-      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'},
-      body:JSON.stringify({voucher_balance:newTotal})
-    });
-    return finalPts;
-  }catch(e){ console.warn('积分入账失败:', e.message); return 0; }
+  const pts = customPts || POINTS_RULES[action] || 0;
+  console.warn('client voucher balance write disabled; points must be recorded by server', {phone, action, pts});
+  return 0;
 }
 let returnTrip=null; // 往返回程信息
 
@@ -16181,131 +16169,17 @@ async function supaPatchOptional(path='',data={}){
 async function recordFriendPointEvent({ownerCode='',action='referral_join',points=20,relatedCode='',reason='',fields={}}={}){
   const code=String(ownerCode||'').trim().toUpperCase();
   if(!code)return null;
-  const related=String(relatedCode||'').trim().toUpperCase();
-  if(related&&related===code&&String(action||'').startsWith('referral')){
-    trackGrowthEvent('contribution_points_rejected',{
-      owner_code:code,
-      action,
-      related_code:related,
-      reason:'self_referral_code',
-      status:'rejected',
-      risk_level:'high'
-    }).catch(()=>null);
-    return {rejected:true,reason:'self_referral_code'};
-  }
-  const mergedFields={...fields,related_code:related};
-  const eventKey=contributionEventKey({ownerCode:code,action,relatedCode,fields:mergedFields});
-  if(!eventKey){
-    trackGrowthEvent('contribution_points_rejected',{
-      owner_code:code,
-      action,
-      related_code:String(relatedCode||'').trim().toUpperCase(),
-      reason:'missing_event_key',
-      status:'rejected',
-      risk_level:'high'
-    }).catch(()=>null);
-    return {rejected:true,reason:'missing_event_key'};
-  }
-  if(eventKey&&localContributionEventSeen(eventKey)){
-    return {duplicate:true,event_key:eventKey};
-  }
-  if(eventKey){
-    try{
-      const existing=await supaGet(`huaban_point_events?tenant_id=eq.${TENANT_ID}&event_key=eq.${encodeURIComponent(eventKey)}&limit=1&select=id,status,points`);
-      if(Array.isArray(existing)&&existing.length){
-        markLocalContributionEvent(eventKey);
-        return {...existing[0],duplicate:true,event_key:eventKey};
-      }
-    }catch(e){}
-  }
-  const calc=await calculateEffectiveContributionPointsForOwner(points,code);
-  const auditStatus=contributionAuditStatus(action,mergedFields);
-  const risk=contributionRiskForAction(action,mergedFields);
-  const refLevel=Number(mergedFields.ref_level||0)||(
-    String(action||'').includes('second_level') ? 2 : 1
-  );
-  const directReferrerCode=String(mergedFields.direct_referrer_code||mergedFields.first_referrer_code||'').trim().toUpperCase();
-  const secondLevelReferrerCode=String(mergedFields.second_level_referrer_code||'').trim().toUpperCase();
-  const rightsMultiplier=Number(calc.level.rightsMultiplier||calc.coefficient||1)||1;
-  const payload={
-    tenant_id:TENANT_ID,
+  trackGrowthEvent('contribution_points_server_required',{
     owner_code:code,
     action,
-    points:calc.effective,
-    related_code:related,
-    reason:reason||'扫码推荐好友',
-    status:auditStatus,
-    event_key:eventKey,
-    base_points:calc.base,
-    release_coefficient:calc.coefficient,
-    level_multiplier:rightsMultiplier,
-    risk_level:risk.level,
-    abnormal_reason:risk.reason,
-    ref_level:refLevel,
-    direct_referrer_code:directReferrerCode,
-    second_level_referrer_code:secondLevelReferrerCode,
-    fields:{
-      source:'huaban_friend_referral',
-      user_visible:true,
-      base_points:calc.base,
-      effective_points:calc.effective,
-      weighted_points:calc.weighted,
-      owner_confirmed_points_before:calc.current||0,
-      audit_status:auditStatus,
-      event_key:eventKey,
-      risk_level:risk.level,
-      abnormal_reason:risk.reason,
-      release_coefficient:calc.coefficient,
-      level_name:calc.level.name,
-      release_stage:calc.level.stage,
-      rights_multiplier:rightsMultiplier,
-      level_multiplier:rightsMultiplier,
-      redemption_rule:'积分按基础数量记录；等级权重决定将来每一积分可兑换金额，不承诺固定兑付。',
-      ...mergedFields
-    }
-  };
-  const row=await supaInsertOptional('huaban_point_events',payload);
-  if(row){
-    markLocalContributionEvent(eventKey);
-    if(code===getFriendCode()&&auditStatus==='confirmed'){
-      const current=Number(localStorage.getItem('huaban_referral_points_cache')||0)||0;
-      localStorage.setItem('huaban_referral_points_cache',String(current+calc.effective));
-    }
-  }
-  trackGrowthEvent('contribution_points_recorded',{
-    owner_code:code,
-    action,
-    points:calc.effective,
-    base_points:calc.base,
-    weighted_points:calc.weighted,
-    release_coefficient:calc.coefficient,
-    level_name:calc.level.name,
-    release_stage:calc.level.stage,
-    rights_multiplier:rightsMultiplier,
-    level_multiplier:rightsMultiplier,
-    ref_level:refLevel,
-    direct_referrer_code:directReferrerCode,
-    second_level_referrer_code:secondLevelReferrerCode,
-    event_key:eventKey,
-    audit_status:auditStatus,
-    risk_level:risk.level,
-    abnormal_reason:risk.reason,
-    related_code:related,
+    points:Number(points)||0,
+    related_code:String(relatedCode||'').trim().toUpperCase(),
     reason,
-    status:auditStatus
+    status:'server_required',
+    risk_level:'blocked_client_write'
   }).catch(()=>null);
-  if(!row){
-    supaInsertLead({
-      lead_type:'system',
-      channel:'point_event',
-      name:'扫码推荐积分',
-      need_type:action,
-      message:`${code} ${action} +${calc.effective}`,
-      status:auditStatus,
-      fields:payload
-    }).catch(()=>null);
-  }
-  return row;
+  console.warn('client contribution ledger write disabled; points must be recorded by server', {ownerCode:code, action, points, relatedCode});
+  return {ok:false,needs_server:true,reason:'client_points_write_disabled'};
 }
 
 async function recordFriendshipRows({inviterCode='',refereeCode='',inviter={},referee={},source='qr_open',cardBy=''}={}){
@@ -16448,9 +16322,11 @@ async function recordFriendReferralClosedLoop({inviterCode='',refereeCode='',inv
     });
     const json=await res.json().catch(()=>({}));
     if(res.ok&&json?.ok)return {...json,server_bound:true};
-    console.warn('server referral bind fallback:',json?.error||res.status);
+    console.warn('server referral bind failed; client points ledger disabled:',json?.error||res.status);
+    return {ok:false,needs_server:true,error:json?.error||`HTTP ${res.status}`};
   }catch(e){
-    console.warn('server referral bind unavailable, fallback to client ledger:',e?.message||e);
+    console.warn('server referral bind unavailable; client points ledger disabled:',e?.message||e);
+    return {ok:false,needs_server:true,error:e?.message||'server_unavailable'};
   }
   const inviterPhoneKey=normalizedIdentityPhone(inviter.phone||'');
   const refereePhoneKey=normalizedIdentityPhone(referee.phone||'');

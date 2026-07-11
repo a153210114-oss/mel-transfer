@@ -179,13 +179,6 @@ async function supaInsert(table,data){
   const res=await fetch(SUPA_URL+'/rest/v1/'+table,{method:'POST',headers:{apikey:SUPA_KEY,Authorization:'Bearer '+SUPA_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(data)});
   return res.ok;
 }
-async function supaUpsert(table,data,onConflict=''){
-  const path=table+(onConflict?`?on_conflict=${encodeURIComponent(onConflict)}`:'');
-  const res=await fetch(SUPA_URL+'/rest/v1/'+path,{method:'POST',headers:{apikey:SUPA_KEY,Authorization:'Bearer '+SUPA_KEY,'Content-Type':'application/json',Prefer:'resolution=merge-duplicates,return=representation'},body:JSON.stringify(data)});
-  if(!res.ok)return null;
-  const rows=await res.json().catch(()=>null);
-  return Array.isArray(rows)?rows[0]:rows;
-}
 function normalizePhone(phone=''){return String(phone||'').replace(/[\s().-]/g,'').trim()}
 function normalizeReferralCode(value=''){return String(value||'').replace(/[^a-zA-Z0-9_-]/g,'').trim().toUpperCase()}
 function getUser(){
@@ -415,98 +408,15 @@ async function completeReferralJoinFromProfile(user={}){
       cardBy:pending.cardBy||''
     });
   }catch(e){
-    result=await completeReferralJoinFromProfileClientFallback({inviterCode,refereeCode,inviter,referee,source:'profile_page_save_referral',cardBy:pending.cardBy||''});
+    console.warn('推荐关系后端绑定失败，已停止前端记账',e);
+    return {ok:false,needs_server:true,error:e.message||'推荐关系后端绑定失败'};
   }
-  localStorage.setItem(localKey,'1');
-  localStorage.setItem(`huaban_friend_code_added_${inviterCode}`,'1');
-  clearPendingReferral();
+  if(result?.ok){
+    localStorage.setItem(localKey,'1');
+    localStorage.setItem(`huaban_friend_code_added_${inviterCode}`,'1');
+    clearPendingReferral();
+  }
   return result;
-}
-async function firstReferrerFor(refereeCode=''){
-  const code=normalizeReferralCode(refereeCode);
-  if(!code)return '';
-  const rows=await supaGet(`huaban_referral_events?tenant_id=eq.${TENANT_ID}&referee_code=eq.${encodeURIComponent(code)}&status=eq.confirmed&order=created_at.asc&limit=1&select=inviter_code`).catch(()=>[]);
-  return normalizeReferralCode(rows?.[0]?.inviter_code||'');
-}
-function referralPointKey(ownerCode='',action='',relatedCode=''){
-  const owner=normalizeReferralCode(ownerCode);
-  const related=normalizeReferralCode(relatedCode);
-  if(!owner||!action||!related)return '';
-  return `huaban:${TENANT_ID}:${owner}:${action}:${related}`;
-}
-async function insertReferralPointClient({ownerCode='',action='',points=0,relatedCode='',reason='',fields={}}={}){
-  const owner=normalizeReferralCode(ownerCode);
-  const related=normalizeReferralCode(relatedCode);
-  if(!owner||!related||owner===related)return null;
-  const eventKey=referralPointKey(owner,action,related);
-  const existing=await supaGet(`huaban_point_events?tenant_id=eq.${TENANT_ID}&event_key=eq.${encodeURIComponent(eventKey)}&limit=1&select=id,points,status`).catch(()=>[]);
-  if(Array.isArray(existing)&&existing.length)return {...existing[0],duplicate:true,event_key:eventKey};
-  return supaUpsert('huaban_point_events',{
-    tenant_id:TENANT_ID,
-    owner_code:owner,
-    action,
-    points,
-    related_code:related,
-    reason,
-    status:'confirmed',
-    event_key:eventKey,
-    ref_level:Number(fields.ref_level||0)||(/second_level/.test(action)?2:1),
-    direct_referrer_code:normalizeReferralCode(fields.direct_referrer_code||fields.first_referrer_code||''),
-    second_level_referrer_code:normalizeReferralCode(fields.second_level_referrer_code||''),
-    fields:{source:'profile_client_referral_fallback',user_visible:true,related_code:related,event_key:eventKey,...fields}
-  });
-}
-async function completeReferralJoinFromProfileClientFallback({inviterCode='',refereeCode='',inviter={},referee={},source='',cardBy=''}={}){
-  const a=normalizeReferralCode(inviterCode);
-  const b=normalizeReferralCode(refereeCode);
-  if(!a||!b||a===b)return null;
-  const existingFirst=await firstReferrerFor(b);
-  const firstCode=existingFirst||a;
-  const isFirst=firstCode===a;
-  const secondCode=isFirst?await firstReferrerFor(a):'';
-  const secondEligible=Boolean(secondCode&&secondCode!==a&&secondCode!==b);
-  const fields={
-    event:'friend_referral_closed_loop',
-    source,
-    card_by:cardBy||'',
-    inviter,
-    referee,
-    first_referrer_code:firstCode,
-    first_referrer_source:existingFirst?'database':'new',
-    direct_referrer_code:a,
-    second_level_referrer_code:secondEligible?secondCode:'',
-    referral_depth:secondEligible?2:1,
-    referral_credit_locked:!isFirst,
-    credit_note:isFirst?'首位推荐者已锁定。':'被推荐者已绑定首位推荐者，本次只添加好友不重复奖励。',
-    user_visible:true,
-    auto_friendship:true
-  };
-  const eventRow=await supaUpsert('huaban_referral_events',{
-    tenant_id:TENANT_ID,
-    inviter_code:a,
-    referee_code:b,
-    inviter_name:inviter.name||`华伴好友 ${a}`,
-    referee_name:referee.name||`华伴好友 ${b}`,
-    inviter_phone:inviter.phone||'',
-    referee_phone:referee.phone||'',
-    inviter_avatar:inviter.avatar||'👤',
-    referee_avatar:referee.avatar||'👤',
-    source,
-    status:'confirmed',
-    points_awarded:isFirst?POINTS_RULES.referral_join:0,
-    direct_referrer_code:a,
-    second_level_referrer_code:secondEligible?secondCode:'',
-    referral_depth:secondEligible?2:1,
-    credit_locked:!isFirst,
-    fields
-  },'tenant_id,inviter_code,referee_code');
-  await Promise.allSettled([
-    supaUpsert('huaban_friendships',{tenant_id:TENANT_ID,owner_code:a,friend_code:b,friend_name:referee.name||`华伴好友 ${b}`,friend_phone:referee.phone||'',friend_industry:referee.industry||'',friend_avatar:referee.avatar||'👤',source:'profile_client_referral_fallback',status:'active',fields:{...fields,friend:{code:b,...referee}}},'tenant_id,owner_code,friend_code'),
-    supaUpsert('huaban_friendships',{tenant_id:TENANT_ID,owner_code:b,friend_code:a,friend_name:inviter.name||`华伴好友 ${a}`,friend_phone:inviter.phone||'',friend_industry:inviter.industry||'',friend_avatar:inviter.avatar||'👤',source:'profile_client_referral_fallback',status:'active',fields:{...fields,friend:{code:a,...inviter}}},'tenant_id,owner_code,friend_code')
-  ]);
-  const direct=isFirst?await insertReferralPointClient({ownerCode:a,action:'referral_join',points:POINTS_RULES.referral_join,relatedCode:b,reason:'好友通过分享进入并保存身份资料',fields:{...fields,ref_level:1,referral_event_id:eventRow?.id||''}}):null;
-  const second=secondEligible?await insertReferralPointClient({ownerCode:secondCode,action:'referral_second_level_join',points:POINTS_RULES.referral_second_level_join,relatedCode:b,reason:'二级好友真实加入华伴',fields:{...fields,ref_level:2,referral_event_id:eventRow?.id||''}}):null;
-  return {ok:Boolean(eventRow||direct||second),client_fallback:true,event:eventRow,points:{direct,second},second_level_referrer_code:secondEligible?secondCode:''};
 }
 async function sendPhoneCode(){
   toast('手机号安全验证即将开放');
