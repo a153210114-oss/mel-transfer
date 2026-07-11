@@ -3783,6 +3783,9 @@ async function sendVoiceMessage(text){
   if(await handlePendingImageIntelSupplement(corrected,{voice:true})){
     return;
   }
+  if(await handleFirstVersionCoreTaskIntent(corrected,{voice:true})){
+    return;
+  }
   if(detectAgentNamingIntent(corrected)){
     await agentSay(`好呀，以后我就叫<strong>${agentName}</strong>。`,180);
     return;
@@ -6772,6 +6775,78 @@ function showVoiceWakePrompt(){
   renderVoiceWakeCard();
   const card=document.getElementById('voice-wake-card');
   autoDismissIntroCard(card, 16000);
+}
+
+function detectFirstVersionCoreTaskIntent(text=''){
+  const clean=String(text||'').trim();
+  if(!clean)return null;
+  const compact=clean.replace(/\s+/g,'');
+  if(/分享华伴|推荐华伴|邀请.*(朋友|好友|家人)|生成.*(海报|二维码)|发给.*(朋友|好友|家人)|把华伴.*(发|转|推)/i.test(clean)){
+    return {key:'share',label:'分享华伴'};
+  }
+  if(/反馈问题|问题反馈|意见反馈|提交反馈|反馈|吐槽|不好用|功能建议|产品建议|对华伴.*(建议|意见)|给华伴.*(建议|意见)|bug|报错|哪里不顺|可以.*改|应该.*改/i.test(clean)){
+    return {key:'feedback',label:'反馈问题'};
+  }
+  if(/整理(资料|信息|文档|内容|需求|表格|清单|素材)|资料整理|保存资料|管理表|做个表|生成清单|归档|把.*整理一下/i.test(clean)){
+    return {key:'organize',label:'整理资料'};
+  }
+  if(/找(本地|当地|附近).*(需要我|需要你|客户|订单|买家|雇主|需求)|让(本地|当地|附近)?.*(需要的人|客户|买家).*(看到|找到|联系)|我有(服务|资源|技能|商品|经验|车|房|店|手艺).*(找|对接|介绍|推广|给).*(本地|当地|附近|需要的人|客户)|我要(接单|获客|找客户)|推广我的(服务|产品|商品|生意)|把我推给.*需要的人/i.test(clean)){
+    return {key:'find_need_people',label:'找本地需要你的人'};
+  }
+  if(!isLocalServiceDemand(clean)&&/(找服务|找人帮忙|找靠谱.*(服务|人)|找本地.*服务|找当地.*服务|需要.*(服务|人帮忙)|帮我找.*(服务|人)|本地服务)/i.test(clean)){
+    return {key:'find_service',label:'找服务'};
+  }
+  if(compact==='找本地需要你的人'||compact==='找本地需要我的人')return {key:'find_need_people',label:'找本地需要你的人'};
+  if(compact==='找服务')return {key:'find_service',label:'找服务'};
+  if(compact==='整理资料')return {key:'organize',label:'整理资料'};
+  if(compact==='反馈问题')return {key:'feedback',label:'反馈问题'};
+  if(compact==='分享华伴')return {key:'share',label:'分享华伴'};
+  return null;
+}
+
+async function handleFirstVersionCoreTaskIntent(text, options={}){
+  if(isLocationAddressIntent(text))return false;
+  const intent=detectFirstVersionCoreTaskIntent(text);
+  if(!intent)return false;
+  rememberMenuKey(intent.key);
+  rewardCompanionAction('try_feature');
+
+  if(intent.key==='find_need_people'){
+    renderBusinessIdentityCard();
+    syncAISearchTaskIfNeeded(text, '用户要把自己提供的服务推给本地需要的人，先收集事业名片并进入供给匹配。', 'first_version_supply_entry');
+    await agentSay('可以。从这里起步：我先把你能提供的服务整理成事业名片，后面有本地真实需求时，再把你推给需要的人。',100);
+    return true;
+  }
+  if(intent.key==='find_service'){
+    await startHiddenIntelTask({
+      wishType:/免费|互助/i.test(text)?'need_free':'need_paid',
+      category:'本地服务',
+      city:(typeof intelCityFromText==='function'&&intelCityFromText(text))||currentRegion.city||currentRegion.country,
+      text,
+      budget:/免费|互助/i.test(text)?'免费/互助':'可商量'
+    });
+    syncAISearchTaskIfNeeded(text, '用户从第一版入口寻找本地服务，已进入需求情报流程。', 'first_version_service_entry');
+    await agentSay('收到。你把服务类型、地点、时间或预算补一句，我会继续整理并找可联系的人。',100);
+    return true;
+  }
+  if(intent.key==='organize'){
+    openManagementSheet(buildManagementDraft(text,{scene:'business',title:'资料整理'}));
+    syncAISearchTaskIfNeeded(text, '用户要求整理资料，已打开管理表形成个人数据库资料。', 'first_version_organize_entry');
+    await agentSay('我先把它整理成资料卡。生活、学习、事业里的内容，都可以先这样沉淀到你的个人数据库。',100);
+    return true;
+  }
+  if(intent.key==='feedback'){
+    recordAITrainingQuestion(text, '第一版用户主动反馈，请沉淀为产品优化资料。', 'first-version-feedback');
+    await agentSay('收到，我会把这个记进优化资料。你可以继续说：哪里不顺、你希望我怎么做、或者哪个功能最该先完善。',100);
+    return true;
+  }
+  if(intent.key==='share'){
+    shareRefLink();
+    syncAISearchTaskIfNeeded(text, '用户触发分享华伴，进入推广分享链路。', 'first_version_share_entry');
+    await agentSay('分享入口打开了。你可以把华伴发给真正需要的人；早期使用、反馈和分享，都会记录真实贡献。',100);
+    return true;
+  }
+  return false;
 }
 
 const FEATURE_INTENTS=[
@@ -10981,6 +11056,9 @@ async function sendMessage(){ stopTTS();
     return;
   }
   if(await handlePromoterContactSupply(msg,{voice:false})){
+    return;
+  }
+  if(await handleFirstVersionCoreTaskIntent(msg,{voice:false})){
     return;
   }
   if(await handleLocationAddressIntent(msg,{voice:false})){
