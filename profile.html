@@ -93,7 +93,7 @@ button,input{font:inherit}
   <section class="card">
     <div class="section-title">手机号验证</div>
     <div class="hint">注重隐私和安全的用户，不怕多一步。验证码通过后，手机号才成为华伴账号的唯一身份锚点。</div>
-    <input class="input" id="phoneInput" type="tel" inputmode="tel" maxlength="32" placeholder="手机号（含国家区号，如 +61）">
+    <input class="input" id="phoneInput" type="tel" inputmode="tel" maxlength="32" placeholder="手机号，如 04... 或 +61...">
     <input class="input" id="codeInput" inputmode="numeric" maxlength="6" placeholder="6 位短信验证码">
     <div class="actions">
       <button class="btn secondary" id="sendCodeBtn" onclick="sendPhoneCode()">发送验证码</button>
@@ -189,7 +189,18 @@ async function supaAuthPost(path,data){
   if(!res.ok)throw new Error(json.msg||json.message||json.error_description||json.error||'手机号验证请求失败');
   return json;
 }
-function normalizePhone(phone=''){return String(phone||'').replace(/[\s().-]/g,'').trim()}
+function normalizePhone(phone=''){
+  let raw=String(phone||'').replace(/[\s().-]/g,'').trim();
+  if(!raw)return '';
+  if(raw.startsWith('00'))raw='+'+raw.slice(2);
+  if(raw.startsWith('+'))return '+'+raw.slice(1).replace(/\D/g,'');
+  const digits=raw.replace(/\D/g,'');
+  if(/^04\d{8}$/.test(digits))return '+61'+digits.slice(1);
+  if(/^4\d{8}$/.test(digits))return '+61'+digits;
+  if(/^61\d{9}$/.test(digits))return '+'+digits;
+  return digits;
+}
+function isE164Phone(phone=''){return /^\+[1-9]\d{7,14}$/.test(normalizePhone(phone))}
 function normalizeReferralCode(value=''){return String(value||'').replace(/[^a-zA-Z0-9_-]/g,'').trim().toUpperCase()}
 function getUser(){
   const p=getProfile();
@@ -431,13 +442,19 @@ async function completeReferralJoinFromProfile(user={}){
 async function sendPhoneCode(){
   await saveIdentity();
   const user=getUser();
-  if(!normalizePhone(user.phone)){toast('请先填写手机号');return;}
+  const phone=normalizePhone(user.phone);
+  if(!phone){toast('请先填写手机号');return;}
+  if(!isE164Phone(phone)){toast('手机号需含国家区号，如 +614xxxxxxxx');return;}
   const btn=$('sendCodeBtn');
   const old=btn.textContent;
   btn.disabled=true;
   btn.textContent='发送中...';
   try{
-    await supaAuthPost('otp',{phone:normalizePhone(user.phone)});
+    $('phoneInput').value=phone;
+    saveProfile({phone});
+    const p=getPassenger();
+    setLocal('au_passenger',{...p,phone});
+    await supaAuthPost('otp',{phone});
     $('verifyHint').textContent='验证码已发送，10 分钟内有效。';
     toast('验证码已发送');
   }catch(e){
@@ -451,21 +468,27 @@ async function sendPhoneCode(){
 async function verifyPhoneCode(){
   const user=getUser();
   const code=$('codeInput').value.trim();
-  if(!normalizePhone(user.phone)){toast('请先填写手机号');return;}
+  const phone=normalizePhone(user.phone);
+  if(!phone){toast('请先填写手机号');return;}
+  if(!isE164Phone(phone)){toast('手机号需含国家区号，如 +614xxxxxxxx');return;}
   if(!/^\d{6}$/.test(code)){toast('请输入 6 位验证码');return;}
+  $('phoneInput').value=phone;
+  saveProfile({phone});
+  const savedPassenger=getPassenger();
+  setLocal('au_passenger',{...savedPassenger,phone});
   const btn=$('verifyCodeBtn');
   const old=btn.textContent;
   btn.disabled=true;
   btn.textContent='验证中...';
   try{
     const auth=await supaAuthPost('verify',{
-      phone:normalizePhone(user.phone),
+      phone,
       token:code,
       type:'sms'
     });
     const data=await postJson('/api/auth-phone-sync',{
       accessToken:auth?.access_token||auth?.session?.access_token||'',
-      phone:user.phone,
+      phone,
       name:user.name,
       industry:user.industry,
       friendCode:getFriendCode(),
@@ -474,12 +497,12 @@ async function verifyPhoneCode(){
     const account=data.account||{};
     localStorage.setItem('huaban_account_uid',account.account_uid||auth?.user?.id||auth?.session?.user?.id||'');
     localStorage.setItem('huaban_account_id',account.id||auth?.user?.id||auth?.session?.user?.id||'');
-    localStorage.setItem('huaban_phone_verified_phone',normalizePhone(user.phone));
+    localStorage.setItem('huaban_phone_verified_phone',phone);
     localStorage.setItem('huaban_phone_verified_at',account.phone_verified_at||new Date().toISOString());
     const p=getPassenger();
     setLocal('au_passenger',{...p,account_uid:account.account_uid||p.account_uid||'',phone_verified:true,phone_verified_at:account.phone_verified_at||new Date().toISOString(),logged_in:true,profile_ready:true});
     $('codeInput').value='';
-    await completeReferralJoinFromProfile({name:user.name||'华伴用户',industry:user.industry,phone:user.phone,avatar:user.avatar}).catch(()=>null);
+    await completeReferralJoinFromProfile({name:user.name||'华伴用户',industry:user.industry,phone,avatar:user.avatar}).catch(()=>null);
     renderIdentity();
     toast(data.ok===false?'验证完成，账号资料待后台同步':'注册验证完成');
   }catch(e){
