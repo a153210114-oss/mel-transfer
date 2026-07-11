@@ -37,6 +37,10 @@
       "destination": "/admin.html"
     },
     {
+      "source": "/profile",
+      "destination": "/profile.html"
+    },
+    {
       "source": "/official",
       "destination": "/official.html"
     },
