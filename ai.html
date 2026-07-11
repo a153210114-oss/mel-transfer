@@ -2036,8 +2036,59 @@ function saveUserIdentity({name,avatar,industry,phone}){
       body:JSON.stringify({full_name:nextName})
     }).catch(()=>{});
   }
+  completeReferralJoinFromSavedProfile({
+    name:nextName||passenger.name||'华伴用户',
+    phone:nextPhone||passenger.phone||'',
+    industry:nextIndustry||passenger.industry||'',
+    avatar:nextAvatar
+  }).catch(e=>console.warn('profile referral close loop failed',e));
   updateUserIdentityUI();
   return {name:nextName,avatar:nextAvatar,industry:nextIndustry,phone:nextPhone};
+}
+
+async function completeReferralJoinFromSavedProfile(profile={}){
+  if(typeof recordFriendReferralClosedLoop!=='function')return null;
+  const params=new URLSearchParams(location.search);
+  const incoming=normalizeReferralCode(
+    sessionStorage.getItem('incoming_ref') ||
+    sessionStorage.getItem('incoming_friend_code') ||
+    params.get('friend') ||
+    (isLikelyFriendReferralCode(params.get('ref')) ? params.get('ref') : '')
+  );
+  if(!incoming)return null;
+  repairIncomingFriendCodeCollision(incoming);
+  const refereeCode=getFriendCode();
+  if(!refereeCode||incoming===refereeCode)return null;
+  const key=`huaban_profile_referral_closed_${incoming}_${refereeCode}`;
+  if(localStorage.getItem(key)==='1')return {duplicate:true};
+  const inviterMeta={
+    code:incoming,
+    name:params.get('card_name')||`华伴好友 ${incoming}`,
+    industry:params.get('card_industry')||'',
+    phone:params.get('card_phone')||'',
+    avatar:params.get('card_avatar')||'👤'
+  };
+  const refereeMeta={
+    code:refereeCode,
+    name:profile.name||'华伴用户',
+    phone:profile.phone||'',
+    industry:profile.industry||'',
+    avatar:profile.avatar||'👤'
+  };
+  const row=await recordFriendReferralClosedLoop({
+    inviterCode:incoming,
+    refereeCode,
+    inviter:inviterMeta,
+    referee:refereeMeta,
+    source:'profile_card_save_referral',
+    cardBy:params.get('card_by')||''
+  });
+  if(row!==null){
+    localStorage.setItem(key,'1');
+    localStorage.setItem(`huaban_friend_code_added_${incoming}`,'1');
+  }
+  refreshProfileFriendStats?.().catch(()=>null);
+  return row;
 }
 
 function getHomepageBusinessEntry(){
