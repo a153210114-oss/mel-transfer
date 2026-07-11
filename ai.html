@@ -16433,6 +16433,25 @@ async function recordFriendReferralClosedLoop({inviterCode='',refereeCode='',inv
   const a=String(inviterCode||'').trim().toUpperCase();
   const b=String(refereeCode||'').trim().toUpperCase();
   if(!a||!b||a===b)return null;
+  try{
+    const res=await fetch('/api/referral-bind',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        inviterCode:a,
+        refereeCode:b,
+        inviter,
+        referee,
+        source,
+        cardBy
+      })
+    });
+    const json=await res.json().catch(()=>({}));
+    if(res.ok&&json?.ok)return {...json,server_bound:true};
+    console.warn('server referral bind fallback:',json?.error||res.status);
+  }catch(e){
+    console.warn('server referral bind unavailable, fallback to client ledger:',e?.message||e);
+  }
   const inviterPhoneKey=normalizedIdentityPhone(inviter.phone||'');
   const refereePhoneKey=normalizedIdentityPhone(referee.phone||'');
   if(inviterPhoneKey&&refereePhoneKey&&inviterPhoneKey===refereePhoneKey){
