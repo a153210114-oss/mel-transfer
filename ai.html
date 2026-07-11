@@ -1749,6 +1749,38 @@ const LEVELS = [
   {name:'合伙候选人', icon:'🤝', min:5000, max:19999, multiplier:1.5, perks:'推荐贡献 +50%，进入候选池观察'},
   {name:'早期共建合伙人', icon:'👑', min:20000, max:Infinity, multiplier:2.0, perks:'推荐贡献翻倍，参与阶段性结算与共建规则讨论'},
 ];
+const POINTS_ACTION_GROUPS = [
+  {
+    title:'使用华伴',
+    note:'真实使用越多，华伴越懂你，贡献记录也越完整。',
+    items:[
+      {label:'领养/启用华伴', points:POINTS_RULES.adopt_ai, confirm:'首次启用后记录'},
+      {label:'第一次有效对话', points:POINTS_RULES.first_effective_chat, confirm:'说清一个真实任务后记录'},
+      {label:'提交真实需求', points:POINTS_RULES.submit_real_need, confirm:'需求可匹配、可跟进后记录'},
+      {label:'生成交易确认卡/智能合约草案', points:POINTS_RULES.generate_confirm_card, confirm:'关键字段整理完成后记录'}
+    ]
+  },
+  {
+    title:'分享与推荐',
+    note:'不拉人头，只记录真实加入、真实使用、真实成交。',
+    items:[
+      {label:'分享华伴', points:POINTS_RULES.share, confirm:'分享动作完成后记录成长值'},
+      {label:'一级好友真实加入', points:POINTS_RULES.referral_join, confirm:'对方通过你的链接/码加入并锁定首推后确认'},
+      {label:'二级好友真实加入', points:POINTS_RULES.referral_second_level_join, confirm:'你推荐的人继续带来真实用户后确认'},
+      {label:'被推荐者完成真实预约/交易', points:POINTS_RULES.referral_trip, confirm:'订单或交易进入有效记录后确认'}
+    ]
+  },
+  {
+    title:'供给与成交',
+    note:'把真实服务能力放进华伴，未来才能被智能匹配。',
+    items:[
+      {label:'提交供给资料/服务名片', points:POINTS_RULES.supplier_profile, confirm:'资料完整、可被匹配后进入审核'},
+      {label:'供给方通过审核', points:POINTS_RULES.supplier_approved, confirm:'人工或规则审核通过后确认'},
+      {label:'促成真实服务完成', points:POINTS_RULES.service_completed_referral, confirm:'双方履约完成并通过风控后确认'},
+      {label:'完成评价', points:POINTS_RULES.review_text, suffix:' 起', confirm:'文字、星级等真实反馈会分别记录'}
+    ]
+  }
+];
 let profilePointsState = {points: 0, level: LEVELS[0], nextLevel: LEVELS[1]};
 
 function getLevel(points){
@@ -13134,6 +13166,30 @@ function showPointsDetail(){
       <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:14px;font-size:12px;color:rgba(255,255,255,0.62);line-height:1.8;">
         <strong style="display:block;color:white;font-size:13px;margin-bottom:6px;">积分说明</strong>
         积分分两层：成长值用于等级和权益，用户体验不减半；贡献积分用于记录真实推广、供给、需求和成交贡献。基础分稳定，最终结算时会按你的等级系数和贡献批次权重，折算成权重积分。
+      </div>
+      <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:14px;margin-top:12px;">
+        <strong style="display:block;color:white;font-size:13px;margin-bottom:10px;">动作积分规则</strong>
+        <div style="display:grid;gap:10px;">
+          ${POINTS_ACTION_GROUPS.map(group=>`
+            <section style="padding:11px;border-radius:13px;background:rgba(255,255,255,0.035);border:1px solid rgba(255,255,255,0.06);">
+              <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:7px;">
+                <b style="display:block;color:white;font-size:13px;">${companionEscape(group.title)}</b>
+                <span style="font-size:10px;color:rgba(255,255,255,0.38);white-space:nowrap;">真实贡献</span>
+              </div>
+              <div style="font-size:11px;color:rgba(255,255,255,0.48);line-height:1.55;margin-bottom:8px;">${companionEscape(group.note)}</div>
+              <div style="display:grid;gap:7px;">
+                ${group.items.map(item=>`
+                  <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:start;padding:8px;border-radius:11px;background:rgba(255,255,255,0.035);">
+                    <span style="min-width:0;">
+                      <b style="display:block;color:rgba(255,255,255,0.86);font-size:12px;line-height:1.35;">${companionEscape(item.label)}</b>
+                      <em style="display:block;font-style:normal;color:rgba(255,255,255,0.42);font-size:10.5px;line-height:1.45;margin-top:3px;">${companionEscape(item.confirm)}</em>
+                    </span>
+                    <strong style="color:#f1cf49;font-size:13px;line-height:1.25;white-space:nowrap;">+${item.points}${companionEscape(item.suffix||'')}</strong>
+                  </div>`).join('')}
+              </div>
+            </section>`).join('')}
+        </div>
+        <div style="margin-top:10px;color:rgba(255,255,255,0.45);font-size:11px;line-height:1.65;">异常、重复、自推、虚假资料、未完成服务会被拦截或进入审核；最终以系统记录和审核状态为准。</div>
       </div>
       <div style="background:rgba(7,193,96,0.08);border:1px solid rgba(7,193,96,0.16);border-radius:14px;padding:14px;margin-top:12px;font-size:12px;color:rgba(255,255,255,0.64);line-height:1.8;">
         <strong style="display:block;color:white;font-size:13px;margin-bottom:6px;">兑换规则</strong>
