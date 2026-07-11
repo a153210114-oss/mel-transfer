@@ -3,12 +3,19 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "vercel dev"
+    "start": "vercel dev",
+    "cap:sync": "cap sync",
+    "cap:android": "cap open android",
+    "cap:ios": "cap open ios"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.54.0"
   },
   "devDependencies": {
+    "@capacitor/android": "^8.4.1",
+    "@capacitor/cli": "^8.4.1",
+    "@capacitor/core": "^8.4.1",
+    "@capacitor/ios": "^8.4.1",
     "vercel": "^44.2.8"
   }
 }

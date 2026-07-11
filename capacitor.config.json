@@ -1,0 +1,16 @@
+{
+  "appId": "com.huabanapp.ai",
+  "appName": "华伴",
+  "webDir": "app-shell",
+  "server": {
+    "url": "https://www.huabanapp.com/ai.html",
+    "cleartext": false
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1200,
+      "backgroundColor": "#071421",
+      "showSpinner": false
+    }
+  }
+}

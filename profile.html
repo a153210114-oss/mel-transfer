@@ -96,10 +96,10 @@ button,input{font:inherit}
     <div class="hint">注重隐私和安全的用户，不怕多一步。验证码通过后，手机号才成为华伴账号的唯一身份锚点。</div>
     <input class="input" id="codeInput" inputmode="numeric" maxlength="6" placeholder="6 位短信验证码">
     <div class="actions">
-      <button class="btn secondary" id="sendCodeBtn" onclick="sendPhoneCode()">发送验证码</button>
-      <button class="btn" id="verifyCodeBtn" onclick="verifyPhoneCode()">验证并注册</button>
+      <button class="btn secondary" id="sendCodeBtn" onclick="sendPhoneCode()" disabled>即将开放</button>
+      <button class="btn" id="verifyCodeBtn" onclick="verifyPhoneCode()" disabled>验证并注册</button>
     </div>
-    <div class="hint" id="verifyHint" style="margin-top:10px">先填写手机号并保存资料，再发送验证码。</div>
+    <div class="hint" id="verifyHint" style="margin-top:10px">手机号安全验证即将开放。现在可先使用华伴，系统会先把积分和关系记录在当前设备身份码下；验证开放后可一键归集到正式账号。</div>
   </section>
 
   <section class="card">
@@ -226,7 +226,7 @@ function renderIdentity(){
   const verified=isPhoneVerified(user.phone);
   $('recoverState').textContent=user.phone?(verified?'手机号已验证，可用于找回':'手机号待验证'):'未绑定手机号';
   $('accountState').textContent=verified?`已注册 · ${accountUid()}`:'未完成验证码注册';
-  $('verifyHint').textContent=verified?'当前手机号已完成验证注册。':'先填写手机号并保存资料，再发送验证码。';
+  $('verifyHint').textContent=verified?'当前手机号已完成验证注册。':'手机号安全验证即将开放。现在可先使用华伴，系统会先把积分和关系记录在当前设备身份码下；验证开放后可一键归集到正式账号。';
   const level=getReleaseLevel();
   $('levelBadge').textContent=`${level.icon} ${level.name}`;
 }
@@ -269,6 +269,8 @@ async function postJson(url,data){
   return json;
 }
 async function sendPhoneCode(){
+  toast('手机号安全验证即将开放');
+  return;
   await saveIdentity();
   const user=getUser();
   if(!normalizePhone(user.phone)){toast('请先填写手机号');return;}
@@ -295,6 +297,8 @@ async function sendPhoneCode(){
   }
 }
 async function verifyPhoneCode(){
+  toast('手机号安全验证即将开放');
+  return;
   const user=getUser();
   const code=$('codeInput').value.trim();
   if(!normalizePhone(user.phone)){toast('请先填写手机号');return;}
