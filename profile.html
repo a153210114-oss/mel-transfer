@@ -82,12 +82,24 @@ button,input{font:inherit}
 
   <section class="card wallet">
     <div class="section-title">华伴身份钱包</div>
-    <div class="hint">华伴不用密码。推荐、积分、交易确认、个人数据库和未来权益，都绑定在这个身份里。日常用设备和生物识别确认，手机号用于找回。</div>
+    <div class="hint">手机号验证码先确认唯一身份。推荐、积分、交易确认、个人数据库和未来权益，都绑定在这个身份里。以后再用设备和生物识别提升体验。</div>
     <div style="margin-top:12px">
       <div class="row"><b>身份码</b><span id="friendCode">—</span></div>
       <div class="row"><b>设备状态</b><span id="deviceState">已绑定当前设备</span></div>
       <div class="row"><b>找回方式</b><span id="recoverState">未绑定手机号</span></div>
+      <div class="row"><b>账号状态</b><span id="accountState">未验证</span></div>
     </div>
+  </section>
+
+  <section class="card">
+    <div class="section-title">手机号验证</div>
+    <div class="hint">注重隐私和安全的用户，不怕多一步。验证码通过后，手机号才成为华伴账号的唯一身份锚点。</div>
+    <input class="input" id="codeInput" inputmode="numeric" maxlength="6" placeholder="6 位短信验证码">
+    <div class="actions">
+      <button class="btn secondary" id="sendCodeBtn" onclick="sendPhoneCode()">发送验证码</button>
+      <button class="btn" id="verifyCodeBtn" onclick="verifyPhoneCode()">验证并注册</button>
+    </div>
+    <div class="hint" id="verifyHint" style="margin-top:10px">先填写手机号并保存资料，再发送验证码。</div>
   </section>
 
   <section class="card">
@@ -177,6 +189,15 @@ function getUser(){
     phone:String(passenger.phone||p.phone||'').trim()
   };
 }
+function verifiedPhone(){
+  return String(localStorage.getItem('huaban_phone_verified_phone')||'').trim();
+}
+function accountUid(){
+  return String(localStorage.getItem('huaban_account_uid')||'').trim();
+}
+function isPhoneVerified(phone=''){
+  return normalizePhone(phone)&&normalizePhone(phone)===normalizePhone(verifiedPhone())&&Boolean(accountUid());
+}
 function avatarMarkup(value){
   const clean=String(value||'👤').trim();
   if(clean==='logo')return '<img src="assets/brand/huaban-logo-v1.png" alt="">';
@@ -202,7 +223,10 @@ function renderIdentity(){
   $('industryInput').value=user.industry||'';
   $('phoneInput').value=user.phone||'';
   $('friendCode').textContent=code;
-  $('recoverState').textContent=user.phone?'手机号已绑定，可用于找回':'未绑定手机号';
+  const verified=isPhoneVerified(user.phone);
+  $('recoverState').textContent=user.phone?(verified?'手机号已验证，可用于找回':'手机号待验证'):'未绑定手机号';
+  $('accountState').textContent=verified?`已注册 · ${accountUid()}`:'未完成验证码注册';
+  $('verifyHint').textContent=verified?'当前手机号已完成验证注册。':'先填写手机号并保存资料，再发送验证码。';
   const level=getReleaseLevel();
   $('levelBadge').textContent=`${level.icon} ${level.name}`;
 }
@@ -237,6 +261,74 @@ async function saveIdentity(){
   renderIdentity();
   await loadStats();
   toast('资料已保存');
+}
+async function postJson(url,data){
+  const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  const json=await res.json().catch(()=>({}));
+  if(!res.ok)throw new Error(json.error||'请求失败');
+  return json;
+}
+async function sendPhoneCode(){
+  await saveIdentity();
+  const user=getUser();
+  if(!normalizePhone(user.phone)){toast('请先填写手机号');return;}
+  const btn=$('sendCodeBtn');
+  const old=btn.textContent;
+  btn.disabled=true;
+  btn.textContent='发送中...';
+  try{
+    await postJson('/api/send-code',{
+      phone:user.phone,
+      name:user.name,
+      industry:user.industry,
+      friendCode:getFriendCode(),
+      source:'profile_page'
+    });
+    $('verifyHint').textContent='验证码已发送，10 分钟内有效。';
+    toast('验证码已发送');
+  }catch(e){
+    $('verifyHint').textContent=e.message||'验证码发送失败';
+    toast(e.message||'验证码发送失败');
+  }finally{
+    btn.disabled=false;
+    btn.textContent=old;
+  }
+}
+async function verifyPhoneCode(){
+  const user=getUser();
+  const code=$('codeInput').value.trim();
+  if(!normalizePhone(user.phone)){toast('请先填写手机号');return;}
+  if(!/^\d{6}$/.test(code)){toast('请输入 6 位验证码');return;}
+  const btn=$('verifyCodeBtn');
+  const old=btn.textContent;
+  btn.disabled=true;
+  btn.textContent='验证中...';
+  try{
+    const data=await postJson('/api/verify-code',{
+      phone:user.phone,
+      code,
+      name:user.name,
+      industry:user.industry,
+      friendCode:getFriendCode(),
+      source:'profile_page'
+    });
+    const account=data.account||{};
+    localStorage.setItem('huaban_account_uid',account.account_uid||'');
+    localStorage.setItem('huaban_account_id',account.id||'');
+    localStorage.setItem('huaban_phone_verified_phone',normalizePhone(user.phone));
+    localStorage.setItem('huaban_phone_verified_at',account.phone_verified_at||new Date().toISOString());
+    const p=getPassenger();
+    setLocal('au_passenger',{...p,account_uid:account.account_uid||p.account_uid||'',phone_verified:true,phone_verified_at:account.phone_verified_at||new Date().toISOString(),logged_in:true,profile_ready:true});
+    $('codeInput').value='';
+    renderIdentity();
+    toast('注册验证完成');
+  }catch(e){
+    $('verifyHint').textContent=e.message||'验证码验证失败';
+    toast(e.message||'验证码验证失败');
+  }finally{
+    btn.disabled=false;
+    btn.textContent=old;
+  }
 }
 async function copyInvite(){
   const url=`https://www.huabanapp.com/ai.html?friend=${encodeURIComponent(getFriendCode())}&ref=${encodeURIComponent(getFriendCode())}`;
