@@ -918,8 +918,9 @@ async function loadPublishedSiteCopy() {
     const rows = await res.json();
     const settings = rows?.[0]?.fields?.settings;
     if (!settings || typeof settings !== 'object') return;
-    const isDualEntry = !settings.homeVersion || settings.homeVersion === 'dual_entry';
-    if (!isDualEntry) return;
+    const hasShareCopy = !!settings.roles?.share;
+    const isCurrentSiteCopy = settings.homeVersion === 'share_growth_v1' || hasShareCopy;
+    if (!isCurrentSiteCopy) return;
     if (settings.mainTitle) document.getElementById('siteMainTitle').textContent = settings.mainTitle;
     if (settings.mainSubtitle) document.getElementById('siteMainSubtitle').textContent = settings.mainSubtitle;
     if (settings.roles) {

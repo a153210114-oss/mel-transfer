@@ -2167,8 +2167,9 @@ async function loadSitePages(){
   const status=document.getElementById('site-pages-status');
   try{
     const rows=await supaFetch('beta_leads?channel=eq.site_page_settings&order=created_at.desc&limit=1&select=fields,created_at');
-    settings=rows?.[0]?.fields?.settings||null;
-    if(status)status.textContent=settings?'已读取线上':'使用默认';
+    const onlineSettings=rows?.[0]?.fields?.settings||null;
+    settings=onlineSettings?.roles?.share?onlineSettings:null;
+    if(status)status.textContent=settings?'已读取线上':'旧配置已忽略，使用新版';
   }catch(e){
     if(status)status.textContent='读取失败，使用默认';
   }
@@ -2180,7 +2181,7 @@ async function loadSitePages(){
 
 async function saveSitePages(){
   const settings={
-    homeVersion:'dual_entry',
+    homeVersion:'share_growth_v1',
     mainTitle:(document.getElementById('site-main-title')?.value||DEFAULT_SITE_PAGES.mainTitle).trim(),
     mainSubtitle:(document.getElementById('site-main-subtitle')?.value||'').trim(),
     roles:{share:collectSiteShare()},
