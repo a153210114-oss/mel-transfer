@@ -8314,15 +8314,15 @@ async function saveSmartDealSessionFromSheet(sessionId='',baseId='',generate=fal
   const session=saveSmartDealSession(smartDealSessionFromSheet(sessionId,baseId));
   document.getElementById('smart-deal-session-sheet')?.remove();
   rewardCompanionAction('try_feature',{xp:6,affection:2,say:'交易会话已保存'});
-  recordFriendPointEvent({
-    ownerCode:getFriendCode(),
-    action:'generate_confirm_card',
-    points:POINTS_RULES.generate_confirm_card,
-    relatedCode:session.id,
-    reason:'整理智能交易会话',
-    fields:{deal_session_id:session.id,force_status:'confirmed',source:'smart_deal_session'}
-  }).catch(()=>null);
   if(generate){
+    recordFriendPointEvent({
+      ownerCode:getFriendCode(),
+      action:'generate_confirm_card',
+      points:POINTS_RULES.generate_confirm_card,
+      relatedCode:session.id,
+      reason:'生成智能交易共识确认单',
+      fields:{deal_session_id:session.id,force_status:'confirmed',source:'smart_deal_session'}
+    }).catch(()=>null);
     await generateSmartDealConsensusCard(session);
   }else{
     await agentSay('已保存。下次你说“接续交易会话”或点智能合约，我会把这次记录接上。',90);
