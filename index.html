@@ -733,6 +733,7 @@ footer {
 <script>
 const SUPA_URL = 'https://gxocvpmgfjvmmkkbswgo.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b2N2cG1nZmp2bW1ra2Jzd2dvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyNDc4NzAsImV4cCI6MjA5NTgyMzg3MH0.ExUNuOP8YyHQmItY6cdl1Euj7nOXqQq-rQT5-7aNerE';
+const TENANT_ID='00000000-0000-0000-0000-000000000001';
 const SITE_LANG_KEY='huaban_site_language_mode';
 const SITE_TZ_LANG=[
   [/Tokyo/i,'ja'],[/Seoul/i,'ko'],[/Bangkok/i,'th'],[/Jakarta/i,'id'],[/Ho_Chi_Minh|Hanoi/i,'vi'],
@@ -740,6 +741,64 @@ const SITE_TZ_LANG=[
   [/Dubai|Riyadh/i,'ar'],[/Istanbul/i,'tr'],[/Moscow/i,'ru']
 ];
 const SITE_LANG_META={zh:{html:'zh-CN',label:'中文'},en:{html:'en',label:'EN'},ja:{html:'ja',label:'日本語'},ko:{html:'ko',label:'한국어'},th:{html:'th',label:'ไทย'},id:{html:'id',label:'ID'},vi:{html:'vi',label:'VI'},de:{html:'de',label:'DE'},fr:{html:'fr',label:'FR'},it:{html:'it',label:'IT'},es:{html:'es',label:'ES'},nl:{html:'nl',label:'NL'},pt:{html:'pt',label:'PT'},ar:{html:'ar',label:'AR'},tr:{html:'tr',label:'TR'},ru:{html:'ru',label:'RU'}};
+function siteId(key,prefix){
+  let id=localStorage.getItem(key);
+  if(!id){
+    id=`${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,8)}`;
+    localStorage.setItem(key,id);
+  }
+  return id;
+}
+function siteAnonId(){return siteId('huaban_site_anon_id','site');}
+function siteSessionId(){return siteId('huaban_site_session_id','sess');}
+function sitePost(table,payload){
+  return fetch(`${SUPA_URL}/rest/v1/${table}`,{
+    method:'POST',
+    keepalive:true,
+    headers:{apikey:SUPA_KEY,Authorization:`Bearer ${SUPA_KEY}`,'Content-Type':'application/json',Prefer:'return=minimal'},
+    body:JSON.stringify(payload)
+  }).catch(()=>null);
+}
+function siteTrackGrowthEvent(eventName, metadata={}){
+  const params=new URLSearchParams(location.search);
+  const ref=params.get('ref')||'';
+  const anon=siteAnonId();
+  return sitePost('huaban_growth_events',{
+    tenant_id:TENANT_ID,
+    anonymous_id:anon,
+    session_id:siteSessionId(),
+    user_code:localStorage.getItem('huaban_device_friend_code')||anon,
+    event_name:eventName,
+    ref_code:ref,
+    channel:'homepage',
+    campaign:metadata.campaign||ref||'homepage',
+    city:metadata.city||'',
+    country:metadata.country||'',
+    page:location.pathname||'/',
+    source_url:location.href,
+    metadata:{...metadata,language:navigator.language||'',screen:{w:screen.width,h:screen.height}}
+  });
+}
+function siteTrackPageView(){
+  const params=new URLSearchParams(location.search);
+  siteTrackGrowthEvent('page_view',{ref:params.get('ref')||'',entry:'official_site'});
+  sitePost('page_events',{
+    tenant_id:TENANT_ID,
+    event_type:'page_view',
+    page:'official_site',
+    url:location.href,
+    path:location.pathname||'/',
+    referrer:document.referrer||'',
+    visitor_id:siteAnonId(),
+    session_id:siteSessionId(),
+    user_agent:navigator.userAgent||'',
+    language:navigator.language||'',
+    utm_source:params.get('utm_source')||'',
+    utm_medium:params.get('utm_medium')||'',
+    utm_campaign:params.get('utm_campaign')||'',
+    fields:{ref:params.get('ref')||'',timezone:Intl.DateTimeFormat().resolvedOptions().timeZone||''}
+  });
+}
 const SITE_I18N={
   zh:{title:'服务海外华人本地生活的智能应用',subtitle:'无需费时费力在一堆搜索结果中徒劳无果，也不会被带偏。',hookNote:'区块链浪潮，你错过了比特币；AI 浪潮已经到来，这一次先别只做旁观者。 越早参与，越容易留下真实贡献位置；有效使用、反馈、分享和促成服务会记录为真实贡献。最高 128 倍为贡献权重/分配权益口径，以审核和公开规则为准，不构成收益承诺。',tabSubs:['真实贡献会被看见','从本地需求开始','一点就能回来'],tabBtns:['共建一程','先让它办','随手可用'],businessSub:'真实贡献会被看见',lifeSub:'从本地需求开始',businessBtn:'共建一程',lifeBtn:'先让它办',open:'现在就试',download:'放到手机',footer:'华伴 AI+ · 服务海外华人本地生活的智能应用'},
   en:{title:'A smart local-life app for overseas Chinese',subtitle:'No more wasting time in messy search results, and no more being led off track.',hookNote:'Many people missed the blockchain wave. The AI wave is here; this time, do not stay only as a spectator. Huaban records real use, useful feedback, real sharing, and reviewed contribution only; no income promise, no headcount game, just transparent rules.',tabSubs:['Real contribution is seen','Start with local needs','One tap back'],tabBtns:['Build Together','Let It Work','Keep It Close'],businessSub:'Real contribution is seen',lifeSub:'Start with local needs',businessBtn:'Build Together',lifeBtn:'Let It Work',open:'Try Now',download:'Keep on Phone',footer:'Huaban AI+ · Smart local life for overseas Chinese',
@@ -799,18 +858,22 @@ let identityCopy = {
     purposes: [
       {
         title: '我想分享华伴',
+        eventName: 'referral_share_clicked',
         text: '点击分享或生成海报，把华伴发给真正需要的人；系统记录真实分享、有效进入、后续使用和服务促成，对应积分与贡献权重。'
       },
       {
         title: '我想使用华伴',
+        eventName: 'site_usage_intent_clicked',
         text: '直接说找本地需要你的人、找服务、整理资料或反馈问题；有效使用会沉淀为个人数据库和真实贡献记录。'
       },
       {
         title: '我想反馈优化',
+        eventName: 'site_feedback_intent_clicked',
         text: '把不好用、不清楚、希望新增的地方告诉华伴；有效反馈会进入优化资料，帮助决定下一版先做什么，并记录贡献积分。'
       },
       {
         title: '我能提供服务',
+        eventName: 'supplier_profile_started',
         text: '提交行业、联系方式、服务范围或供给资料；当本地有人需要时，华伴优先整理并尝试匹配，形成服务贡献记录。'
       }
     ]
@@ -980,7 +1043,7 @@ function renderIdentity(role) {
       <li class="identity-hook-row">
         <div class="identity-hook-line">
           <span><strong>${section.label}</strong>${section.text}</span>
-          <button class="identity-detail-toggle" type="button" onclick="toggleIdentityDetail('identityDetail${index}',this)">查看详情</button>
+          <button class="identity-detail-toggle" type="button" onclick="toggleIdentityDetail('identityDetail${index}',this,'${section.label}')">查看详情</button>
         </div>
         <div class="identity-detail" id="identityDetail${index}">${(section.details||[]).map(item=>`<p>${item}</p>`).join('')}</div>
       </li>`).join('');
@@ -991,9 +1054,11 @@ function renderIdentity(role) {
   const secondaryAction=document.getElementById('identitySecondaryAction');
   primaryAction.href = copy.href;
   primaryAction.textContent = copy.actionLabel || siteText('open');
+  primaryAction.onclick=()=>siteTrackGrowthEvent(copy.primaryEventName||'site_ai_entry_clicked',{role:currentIdentityRole,action:'primary',target:primaryAction.href});
   if(secondaryAction){
     secondaryAction.href = copy.secondaryHref || 'app-download.html?ref=identity_home';
     secondaryAction.textContent = copy.secondaryLabel || siteText('download');
+    secondaryAction.onclick=()=>siteTrackGrowthEvent(copy.secondaryEventName||'site_secondary_entry_clicked',{role:currentIdentityRole,action:'secondary',target:secondaryAction.href});
   }
   const detailHtml=Array.isArray(copy.details)&&copy.details.length ? `
     <button class="identity-detail-toggle" type="button" onclick="toggleIdentityDetail('identityDetail',this)">${copy.detailLabel || '查看详情'}</button>
@@ -1008,7 +1073,7 @@ function renderIdentity(role) {
       <h3>按你的目的使用华伴</h3>
       <div class="identity-purpose-grid">
         ${copy.purposes.map(item=>`
-          <div class="identity-purpose">
+          <div class="identity-purpose" onclick="siteTrackGrowthEvent('${item.eventName||'homepage_purpose_clicked'}',{purpose:'${item.title}',category:'homepage_usage'})">
             <strong>${item.title}</strong>
             <span>${item.text}</span>
           </div>`).join('')}
@@ -1040,12 +1105,13 @@ function renderIdentity(role) {
   });
 }
 
-function toggleIdentityDetail(id,button){
+function toggleIdentityDetail(id,button,label=''){
   const panel=document.getElementById(id);
   if(!panel)return;
   const show=!panel.classList.contains('show');
   panel.classList.toggle('show',show);
   if(button)button.textContent=show?'收起详情':'查看详情';
+  if(show)siteTrackGrowthEvent('site_detail_opened',{detail_id:id,detail_label:label,role:currentIdentityRole,category:'homepage_hook'});
 }
 
 async function submitBusinessEntry() {
@@ -1176,11 +1242,15 @@ function persistBusinessEntryLocally(phone, industry) {
 
 function startLifeNeed() {
   const text = document.getElementById('lifeNeed')?.value.trim();
+  siteTrackGrowthEvent('demand_created',{source:'homepage_life_need',need_preview:text||'',category:'life_need'});
   location.href = `/ai?ref=life_butler${text ? `&q=${encodeURIComponent(text)}` : ''}`;
 }
 
 document.querySelectorAll('.identity-tab').forEach(tab => {
-  tab.addEventListener('click', () => renderIdentity(tab.dataset.role));
+  tab.addEventListener('click', () => {
+    siteTrackGrowthEvent('homepage_tab_clicked',{role:tab.dataset.role||'',category:'homepage_navigation'});
+    renderIdentity(tab.dataset.role);
+  });
 });
 
 const refRole = new URLSearchParams(location.search).get('ref');
@@ -1204,13 +1274,16 @@ loadPublishedSiteCopy().finally(() => {
     if(primary){
       primary.href='/ai?ref=mutual_intro_return&intent=introduce_self';
       primary.textContent='进入华伴，自我介绍';
+      primary.onclick=()=>siteTrackGrowthEvent('mutual_intro_return_clicked',{action:'primary',target:primary.href,category:'homepage_mutual_intro'});
     }
     if(secondary){
       secondary.href='/ai?ref=mutual_intro_return&intent=introduce_self';
       secondary.textContent='让 AI 生成名片';
+      secondary.onclick=()=>siteTrackGrowthEvent('mutual_intro_return_clicked',{action:'secondary',target:secondary.href,category:'homepage_mutual_intro'});
     }
   }
 });
+siteTrackPageView();
 </script>
 </body>
 </html>
