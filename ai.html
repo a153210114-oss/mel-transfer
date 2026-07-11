@@ -8858,19 +8858,52 @@ function parseLocationLabelFromText(text=''){
   return '当前位置';
 }
 
-function reverseGeocodeCurrentPosition(){
+function fillAddressBookEditorWithLocation(loc={},label='当前位置'){
+  showAddressBookEditor();
+  setTimeout(()=>{
+    const labelInput=document.getElementById('address-book-label');
+    const addressInput=document.getElementById('address-book-address');
+    const hint=document.getElementById('address-book-location-hint');
+    if(labelInput&&!labelInput.value)labelInput.value=label||'当前位置';
+    if(addressInput){
+      addressInput.value=loc.address||'';
+      addressInput.focus();
+    }
+    if(hint){
+      const quality=loc.precise?'已拿到较精确定位':'定位可能不够精确';
+      hint.textContent=`${quality}，${locationAccuracyText(loc)}。请核对门牌、楼层或单元号后再保存。`;
+      hint.style.display='block';
+    }
+  },160);
+}
+
+function locationAccuracyText(loc={}){
+  const acc=Number(loc.accuracy||0);
+  return acc?`精度约 ${Math.round(acc)} 米`:'精度未知';
+}
+
+function isPreciseGeocodeResult(result={},loc={}){
+  const types=Array.isArray(result.types)?result.types:[];
+  const preciseType=types.some(type=>/street_address|premise|subpremise|establishment|point_of_interest|plus_code/i.test(type));
+  const accuracy=Number(loc.accuracy||0);
+  return preciseType && (!accuracy || accuracy<=80);
+}
+
+function reverseGeocodeCurrentPosition(options={}){
   return new Promise(resolve=>{
     if(!navigator.geolocation)return resolve(null);
     navigator.geolocation.getCurrentPosition(pos=>{
       const lat=pos.coords.latitude;
       const lng=pos.coords.longitude;
-      const finish=(address='')=>{
+      const finish=(address='',result=null)=>{
         if(!address)return resolve(null);
         const loc={
           address,
           lat,
           lng,
           accuracy:pos.coords.accuracy||null,
+          precise:isPreciseGeocodeResult(result||{},pos.coords||{}),
+          geocode_types:result?.types||[],
           city:currentRegion.city||'',
           country:currentRegion.country||'',
           updatedAt:new Date().toISOString()
@@ -8883,7 +8916,7 @@ function reverseGeocodeCurrentPosition(){
           if(status==='OK'&&results?.[0]){
             const formatted=results[0].formatted_address||'';
             try{ await applyGeocodeResult(results[0],lat,lng); }catch(e){}
-            finish(formatted);
+            finish(formatted,results[0]);
           }else{
             finish('');
           }
@@ -8891,7 +8924,11 @@ function reverseGeocodeCurrentPosition(){
         return;
       }
       resolve(null);
-    },()=>resolve(null),{enableHighAccuracy:true,timeout:9000,maximumAge:120000});
+    },()=>resolve(null),{
+      enableHighAccuracy:true,
+      timeout:options.timeout||15000,
+      maximumAge:options.force?0:120000
+    });
   });
 }
 
@@ -8903,7 +8940,7 @@ async function handleLocationAddressIntent(text='', options={}){
   if(!isLocationAddressIntent(text))return false;
   const clean=String(text||'').trim();
   const wantsSave=/地址簿|保存|标记为|备注为|保存为|叫做|命名为|名称是/i.test(clean);
-  const loc=await ensureCurrentLocationSnapshot();
+  const loc=wantsSave ? await reverseGeocodeCurrentPosition({force:true,timeout:16000}) : await ensureCurrentLocationSnapshot();
   if(!loc?.address){
     await agentSay('我还没拿到当前位置的详细地址。请允许浏览器定位，或者在“我的地址簿”里手动新增地址。',100);
     showAddressBookEditor();
@@ -8911,9 +8948,8 @@ async function handleLocationAddressIntent(text='', options={}){
   }
   if(wantsSave){
     const label=parseLocationLabelFromText(clean);
-    addToAddressBook(loc.address,label);
-    if(/家|home/i.test(label))saveProfile({home_address:loc.address});
-    await agentSay(`已保存到地址簿：${companionEscape(label)} · ${companionEscape(loc.address)}。以后你说“送家里”“从这里出发”，我会优先用这个地址。`,100);
+    fillAddressBookEditorWithLocation(loc,label);
+    await agentSay(`我已把当前定位填进地址簿：${companionEscape(label)}。${companionEscape(locationAccuracyText(loc))}，请核对门牌、楼层或单元号后点保存。`,100);
     return true;
   }
   await agentSay(`当前定位的详细地址是：${companionEscape(loc.address)}。要保存的话，可以说“保存为我家/公司/学校”。`,100);
@@ -12695,8 +12731,9 @@ function showAddressBookEditor(){
           style="width:100%;height:40px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:10px;color:white;font-size:13px;font-family:inherit;outline:none;padding:0 12px;margin-bottom:9px;">
         <button onclick="saveAddressBookEntryFromEditor()"
           style="width:100%;padding:11px;background:rgba(7,193,96,0.26);border:1px solid rgba(7,193,96,0.38);border-radius:11px;color:white;font-size:13px;font-weight:900;cursor:pointer;font-family:inherit;">保存到地址簿</button>
-        <button onclick="saveCurrentLocationToAddressBookFromEditor()"
-          style="width:100%;padding:11px;background:rgba(0,212,255,0.14);border:1px solid rgba(0,212,255,0.28);border-radius:11px;color:white;font-size:13px;font-weight:900;cursor:pointer;font-family:inherit;margin-top:8px;">保存当前定位</button>
+        <button onclick="saveCurrentLocationToAddressBookFromEditor(this)"
+          style="width:100%;padding:11px;background:rgba(0,212,255,0.14);border:1px solid rgba(0,212,255,0.28);border-radius:11px;color:white;font-size:13px;font-weight:900;cursor:pointer;font-family:inherit;margin-top:8px;">定位并填入地址</button>
+        <div id="address-book-location-hint" style="display:none;margin-top:9px;font-size:11px;line-height:1.5;color:rgba(255,255,255,0.48);"></div>
       </div>
       ${items||'<div style="text-align:center;color:rgba(255,255,255,0.3);padding:20px;">暂无保存地址</div>'}
       <button onclick="this.closest('div[style*=fixed]').remove()"
@@ -12853,20 +12890,29 @@ function saveAddressBookEntryFromEditor(){
   agentSay('地址已保存。以后你说“送家里”“从公司出发”这类话，我会优先用地址簿，不再重复问。',80);
 }
 
-async function saveCurrentLocationToAddressBookFromEditor(){
+async function saveCurrentLocationToAddressBookFromEditor(trigger=null){
   const label=String(document.getElementById('address-book-label')?.value||'').trim()||'当前位置';
-  const loc=await ensureCurrentLocationSnapshot();
+  if(trigger){trigger.disabled=true;trigger.textContent='正在定位...';}
+  const loc=await reverseGeocodeCurrentPosition({force:true,timeout:16000});
+  if(trigger){trigger.disabled=false;trigger.textContent='定位并填入地址';}
   if(!loc?.address){
     alert('还没拿到当前位置。请允许浏览器定位，或手动填写详细地址。');
     return;
   }
-  addToAddressBook(loc.address,label);
-  if(/家|home/i.test(label)){
-    saveProfile({home_address:loc.address});
+  const labelInput=document.getElementById('address-book-label');
+  const addressInput=document.getElementById('address-book-address');
+  const hint=document.getElementById('address-book-location-hint');
+  if(labelInput&&!labelInput.value)labelInput.value=label;
+  if(addressInput){
+    addressInput.value=loc.address;
+    addressInput.focus();
   }
-  document.querySelector('div[style*=fixed]')?.remove();
-  showAddressBookEditor();
-  agentSay(`已保存当前定位：${companionEscape(label)}。以后我会优先用这个地址。`,80);
+  if(hint){
+    const quality=loc.precise?'已拿到较精确定位':'定位可能不够精确';
+    hint.textContent=`${quality}，${locationAccuracyText(loc)}。请核对门牌、楼层或单元号后再点“保存到地址簿”。`;
+    hint.style.display='block';
+  }
+  agentSay(`我已填入当前定位：${companionEscape(loc.address)}。${companionEscape(locationAccuracyText(loc))}，请确认或补充门牌后再保存。`,80);
 }
 
 // ── 底部导航 ──
