@@ -1725,7 +1725,6 @@ const POINTS_RULES = {
   adopt_ai:10,
   first_effective_chat:20,
   submit_real_need:30,
-  generate_confirm_card:50,
   register:10,
   first_booking:20,
   booking:5,
@@ -1736,6 +1735,7 @@ const POINTS_RULES = {
   referral_join:20,
   referral_second_level_join:6,
   referral_trip:30,
+  transaction_completed_party:50,
   round_trip:15,
   supplier_profile:80,
   supplier_approved:150,
@@ -1757,7 +1757,7 @@ const POINTS_ACTION_GROUPS = [
     title:'使用与交易',
     note:'只有能形成真实需求、交易记录或可审核资料的动作，才进入贡献规则。',
     items:[
-      {label:'生成交易确认卡/智能合约草案', points:POINTS_RULES.generate_confirm_card, unit:'积分', confirm:'关键字段整理完成后记录'}
+      {label:'双方履约完成并确认支付', points:POINTS_RULES.transaction_completed_party, unit:'积分 / 人', confirm:'交易双方完成履约与支付确认后，双方各记录 50 分'}
     ]
   },
   {
@@ -8315,14 +8315,6 @@ async function saveSmartDealSessionFromSheet(sessionId='',baseId='',generate=fal
   document.getElementById('smart-deal-session-sheet')?.remove();
   rewardCompanionAction('try_feature',{xp:6,affection:2,say:'交易会话已保存'});
   if(generate){
-    recordFriendPointEvent({
-      ownerCode:getFriendCode(),
-      action:'generate_confirm_card',
-      points:POINTS_RULES.generate_confirm_card,
-      relatedCode:session.id,
-      reason:'生成智能交易共识确认单',
-      fields:{deal_session_id:session.id,force_status:'confirmed',source:'smart_deal_session'}
-    }).catch(()=>null);
     await generateSmartDealConsensusCard(session);
   }else{
     await agentSay('已保存。下次你说“接续交易会话”或点智能合约，我会把这次记录接上。',90);
@@ -13814,6 +13806,75 @@ function unifiedOrderCanRecord(order={}){
   return ['supplier_confirmed','in_progress','completed','disputed'].includes(order.status);
 }
 
+function resolveUnifiedOrderPartyCodes(order={}){
+  const fields=order.fields||{};
+  const workOrder=order.work_order||{};
+  const agreement=order.transaction_agreement||{};
+  const buyerCode=normalizeSupplyCode(
+    order.buyer_code ||
+    fields.buyer_code ||
+    fields.buyer?.code ||
+    order.referral_chain?.referrer_code ||
+    workOrder.buyer_code ||
+    agreement.buyer_code ||
+    getFriendCode()
+  );
+  const sellerCode=normalizeSupplyCode(
+    order.supplier_code ||
+    order.provider_code ||
+    order.seller_code ||
+    fields.supplier_code ||
+    fields.provider_code ||
+    fields.seller_code ||
+    fields.supplier?.code ||
+    fields.seller?.code ||
+    workOrder.supplier_code ||
+    workOrder.provider_code ||
+    workOrder.seller_code ||
+    workOrder.service_provider_code ||
+    agreement.supplier_code ||
+    agreement.provider_code ||
+    agreement.seller_code ||
+    ''
+  );
+  return {buyerCode,sellerCode};
+}
+
+async function recordCompletedTransactionPartyPoints(order={}){
+  const {buyerCode,sellerCode}=resolveUnifiedOrderPartyCodes(order);
+  if(!buyerCode||!sellerCode||buyerCode===sellerCode){
+    return {ok:false,reason:'missing_party_code',buyerCode,sellerCode};
+  }
+  const orderRef=String(order.id||order.order_no||Date.now()).trim();
+  const commonFields={
+    force_status:'confirmed',
+    related_order_id:orderRef,
+    order_id:order.id||'',
+    order_no:order.order_no||'',
+    source:'transaction_completion',
+    user_visible:true
+  };
+  const [buyerResult,sellerResult]=await Promise.all([
+    recordFriendPointEvent({
+      ownerCode:buyerCode,
+      action:'transaction_completed_party',
+      points:POINTS_RULES.transaction_completed_party,
+      relatedCode:`${orderRef}:buyer`,
+      reason:'双方履约完成并确认支付',
+      fields:{...commonFields,party_role:'buyer'}
+    }),
+    recordFriendPointEvent({
+      ownerCode:sellerCode,
+      action:'transaction_completed_party',
+      points:POINTS_RULES.transaction_completed_party,
+      relatedCode:`${orderRef}:seller`,
+      reason:'双方履约完成并确认支付',
+      fields:{...commonFields,party_role:'seller'}
+    })
+  ]);
+  return {ok:true,buyerCode,sellerCode,buyerResult,sellerResult};
+}
+
 function unifiedOrderDisplayTime(value=''){
   if(!value)return '待确认';
   const date=new Date(value);
@@ -13949,6 +14010,7 @@ async function showUnifiedOrderDetail(orderId=''){
       </div>
       <div style="display:flex;gap:10px;">
         ${canRecord?`<button onclick="openUnifiedOrderRecordSheet('${jsString(order.id)}')" style="flex:1;padding:12px;background:rgba(98,221,178,0.18);border:1px solid rgba(98,221,178,0.32);border-radius:12px;color:#62ddb2;font-size:13px;font-weight:900;cursor:pointer;font-family:inherit;">继续沟通 / 补充记录</button>`:''}
+        ${canRecord&&order.status!=='completed'?`<button onclick="completeUnifiedOrderAndAwardPoints('${jsString(order.id)}',this)" style="flex:1;padding:12px;background:linear-gradient(135deg,#07c160,#32d3a6);border:0;border-radius:12px;color:white;font-size:13px;font-weight:900;cursor:pointer;font-family:inherit;">履约完成 / 确认支付</button>`:''}
         <button onclick="document.getElementById('unified-order-detail-modal')?.remove()" style="flex:1;padding:12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:rgba(255,255,255,0.6);font-size:13px;cursor:pointer;font-family:inherit;">关闭</button>
       </div>
     </div>`;
@@ -14066,6 +14128,68 @@ async function submitUnifiedOrderRecord(orderId='',btn){
     console.warn('submit unified order record failed',e);
     if(btn){btn.disabled=false;btn.textContent='保存记录';}
     await agentSay('这条记录暂时没保存成功。你可以稍后再试。',120);
+  }
+}
+
+async function completeUnifiedOrderAndAwardPoints(orderId='',btn){
+  const id=String(orderId||'');
+  if(!id)return;
+  if(btn){btn.disabled=true;btn.textContent='确认中...';}
+  try{
+    const rows=await supaGet(`huaban_orders?id=eq.${encodeURIComponent(id)}&tenant_id=eq.${TENANT_ID}&select=*`);
+    const order=Array.isArray(rows)?rows[0]:null;
+    if(!order)throw new Error('order not found');
+    const parties=resolveUnifiedOrderPartyCodes(order);
+    if(!parties.buyerCode||!parties.sellerCode||parties.buyerCode===parties.sellerCode){
+      if(btn){btn.disabled=false;btn.textContent='履约完成 / 确认支付';}
+      await agentSay('这张交易还缺一方华伴码。双方身份锁定后，我才能按规则给交易双方各记录 50 积分。',140);
+      return;
+    }
+    const now=new Date().toISOString();
+    const proof=order.performance_proof||{};
+    const timeline=Array.isArray(proof.timeline)?proof.timeline:[];
+    const fields=order.fields||{};
+    const awarded=fields.completion_points_awarded===true;
+    await supaPatch(`huaban_orders?id=eq.${encodeURIComponent(order.id)}&tenant_id=eq.${TENANT_ID}`,{
+      status:'completed',
+      temporary_chat_status:order.temporary_chat_status==='none'?'open':(order.temporary_chat_status||'open'),
+      performance_proof:{
+        ...proof,
+        timeline:[...timeline,{event:'completed_paid',at:now,note:'双方履约完成并确认支付'}]
+      },
+      fields:{
+        ...fields,
+        buyer_code:parties.buyerCode,
+        seller_code:parties.sellerCode,
+        buyer_status:'completed',
+        supplier_status:'completed',
+        payment_status:'completed',
+        completed_paid_at:fields.completed_paid_at||now
+      }
+    });
+    if(!awarded){
+      await recordCompletedTransactionPartyPoints({...order,status:'completed',fields:{...fields,buyer_code:parties.buyerCode,seller_code:parties.sellerCode}});
+      await supaPatch(`huaban_orders?id=eq.${encodeURIComponent(order.id)}&tenant_id=eq.${TENANT_ID}`,{
+        fields:{
+          ...fields,
+          buyer_code:parties.buyerCode,
+          seller_code:parties.sellerCode,
+          buyer_status:'completed',
+          supplier_status:'completed',
+          payment_status:'completed',
+          completed_paid_at:fields.completed_paid_at||now,
+          completion_points_awarded:true,
+          completion_points_awarded_at:now
+        }
+      });
+    }
+    document.getElementById('unified-order-detail-modal')?.remove();
+    await agentSay(awarded?'这张交易已经完成，双方积分此前已记录过，不会重复入账。':'已确认履约和支付完成，交易双方各记录 50 积分。',140);
+    loadProfileTrips(getPassenger().phone);
+  }catch(e){
+    console.warn('complete unified order failed',e);
+    if(btn){btn.disabled=false;btn.textContent='履约完成 / 确认支付';}
+    await agentSay('完成确认暂时没保存成功。你可以稍后再试。',120);
   }
 }
 
