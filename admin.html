@@ -1208,35 +1208,37 @@ body.admin-unlocked .admin-auth { display: none; }
     </div>
     <div class="two-col">
       <div class="card">
-        <div class="card-header"><div class="card-title">年轻人 / 留学生</div><span class="tag">student</span></div>
+        <div class="card-header"><div class="card-title">主钩子</div><span class="tag">share</span></div>
         <div class="card-body">
-          <input class="input" id="site-student-title" style="width:100%;margin-bottom:10px;" placeholder="标题">
-          <textarea class="input textarea" id="site-student-lead" style="min-height:90px;" placeholder="说明"></textarea>
-          <textarea class="input textarea" id="site-student-items" style="min-height:120px;margin-top:10px;" placeholder="一行一个要点"></textarea>
+          <input class="input" id="site-share-title" style="width:100%;margin-bottom:10px;" placeholder="区块链浪潮，你错过了比特币...">
+          <textarea class="input textarea" id="site-share-lead" style="min-height:72px;" placeholder="越早加入、越早使用、越早反馈、越早分享..."></textarea>
         </div>
       </div>
       <div class="card">
-        <div class="card-header"><div class="card-title">爸爸妈妈 / 家庭</div><span class="tag">family</span></div>
+        <div class="card-header"><div class="card-title">三条钩子</div><span class="tag">规则 / 共识 / 共享</span></div>
         <div class="card-body">
-          <input class="input" id="site-family-title" style="width:100%;margin-bottom:10px;" placeholder="标题">
-          <textarea class="input textarea" id="site-family-lead" style="min-height:90px;" placeholder="说明"></textarea>
-          <textarea class="input textarea" id="site-family-items" style="min-height:120px;margin-top:10px;" placeholder="一行一个要点"></textarea>
+          <input class="input" id="site-section-0-label" style="width:100%;margin-bottom:8px;" placeholder="规则怎么可信？">
+          <input class="input" id="site-section-0-text" style="width:100%;margin-bottom:8px;" placeholder="先定公平规则，再记录真实贡献...">
+          <textarea class="input textarea" id="site-section-0-details" style="min-height:92px;margin-bottom:14px;" placeholder="一行一个详情"></textarea>
+          <input class="input" id="site-section-1-label" style="width:100%;margin-bottom:8px;" placeholder="共识怎么形成？">
+          <input class="input" id="site-section-1-text" style="width:100%;margin-bottom:8px;" placeholder="用户早使用、早反馈、早分享...">
+          <textarea class="input textarea" id="site-section-1-details" style="min-height:92px;margin-bottom:14px;" placeholder="一行一个详情"></textarea>
+          <input class="input" id="site-section-2-label" style="width:100%;margin-bottom:8px;" placeholder="共享怎么执行？">
+          <input class="input" id="site-section-2-text" style="width:100%;margin-bottom:8px;" placeholder="可分配净收益的 80% 进入共享池...">
+          <textarea class="input textarea" id="site-section-2-details" style="min-height:92px;" placeholder="一行一个详情"></textarea>
         </div>
       </div>
       <div class="card">
-        <div class="card-header"><div class="card-title">事业 / 小生意</div><span class="tag">supplier</span></div>
+        <div class="card-header"><div class="card-title">前景说明</div><span class="tag">现在 / 将来</span></div>
         <div class="card-body">
-          <input class="input" id="site-supplier-title" style="width:100%;margin-bottom:10px;" placeholder="标题">
-          <textarea class="input textarea" id="site-supplier-lead" style="min-height:90px;" placeholder="说明"></textarea>
-          <textarea class="input textarea" id="site-supplier-items" style="min-height:120px;margin-top:10px;" placeholder="一行一个要点"></textarea>
+          <input class="input" id="site-prospect-title" style="width:100%;margin-bottom:10px;" placeholder="华伴现在能干嘛，将来要干嘛">
+          <textarea class="input textarea" id="site-prospect-text" style="min-height:132px;" placeholder="现在... 将来..."></textarea>
         </div>
       </div>
       <div class="card">
-        <div class="card-header"><div class="card-title">创意工作者</div><span class="tag">creator</span></div>
+        <div class="card-header"><div class="card-title">按目的使用华伴</div><span class="tag">流程 / 积分</span></div>
         <div class="card-body">
-          <input class="input" id="site-creator-title" style="width:100%;margin-bottom:10px;" placeholder="标题">
-          <textarea class="input textarea" id="site-creator-lead" style="min-height:90px;" placeholder="说明"></textarea>
-          <textarea class="input textarea" id="site-creator-items" style="min-height:120px;margin-top:10px;" placeholder="一行一个要点"></textarea>
+          <textarea class="input textarea" id="site-purposes" style="min-height:260px;" placeholder="每行一条：标题｜事件名｜说明"></textarea>
         </div>
       </div>
     </div>
@@ -2059,9 +2061,25 @@ async function resetTickerSettings(){
 
 // ── Official Site Pages ──
 const DEFAULT_SITE_PAGES={
-  mainTitle:'免费智能匹配供需关系的轻社交通讯工具',
+  mainTitle:'服务海外华人本地生活的智能应用',
   mainSubtitle:'无需费时费力在一堆搜索结果中徒劳无果，也不会被带偏。',
   roles:{
+    share:{
+      title:'区块链浪潮，你错过了比特币；AI 浪潮已经到来，这一次先别只做旁观者',
+      lead:'越早加入、越早使用、越早反馈、越早分享，越容易留下真实贡献位置。',
+      sections:[
+        {label:'规则怎么可信？',text:'先定公平规则，再记录真实贡献；越早参与，越早留下可核验位置。',details:['华伴的推广不是靠拉人头，而是先建立规则：只记录真实使用、有效反馈、真实分享、提交供给资料和促成服务。','所有贡献都要可核验、可追溯、可按规则计算；越早参与，越早在规则体系里留下清晰位置。','最高 128 倍属于贡献权重/分配权益口径，以真实贡献、审核和公开规则为准，不构成收益承诺。']},
+        {label:'共识怎么形成？',text:'用户早使用、早反馈、早分享，本身就在形成华伴共识。',details:['共识不是一句口号，而是越来越多人真实使用、持续反馈、愿意分享，并把需求和服务资料沉淀进华伴。','当用户觉得华伴真的能解决事业、生活、学习里的问题，华伴的网络价值就开始形成。','越早参与共识形成的人，越容易留下更完整、更早期、更可核验的贡献记录。']},
+        {label:'共享怎么执行？',text:'可分配净收益的 80% 进入共享池，未来按 Web3 规则自动分配。',details:['华伴的共享机制是：未来可分配净收益的 80% 进入共享池，面向真实贡献者。','共享不按单纯拉新人数，而按真实使用、有效反馈、真实分享、供给资料和服务促成等贡献计算。','最终以审核、公开规则和不可更改的 Web3 自动分配机制为准。']}
+      ],
+      prospect:{title:'华伴现在能干嘛，将来要干嘛',text:'现在，华伴先帮你智能匹配本地需要你的人、服务和资源，整理资料、反馈问题、分享华伴，把事业、生活、学习里的真实任务先跑起来。将来，华伴会从华人先行扩展到多语种服务所有人，成为个人数据库、AI 机器人和智能化生活场景的入口。'},
+      purposes:[
+        {title:'我想分享华伴',eventName:'referral_share_clicked',text:'点击分享或生成海报，把华伴发给真正需要的人；系统记录真实分享、有效进入、后续使用和服务促成，对应积分与贡献权重。'},
+        {title:'我想使用华伴',eventName:'site_usage_intent_clicked',text:'直接说找本地需要你的人、找服务、整理资料或反馈问题；有效使用会沉淀为个人数据库和真实贡献记录。'},
+        {title:'我想反馈优化',eventName:'site_feedback_intent_clicked',text:'把不好用、不清楚、希望新增的地方告诉华伴；有效反馈会进入优化资料，帮助决定下一版先做什么，并记录贡献积分。'},
+        {title:'我能提供服务',eventName:'supplier_profile_started',text:'提交行业、联系方式、服务范围或供给资料；当本地有人需要时，华伴优先整理并尝试匹配，形成服务贡献记录。'}
+      ]
+    },
     student:{
       title:'不想被红点、广告和推荐流拖着走？',
       lead:'华伴 AI+，你主动，它才出现。一个安静、有用、听你指挥的 AI 工具。',
@@ -2099,6 +2117,51 @@ function fillSiteRole(role, data={}){
   if(items)items.value=(source.items||[]).join('\n');
 }
 
+function fillSiteShare(data={}){
+  const source=data||DEFAULT_SITE_PAGES.roles.share;
+  document.getElementById('site-share-title').value=source.title||'';
+  document.getElementById('site-share-lead').value=source.lead||'';
+  (source.sections||[]).slice(0,3).forEach((section,index)=>{
+    document.getElementById(`site-section-${index}-label`).value=section.label||'';
+    document.getElementById(`site-section-${index}-text`).value=section.text||'';
+    document.getElementById(`site-section-${index}-details`).value=(section.details||[]).join('\n');
+  });
+  document.getElementById('site-prospect-title').value=source.prospect?.title||'';
+  document.getElementById('site-prospect-text').value=source.prospect?.text||'';
+  document.getElementById('site-purposes').value=(source.purposes||[]).map(item=>[
+    item.title||'',
+    item.eventName||'homepage_purpose_clicked',
+    item.text||''
+  ].join('｜')).join('\n');
+}
+
+function collectSiteShare(){
+  const sections=[0,1,2].map(index=>({
+    label:(document.getElementById(`site-section-${index}-label`)?.value||'').trim(),
+    text:(document.getElementById(`site-section-${index}-text`)?.value||'').trim(),
+    details:siteTextareaLines(`site-section-${index}-details`)
+  })).filter(item=>item.label||item.text||item.details.length);
+  const purposes=(document.getElementById('site-purposes')?.value||'').split('\n').map(line=>{
+    const parts=line.split('｜').map(v=>v.trim());
+    return {title:parts[0]||'',eventName:parts[1]||'homepage_purpose_clicked',text:parts.slice(2).join('｜')||''};
+  }).filter(item=>item.title&&item.text);
+  return {
+    title:(document.getElementById('site-share-title')?.value||'').trim(),
+    lead:(document.getElementById('site-share-lead')?.value||'').trim(),
+    href:'/ai?ref=share_growth',
+    actionLabel:'去试一句',
+    secondaryHref:'app-download.html?ref=share_growth',
+    secondaryLabel:'放到手机',
+    mode:'plain',
+    sections,
+    prospect:{
+      title:(document.getElementById('site-prospect-title')?.value||'').trim(),
+      text:(document.getElementById('site-prospect-text')?.value||'').trim()
+    },
+    purposes
+  };
+}
+
 async function loadSitePages(){
   let settings=null;
   const status=document.getElementById('site-pages-status');
@@ -2112,7 +2175,7 @@ async function loadSitePages(){
   const data=settings||DEFAULT_SITE_PAGES;
   document.getElementById('site-main-title').value=data.mainTitle||DEFAULT_SITE_PAGES.mainTitle;
   document.getElementById('site-main-subtitle').value=data.mainSubtitle||DEFAULT_SITE_PAGES.mainSubtitle;
-  ['student','family','supplier','creator'].forEach(role=>fillSiteRole(role,data.roles?.[role]||DEFAULT_SITE_PAGES.roles[role]));
+  fillSiteShare(data.roles?.share||DEFAULT_SITE_PAGES.roles.share);
 }
 
 async function saveSitePages(){
@@ -2120,16 +2183,9 @@ async function saveSitePages(){
     homeVersion:'dual_entry',
     mainTitle:(document.getElementById('site-main-title')?.value||DEFAULT_SITE_PAGES.mainTitle).trim(),
     mainSubtitle:(document.getElementById('site-main-subtitle')?.value||'').trim(),
-    roles:{},
+    roles:{share:collectSiteShare()},
     updated_at:new Date().toISOString()
   };
-  ['student','family','supplier','creator'].forEach(role=>{
-    settings.roles[role]={
-      title:(document.getElementById(`site-${role}-title`)?.value||'').trim(),
-      lead:(document.getElementById(`site-${role}-lead`)?.value||'').trim(),
-      items:siteTextareaLines(`site-${role}-items`)
-    };
-  });
   await supaInsert('beta_leads',{
     tenant_id:TENANT_ID,
     lead_type:'config',

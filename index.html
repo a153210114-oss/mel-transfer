@@ -924,6 +924,7 @@ async function loadPublishedSiteCopy() {
     if (settings.mainSubtitle) document.getElementById('siteMainSubtitle').textContent = settings.mainSubtitle;
     if (settings.roles) {
       const mappedRoles = {
+        share: settings.roles.share,
         business: settings.roles.business || settings.roles.supplier || settings.roles.creator,
         life: settings.roles.life || settings.roles.family || settings.roles.student
       };
