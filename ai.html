@@ -1232,7 +1232,7 @@ body.theme-light .visual-guide-actions .guide-skip{background:rgba(0,0,0,.06);co
           <button onclick="showLocalFriendListSheet()" style="border:1px solid rgba(98,221,178,0.32);background:rgba(98,221,178,0.13);color:#62ddb2;border-radius:12px;padding:10px 13px;font-size:13px;font-weight:800;font-family:inherit;cursor:pointer;min-width:86px;">查看好友</button>
         </div>
         <div style="font-size:12px;color:rgba(255,255,255,0.55);line-height:1.65;">
-          推荐积分：<span id="profile-referral-points" style="color:#f1cf49;font-weight:900;">0</span> 分 · 分享链接、扫码添加和名片转发都会留痕。
+          推荐积分：<span id="profile-referral-points" style="color:#f1cf49;font-weight:900;">0</span> 分 · 待绑定 <span id="profile-pending-referrals" style="color:#85e8ff;font-weight:900;">0</span> · 分享链接、扫码添加和名片转发都会留痕。
         </div>
       </div>
     </div>
@@ -2064,6 +2064,9 @@ function rememberPendingReferral(code='', meta={}){
     industry:meta.industry||'',
     phone:meta.phone||'',
     avatar:meta.avatar||'',
+    targetName:meta.targetName||meta.target_name||'',
+    targetIndustry:meta.targetIndustry||meta.target_industry||'',
+    targetPhone:meta.targetPhone||meta.target_phone||'',
     source:meta.source||'incoming_referral',
     savedAt:new Date().toISOString()
   };
@@ -2088,6 +2091,9 @@ function readPendingReferral(){
       industry:params.get('card_industry')||'',
       phone:params.get('card_phone')||'',
       avatar:params.get('card_avatar')||'',
+      targetName:params.get('target_name')||'',
+      targetIndustry:params.get('target_industry')||'',
+      targetPhone:params.get('target_phone')||'',
       source:'url_or_session_referral'
     });
   }
@@ -2102,6 +2108,19 @@ function clearPendingReferral(){
   sessionStorage.removeItem('incoming_friend_code');
   sessionStorage.removeItem('incoming_ref');
   localStorage.removeItem('huaban_pending_referral');
+}
+
+function markPendingReferralInviteBound(phoneOrKey=''){
+  const key=normalizedIdentityPhone(phoneOrKey)||String(phoneOrKey||'').trim().toLowerCase();
+  if(!key)return;
+  const list=pendingReferralInvitesStore().map(item=>{
+    const itemKey=String(item.key||normalizedIdentityPhone(item.phone||'')||'').trim();
+    if(itemKey===key||String(item.phone||'').trim()===String(phoneOrKey||'').trim()){
+      return {...item,status:'已绑定',boundAt:new Date().toISOString(),updatedAt:new Date().toISOString()};
+    }
+    return item;
+  });
+  localStorage.setItem('huaban_pending_referral_invites',JSON.stringify(list.slice(0,200)));
 }
 
 async function completeReferralJoinFromSavedProfile(profile={}){
@@ -2139,6 +2158,7 @@ async function completeReferralJoinFromSavedProfile(profile={}){
   if(row!==null){
     localStorage.setItem(key,'1');
     localStorage.setItem(`huaban_friend_code_added_${incoming}`,'1');
+    markPendingReferralInviteBound(profile.phone||pending?.targetPhone||refereeCode);
     clearPendingReferral();
   }
   refreshProfileFriendStats?.().catch(()=>null);
@@ -2599,6 +2619,12 @@ function userAvatarChoiceMarkup(value,label,active=false){
 function renderUserSetupCard(){
   if(document.getElementById('user-setup-card'))return;
   const user=getUserProfile();
+  const pending=readPendingReferral();
+  const prefill={
+    name:user.name||pending?.targetName||'',
+    industry:user.industry||pending?.targetIndustry||'',
+    phone:user.phone||pending?.targetPhone||''
+  };
   const card=document.createElement('section');
   card.id='user-setup-card';
   card.className='agent-setup-card';
@@ -2612,11 +2638,11 @@ function renderUserSetupCard(){
       </div>
     </div>
     <div class="agent-setup-grid">
-      <input class="agent-setup-input" id="user-setup-name" value="${companionEscape(user.name||'')}" maxlength="12" placeholder="我怎么称呼你">
+      <input class="agent-setup-input" id="user-setup-name" value="${companionEscape(prefill.name)}" maxlength="12" placeholder="我怎么称呼你">
       <button class="agent-setup-save" onclick="saveUserSetupCard()">保存</button>
     </div>
-    <input class="agent-setup-input" id="user-setup-industry" value="${companionEscape(user.industry||'')}" maxlength="32" placeholder="主业/副业：如打理花园、家教、水管工" style="width:100%;margin-top:8px;">
-    <input class="agent-setup-input" id="user-setup-phone" value="${companionEscape(user.phone||'')}" maxlength="32" placeholder="联系电话：分享名片时显示" style="width:100%;margin-top:8px;">
+    <input class="agent-setup-input" id="user-setup-industry" value="${companionEscape(prefill.industry)}" maxlength="32" placeholder="主业/副业：如打理花园、家教、水管工" style="width:100%;margin-top:8px;">
+    <input class="agent-setup-input" id="user-setup-phone" value="${companionEscape(prefill.phone)}" maxlength="32" placeholder="联系电话：分享名片时显示" style="width:100%;margin-top:8px;">
     <input id="user-setup-avatar" type="hidden" value="${companionEscape(active)}">
     <div class="agent-avatar-choices">
       ${USER_AVATAR_CHOICES.map(([value,label])=>userAvatarChoiceMarkup(value,label,value===active)).join('')}
@@ -13193,6 +13219,7 @@ async function refreshProfileFriendStats(){
   const friendCountEl=document.getElementById('profile-friend-count');
   if(friendCountEl)friendCountEl.textContent=String(friends.length);
   const myCode=getFriendCode();
+  let pendingBinding=pendingReferralInvitesStore().filter(item=>String(item.status||'')!=='已绑定').length;
   let confirmed=0;
   let pending=0;
   const creditedDirect=new Set();
@@ -13257,6 +13284,14 @@ async function refreshProfileFriendStats(){
         fields:{...(row.fields||{}),ref_level:2,reconciled_from:'huaban_referral_events'}
       }).catch(()=>null);
     });
+    const pendingRows=await supaGet(`huaban_identity_links?tenant_id=eq.${TENANT_ID}&inviter_code=eq.${encodeURIComponent(myCode)}&link_type=eq.pending_referral_invite&status=eq.active&order=created_at.desc&limit=300&select=normalized_phone,phone,display_name,industry,fields`).catch(()=>[]);
+    const pendingKeys=new Set(pendingReferralInvitesStore().map(item=>String(item.key||'').trim()));
+    (Array.isArray(pendingRows)?pendingRows:[]).forEach(row=>{
+      const key=String(row.normalized_phone||row.phone||row.display_name||'').trim();
+      if(!key||pendingKeys.has(key))return;
+      pendingKeys.add(key);
+      pendingBinding+=1;
+    });
     refreshProfileFriendStats._lastDirect=direct;
     refreshProfileFriendStats._lastSecond=second;
   }catch(e){
@@ -13266,6 +13301,8 @@ async function refreshProfileFriendStats(){
   }
   const pointsEl=document.getElementById('profile-referral-points');
   if(pointsEl)pointsEl.textContent=String(confirmed+pending);
+  const pendingRefEl=document.getElementById('profile-pending-referrals');
+  if(pendingRefEl)pendingRefEl.textContent=String(pendingBinding);
   const totalEl=document.getElementById('profile-points');
   const basePoints=Number(profilePointsState.basePoints||0);
   const totalPoints=basePoints+confirmed+pending;
@@ -14601,6 +14638,74 @@ function saveInvitedContacts(contacts=[]){
   return existing;
 }
 
+function pendingReferralInvitesStore(){
+  try{return JSON.parse(localStorage.getItem('huaban_pending_referral_invites')||'[]')||[];}catch(e){return[];}
+}
+
+function savePendingReferralInviteLocal(invite={}){
+  const phone=String(invite.phone||'').trim();
+  const key=normalizedIdentityPhone(phone)||String(invite.targetCode||invite.name||invite.industry||Date.now()).trim().toLowerCase();
+  const now=new Date().toISOString();
+  const list=pendingReferralInvitesStore().filter(item=>String(item.key||'')!==key);
+  const row={
+    key,
+    name:String(invite.name||'').trim(),
+    phone,
+    industry:String(invite.industry||'').trim(),
+    targetCode:String(invite.targetCode||'').trim().toUpperCase(),
+    status:invite.status||'待绑定',
+    source:invite.source||'manual_referral_invite',
+    createdAt:invite.createdAt||now,
+    updatedAt:now
+  };
+  list.unshift(row);
+  localStorage.setItem('huaban_pending_referral_invites',JSON.stringify(list.slice(0,200)));
+  return row;
+}
+
+async function recordPendingReferralAssociation({name='',phone='',industry='',source='manual_referral_invite'}={}){
+  const inviterCode=getFriendCode();
+  const cleanPhone=String(phone||'').trim();
+  const cleanName=String(name||'').trim();
+  const cleanIndustry=String(industry||'').trim();
+  const targetCode=cleanPhone?contactSupplyCode(cleanPhone):normalizeSupplyCode(`PEND${genRef()}`);
+  const local=savePendingReferralInviteLocal({name:cleanName,phone:cleanPhone,industry:cleanIndustry,targetCode,source});
+  if(cleanPhone){
+    await recordPhoneIdentityLink({
+      phone:cleanPhone,
+      friendCode:targetCode,
+      displayName:cleanName||'待绑定好友',
+      industry:cleanIndustry,
+      city:currentRegion.city||'',
+      country:currentRegion.country||'',
+      source,
+      sourceRef:inviterCode,
+      linkType:'pending_referral_invite',
+      inviterCode,
+      ownerCode:targetCode,
+      fields:{
+        pending_binding:true,
+        status_label:'尚未绑定',
+        invited_by_code:inviterCode,
+        target_name:cleanName,
+        target_industry:cleanIndustry
+      }
+    }).catch(()=>null);
+  }
+  supaInsertLead({
+    lead_type:'social',
+    channel:'pending_referral_invite',
+    need_type:'pending_referral_invite',
+    name:cleanName||'待绑定好友',
+    contact:cleanPhone,
+    message:`待绑定邀请：${cleanName||''} ${cleanPhone||''} ${cleanIndustry||''}`,
+    status:'pending',
+    fields:{...local,inviter_code:inviterCode,pending_binding:true}
+  }).catch(()=>null);
+  refreshProfileFriendStats?.().catch(()=>null);
+  return local;
+}
+
 function contactPrimaryPhone(contact={}){
   const tel=Array.isArray(contact.tel)?contact.tel[0]:contact.tel;
   return String(tel||'').trim();
@@ -14721,6 +14826,12 @@ async function recordPromoterContactSupply(lead={}, source='promoter_contact_sup
       user_visible:false
     }
   }).catch(()=>null);
+  await recordPendingReferralAssociation({
+    name:lead.name||type.label||'',
+    phone,
+    industry:lead.serviceType||type.label||lead.industry||'',
+    source:`${source}_pending_bind`
+  }).catch(()=>null);
   await recordFriendPointEvent({
     ownerCode:inviterCode,
     action:'supplier_profile',
@@ -14737,7 +14848,8 @@ async function recordPromoterContactSupply(lead={}, source='promoter_contact_sup
     name:lead.name||type.label||'',
     industry:lead.serviceType||type.label||lead.industry||'',
     phone,
-    source
+    source,
+    targetMode:true
   });
   return profile;
 }
@@ -14807,6 +14919,18 @@ function friendInviteLink(code=getFriendCode(), cardBy='', meta={}){
   if(profileMeta.phone)q.set('card_phone',String(profileMeta.phone).slice(0,32));
   if(profileMeta.avatar)q.set('card_avatar',String(profileMeta.avatar).slice(0,8));
   return `https://www.huabanapp.com/ai.html?${q.toString()}`;
+}
+
+function targetReferralInviteLink(target={}, code=getFriendCode()){
+  const link=new URL(friendInviteLink(code));
+  const name=String(target.name||'').trim();
+  const industry=String(target.industry||target.serviceType||'').trim();
+  const phone=String(target.phone||'').trim();
+  if(name)link.searchParams.set('target_name',name.slice(0,24));
+  if(industry)link.searchParams.set('target_industry',industry.slice(0,40));
+  if(phone)link.searchParams.set('target_phone',phone.slice(0,32));
+  link.searchParams.set('invite_mode','pending_bind');
+  return link.toString();
 }
 
 function friendQrUrl(link=friendInviteLink()){
@@ -14879,8 +15003,10 @@ function contributionLevelSummaryText(){
 等级不靠个人积分升级，而按释放池阶段自动升级：每释放一半，等级升一级，权益权重翻番。积分就是积分，等级权重决定将来每一积分可兑换金额；有可分配收益后，每月 1-7 日可申请上月结算，审核期 14 天，现金优先银行转账或平台余额。`;
 }
 
-function showSupplierGrowthLoopCard({name='',industry='',phone='',source='supplier_growth_loop'}={}){
-  const link=friendInviteLink(getFriendCode(), '', {name,industry,phone});
+function showSupplierGrowthLoopCard({name='',industry='',phone='',source='supplier_growth_loop',targetMode=false}={}){
+  const link=targetMode
+    ? targetReferralInviteLink({name,industry,phone})
+    : friendInviteLink();
   const copy=supplierGrowthInviteCopy({name,industry,phone,link});
   trackGrowthEvent('referral_share_prompted',{
     source,
@@ -14896,7 +15022,7 @@ function showSupplierGrowthLoopCard({name='',industry='',phone='',source='suppli
       <img src="assets/brand/huaban-logo-v1.png" alt="">
       <div class="install-copy">
         <strong>这条可以直接发给对方</strong>
-        <span>被推荐者只绑定第一位推荐者。真实领养、资料和成交会记录贡献。</span>
+        <span>${targetMode?'已先关联为待绑定邀请。对方打开并确认任意资料后转为正式绑定。':'被推荐者只绑定第一位推荐者。真实领养、资料和成交会记录贡献。'}</span>
       </div>
     </div>
     <textarea id="supplier-growth-copy" readonly style="width:100%;min-height:168px;border:1px solid rgba(255,255,255,0.12);border-radius:14px;background:rgba(255,255,255,0.06);color:inherit;font:13px/1.7 inherit;padding:12px;box-sizing:border-box;resize:vertical;">${companionEscape(copy)}</textarea>
@@ -16801,6 +16927,9 @@ function checkIncomingFriendCode(){
     industry:params.get('card_industry')||'',
     phone:params.get('card_phone')||'',
     avatar:params.get('card_avatar')||'',
+    targetName:params.get('target_name')||'',
+    targetIndustry:params.get('target_industry')||'',
+    targetPhone:params.get('target_phone')||'',
     source:'url_referral'
   });
 }
@@ -16847,7 +16976,10 @@ function maybeShowIncomingFriendCode(){
     name:params.get('card_name')||'',
     industry:params.get('card_industry')||'',
     phone:params.get('card_phone')||'',
-    avatar:params.get('card_avatar')||''
+    avatar:params.get('card_avatar')||'',
+    targetName:params.get('target_name')||'',
+    targetIndustry:params.get('target_industry')||'',
+    targetPhone:params.get('target_phone')||''
   };
   setTimeout(()=>acceptIncomingFriendCode(friend,'qr_open',by,meta),600);
 }
