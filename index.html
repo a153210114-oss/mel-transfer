@@ -435,6 +435,14 @@ footer {
   flex-wrap: wrap;
   font-size: 13px;
 }
+.footer-links a {
+  color: var(--muted);
+  font-weight: 800;
+  text-decoration: none;
+}
+.footer-links a:hover {
+  color: var(--text);
+}
 .identity-home {
   width: min(920px, calc(100vw - 32px));
   min-height: 100vh;
@@ -561,6 +569,27 @@ footer {
 .identity-hook-note strong {
   color: #3a4a5f;
   font-weight: 900;
+}
+.identity-compliance-note {
+  margin-top: 12px;
+  border: 1px solid rgba(231,167,47,0.24);
+  border-radius: 14px;
+  background: rgba(255,250,240,0.74);
+  padding: 12px 13px;
+  color: #6a5b3d;
+  font-size: 12px;
+  line-height: 1.75;
+  text-align: left;
+}
+.identity-compliance-note strong {
+  color: #4a3820;
+  font-weight: 900;
+}
+.identity-compliance-note a {
+  color: #087552;
+  font-weight: 900;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 .identity-form {
   display: grid;
@@ -736,6 +765,7 @@ footer {
         <a class="btn" id="identitySecondaryAction" href="app-download.html?ref=identity_home">放到手机</a>
       </div>
       <div class="identity-hook-note" id="siteHookNote"><strong>区块链浪潮，你错过了比特币；AI 浪潮已经到来，这一次先别只做旁观者。</strong> 越早参与，越容易留下真实贡献位置；有效使用、反馈、分享和促成服务会记录为真实贡献。最高 128 倍为贡献权重/分配权益口径，以审核和公开规则为准，不构成收益承诺。</div>
+      <div class="identity-compliance-note" id="siteComplianceNote"><strong>合规边界：</strong>华伴不接受用户出资参与积分，不以拉人头计酬，不发行、出售或承诺兑换任何虚拟货币。华伴积分仅记录真实使用、反馈、分享、交易确认和履约等贡献；不是投资产品、证券、股权、债权、固定收益或保本承诺。未来如开放兑换，须以实际净收益、公开规则、身份/税务/所在地合规审查为准。 <a href="terms.html#compliance">查看用户协议</a></div>
     </article>
   </section>
 </main>
@@ -743,7 +773,7 @@ footer {
 <footer>
   <div class="footer-inner">
     <span>华伴 AI+ · 智能匹配，没有佣金差价</span>
-    <span>huabanapp.com</span>
+    <span class="footer-links"><a href="terms.html">用户协议</a> · <a href="privacy.html">隐私政策</a> · <a href="terms.html#compliance">合规边界</a></span>
   </div>
 </footer>
 <script>
@@ -816,8 +846,8 @@ function siteTrackPageView(){
   });
 }
 const SITE_I18N={
-  zh:{title:'海外华人必备智能体',subtitle:'智能匹配，没有佣金差价！\n聚焦目标，不再费时费力！\n智能合约，保障自愿公平。',versionLabel:'版本 1.1：智能交易工具',browserTitle:'华伴 AI+｜海外华人必备智能体',hookNote:'区块链浪潮，你错过了比特币；AI 浪潮已经到来，这一次先别只做旁观者。 越早参与，越容易留下真实贡献位置；有效使用、反馈、分享和促成服务会记录为真实贡献。最高 128 倍为贡献权重/分配权益口径，以审核和公开规则为准，不构成收益承诺。',tabSubs:['','',''],tabBtns:['共建一程','先让它办','随手可用'],businessSub:'真实贡献会被看见',lifeSub:'从本地需求开始',businessBtn:'共建一程',lifeBtn:'先让它办',open:'现在就试',download:'放到手机',detailOpen:'查看详情',detailClose:'收起详情',purposeHeading:'按你的目的使用华伴',footer:'华伴 AI+ · 智能匹配，没有佣金差价'},
-  en:{title:'A smart local-life app for overseas Chinese',subtitle:'No more wasting time in messy search results, and no more being led off track.',browserTitle:'Huaban AI+ | Smart local life for overseas Chinese',hookNote:'Many people missed the blockchain wave. The AI wave is here; this time, do not stay only as a spectator. Huaban records real use, useful feedback, real sharing, and reviewed contribution only; no income promise, no headcount game, just transparent rules.',tabSubs:['Real contribution is seen','Start with local needs','One tap back'],tabBtns:['Build Together','Let It Work','Keep It Close'],businessSub:'Real contribution is seen',lifeSub:'Start with local needs',businessBtn:'Build Together',lifeBtn:'Let It Work',open:'Try Now',download:'Keep on Phone',detailOpen:'View Details',detailClose:'Collapse',purposeHeading:'Use Huaban By Goal',footer:'Huaban AI+ · Smart local life for overseas Chinese',
+  zh:{title:'海外华人必备智能体',subtitle:'智能匹配，没有佣金差价！\n聚焦目标，不再费时费力！\n智能合约，保障自愿公平。',versionLabel:'版本 1.1：智能交易工具',browserTitle:'华伴 AI+｜海外华人必备智能体',hookNote:'区块链浪潮，你错过了比特币；AI 浪潮已经到来，这一次先别只做旁观者。 越早参与，越容易留下真实贡献位置；有效使用、反馈、分享和促成服务会记录为真实贡献。最高 128 倍为贡献权重/分配权益口径，以审核和公开规则为准，不构成收益承诺。',complianceTitle:'合规边界',complianceText:'华伴不接受用户出资参与积分，不以拉人头计酬，不发行、出售或承诺兑换任何虚拟货币。华伴积分仅记录真实使用、反馈、分享、交易确认和履约等贡献；不是投资产品、证券、股权、债权、固定收益或保本承诺。未来如开放兑换，须以实际净收益、公开规则、身份/税务/所在地合规审查为准。',complianceLinkText:'查看用户协议',tabSubs:['','',''],tabBtns:['共建一程','先让它办','随手可用'],businessSub:'真实贡献会被看见',lifeSub:'从本地需求开始',businessBtn:'共建一程',lifeBtn:'先让它办',open:'现在就试',download:'放到手机',detailOpen:'查看详情',detailClose:'收起详情',purposeHeading:'按你的目的使用华伴',footer:'华伴 AI+ · 智能匹配，没有佣金差价'},
+  en:{title:'A smart local-life app for overseas Chinese',subtitle:'No more wasting time in messy search results, and no more being led off track.',browserTitle:'Huaban AI+ | Smart local life for overseas Chinese',hookNote:'Many people missed the blockchain wave. The AI wave is here; this time, do not stay only as a spectator. Huaban records real use, useful feedback, real sharing, and reviewed contribution only; no income promise, no headcount game, just transparent rules.',complianceTitle:'Compliance boundary',complianceText:'Huaban does not accept user investment for points, does not reward headcount recruiting, and does not issue, sell, or promise redemption of any virtual currency. Points only record real use, feedback, sharing, transaction confirmation, and fulfillment contribution; they are not an investment product, security, equity, debt, fixed return, or principal guarantee. Any future redemption must follow actual net revenue, published rules, identity/tax/location compliance review.',complianceLinkText:'View terms',tabSubs:['Real contribution is seen','Start with local needs','One tap back'],tabBtns:['Build Together','Let It Work','Keep It Close'],businessSub:'Real contribution is seen',lifeSub:'Start with local needs',businessBtn:'Build Together',lifeBtn:'Let It Work',open:'Try Now',download:'Keep on Phone',detailOpen:'View Details',detailClose:'Collapse',purposeHeading:'Use Huaban By Goal',footer:'Huaban AI+ · Smart local life for overseas Chinese',
     business:{title:'Let the right customers find you',lead:'No complicated signup. Leave your phone and industry first; add Huaban to your phone when you want timely demand alerts.',items:['For local service providers, shops, drivers, translators, lawyers, accountants, restaurants, delivery, tours, and product suppliers.','Huaban organizes your industry, city, service area, and contact details, then matches them intelligently.','No need to stare at a page. Huaban reminds you when a suitable need appears.']},
     life:{title:'Find what you really need',lead:'Stop getting lost in fragmented information.',items:['No more wasting time in a pile of search results.','Tell Huaban what you need; it keeps the goal clear and moves it forward.','Save your time and attention for your family and your life.']}},
   ja:{title:'海外華人の現地生活を支えるAIアプリ',subtitle:'検索結果に迷わず、必要なことに集中できます。',tabSubs:['Real contribution is seen','Start with local needs','One tap back'],tabBtns:['Build Together','Let It Work','Keep It Close'],open:'Try Now',download:'Keep on Phone',footer:'華伴 AI+ · 海外華人の現地生活AI'},
@@ -1054,6 +1084,14 @@ function applySiteI18n(){
     const note=siteText('hookNote');
     const parts=note.split('。 ');
     hookNote.innerHTML=parts.length>1?`<strong>${parts[0]}。</strong> ${parts.slice(1).join('。 ')}`:note;
+  }
+  const complianceNote=document.getElementById('siteComplianceNote');
+  if(complianceNote){
+    const text=siteText('complianceText');
+    const title=siteText('complianceTitle');
+    const linkText=siteText('complianceLinkText');
+    complianceNote.style.display=text?'block':'none';
+    complianceNote.innerHTML=text?`<strong>${title}：</strong>${text} <a href="terms.html#compliance" onclick="siteTrackGrowthEvent('site_compliance_link_clicked',{category:'homepage_compliance'})">${linkText}</a>`:'';
   }
   const langBtn=document.getElementById('siteLangSwitch');
   if(langBtn)langBtn.textContent=siteLanguageLabel();
