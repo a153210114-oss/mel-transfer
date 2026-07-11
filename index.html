@@ -583,19 +583,20 @@ footer {
   line-height: 1.7;
 }
 .identity-detail-toggle {
-  margin-top: 14px;
+  margin-left: auto;
   border: 1px solid rgba(15,40,70,0.12);
   background: #fff;
   color: var(--ink);
-  border-radius: 12px;
-  min-height: 42px;
-  padding: 0 14px;
-  font: 900 14px/1 inherit;
+  border-radius: 999px;
+  min-height: 34px;
+  padding: 0 12px;
+  font: 900 12px/1 inherit;
   cursor: pointer;
+  flex: 0 0 auto;
 }
 .identity-detail {
   display: none;
-  margin-top: 12px;
+  margin: 10px 0 0;
   border: 1px solid rgba(15,40,70,0.1);
   border-radius: 14px;
   background: rgba(237,247,244,0.72);
@@ -613,6 +614,22 @@ footer {
 .identity-detail p:last-child {
   margin-bottom: 0;
 }
+.identity-hook-row {
+  margin-bottom: 10px;
+}
+.identity-hook-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.identity-hook-line strong {
+  min-width: 92px;
+  color: var(--ink);
+}
+.identity-hook-line span {
+  color: var(--muted);
+  line-height: 1.65;
+}
 @media (max-width: 860px) {
   .nav-inner { min-height: 62px; }
   .nav-link { display: none; }
@@ -629,6 +646,7 @@ footer {
   .identity-logo { width: 74px; height: 74px; border-radius: 21px; }
   .identity-panel { padding: 22px; }
   .identity-actions .btn { width: 100%; }
+  .identity-hook-line { align-items: flex-start; }
 }
 </style>
 </head>
@@ -706,17 +724,34 @@ let identityCopy = {
     secondaryHref: 'app-download.html?ref=share_growth',
     secondaryLabel: '放到手机',
     mode: 'plain',
-    items: [
-      '越早使用，越早让华伴记住你的真实需求和贡献。',
-      '越早反馈，越早影响华伴下一版先解决什么。',
-      '越早分享，越早把真实需求和服务网络带起来。'
-    ],
-    detailLabel: '查看详情',
-    details: [
-      '华伴不是靠拉人头的推广。系统只记录真实使用、有效反馈、真实推荐、提交供给资料和促成服务。',
-      '这些记录会沉淀为可核验的贡献。越早参与，越容易在规则形成早期留下清晰位置。',
-      '可分配净收益的 80% 进入共享池，未来按不可更改的 Web3 规则自动分配。',
-      '最高 128 倍为贡献权重/分配权益口径，以真实使用、审核和公开规则为准，不构成收益承诺。'
+    sections: [
+      {
+        label: '奖励机制',
+        text: '越早使用、反馈、分享，越容易留下真实贡献位置。',
+        details: [
+          '华伴只记录真实贡献：有效使用、真实反馈、真实推荐、提交供给资料和促成服务。',
+          '越早参与，越容易在规则形成早期留下清晰、可核验的位置。',
+          '最高 128 倍为贡献权重/分配权益口径，以真实使用、审核和公开规则为准，不构成收益承诺。'
+        ]
+      },
+      {
+        label: '可分配什么',
+        text: '可分配净收益的 80%，进入所有真实贡献者的共享池。',
+        details: [
+          '华伴共享的是未来可分配净收益中的 80%，不是平台口头承诺的固定收益。',
+          '共享池服务于真实使用者、反馈者、分享者、供给者和促成服务的人。',
+          '能分配的前提是平台产生可分配净收益，并按规则核验真实贡献。'
+        ]
+      },
+      {
+        label: '如何分配',
+        text: '未来按不可更改的 Web3 规则自动分配，不靠拉人头。',
+        details: [
+          '华伴的核心是共识、共享：贡献记录先沉淀，规则公开后按规则执行。',
+          '分配不按单纯拉新人数，而按真实使用、有效反馈、真实分享、供给资料和服务促成等贡献计算。',
+          '最终以审核、公开规则和链上自动分配机制为准。'
+        ]
+      }
     ]
   },
   now: {
@@ -878,7 +913,19 @@ function renderIdentity(role) {
   const copy = siteCopyFor(currentIdentityRole) || identityCopy.share;
   document.getElementById('identityTitle').textContent = copy.title;
   document.getElementById('identityLead').textContent = copy.lead;
-  document.getElementById('identityList').innerHTML = copy.items.map(item => `<li>${item}</li>`).join('');
+  const list=document.getElementById('identityList');
+  if(Array.isArray(copy.sections)&&copy.sections.length){
+    list.innerHTML=copy.sections.map((section,index)=>`
+      <li class="identity-hook-row">
+        <div class="identity-hook-line">
+          <span><strong>${section.label}</strong>${section.text}</span>
+          <button class="identity-detail-toggle" type="button" onclick="toggleIdentityDetail('identityDetail${index}',this)">查看详情</button>
+        </div>
+        <div class="identity-detail" id="identityDetail${index}">${(section.details||[]).map(item=>`<p>${item}</p>`).join('')}</div>
+      </li>`).join('');
+  }else{
+    list.innerHTML = copy.items.map(item => `<li>${item}</li>`).join('');
+  }
   const primaryAction=document.getElementById('identityAction');
   const secondaryAction=document.getElementById('identitySecondaryAction');
   primaryAction.href = copy.href;
@@ -888,7 +935,7 @@ function renderIdentity(role) {
     secondaryAction.textContent = copy.secondaryLabel || siteText('download');
   }
   const detailHtml=Array.isArray(copy.details)&&copy.details.length ? `
-    <button class="identity-detail-toggle" type="button" onclick="toggleIdentityDetail(this)">${copy.detailLabel || '查看详情'}</button>
+    <button class="identity-detail-toggle" type="button" onclick="toggleIdentityDetail('identityDetail',this)">${copy.detailLabel || '查看详情'}</button>
     <div class="identity-detail" id="identityDetail">${copy.details.map(item=>`<p>${item}</p>`).join('')}</div>` : '';
   document.getElementById('identityExtra').innerHTML = copy.mode === 'business' ? `
     <div class="identity-form">
@@ -915,8 +962,8 @@ function renderIdentity(role) {
   });
 }
 
-function toggleIdentityDetail(button){
-  const panel=document.getElementById('identityDetail');
+function toggleIdentityDetail(id,button){
+  const panel=document.getElementById(id);
   if(!panel)return;
   const show=!panel.classList.contains('show');
   panel.classList.toggle('show',show);
