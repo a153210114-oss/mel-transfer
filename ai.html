@@ -3476,7 +3476,7 @@ function finishPushToTalk(shouldSend){
 function toggleMic(){
   completeVisualGuideStep('voice_call');
   if(ACTIVE_FRIEND_CHAT){
-    toggleFriendVoiceCall();
+    explainFriendWebMessaging();
     return;
   }
   if(!('webkitSpeechRecognition' in window)&&!('SpeechRecognition' in window)){alert('请使用Safari或Chrome');return;}
@@ -3498,7 +3498,7 @@ function setVoiceModeUI(active){
   }else{
     btn?.classList.remove('recording');
     btn?.setAttribute('aria-label','连续语音对话');
-    btn?.setAttribute('title',ACTIVE_FRIEND_CHAT?'发起语音通话':'AI 语音对话');
+    btn?.setAttribute('title',ACTIVE_FRIEND_CHAT?'网页好友留言':'AI 语音对话');
     if(vi) vi.style.display='none';
   }
 }
@@ -6260,8 +6260,8 @@ const VISUAL_GUIDE_STEPS=[
   {
     key:'voice_call',
     target:'mic-btn',
-    title:'这是语音通话',
-    what:'像和华伴打电话一样连续对话。',
+    title:'这是 AI 语音对话',
+    what:'像和华伴说话一样连续对话。',
     use:'适合开车、做饭、手不方便打字的时候。',
     result:'点开后你直接说话，华伴听完会接着回应。'
   },
@@ -16169,11 +16169,11 @@ function setFriendVoiceCallUI(active=false){
   const btn=document.getElementById('mic-btn');
   const vi=document.getElementById('voice-indicator');
   btn?.classList.toggle('recording',active);
-  btn?.setAttribute('aria-label',active?'结束语音通话':'发起语音通话');
-  btn?.setAttribute('title',active?'结束语音通话':'发起语音通话');
+  btn?.setAttribute('aria-label',active?'停止网页留言提示':'网页好友留言');
+  btn?.setAttribute('title',active?'停止网页留言提示':'网页好友留言');
   if(vi){
     vi.style.display=active?'block':'none';
-    vi.textContent=active?'📞 语音通话中...':'';
+    vi.textContent=active?'网页留言模式':'';
   }
 }
 
@@ -16187,6 +16187,13 @@ function appendFriendSystemMessage(friend={},text=''){
     chatArea.appendChild(friendChatBubble(clean,false));
     scrollBottom();
   }
+}
+
+async function explainFriendWebMessaging(){
+  const friend=ACTIVE_FRIEND_CHAT;
+  if(!friend)return false;
+  appendFriendSystemMessage(friend,'网页里先用文字留言；语音可用“按住说话”转成文字留言。实时通话留给 App 版本实现。');
+  return true;
 }
 
 async function toggleFriendVoiceCall(){
@@ -16203,19 +16210,18 @@ async function startFriendVoiceCall(){
   if(voiceMode)stopVoiceMode();
   if(inputMode==='voice-input')toggleInputMode();
   setFriendVoiceCallUI(true);
-  playLocalFriendBell();
   const name=friendDisplayName(friend);
-  appendFriendSystemMessage(friend,`正在呼叫 ${name}。对方接听后进入语音通话；未接听时，不会把你的声音转成文字发送。`);
+  appendFriendSystemMessage(friend,`网页里先给 ${name} 留言。实时通话留给 App 版本实现。`);
   supaInsertLead({
     lead_type:'social',
-    channel:'friend_voice_call',
-    need_type:'friend_voice_call',
+    channel:'friend_web_message_hint',
+    need_type:'friend_web_message_hint',
     name:getPassenger().name||'华伴用户',
     contact:getPassenger().phone||'',
-    message:`向好友 ${name} 发起语音通话`,
-    status:'calling',
+    message:`提示好友网页留言模式：${name}`,
+    status:'notified',
     fields:{
-      event:'friend_voice_call_started',
+      event:'friend_web_message_hint',
       from_code:getFriendCode(),
       to_code:friend.code||friend.id||'',
       friend,
@@ -16229,7 +16235,7 @@ function stopFriendVoiceCall(showMessage=true){
   const friend=ACTIVE_FRIEND_CHAT;
   if(!FRIEND_VOICE_CALL_ACTIVE)return;
   setFriendVoiceCallUI(false);
-  if(showMessage&&friend)appendFriendSystemMessage(friend,'语音通话已结束。');
+  if(showMessage&&friend)appendFriendSystemMessage(friend,'网页留言提示已关闭。');
 }
 
 function friendChatStorageKey(friend={}){
@@ -16288,6 +16294,9 @@ function enterFriendChatMode(friend={}){
   setTopConversationTitle(friendDisplayName(normalized));
   const input=document.getElementById('chat-input');
   if(input)input.placeholder=`给 ${friendDisplayName(normalized)} 发消息`;
+  const mic=document.getElementById('mic-btn');
+  mic?.setAttribute('aria-label','网页留言，App 可通话');
+  mic?.setAttribute('title','网页留言，App 可通话');
   closeMorePanel();
   initFriendAIOrbDrag();
   renderFriendChatPage(normalized);
@@ -16303,6 +16312,9 @@ function exitFriendChatToAI(){
   setTopConversationTitle(AI_TITLE_SNAPSHOT||t('brand_positioning'));
   const input=document.getElementById('chat-input');
   if(input)input.placeholder=t('input_placeholder');
+  const mic=document.getElementById('mic-btn');
+  mic?.setAttribute('aria-label','AI 语音对话');
+  mic?.setAttribute('title','AI 语音对话');
   chatArea.innerHTML=AI_CHAT_SNAPSHOT||chatArea.innerHTML;
   AI_CHAT_SNAPSHOT='';
   scrollBottom();
@@ -16318,7 +16330,6 @@ async function sendFriendChatMessage(text=''){
   saveFriendChatMessages(friend,messages);
   chatArea.appendChild(friendChatBubble(clean,true));
   scrollBottom();
-  playLocalFriendBell();
   supaInsertLead({
     lead_type:'social',
     channel:'friend_chat_message',
@@ -16337,7 +16348,7 @@ async function sendFriendChatMessage(text=''){
     }
   }).catch(()=>null);
   setTimeout(()=>{
-    const hint='我用铃声提醒了，对方看到后就可以回应。';
+    const hint='消息已留下。对方打开华伴后就能看到并回复。';
     const next=readFriendChatMessages(friend);
     next.push({from:'system',text:hint,at:new Date().toISOString()});
     saveFriendChatMessages(friend,next);
