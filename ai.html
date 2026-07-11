@@ -732,6 +732,23 @@ body.theme-night .lang-btn{background:rgba(255,255,255,0.08);border-color:rgba(2
   font-size:12px;
   line-height:1.55;
 }
+.referral-promo-banner{
+  grid-column:1/-1;
+  margin:8px 0 2px;
+  padding:10px 12px;
+  border-radius:12px;
+  background:rgba(7,193,96,.12);
+  border:1px solid rgba(7,193,96,.24);
+  color:#10251d;
+  font-size:13px;
+  font-weight:900;
+  line-height:1.45;
+}
+body.theme-night .referral-promo-banner{
+  color:#dffcef;
+  background:rgba(98,221,178,.13);
+  border-color:rgba(98,221,178,.28);
+}
 .supplier-growth-card .install-actions{
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -2637,6 +2654,7 @@ function renderUserSetupCard(){
         <div class="agent-setup-sub">你熟视无睹的强项，也许正是TA苦苦寻觅的答案</div>
       </div>
     </div>
+    ${pending?.targetName||pending?.targetIndustry||pending?.targetPhone?'<div class="referral-promo-banner">朋友帮你生成业务名片，并在华伴应用程序上推广。</div>':''}
     <div class="agent-setup-grid">
       <input class="agent-setup-input" id="user-setup-name" value="${companionEscape(prefill.name)}" maxlength="12" placeholder="我怎么称呼你">
       <button class="agent-setup-save" onclick="saveUserSetupCard()">保存</button>
@@ -12933,6 +12951,7 @@ function renderBusinessIdentityCard(){
       <strong>事业名片</strong>
       <span>${ready?'姓名、电话、行业已经有了，直接保存即可。':'先留下姓名、电话和行业，让本地需要的人有机会找到你。'}</span>
     </div>
+    <div class="referral-promo-banner">朋友帮你生成业务名片，并在华伴应用程序上推广。</div>
     <div style="grid-column:1/-1;display:grid;gap:9px;margin-top:2px;">
       <input id="business-card-name" value="${companionEscape(name)}" maxlength="18" placeholder="姓名 / 昵称"
         style="height:42px;border:1px solid rgba(0,0,0,.10);border-radius:12px;background:#fff;color:#111;font:14px/1 inherit;padding:0 12px;outline:none;">
@@ -14969,6 +14988,7 @@ function supplierGrowthInviteCopy({name='',industry='',phone='',link=friendInvit
   return `${prefix}${industryLine}
 ${phoneLine}
 
+朋友帮你生成业务名片，并在华伴应用程序上推广。
 华伴会把你的行业、城市、服务范围和联系方式整理清楚，并智能匹配真正需要的人。
 你只要下载或添加到手机桌面，先放着看看会不会有订单找你；有需求时再打开确认。
 被推荐者只绑定第一位推荐者，所以我先把你推荐给华伴。你也可以继续推荐你的朋友用华伴推广。
@@ -15025,6 +15045,7 @@ function showSupplierGrowthLoopCard({name='',industry='',phone='',source='suppli
         <span>${targetMode?'已先关联为待绑定邀请。对方打开并确认任意资料后转为正式绑定。':'被推荐者只绑定第一位推荐者。真实领养、资料和成交会记录贡献。'}</span>
       </div>
     </div>
+    ${targetMode?'<div class="referral-promo-banner">朋友帮你生成业务名片，并在华伴应用程序上推广。</div>':''}
     <textarea id="supplier-growth-copy" readonly style="width:100%;min-height:168px;border:1px solid rgba(255,255,255,0.12);border-radius:14px;background:rgba(255,255,255,0.06);color:inherit;font:13px/1.7 inherit;padding:12px;box-sizing:border-box;resize:vertical;">${companionEscape(copy)}</textarea>
     <div class="supplier-growth-note">赶快推荐你的朋友用华伴推广。积分就是积分，等级权重决定将来每一积分可兑换金额；异常或重复行为不进入分配。</div>
     <div class="install-actions">
