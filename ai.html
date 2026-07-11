@@ -15702,14 +15702,14 @@ async function recordFriendReferralClosedLoop({inviterCode='',refereeCode='',inv
     }).catch(()=>null);
   }
   await recordFriendshipRows({inviterCode:a,refereeCode:b,inviter,referee,source,cardBy});
-  if(eventRow&&firstRef.isFirst){
+  if(firstRef.isFirst){
     await recordFriendPointEvent({
       ownerCode:a,
       action:'referral_join',
       points:POINTS_RULES.referral_join,
       relatedCode:b,
       reason:'好友扫码领养华伴',
-      fields:{...fields,ref_level:1}
+      fields:{...fields,ref_level:1,referral_event_saved:Boolean(eventRow)}
     });
     if(secondLevelEligible){
       await recordFriendPointEvent({
@@ -15721,6 +15721,7 @@ async function recordFriendReferralClosedLoop({inviterCode='',refereeCode='',inv
         fields:{
           ...fields,
           ref_level:2,
+          referral_event_saved:Boolean(eventRow),
           direct_referrer_code:a,
           second_level_referrer_code:secondLevelCode,
           second_level_referee_code:b
