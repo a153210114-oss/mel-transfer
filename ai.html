@@ -13840,6 +13840,36 @@ function resolveUnifiedOrderPartyCodes(order={}){
   return {buyerCode,sellerCode};
 }
 
+function currentUnifiedOrderPartyRole(order={},parties=resolveUnifiedOrderPartyCodes(order)){
+  const currentCode=normalizeSupplyCode(getFriendCode());
+  if(currentCode&&currentCode===parties.sellerCode)return 'seller';
+  return 'buyer';
+}
+
+function unifiedOrderCompletionState(order={},parties=resolveUnifiedOrderPartyCodes(order)){
+  const fields=order.fields||{};
+  const confirmations=fields.completion_confirmations||{};
+  const buyerConfirmed=Boolean(
+    fields.buyer_completion_confirmed_at ||
+    confirmations.buyer?.confirmed_at
+  );
+  const sellerConfirmed=Boolean(
+    fields.seller_completion_confirmed_at ||
+    confirmations.seller?.confirmed_at
+  );
+  const role=currentUnifiedOrderPartyRole(order,parties);
+  const otherRole=role==='seller'?'buyer':'seller';
+  return {
+    buyerConfirmed,
+    sellerConfirmed,
+    bothConfirmed:buyerConfirmed&&sellerConfirmed,
+    role,
+    otherRole,
+    currentConfirmed:role==='seller'?sellerConfirmed:buyerConfirmed,
+    otherConfirmed:otherRole==='seller'?sellerConfirmed:buyerConfirmed
+  };
+}
+
 async function recordCompletedTransactionPartyPoints(order={}){
   const {buyerCode,sellerCode}=resolveUnifiedOrderPartyCodes(order);
   if(!buyerCode||!sellerCode||buyerCode===sellerCode){
@@ -14149,24 +14179,54 @@ async function completeUnifiedOrderAndAwardPoints(orderId='',btn){
     const proof=order.performance_proof||{};
     const timeline=Array.isArray(proof.timeline)?proof.timeline:[];
     const fields=order.fields||{};
+    const confirmations=fields.completion_confirmations||{};
+    const state=unifiedOrderCompletionState(order,parties);
+    const role=state.role;
+    const otherRole=state.otherRole;
+    const roleLabel=role==='seller'?'服务方':'需求方';
+    const otherLabel=otherRole==='seller'?'服务方':'需求方';
+    const nextConfirmations={
+      ...confirmations,
+      [role]:{
+        ...(confirmations[role]||{}),
+        confirmed_at:confirmations[role]?.confirmed_at||now,
+        code:role==='seller'?parties.sellerCode:parties.buyerCode
+      }
+    };
+    const nextBuyerConfirmed=state.buyerConfirmed||role==='buyer';
+    const nextSellerConfirmed=state.sellerConfirmed||role==='seller';
+    const bothConfirmed=nextBuyerConfirmed&&nextSellerConfirmed;
     const awarded=fields.completion_points_awarded===true;
     await supaPatch(`huaban_orders?id=eq.${encodeURIComponent(order.id)}&tenant_id=eq.${TENANT_ID}`,{
-      status:'completed',
+      status:bothConfirmed?'completed':(order.status==='supplier_confirmed'?'in_progress':order.status),
       temporary_chat_status:order.temporary_chat_status==='none'?'open':(order.temporary_chat_status||'open'),
       performance_proof:{
         ...proof,
-        timeline:[...timeline,{event:'completed_paid',at:now,note:'双方履约完成并确认支付'}]
+        timeline:[
+          ...timeline,
+          ...(state.currentConfirmed?[]:[{event:`${role}_completed_paid_confirmed`,at:now,note:`${roleLabel}确认履约和支付完成`}]),
+          ...(bothConfirmed&&!fields.completed_paid_at?[{event:'completed_paid',at:now,note:'双方均确认履约和支付完成'}]:[])
+        ]
       },
       fields:{
         ...fields,
         buyer_code:parties.buyerCode,
         seller_code:parties.sellerCode,
-        buyer_status:'completed',
-        supplier_status:'completed',
-        payment_status:'completed',
-        completed_paid_at:fields.completed_paid_at||now
+        completion_confirmations:nextConfirmations,
+        buyer_completion_confirmed_at:nextBuyerConfirmed?(fields.buyer_completion_confirmed_at||now):null,
+        seller_completion_confirmed_at:nextSellerConfirmed?(fields.seller_completion_confirmed_at||now):null,
+        buyer_status:nextBuyerConfirmed?'completion_confirmed':(fields.buyer_status||'confirmed'),
+        supplier_status:nextSellerConfirmed?'completion_confirmed':(fields.supplier_status||'confirmed'),
+        payment_status:bothConfirmed?'completed':'waiting_counterparty_confirmation',
+        completed_paid_at:bothConfirmed?(fields.completed_paid_at||now):fields.completed_paid_at||null
       }
     });
+    if(!bothConfirmed){
+      document.getElementById('unified-order-detail-modal')?.remove();
+      await agentSay(`${roleLabel}已确认。还需要${otherLabel}确认后，才算履约完整；我会提醒另一方确认，双方确认后各记 50 积分。`,150);
+      loadProfileTrips(getPassenger().phone);
+      return;
+    }
     if(!awarded){
       await recordCompletedTransactionPartyPoints({...order,status:'completed',fields:{...fields,buyer_code:parties.buyerCode,seller_code:parties.sellerCode}});
       await supaPatch(`huaban_orders?id=eq.${encodeURIComponent(order.id)}&tenant_id=eq.${TENANT_ID}`,{
@@ -14174,8 +14234,11 @@ async function completeUnifiedOrderAndAwardPoints(orderId='',btn){
           ...fields,
           buyer_code:parties.buyerCode,
           seller_code:parties.sellerCode,
-          buyer_status:'completed',
-          supplier_status:'completed',
+          completion_confirmations:nextConfirmations,
+          buyer_completion_confirmed_at:fields.buyer_completion_confirmed_at||now,
+          seller_completion_confirmed_at:fields.seller_completion_confirmed_at||now,
+          buyer_status:'completion_confirmed',
+          supplier_status:'completion_confirmed',
           payment_status:'completed',
           completed_paid_at:fields.completed_paid_at||now,
           completion_points_awarded:true,
