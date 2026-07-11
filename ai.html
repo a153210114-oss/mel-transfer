@@ -2048,6 +2048,7 @@ function saveUserIdentity({name,avatar,industry,phone}){
 
 async function completeReferralJoinFromSavedProfile(profile={}){
   if(typeof recordFriendReferralClosedLoop!=='function')return null;
+  if(!String(profile.name||profile.phone||profile.industry||'').trim())return null;
   const params=new URLSearchParams(location.search);
   const incoming=normalizeReferralCode(
     sessionStorage.getItem('incoming_ref') ||
@@ -12874,15 +12875,18 @@ async function saveBusinessIdentityCard(){
   const name=document.getElementById('business-card-name')?.value||'';
   const phone=document.getElementById('business-card-phone')?.value||'';
   const industry=document.getElementById('business-card-industry')?.value||'';
-  if(!String(phone||'').trim()||!String(industry||'').trim()){
-    await agentSay('还差电话和行业。填上这两项，我就能先写入华伴系统；其他资料以后再补也行。',100);
+  if(!String(name||phone||industry||'').trim()){
+    await agentSay('先填姓名、电话、职业中的任意一项，我就能先帮你记上。',100);
     return;
   }
   saveUserIdentity({name,avatar:getUserProfile().avatar||'👤',industry,phone});
   markHomeIntroDone();
   document.getElementById('business-identity-card')?.remove();
-  await agentSay('已保存。你的事业名片已经写入华伴系统；有人需要这类服务时，我会优先拿来匹配。',90);
-  showSupplierGrowthLoopCard({name,industry,phone,source:'business_identity_card_saved'});
+  const missing=[!String(phone||'').trim()?'电话':'',!String(industry||'').trim()?'职业':''].filter(Boolean);
+  await agentSay(missing.length?`已记录。推荐关联先锁定，${missing.join('、')}以后再补。`:'已保存。你的事业名片已经写入华伴系统；有人需要这类服务时，我会优先拿来匹配。',90);
+  if(String(phone||'').trim()&&String(industry||'').trim()){
+    showSupplierGrowthLoopCard({name,industry,phone,source:'business_identity_card_saved'});
+  }
 }
 
 function openBusinessDetailsFromCard(){
@@ -12911,10 +12915,15 @@ function saveUserIdentityFromEditor(){
   const avatar=document.getElementById('user-editor-avatar')?.value||'👤';
   const industry=document.getElementById('user-editor-industry')?.value||'';
   const phone=document.getElementById('user-editor-phone')?.value||'';
+  if(!String(name||phone||industry||'').trim()){
+    agentSay('先填姓名、电话、职业中的任意一项，我就能先帮你记上。',80);
+    return;
+  }
   saveUserIdentity({name,avatar,industry,phone});
   markHomeIntroDone();
   document.querySelector('div[style*=fixed]')?.remove();
-  agentSay('好呀，我记住你的名片了。你熟视无睹的强项，也许正是TA苦苦寻觅的答案。',80);
+  const missing=[!String(name||'').trim()?'姓名':'',!String(phone||'').trim()?'电话':'',!String(industry||'').trim()?'职业':''].filter(Boolean);
+  agentSay(missing.length?`已先记录。推荐关联先锁定，${missing.join('、')}以后再补。`:'名片已保存。',80);
   if(String(industry||'').trim()&&String(phone||'').trim()){
     setTimeout(()=>showSupplierGrowthLoopCard({name,industry,phone,source:'user_identity_saved'}),260);
   }
