@@ -1217,7 +1217,7 @@ body.theme-light .visual-guide-actions .guide-skip{background:rgba(0,0,0,.06);co
           <button onclick="refreshProfileLocationNow(this)" style="border:1px solid rgba(133,232,255,0.32);background:rgba(133,232,255,0.12);color:#85e8ff;border-radius:12px;padding:10px 13px;font-size:13px;font-weight:800;font-family:inherit;cursor:pointer;">重新定位</button>
         </div>
         <div id="profile-location-detail" style="font-size:12px;color:rgba(255,255,255,0.55);line-height:1.65;">还没有拿到详细地址。</div>
-        <button onclick="handleProfileSaveLocation(this)" style="width:100%;margin-top:10px;padding:11px;border:1px solid rgba(7,193,96,0.34);background:rgba(7,193,96,0.18);border-radius:12px;color:white;font-size:13px;font-weight:900;font-family:inherit;cursor:pointer;">保存到地址簿</button>
+        <button onclick="handleProfileSaveLocation(this)" style="width:100%;margin-top:10px;padding:11px;border:1px solid rgba(7,193,96,0.34);background:rgba(7,193,96,0.18);border-radius:12px;color:white;font-size:13px;font-weight:900;font-family:inherit;cursor:pointer;">添加地址</button>
       </div>
     </div>
 
@@ -7485,7 +7485,6 @@ async function openFeatureByKey(key,label,options={}){
   }
   if(key==='region'){
     openProfile();
-    await say('我打开个人中心了。定位和地址簿都放在这里，避免两个入口重复。');
     return;
   }
   if(key==='share'){
@@ -8947,15 +8946,19 @@ async function handleLocationAddressIntent(text='', options={}){
   const wantsSave=/地址簿|保存|标记为|备注为|保存为|叫做|命名为|名称是/i.test(clean);
   const loc=wantsSave ? await reverseGeocodeCurrentPosition({force:true,timeout:16000}) : await ensureCurrentLocationSnapshot();
   if(!loc?.address){
-    const reason=locationErrorText();
-    await agentSay(`${companionEscape(reason)} 也可以先在“我的地址簿”里手动新增地址。`,100);
     showAddressBookEditor();
+    setTimeout(()=>{
+      const hint=document.getElementById('address-book-location-hint');
+      if(hint){
+        hint.textContent=`${locationErrorText()} 可手动填写。`;
+        hint.style.display='block';
+      }
+    },160);
     return true;
   }
   if(wantsSave){
     const label=parseLocationLabelFromText(clean);
     fillAddressBookEditorWithLocation(loc,label);
-    await agentSay(`我已把当前定位填进地址簿：${companionEscape(label)}。${companionEscape(locationAccuracyText(loc))}，请核对门牌、楼层或单元号后点保存。`,100);
     return true;
   }
   await agentSay(`当前定位的详细地址是：${companionEscape(loc.address)}。要保存的话，可以说“保存为我家/公司/学校”。`,100);
@@ -10940,7 +10943,7 @@ function buildPrompt(){
 开场规则：普通入口不要急着推家庭角色，也不要问“爸爸妈妈还是宝宝呀”，只用“提问还是需要我做什么事？”这种干净开场。只有用户明确选择家庭套餐、家庭 AI、全家用 AI，或从家庭入口进入时，才可以轻松问“哈哈，这是谁呀？爸爸妈妈还是宝宝呀”。
 家庭角色推荐：家庭套餐场景里不要急着推功能或显得功利。爸爸/妈妈只是家庭身份，不是最终角色；要先追问“那你是贤内助还是顶梁柱啊？”，等家庭角色定了才推荐。用户说贤内助、负责家里、主内时推荐家庭管家；用户说顶梁柱、负责赚钱、做生意时推荐生意伙伴；孩子、学生或想快乐成长的人推荐快乐成长；做图片、视频、产品、设计和内容的人推荐创意总监。不要用卡片堆给用户看，只在聊天中自然推荐。
 家庭通讯理解：家庭套餐至少要让家人能用上华伴自己的通讯工具。AI 要自然引导“一家人的悄悄话。私密，不被淹没”，强调私密连接、少打扰、需要谁就让华伴找谁；不要主动摊开长好友列表，不要制造红点焦虑。用户需要联系家人时，直接打开双方对话或提醒；用户想不起来是谁时，再弹出好友列表或名片按钮。分享给家庭以外的人时，要表达为“点开/扫码后我们自动成为华伴好友”，让对方更快明白怎么联系和使用。
-口令动作规则：用户说“打开好友列表、看好友、打开个人中心、查看积分、打开订单、扫码、我的二维码、联系客服、切换中文/英文、保存到地址簿、打开定位、查看订单进度”等明确口令时，AI 不要再解释、不要再反问“要不要”、不要只回复“我打开给你看”。必须直接调用对应界面或工具。只有口令缺少对象、可能误操作、涉及付款/交易/隐私授权/合同确认时，才补问一个最关键问题或要求用户确认。用户跟进说“打开呀、看、继续、好的、可以”时，要结合上一轮上下文执行刚才那个动作。
+口令动作规则：用户说“打开好友列表、看好友、打开个人中心、查看积分、打开订单、扫码、我的二维码、联系客服、切换中文/英文、添加地址、打开定位、查看订单进度”等明确口令时，AI 不要再解释、不要再反问“要不要”、不要只回复“我打开给你看”。必须直接调用对应界面或工具。只有口令缺少对象、可能误操作、涉及付款/交易/隐私授权/合同确认时，才补问一个最关键问题或要求用户确认。用户跟进说“打开呀、看、继续、好的、可以”时，要结合上一轮上下文执行刚才那个动作。
 产品骨架：用户直觉里只有一个华伴 AI。所有商业化系统都在后台运行；接机、包车、外卖、接单、商家使用等都只是 AI 背后调用的工具，或审核后给使用者使用的工具。
 核心定位：除了需要与被需要，生活不该被打扰。华伴是一款有脑、有手的 AI，也是一个更出色的你。在华伴，每个人都可以被帮助，也可以被需要。生活，是发现用户的真实需求并尽力满足用户；事业，是帮助用户发现机会、连接客户、提升成交，逐步实现商业目标。
 首要任务：保持华伴飞轮不断链。每次用户提出真实需求，都要像真正智能体一样先理解意图，再判断缺口，再调用可用工具推进结果。能直接回答就直接给结果；能搜索就搜索；能匹配数据库就匹配；能找到可联系对象就给联系人、电话、来源提示和可复制短信；能整理成计划就给下一步；能沉淀供给就默默记录。禁止用死话术假装办事；缺信息时只问一个关键问题。用户只看到结果和下一步，后台完成需求沉淀、供给沉淀、联系触达和学习复用。
@@ -12728,20 +12731,20 @@ function showAddressBookEditor(){
   overlay.innerHTML=`
     <div style="background:#0d1f3c;border-radius:24px 24px 0 0;padding:24px 20px 44px;width:100%;max-width:480px;max-height:80vh;overflow-y:auto;">
       <div style="width:40px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:0 auto 20px;"></div>
-      <div style="font-size:16px;font-weight:900;color:white;margin-bottom:16px;">📍 我的地址簿</div>
+      <div style="font-size:16px;font-weight:900;color:white;margin-bottom:16px;">📍 地址簿</div>
       <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:12px;margin-bottom:14px;">
-        <div style="font-size:12px;color:rgba(255,255,255,0.56);line-height:1.6;margin-bottom:10px;">把家、公司、学校或常用酒店保存下来。以后你说“送家里”“从公司出发”，华伴会优先使用这里的地址。</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.56);line-height:1.6;margin-bottom:10px;">保存家、公司、学校等常用地址。</div>
         <input id="address-book-label" placeholder="地址名称，例如：我家 / 公司 / 学校"
           style="width:100%;height:40px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:10px;color:white;font-size:13px;font-family:inherit;outline:none;padding:0 12px;margin-bottom:8px;">
-        <input class="address-autocomplete" id="address-book-address" placeholder="详细地址，可编辑后保存"
+        <input class="address-autocomplete" id="address-book-address" placeholder="详细地址，含门牌或单元号"
           style="width:100%;height:40px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:10px;color:white;font-size:13px;font-family:inherit;outline:none;padding:0 12px;margin-bottom:9px;">
         <button onclick="saveAddressBookEntryFromEditor()"
-          style="width:100%;padding:11px;background:rgba(7,193,96,0.26);border:1px solid rgba(7,193,96,0.38);border-radius:11px;color:white;font-size:13px;font-weight:900;cursor:pointer;font-family:inherit;">保存到地址簿</button>
+          style="width:100%;padding:11px;background:rgba(7,193,96,0.26);border:1px solid rgba(7,193,96,0.38);border-radius:11px;color:white;font-size:13px;font-weight:900;cursor:pointer;font-family:inherit;">保存地址</button>
         <button onclick="saveCurrentLocationToAddressBookFromEditor(this)"
-          style="width:100%;padding:11px;background:rgba(0,212,255,0.14);border:1px solid rgba(0,212,255,0.28);border-radius:11px;color:white;font-size:13px;font-weight:900;cursor:pointer;font-family:inherit;margin-top:8px;">定位并填入地址</button>
+          style="width:100%;padding:11px;background:rgba(0,212,255,0.14);border:1px solid rgba(0,212,255,0.28);border-radius:11px;color:white;font-size:13px;font-weight:900;cursor:pointer;font-family:inherit;margin-top:8px;">用当前位置填入</button>
         <div id="address-book-location-hint" style="display:none;margin-top:9px;font-size:11px;line-height:1.5;color:rgba(255,255,255,0.48);"></div>
       </div>
-      ${items||'<div style="text-align:center;color:rgba(255,255,255,0.3);padding:20px;">暂无保存地址</div>'}
+      ${items||'<div style="text-align:center;color:rgba(255,255,255,0.3);padding:20px;">暂无地址</div>'}
       <button onclick="this.closest('div[style*=fixed]').remove()"
         style="width:100%;padding:12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:rgba(255,255,255,0.6);font-size:13px;cursor:pointer;font-family:inherit;margin-top:8px;">关闭</button>
     </div>`;
@@ -12893,14 +12896,13 @@ function saveAddressBookEntryFromEditor(){
   }
   document.querySelector('div[style*=fixed]')?.remove();
   showAddressBookEditor();
-  agentSay('地址已保存。以后你说“送家里”“从公司出发”这类话，我会优先用地址簿，不再重复问。',80);
 }
 
 async function saveCurrentLocationToAddressBookFromEditor(trigger=null){
   const label=String(document.getElementById('address-book-label')?.value||'').trim()||'当前位置';
   if(trigger){trigger.disabled=true;trigger.textContent='正在定位...';}
   const loc=await reverseGeocodeCurrentPosition({force:true,timeout:16000});
-  if(trigger){trigger.disabled=false;trigger.textContent='定位并填入地址';}
+  if(trigger){trigger.disabled=false;trigger.textContent='用当前位置填入';}
   if(!loc?.address){
     alert(locationErrorText()+' 也可以手动填写详细地址。');
     return;
@@ -12915,10 +12917,9 @@ async function saveCurrentLocationToAddressBookFromEditor(trigger=null){
   }
   if(hint){
     const quality=loc.precise?'已拿到较精确定位':'定位可能不够精确';
-    hint.textContent=`${quality}，${locationAccuracyText(loc)}。请核对门牌、楼层或单元号后再点“保存到地址簿”。`;
+    hint.textContent=`${quality}，${locationAccuracyText(loc)}。请核对门牌或单元号。`;
     hint.style.display='block';
   }
-  agentSay(`我已填入当前定位：${companionEscape(loc.address)}。${companionEscape(locationAccuracyText(loc))}，请确认或补充门牌后再保存。`,80);
 }
 
 // ── 底部导航 ──
@@ -13141,7 +13142,7 @@ function updateProfileLocationStatus(){
       const acc=loc.accuracy?` · 精度约 ${Math.round(Number(loc.accuracy))} 米`:'';
       detailEl.textContent=`${loc.address}${acc} · ${formatProfileLocationTime(loc.updatedAt)}`;
     }else{
-      detailEl.textContent=`当前识别为 ${city}。还没有拿到详细地址，点“重新定位”后可保存到地址簿。`;
+      detailEl.textContent=`当前识别为 ${city}。可重新定位或添加地址。`;
     }
   }
 }
@@ -13159,12 +13160,12 @@ async function refreshProfileLocationNow(btn=null){
     updateProfileLocationStatus();
   }else{
     if(cityEl)cityEl.textContent=currentRegion.city||currentRegion.country||'未定位';
-    if(detailEl)detailEl.textContent=`${locationErrorText()} 可点“保存到地址簿”手动填写。`;
+    if(detailEl)detailEl.textContent=`${locationErrorText()} 可点“添加地址”手动填写。`;
   }
 }
 
 async function handleProfileSaveLocation(btn=null){
-  const oldLabel=btn?.textContent||'保存到地址簿';
+  const oldLabel=btn?.textContent||'添加地址';
   if(btn){btn.disabled=true;btn.textContent='定位中...';}
   try{
     const loc=await reverseGeocodeCurrentPosition({force:true,timeout:16000});
