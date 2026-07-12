@@ -216,14 +216,9 @@ function getReleaseLevel(){
   return LEVELS[stage-1]||LEVELS[0];
 }
 function getReleaseStage(){return Math.max(1,Math.min(LEVELS.length,Number(profileSummaryCache?.release?.stage||profileSummaryCache?.points?.release_stage||1)||1))}
-async function supaGet(path){
-  const res=await fetch(SUPA_URL+'/rest/v1/'+path,{headers:{apikey:SUPA_KEY,Authorization:'Bearer '+SUPA_KEY}});
-  if(!res.ok)return [];
-  return res.json();
-}
-async function supaInsert(table,data){
-  const res=await fetch(SUPA_URL+'/rest/v1/'+table,{method:'POST',headers:{apikey:SUPA_KEY,Authorization:'Bearer '+SUPA_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(data)});
-  return res.ok;
+function renderLevelBadge(){
+  const level=getReleaseLevel();
+  $('levelBadge').textContent=`${level.icon} ${level.name}`;
 }
 function authErrorMessage(error, fallback='手机号验证请求失败'){
   const raw=String(error?.message||error||'');
@@ -316,22 +311,6 @@ function uniqueCodes(list=[]){
     seen.add(code);
     return true;
   });
-}
-async function loadIdentityCodes(force=false){
-  if(identityCodesCache&&!force)return identityCodesCache;
-  const summary=await loadProfileSummary(force).catch(()=>null);
-  if(summary?.identityCodes?.length){
-    identityCodesCache=uniqueCodes(summary.identityCodes);
-    return identityCodesCache;
-  }
-  const user=getUser();
-  const phone=normalizePhone(user.phone||verifiedPhone());
-  const codes=[getFriendCode(),getPassenger().ref];
-  if(phone){
-    // 未登录或 token 过期时只保留本地身份码，不再用 anon key 直接查询隐私表。
-  }
-  identityCodesCache=uniqueCodes(codes);
-  return identityCodesCache;
 }
 function avatarMarkup(value){
   const clean=String(value||'👤').trim();
@@ -460,8 +439,7 @@ function renderIdentity(){
   const syncError=accountSyncError();
   $('accountState').textContent=verified?`已注册 · ${accountUid()}`:(syncError?'账号同步失败':'未完成验证码注册');
   $('verifyHint').textContent=verified?'当前手机号已完成验证注册。':(syncError?`短信验证通过，但华伴账号同步失败：${syncError}`:'填写手机号后发送验证码。验证完成后，手机号会成为华伴账号的正式身份锚点，推荐关系和积分再归集到这个账号。');
-  const level=getReleaseLevel();
-  $('levelBadge').textContent=`${level.icon} ${level.name}`;
+  renderLevelBadge();
 }
 async function saveIdentity(){
   const name=$('nameInput').value.trim().slice(0,12);
@@ -778,6 +756,7 @@ async function loadStats(){
     const p=summary.points;
     $('points').textContent=String(Number(p.total||0)||0);
     $('pointsBreakdown').textContent=`基础 ${p.base||0} · 一级 ${p.direct||0} · 二级 ${p.second||0} · 审核中 ${p.pending||0} · 待绑定 ${p.pending_bind||0} · 归集 ${(summary.identityCodes||[]).length} 个身份码`;
+    renderLevelBadge();
     return;
   }
   const pendingLocal=pendingReferralInvitesStore().filter(item=>String(item.status||'')!=='已绑定').length;
