@@ -1,10 +1,9 @@
-const CACHE_NAME = 'huaban-mobile-shell-v5';
+const CACHE_NAME = 'huaban-mobile-shell-v6';
 const APP_SHELL = [
   '/',
   '/index.html',
   '/official.html',
   '/ai.html',
-  '/admin.html',
   '/manifest.json',
   '/assets/brand/huaban-logo-v1.png',
   '/assets/brand/apple-touch-icon.png',
@@ -35,10 +34,14 @@ self.addEventListener('fetch', event => {
 
   const url = new URL(request.url);
   if (url.origin !== location.origin) return;
+  if (url.pathname.startsWith('/api/') || url.pathname === '/admin' || url.pathname === '/admin.html' || url.pathname.startsWith('/admin/')) {
+    event.respondWith(fetch(request, { cache: 'no-store' }));
+    return;
+  }
 
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request)
+      fetch(request, { cache: 'no-store' })
         .then(response => {
           const copy = response.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(url.pathname, copy));

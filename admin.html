@@ -1949,6 +1949,16 @@ async function verifyAdminSession() {
   }
 }
 
+async function requireAdminSession() {
+  const ok = await verifyAdminSession();
+  if (!ok) {
+    sessionStorage.removeItem(ADMIN_TOKEN_KEY);
+    setAdminLocked(true);
+    setAdminAuthError('登录已过期，请重新进入后台');
+    throw new Error('Admin session required');
+  }
+}
+
 async function adminLogin(event) {
   event?.preventDefault();
   const input = document.getElementById('admin-password');
@@ -1997,6 +2007,7 @@ function adminLogout() {
 }
 
 async function supaFetch(path) {
+  await requireAdminSession();
   const res = await fetch(SUPA_URL + '/rest/v1/' + path, {
     headers: {
       'apikey': SUPA_KEY,
@@ -2009,6 +2020,7 @@ async function supaFetch(path) {
 }
 
 async function supaPatch(path, data) {
+  await requireAdminSession();
   const res = await fetch(SUPA_URL + '/rest/v1/' + path, {
     method: 'PATCH',
     headers: {
@@ -2026,6 +2038,7 @@ async function supaPatch(path, data) {
 }
 
 async function supaInsert(table, data) {
+  await requireAdminSession();
   const res = await fetch(SUPA_URL + '/rest/v1/' + table, {
     method: 'POST',
     headers: {
@@ -3250,23 +3263,11 @@ async function updateProjectResearch(status, patch = {}){
     ...patch,
     updatedByAdminAt: new Date().toISOString()
   };
-  const res = await fetch(`${SUPA_URL}/rest/v1/beta_leads?id=eq.${encodeURIComponent(row.id)}`, {
-    method:'PATCH',
-    headers:{
-      apikey: SUPA_KEY,
-      Authorization:`Bearer ${SUPA_KEY}`,
-      'Content-Type':'application/json',
-      Prefer:'return=representation'
-    },
-    body:JSON.stringify({
-      status,
-      stage: status === 'done' ? 'research_result_saved' : 'research_running',
-      fields
-    })
+  await supaPatch(`beta_leads?id=eq.${encodeURIComponent(row.id)}`, {
+    status,
+    stage: status === 'done' ? 'research_result_saved' : 'research_running',
+    fields
   });
-  const text = await res.text();
-  const payload = text ? JSON.parse(text) : null;
-  if(!res.ok) throw new Error(payload?.message || text || '更新失败');
   await loadProjectResearch();
 }
 

@@ -194,7 +194,7 @@ const POINTS_ACTION_GROUPS=[
 ];
 function $(id){return document.getElementById(id);}
 function esc(v){return String(v||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
-function jsString(v){return String(v||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,'\\n').replace(/\r/g,'');}
+function jsString(v){return String(v||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;').replace(/\n/g,'\\n').replace(/\r/g,'');}
 function toast(text){const el=$('toast');el.textContent=text;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1500);}
 function getLocal(key){try{return JSON.parse(localStorage.getItem(key)||'null')}catch(e){return null}}
 function setLocal(key,val){localStorage.setItem(key,JSON.stringify(val))}
@@ -211,10 +211,11 @@ function getFriendCode(){
   return code;
 }
 function getReleaseLevel(){
-  const stage=Math.max(1,Math.min(LEVELS.length,Math.round(Math.log2(Math.max(1,Number(localStorage.getItem('huaban_contribution_release_coefficient')||'1'))))+1));
+  const serverStage=Number(profileSummaryCache?.release?.stage||profileSummaryCache?.points?.release_stage||1);
+  const stage=Math.max(1,Math.min(LEVELS.length,Number.isFinite(serverStage)?serverStage:1));
   return LEVELS[stage-1]||LEVELS[0];
 }
-function getReleaseStage(){return Math.max(1,Math.min(LEVELS.length,LEVELS.indexOf(getReleaseLevel())+1))}
+function getReleaseStage(){return Math.max(1,Math.min(LEVELS.length,Number(profileSummaryCache?.release?.stage||profileSummaryCache?.points?.release_stage||1)||1))}
 async function supaGet(path){
   const res=await fetch(SUPA_URL+'/rest/v1/'+path,{headers:{apikey:SUPA_KEY,Authorization:'Bearer '+SUPA_KEY}});
   if(!res.ok)return [];
@@ -281,10 +282,29 @@ function accountUid(){
 function accountSyncError(){
   return String(localStorage.getItem('huaban_account_sync_error')||'').trim();
 }
+function authAccessToken(){
+  return String(localStorage.getItem('huaban_auth_access_token')||'').trim();
+}
 function isPhoneVerified(phone=''){
   return normalizePhone(phone)&&normalizePhone(phone)===normalizePhone(verifiedPhone())&&Boolean(accountUid())&&!accountSyncError();
 }
 let identityCodesCache=null;
+let profileSummaryCache=null;
+async function loadProfileSummary(force=false){
+  if(profileSummaryCache&&!force)return profileSummaryCache;
+  const token=authAccessToken();
+  if(!token)return null;
+  profileSummaryCache=await postJson('/api/profile-summary',{
+    accessToken:token,
+    friendCode:getFriendCode()
+  }).catch(error=>{
+    if(/登录状态|jwt|token|expired|invalid/i.test(String(error?.message||''))){
+      localStorage.removeItem('huaban_auth_access_token');
+    }
+    throw error;
+  });
+  return profileSummaryCache;
+}
 function uniqueCodes(list=[]){
   const seen=new Set();
   return list.map(normalizeReferralCode).filter(code=>{
@@ -295,17 +315,16 @@ function uniqueCodes(list=[]){
 }
 async function loadIdentityCodes(force=false){
   if(identityCodesCache&&!force)return identityCodesCache;
+  const summary=await loadProfileSummary(force).catch(()=>null);
+  if(summary?.identityCodes?.length){
+    identityCodesCache=uniqueCodes(summary.identityCodes);
+    return identityCodesCache;
+  }
   const user=getUser();
   const phone=normalizePhone(user.phone||verifiedPhone());
   const codes=[getFriendCode(),getPassenger().ref];
   if(phone){
-    const accounts=await supaGet(`huaban_accounts?tenant_id=eq.${TENANT_ID}&normalized_phone=eq.${encodeURIComponent(phone)}&order=created_at.asc&limit=20&select=friend_code`).catch(()=>[]);
-    (Array.isArray(accounts)?accounts:[]).forEach(row=>codes.push(row.friend_code));
-    const links=await supaGet(`huaban_identity_links?tenant_id=eq.${TENANT_ID}&normalized_phone=eq.${encodeURIComponent(phone)}&status=eq.active&order=created_at.asc&limit=120&select=friend_code,fields`).catch(()=>[]);
-    (Array.isArray(links)?links:[]).forEach(row=>{
-      codes.push(row.friend_code);
-      codes.push(row.fields?.canonical_friend_code);
-    });
+    // 未登录或 token 过期时只保留本地身份码，不再用 anon key 直接查询隐私表。
   }
   identityCodesCache=uniqueCodes(codes);
   return identityCodesCache;
@@ -451,23 +470,6 @@ async function saveIdentity(){
   saveProfile({display_name:name,industry,phone,avatar});
   const p=getPassenger();
   setLocal('au_passenger',{...p,name:name||p.name||'华伴用户',industry:industry||p.industry||'',phone:phone||p.phone||'',avatar,ref:getFriendCode(),logged_in:true,profile_ready:true,login_source:p.login_source||'profile_page'});
-  if(phone){
-    await supaInsert('huaban_identity_links',{
-      tenant_id:TENANT_ID,
-      phone,
-      normalized_phone:normalizePhone(phone),
-      friend_code:getFriendCode(),
-      display_name:name||'华伴用户',
-      avatar,
-      industry,
-      source:'profile_page_save',
-      source_ref:getFriendCode(),
-      link_type:'huaban_user_profile',
-      status:'active',
-      owner_code:getFriendCode(),
-      fields:{user_visible:false,identity_anchor:'phone',created_by:'huaban_profile_page',profile_ready:true}
-    }).catch(()=>false);
-  }
   let referralBound=false;
   try{
     const result=await completeReferralJoinFromProfile({name:name||'华伴用户',industry,phone,avatar});
@@ -578,8 +580,11 @@ async function verifyPhoneCode(){
       token:code,
       type:'sms'
     },{timeout:25000});
+    const accessToken=auth?.access_token||auth?.session?.access_token||'';
+    if(accessToken)localStorage.setItem('huaban_auth_access_token',accessToken);
+    if(auth?.refresh_token||auth?.session?.refresh_token)localStorage.setItem('huaban_auth_refresh_token',auth?.refresh_token||auth?.session?.refresh_token);
     const data=await postJson('/api/auth-phone-sync',{
-      accessToken:auth?.access_token||auth?.session?.access_token||'',
+      accessToken,
       phone,
       name:user.name,
       industry:user.industry,
@@ -588,6 +593,8 @@ async function verifyPhoneCode(){
     });
     const account=data.account||{};
     localStorage.removeItem('huaban_account_sync_error');
+    profileSummaryCache=null;
+    identityCodesCache=null;
     localStorage.setItem('huaban_account_uid',account.account_uid||auth?.user?.id||auth?.session?.user?.id||'');
     localStorage.setItem('huaban_account_id',account.id||auth?.user?.id||auth?.session?.user?.id||'');
     localStorage.setItem('huaban_phone_verified_phone',phone);
@@ -660,6 +667,7 @@ function showPointsDetail(){
         <strong>我的积分</strong>
         <div style="font-size:34px;font-weight:950;color:#f1cf49;line-height:1">${points}</div>
         <p style="margin-top:9px">积分就是积分，用来记录真实参与和贡献；等级权重不改变积分数量，只决定未来每一积分参与权益分配时的权重。</p>
+        <p style="margin-top:7px;color:rgba(255,255,255,.48)">页面只展示后台账本读取结果；真实积分、等级和权重以服务端积分流水与结算记录为准。</p>
       </div>
       <div class="rule-card">
         <strong>释放池与等级</strong>
@@ -695,91 +703,32 @@ function showPointsDetail(){
   document.body.appendChild(modal);
 }
 async function loadStats(){
-  const identityCodes=await loadIdentityCodes(true);
-  const user=getUser();
-  let base=0,direct=0,second=0,pending=0;
-  if(user.phone){
-    const contacts=await supaGet(`contacts?phone=eq.${encodeURIComponent(user.phone)}&tenant_id=eq.${TENANT_ID}&select=voucher_balance`).catch(()=>[]);
-    base=Number(contacts?.[0]?.voucher_balance||0)||0;
-  }
-  const events=[];
-  for(const ownerCode of identityCodes){
-    const rows=await supaGet(`huaban_point_events?tenant_id=eq.${TENANT_ID}&owner_code=eq.${encodeURIComponent(ownerCode)}&order=created_at.desc&limit=300&select=id,event_key,points,action,status,fields,related_code`).catch(()=>[]);
-    if(Array.isArray(rows))events.push(...rows);
-  }
-  const creditedDirect=new Set();
-  const creditedSecond=new Set();
-  const seenEvents=new Set();
-  (Array.isArray(events)?events:[]).forEach(row=>{
-    const eventId=String(row.event_key||row.id||'');
-    if(eventId&&seenEvents.has(eventId))return;
-    if(eventId)seenEvents.add(eventId);
-    const pts=Number(row.points)||0;
-    const status=String(row.status||'').toLowerCase();
-    const action=String(row.action||'');
-    const refLevel=Number(row.fields?.ref_level||0);
-    const related=String(row.related_code||row.fields?.related_code||'').toUpperCase();
-    if(status==='confirmed'){
-      if(action==='referral_second_level_join'||refLevel===2){second+=pts;if(related)creditedSecond.add(related)}
-      else if(action==='referral_join'||refLevel===1){direct+=pts;if(related)creditedDirect.add(related)}
-      else base+=pts;
-    }else pending+=pts;
+  const summary=await loadProfileSummary(true).catch(error=>{
+    $('pointsBreakdown').textContent=`账号资料读取失败：${error.message||'请重新验证手机号'}`;
+    return null;
   });
-  const referrals=[];
-  for(const ownerCode of identityCodes){
-    const rows=await supaGet(`huaban_referral_events?tenant_id=eq.${TENANT_ID}&inviter_code=eq.${encodeURIComponent(ownerCode)}&status=eq.confirmed&order=created_at.desc&limit=300&select=id,referee_code,points_awarded,credit_locked`).catch(()=>[]);
-    if(Array.isArray(rows))referrals.push(...rows);
-  }
-  const seenReferrals=new Set();
-  (Array.isArray(referrals)?referrals:[]).forEach(row=>{
-    const referralId=String(row.id||row.referee_code||'');
-    if(referralId&&seenReferrals.has(referralId))return;
-    if(referralId)seenReferrals.add(referralId);
-    const code=String(row.referee_code||'').toUpperCase();
-    if(code&&!creditedDirect.has(code)&&!row.credit_locked){direct+=Number(row.points_awarded)||POINTS_RULES.referral_join;creditedDirect.add(code)}
-  });
-  const secondRows=[];
-  for(const ownerCode of identityCodes){
-    const rows=await supaGet(`huaban_referral_events?tenant_id=eq.${TENANT_ID}&second_level_referrer_code=eq.${encodeURIComponent(ownerCode)}&status=eq.confirmed&order=created_at.desc&limit=300&select=id,referee_code`).catch(()=>[]);
-    if(Array.isArray(rows))secondRows.push(...rows);
-  }
-  const seenSecondRows=new Set();
-  (Array.isArray(secondRows)?secondRows:[]).forEach(row=>{
-    const secondId=String(row.id||row.referee_code||'');
-    if(secondId&&seenSecondRows.has(secondId))return;
-    if(secondId)seenSecondRows.add(secondId);
-    const code=String(row.referee_code||'').toUpperCase();
-    if(code&&!creditedSecond.has(code)){second+=POINTS_RULES.referral_second_level_join;creditedSecond.add(code)}
-  });
-  const pendingRemote=[];
-  for(const ownerCode of identityCodes){
-    const rows=await supaGet(`huaban_identity_links?tenant_id=eq.${TENANT_ID}&inviter_code=eq.${encodeURIComponent(ownerCode)}&link_type=eq.pending_referral_invite&status=eq.active&order=created_at.desc&limit=300&select=normalized_phone,phone,display_name`).catch(()=>[]);
-    if(Array.isArray(rows))pendingRemote.push(...rows);
+  if(summary?.points){
+    const p=summary.points;
+    $('points').textContent=String(Number(p.total||0)||0);
+    $('pointsBreakdown').textContent=`基础 ${p.base||0} · 一级 ${p.direct||0} · 二级 ${p.second||0} · 审核中 ${p.pending||0} · 待绑定 ${p.pending_bind||0} · 归集 ${(summary.identityCodes||[]).length} 个身份码`;
+    return;
   }
   const pendingLocal=pendingReferralInvitesStore().filter(item=>String(item.status||'')!=='已绑定').length;
-  const total=base+direct+second+pending;
-  $('points').textContent=String(total);
-  $('pointsBreakdown').textContent=`基础 ${base} · 一级 ${direct} · 二级 ${second} · 审核中 ${pending} · 待绑定 ${pendingLocal+pendingRemote.length} · 归集 ${identityCodes.length} 个身份码`;
+  $('points').textContent='0';
+  $('pointsBreakdown').textContent=authAccessToken()
+    ? `积分账本暂时无法读取，请重新验证手机号或检查服务端接口。待绑定 ${pendingLocal}`
+    : `完成手机号验证后，积分、推荐关系和身份码会从后台账本读取。待绑定 ${pendingLocal}`;
 }
 async function loadFriends(){
-  const identityCodes=await loadIdentityCodes();
   let list=localFriendStore();
-  for(const ownerCode of identityCodes){
-    const remote=await supaGet(`huaban_friendships?tenant_id=eq.${TENANT_ID}&owner_code=eq.${encodeURIComponent(ownerCode)}&status=eq.active&order=created_at.desc&limit=120&select=*`).catch(()=>[]);
-    if(Array.isArray(remote))remote.forEach(row=>{
-      const code=String(row.friend_code||row.fields?.friend?.code||'').toUpperCase();
-      if(!code)return;
-      list=mergeFriend(list,{code,name:row.friend_name||row.fields?.friend?.name||`华伴好友 ${code}`,phone:row.friend_phone||'',industry:row.friend_industry||'',avatar:row.friend_avatar||'👤',source:row.source||'friendship_sync',addedAt:row.created_at});
-    });
+  const summary=await loadProfileSummary().catch(()=>null);
+  if(Array.isArray(summary?.friends)){
+    summary.friends.forEach(friend=>{list=mergeFriend(list,friend)});
   }
   for(const friend of list.slice(0,30)){
     const code=String(friend.code||'').toUpperCase();
     if(!code||(friend.phone&&friend.industry&&!isGenericFriendName(friend.name)))continue;
-    const identities=await supaGet(`huaban_identity_links?tenant_id=eq.${TENANT_ID}&friend_code=eq.${encodeURIComponent(code)}&status=eq.active&order=updated_at.desc&limit=1&select=friend_code,display_name,phone,industry,avatar,created_at`).catch(()=>[]);
-    const identity=Array.isArray(identities)?identities[0]:null;
-    if(identity){
-      list=mergeFriend(list,{code,name:identity.display_name||friend.name,phone:identity.phone||friend.phone,industry:identity.industry||friend.industry,avatar:identity.avatar||friend.avatar,source:'identity_link_sync',addedAt:friend.addedAt||identity.created_at});
-    }
+    // 好友补全必须走服务端接口；这里保留已有本地信息，不再用 anon key 直接查身份表。
   }
   saveLocalFriendStore(list);
   $('friendCount').textContent=String(list.length);
@@ -792,6 +741,9 @@ async function loadFriends(){
 function openFriendDetail(code=''){
   const target=localFriendStore().find(friend=>String(friend.code||'').toUpperCase()===String(code||'').toUpperCase());
   if(!target){toast('好友资料还在同步');return;}
+  window.__profileFriendPayloads=window.__profileFriendPayloads||{};
+  const payloadKey=`friend_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
+  window.__profileFriendPayloads[payloadKey]=target;
   document.getElementById('friendDetailSheet')?.remove();
   const overlay=document.createElement('div');
   overlay.id='friendDetailSheet';
@@ -812,23 +764,21 @@ function openFriendDetail(code=''){
       </div>
       <div class="hint" style="margin:12px 0 14px;">这位好友已经在你的本地圈子里。点“联系好友”会回到华伴 AI 对话；点“复制好友链接”可继续分享这位好友的名片入口。</div>
       <div class="actions">
-        <button class="btn" type="button" onclick="sessionStorage.setItem('huaban_profile_target_friend','${jsString(JSON.stringify(target))}');location.href='ai.html?intent=friend_chat&friend=${encodeURIComponent(target.code||'')}'">联系好友</button>
+        <button class="btn" type="button" onclick="goFriendChat('${jsString(payloadKey)}','${jsString(target.code||'')}')">联系好友</button>
         <button class="btn secondary" type="button" onclick="copyTextWithFallback('${jsString(friendUrl)}','复制好友链接')">复制好友链接</button>
       </div>
     </div>`;
   overlay.addEventListener('click',()=>overlay.remove());
   document.body.appendChild(overlay);
 }
+function goFriendChat(payloadKey='',code=''){
+  const friend=window.__profileFriendPayloads?.[payloadKey]||localFriendStore().find(item=>String(item.code||'').toUpperCase()===String(code||'').toUpperCase())||{code};
+  sessionStorage.setItem('huaban_profile_target_friend',JSON.stringify(friend));
+  location.href=`ai.html?intent=friend_chat&friend=${encodeURIComponent(code||friend.code||'')}`;
+}
 async function loadOrders(){
-  const user=getUser();
-  const queries=[];
-  if(user.phone)queries.push(`huaban_orders?tenant_id=eq.${TENANT_ID}&buyer_contact=eq.${encodeURIComponent(user.phone)}&order=created_at.desc&limit=8&select=*`);
-  if(user.name)queries.push(`huaban_orders?tenant_id=eq.${TENANT_ID}&buyer_name=eq.${encodeURIComponent(user.name)}&order=created_at.desc&limit=8&select=*`);
-  let orders=[];
-  for(const q of queries){
-    const rows=await supaGet(q).catch(()=>[]);
-    if(Array.isArray(rows))orders=orders.concat(rows);
-  }
+  const summary=await loadProfileSummary().catch(()=>null);
+  let orders=Array.isArray(summary?.orders)?summary.orders:[];
   const seen=new Set();
   orders=orders.filter(row=>{const id=String(row.id||row.created_at);if(seen.has(id))return false;seen.add(id);return true}).slice(0,8);
   $('orderList').innerHTML=orders.length?orders.map(order=>`

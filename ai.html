@@ -1778,13 +1778,11 @@ const POINTS_ACTION_GROUPS = [
 let profilePointsState = {points: 0, level: LEVELS[0], nextLevel: null};
 
 function getCurrentContributionReleaseCoefficient(){
-  const stored=Number(localStorage.getItem('huaban_contribution_release_coefficient')||'1');
-  return Number.isFinite(stored)&&stored>0?stored:1;
+  return 1;
 }
 
 function getCurrentContributionReleaseStage(){
-  const coefficient=getCurrentContributionReleaseCoefficient();
-  return Math.max(1,Math.min(LEVELS.length,Math.round(Math.log2(Math.max(1,coefficient)))+1));
+  return 1;
 }
 
 function getReleaseLevel(stage=getCurrentContributionReleaseStage()){
@@ -2452,7 +2450,7 @@ function companionEscape(value){
 }
 
 function jsString(value){
-  return String(value||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,'\\n').replace(/\r/g,'');
+  return String(value||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;').replace(/\n/g,'\\n').replace(/\r/g,'');
 }
 
 function companionMood(state){
@@ -6079,6 +6077,7 @@ async function startApp(){
   // 首屏保持纯对话，不主动弹更新卡片。
   // 共创相关能力不主动弹出；普通用户只看到一个华伴 AI 智能体。
   if(currentRole!=='driver')maybeShowIncomingFriendCode();
+  if(currentRole!=='driver')maybeStartFriendChatFromQuery();
   if(currentRole!=='driver')maybeContinueHomepageBusinessEntry();
   if(currentRole!=='driver')maybeStartMutualIntroFromQuery();
   if(currentRole!=='driver')maybeStartPartnerIntentFromQuery();
@@ -13963,6 +13962,7 @@ function showPointsDetail(){
         <div style="font-size:12px;color:rgba(255,255,255,0.48);margin-bottom:4px;">我的积分</div>
         <div style="font-size:36px;font-weight:900;color:#f1cf49;line-height:1;">${points}</div>
         <div style="font-size:12px;color:rgba(255,255,255,0.55);line-height:1.7;margin-top:10px;">积分就是积分，用来记录你的有效动作；等级权重不改变积分数量，只决定将来每一积分可兑换金额。等级按释放池阶段自动变化：每释放一半，权重翻番。</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.42);line-height:1.6;margin-top:8px;">页面只做规则说明和账本展示；真实积分、等级和权重以服务端积分流水与结算记录为准。</div>
       </div>
       <div style="background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.18);border-radius:14px;padding:14px;margin-bottom:12px;font-size:12px;color:rgba(255,255,255,0.68);line-height:1.8;">
         <strong style="display:block;color:white;font-size:13px;margin-bottom:6px;">贡献释放池</strong>
@@ -17636,6 +17636,29 @@ function shouldStartPartnerIntent(){
   const params=new URLSearchParams(location.search);
   const intent=(params.get('intent')||params.get('task')||'').toLowerCase();
   return intent==='partner'||intent==='join'||intent==='cofounder'||params.get('partner')==='1';
+}
+
+function friendFromQueryForChat(){
+  const params=new URLSearchParams(location.search);
+  const intent=(params.get('intent')||params.get('task')||'').toLowerCase();
+  if(intent!=='friend_chat'&&intent!=='friend')return null;
+  const code=normalizeReferralCode(params.get('friend')||params.get('code')||'');
+  let payload=null;
+  try{payload=JSON.parse(sessionStorage.getItem('huaban_profile_target_friend')||'null');}catch(e){payload=null;}
+  if(payload&&(!code||normalizeReferralCode(payload.code||'')===code))return normalizeLocalFriend(payload);
+  const local=localFriendStore().find(friend=>normalizeReferralCode(friend.code||'')===code);
+  if(local)return normalizeLocalFriend(local);
+  if(code)return normalizeLocalFriend({code,name:`华伴好友 ${code}`,avatar:'👤',source:'query_friend_chat'});
+  return null;
+}
+
+function maybeStartFriendChatFromQuery(){
+  const friend=friendFromQueryForChat();
+  if(!friend)return;
+  const key=`huaban_friend_chat_started_${friendStableKey(friend)}`;
+  if(sessionStorage.getItem(key)==='1')return;
+  sessionStorage.setItem(key,'1');
+  setTimeout(()=>openFriendConversation(friend),360);
 }
 
 function maybeStartPartnerIntentFromQuery(){
