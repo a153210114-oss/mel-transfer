@@ -642,9 +642,13 @@ async function loadOrders(){
 function isCoordinateText(value=''){
   return /^-?\d{1,3}(?:\.\d+)?\s*,\s*-?\d{1,3}(?:\.\d+)?$/.test(String(value||'').trim());
 }
+function isAddressLabelOnly(value=''){
+  const clean=String(value||'').trim().replace(/\s+/g,'');
+  return /^(家|我家|家里|公司|办公室|单位|学校|宿舍|酒店|民宿|服务地点|当前位置|当前定位)$/i.test(clean);
+}
 function displayableAddress(value=''){
   const address=String(value||'').trim();
-  return address&&!isCoordinateText(address)?address:'';
+  return address&&!isCoordinateText(address)&&!isAddressLabelOnly(address)?address:'';
 }
 function renderLocation(){
   const loc=getLocationSnapshot();
@@ -714,7 +718,10 @@ function chooseAddressLabel(defaultLabel='家'){
 }
 function rememberAddress(loc={},defaultLabel='家'){
   const address=String(loc.address||'').trim();
-  if(!address)return null;
+  if(!displayableAddress(address)){
+    toast('请填写详细地址，标签不能作为地址保存');
+    return null;
+  }
   const label=chooseAddressLabel(defaultLabel);
   if(!label)return null;
   const item={...loc,label,address,updatedAt:new Date().toISOString()};
@@ -768,7 +775,8 @@ async function refreshLocationNow(){
 }
 function addManualAddress(){
   const loc=getLocationSnapshot()||{};
-  const address=prompt('请输入详细地址',displayableAddress(loc.address));
+  const defaultAddress=displayableAddress(loc.address);
+  const address=prompt('请输入详细地址，例如门牌号、街道、公司名或服务地点',defaultAddress||'');
   if(!address||!address.trim())return;
   const saved=rememberAddress({address:address.trim(),manual:true,source:'profile_manual_address'},'家');
   toast(saved?'地址已保存':'已取消保存');

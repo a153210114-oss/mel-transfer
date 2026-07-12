@@ -9435,7 +9435,10 @@ function saveChatLocationToAddressBook(cardId,label=''){
     return;
   }
   const finalLabel=String(label||'常用地址').trim()||'常用地址';
-  addToAddressBook(address,finalLabel);
+  if(!addToAddressBook(address,finalLabel)){
+    agentSay('这个还不是详细地址，不能保存到地址簿。请先发具体门牌、公司地址，或重新定位。',80);
+    return;
+  }
   const loc=getCurrentLocationSnapshot()||{};
   localStorage.setItem('huaban_current_location',JSON.stringify({
     ...loc,
@@ -13198,8 +13201,21 @@ function saveAddressBook(book){
   localStorage.setItem('huaban_address_book', JSON.stringify(clean.slice(0,20)));
 }
 
+function isAddressLabelOnly(value=''){
+  const clean=String(value||'').trim().replace(/\s+/g,'');
+  return /^(家|我家|家里|公司|办公室|单位|学校|宿舍|酒店|民宿|服务地点|当前位置|当前定位)$/i.test(clean);
+}
+
+function isSavableAddressText(value=''){
+  const address=String(value||'').trim();
+  if(!address||address.length<5)return false;
+  if(isAddressLabelOnly(address))return false;
+  if(/^-?\d{1,3}(?:\.\d+)?\s*,\s*-?\d{1,3}(?:\.\d+)?$/.test(address))return false;
+  return true;
+}
+
 function addToAddressBook(address, label=''){
-  if(!address||address.length<5) return;
+  if(!isSavableAddressText(address)) return false;
   const book = getAddressBook();
   const existing = book.find(a=>a.address===address);
   if(existing){ existing.used=(existing.used||0)+1; }
@@ -13208,6 +13224,7 @@ function addToAddressBook(address, label=''){
   book.sort((a,b)=>(b.used||0)-(a.used||0));
   if(book.length>10) book.pop();
   saveAddressBook(book);
+  return true;
 }
 
 function preferredSavedAddress(labelHint=''){
@@ -16533,6 +16550,14 @@ async function recordFriendReferralClosedLoop({inviterCode='',refereeCode='',inv
   return {eventRow,directPointRow,secondPointRow,firstRef,secondLevelEligible};
 }
 
+function referralBindHasConfirmedPoints(result=null){
+  if(!result||result.ok===false)return false;
+  const direct=result.points?.direct;
+  const second=result.points?.second;
+  const pointOk=row=>row && !row.error && (row.id || row.event_key || row.duplicate===true);
+  return pointOk(direct)||pointOk(second);
+}
+
 async function syncInboundFriendAdds({announce=false}={}){
   const myCode=getFriendCode();
   if(!myCode)return [];
@@ -16613,11 +16638,16 @@ async function syncInboundFriendAdds({announce=false}={}){
     localStorage.setItem(marker,'1');
     added.push(friend);
   });
-  if(reconcileJobs.length)await Promise.allSettled(reconcileJobs);
+  const reconcileResults=reconcileJobs.length?await Promise.allSettled(reconcileJobs):[];
+  const confirmedPointCount=reconcileResults.filter(result=>result.status==='fulfilled'&&referralBindHasConfirmedPoints(result.value)).length;
   await enrichLocalFriendsFromIdentityLinks().catch(()=>[]);
   if(announce&&added.length){
-    rewardCompanionAction('share',{say:`${added.length} 位新朋友通过你的二维码加入了，积分已记录`});
-    await agentSay(`${added.length} 位新朋友通过你的二维码加入了，已经在好友里，积分已记录。`,100);
+    if(confirmedPointCount>0){
+      rewardCompanionAction('share',{say:`${added.length} 位新朋友通过你的二维码加入了，${confirmedPointCount} 条积分已入账`});
+      await agentSay(`${added.length} 位新朋友通过你的二维码加入了，已经在好友里；${confirmedPointCount} 条推荐积分已入账。`,100);
+    }else{
+      await agentSay(`${added.length} 位新朋友通过你的二维码加入了，已经在好友里；推荐积分正在等待后台同步确认。`,100);
+    }
   }
   return added;
 }
