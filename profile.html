@@ -113,11 +113,16 @@ button,input{font:inherit}
   <section class="card">
     <div class="section-title">当前定位</div>
     <div class="hint" id="locationText">还没有定位记录。</div>
-    <div class="hint" id="addressBookText" style="margin-top:8px"></div>
     <div class="actions">
       <button class="btn secondary" onclick="refreshLocationNow()">重新定位</button>
       <button class="btn secondary" onclick="addManualAddress()">添加地址</button>
     </div>
+  </section>
+
+  <section class="card">
+    <div class="section-title">地址簿</div>
+    <div class="hint" style="margin-bottom:10px">保存家、公司、学校等常用地址。华伴会在订单、提醒和智能匹配里优先使用。</div>
+    <div class="list" id="addressBookList"></div>
   </section>
 
   <section class="card">
@@ -634,12 +639,23 @@ async function loadOrders(){
       <div class="item-main"><strong>${esc(order.title||order.service_title||order.need_type||'交易订单')}</strong><em>${esc(order.status||'处理中')} · ${esc(order.price_text||order.budget||'')}</em></div>
     </div>`).join(''):'<div class="empty">还没有订单。交易双方确认后的记录会显示在这里。</div>';
 }
+function isCoordinateText(value=''){
+  return /^-?\d{1,3}(?:\.\d+)?\s*,\s*-?\d{1,3}(?:\.\d+)?$/.test(String(value||'').trim());
+}
+function displayableAddress(value=''){
+  const address=String(value||'').trim();
+  return address&&!isCoordinateText(address)?address:'';
+}
 function renderLocation(){
   const loc=getLocationSnapshot();
-  if(loc?.address)$('locationText').textContent=`${loc.label?loc.label+' · ':''}${loc.address}${loc.accuracy?` · 精度约 ${Math.round(Number(loc.accuracy))} 米`:''}`;
+  const address=displayableAddress(loc?.address);
+  if(address)$('locationText').textContent=`${loc.label?loc.label+' · ':''}${address}${loc.accuracy?` · 精度约 ${Math.round(Number(loc.accuracy))} 米`:''}`;
+  else if(loc?.lat&&loc?.lng)$('locationText').textContent='已获取当前位置，请重新定位识别详细地址，或手动添加家/公司地址。';
   else $('locationText').textContent=localStorage.getItem('huaban_region_city')||'还没有定位记录。';
   const book=getAddressBook();
-  $('addressBookText').textContent=book.length?`已保存：${book.slice(0,3).map(item=>`${item.label} ${item.address}`).join('；')}`:'可把常用地址标注为家、公司或其他。';
+  const cleanBook=book.filter(item=>displayableAddress(item.address));
+  if(cleanBook.length!==book.length)saveAddressBook(cleanBook);
+  renderAddressBook(cleanBook);
 }
 function saveLocationSnapshot(loc){
   const next={...(loc||{}),updatedAt:new Date().toISOString()};
@@ -649,6 +665,47 @@ function saveLocationSnapshot(loc){
 }
 function getAddressBook(){try{return JSON.parse(localStorage.getItem('huaban_address_book')||'[]')||[]}catch(e){return[]}}
 function saveAddressBook(list=[]){localStorage.setItem('huaban_address_book',JSON.stringify(list.slice(0,20)))}
+function renderAddressBook(list=getAddressBook().filter(item=>displayableAddress(item.address))){
+  const el=$('addressBookList');
+  if(!el)return;
+  el.innerHTML=list.length?list.map((item,index)=>`
+    <div class="item">
+      <div class="item-avatar">📍</div>
+      <div class="item-main">
+        <strong>${esc(item.label||'常用地址')}</strong>
+        <em>${esc(displayableAddress(item.address))}</em>
+      </div>
+      <button class="btn secondary" type="button" onclick="useAddressBookItem(${index})" style="width:auto;height:34px;padding:0 10px;border-radius:10px;font-size:12px;">使用</button>
+      <button class="btn secondary" type="button" onclick="renameAddressBookItem(${index})" style="width:auto;height:34px;padding:0 10px;border-radius:10px;font-size:12px;">标注</button>
+      <button class="btn secondary" type="button" onclick="deleteAddressBookItem(${index})" style="width:auto;height:34px;padding:0 10px;border-radius:10px;font-size:12px;">删除</button>
+    </div>`).join(''):'<div class="empty">还没有保存地址。点“重新定位”识别当前位置，或手动添加详细地址。</div>';
+}
+function useAddressBookItem(index){
+  const item=getAddressBook().filter(row=>displayableAddress(row.address))[index];
+  if(!item)return;
+  saveLocationSnapshot(item);
+  toast('已设为当前地址');
+}
+function renameAddressBookItem(index){
+  const list=getAddressBook().filter(row=>displayableAddress(row.address));
+  const item=list[index];
+  if(!item)return;
+  const label=chooseAddressLabel(item.label||'家');
+  if(!label)return;
+  list[index]={...item,label,updatedAt:new Date().toISOString()};
+  saveAddressBook(list);
+  renderLocation();
+  toast('标注已更新');
+}
+function deleteAddressBookItem(index){
+  const list=getAddressBook().filter(row=>displayableAddress(row.address));
+  if(!list[index])return;
+  if(!confirm('删除这个地址？'))return;
+  list.splice(index,1);
+  saveAddressBook(list);
+  renderLocation();
+  toast('地址已删除');
+}
 function chooseAddressLabel(defaultLabel='家'){
   const raw=prompt('把这个地址标注为：家 / 公司 / 学校 / 其他',defaultLabel||'家');
   if(raw===null)return '';
@@ -711,7 +768,7 @@ async function refreshLocationNow(){
 }
 function addManualAddress(){
   const loc=getLocationSnapshot()||{};
-  const address=prompt('请输入详细地址',loc.address&&!/^-?\d+(\.\d+)?,\s*-?\d+(\.\d+)?$/.test(loc.address)?loc.address:'');
+  const address=prompt('请输入详细地址',displayableAddress(loc.address));
   if(!address||!address.trim())return;
   const saved=rememberAddress({address:address.trim(),manual:true,source:'profile_manual_address'},'家');
   toast(saved?'地址已保存':'已取消保存');
