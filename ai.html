@@ -7368,6 +7368,7 @@ const CORE_TOOL_ITEMS=[
   {key:'voice',icon:'🎙️',label:'语音'},
   {key:'media',icon:'📷',label:'发图'},
   {key:'smart-contract',icon:'📄',label:'智能合约'},
+  {key:'location',icon:'📍',label:'定位'},
   {key:'reminder',icon:'⏰',label:'提醒'},
   {key:'manager',icon:'🗂️',label:'管理表'},
   {key:'local-people',icon:'👥',label:'添加好友'},
@@ -7505,6 +7506,7 @@ function renderMoreMenu(category='home'){
     grid.innerHTML=[
       ['voice','🎙️','语音'],
       ['media','📷','发图'],
+      ['location','📍','定位'],
       ['reminder','⏰','提醒'],
       ['share','🔗','分享'],
       ['profile','👤','个人中心'],
@@ -7568,6 +7570,7 @@ function runMoreAction(key,label){
   if(key==='media'||key==='camera'||key==='image'){openMediaChoiceSheet();return;}
   if(key==='intro'){window.location.href='https://www.huabanapp.com/';return;}
   if(key==='smart-contract'){startSmartDealFlow('',{force:true});return;}
+  if(key==='location'){sendLocationFromMenu();return;}
   if(key==='local-people'){openLocalPeopleIntent();return;}
   if(key==='contacts-invite'){pickContactsForInvite();return;}
   if(key==='profile'){openProfile();return;}
@@ -7606,6 +7609,10 @@ async function openFeatureByKey(key,label,options={}){
   }
   if(key==='smart-contract'){
     await startSmartDealFlow(options.sourceText||'',{force:true});
+    return;
+  }
+  if(key==='location'){
+    await sendLocationFromMenu();
     return;
   }
   if(categoryMap[key]){
@@ -9409,6 +9416,74 @@ async function handleLocationAddressIntent(text='', options={}){
   }
   await agentSay(`当前定位的详细地址是：${companionEscape(loc.address)}。要保存的话，可以说“保存为我家/公司/学校”。`,100);
   return true;
+}
+
+function locationCardMapUrl(loc={}){
+  const address=String(loc.address||'').trim();
+  if(address)return mapSearchUrl(address);
+  if(Number.isFinite(Number(loc.lat))&&Number.isFinite(Number(loc.lng))){
+    return mapSearchUrl(`${loc.lat},${loc.lng}`);
+  }
+  return '';
+}
+
+function saveChatLocationToAddressBook(cardId,label=''){
+  const card=document.getElementById(cardId);
+  const address=card?.dataset.address||'';
+  if(!address){
+    agentSay('这张位置卡没有可保存的详细地址。可以重新定位，或手动输入地址。',80);
+    return;
+  }
+  const finalLabel=String(label||'常用地址').trim()||'常用地址';
+  addToAddressBook(address,finalLabel);
+  const loc=getCurrentLocationSnapshot()||{};
+  localStorage.setItem('huaban_current_location',JSON.stringify({
+    ...loc,
+    address,
+    label:finalLabel,
+    updatedAt:new Date().toISOString()
+  }));
+  card.querySelector('[data-location-save-status]')?.replaceChildren(document.createTextNode(`已保存为：${finalLabel}`));
+  agentSay(`已保存为「${companionEscape(finalLabel)}」。以后购物送公司、服务到家里，或者安排上门地点，都可以直接让我用这个地址。`,80);
+}
+
+function renderChatLocationCard(loc={}){
+  const address=String(loc.address||'').trim();
+  if(!address)return false;
+  const id='chat-location-'+Date.now()+'-'+Math.random().toString(36).slice(2,7);
+  const mapUrl=locationCardMapUrl(loc);
+  const card=document.createElement('section');
+  card.className='confirm-card work-order-card';
+  card.id=id;
+  card.dataset.address=address;
+  card.innerHTML=`
+    <div class="work-order-title">📍 位置</div>
+    <div class="work-order-sub">已发送到当前对话。购物、上门服务、公司收货、家里服务，都可以直接引用这个地址。</div>
+    <div style="padding:12px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.05);font-size:14px;line-height:1.65;color:rgba(255,255,255,.9);margin-top:10px;">
+      ${companionEscape(address)}
+      <div style="font-size:12px;color:rgba(255,255,255,.48);margin-top:4px;">${companionEscape(locationAccuracyText(loc))}</div>
+    </div>
+    <div class="confirm-btns" style="flex-wrap:wrap;">
+      <button class="confirm-btn primary" onclick="window.open('${jsString(mapUrl)}','_blank')">打开地图</button>
+      <button class="confirm-btn secondary" onclick="saveChatLocationToAddressBook('${id}','公司')">标注公司</button>
+      <button class="confirm-btn secondary" onclick="saveChatLocationToAddressBook('${id}','家')">标注家</button>
+      <button class="confirm-btn secondary" onclick="saveChatLocationToAddressBook('${id}','服务地点')">服务地点</button>
+    </div>
+    <div data-location-save-status style="font-size:12px;color:rgba(255,255,255,.5);line-height:1.5;margin-top:8px;">需要长期使用时，再保存到地址簿。</div>`;
+  chatArea.appendChild(card);
+  scrollBottom();
+  aiHistory.push({role:'user',content:`我的位置：${address}`});
+  return true;
+}
+
+async function sendLocationFromMenu(){
+  await agentSay('我来生成一张位置卡，发在当前对话里。你可以点开地图，也可以标注为公司、家或服务地点。',80);
+  const loc=await reverseGeocodeCurrentPosition({force:true,timeout:16000});
+  if(!loc?.address){
+    await agentSay(`${companionEscape(locationErrorText())} 如果现在定位不准，也可以直接发详细地址给我。`,80);
+    return;
+  }
+  renderChatLocationCard(loc);
 }
 
 function showLocationConfirmForDraft(post={}, kind='work'){
@@ -13103,12 +13178,24 @@ async function calcDistanceSurcharge(address, direction) {
 <script>
 // ── 地址簿系统 ──
 function getAddressBook(){
-  try{ return JSON.parse(localStorage.getItem('au_addressbook')||'[]'); }
+  try{
+    const legacy=JSON.parse(localStorage.getItem('au_addressbook')||'[]');
+    const shared=JSON.parse(localStorage.getItem('huaban_address_book')||'[]');
+    const map=new Map();
+    [...(Array.isArray(legacy)?legacy:[]),...(Array.isArray(shared)?shared:[])].forEach(item=>{
+      const address=String(item?.address||'').trim();
+      if(!address)return;
+      map.set(address,{...item,address});
+    });
+    return [...map.values()];
+  }
   catch(e){ return []; }
 }
 
 function saveAddressBook(book){
-  localStorage.setItem('au_addressbook', JSON.stringify(book));
+  const clean=Array.isArray(book)?book:[];
+  localStorage.setItem('au_addressbook', JSON.stringify(clean));
+  localStorage.setItem('huaban_address_book', JSON.stringify(clean.slice(0,20)));
 }
 
 function addToAddressBook(address, label=''){
