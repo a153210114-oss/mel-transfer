@@ -88,6 +88,7 @@ module.exports = async function handler(req, res) {
     const friendCode = canonicalFromLinks || code(existingAccount?.friend_code) || requestedFriendCode;
     const displayName = text(body.name || authUser.user_metadata?.name || '华伴用户', 40);
     const industry = text(body.industry || '', 80);
+    const avatar = text(body.avatar || '👤', 20) || '👤';
     const verifiedAt = authUser.phone_confirmed_at || authUser.confirmed_at || new Date().toISOString();
     const account = {
       tenant_id: TENANT_ID,
@@ -103,6 +104,7 @@ module.exports = async function handler(req, res) {
         auth_user_id: authUser.id,
         requested_friend_code: requestedFriendCode,
         canonical_friend_code: friendCode,
+        avatar,
         provider: 'supabase_phone_auth',
         last_verify_source: body.source || 'profile_page'
       }
@@ -123,6 +125,7 @@ module.exports = async function handler(req, res) {
         normalized_phone: phone,
         friend_code: friendCode,
         display_name: displayName,
+        avatar,
         industry,
         source: 'supabase_phone_auth',
         source_ref: authUser.id,
@@ -143,6 +146,7 @@ module.exports = async function handler(req, res) {
           normalized_phone: phone,
           friend_code: requestedFriendCode,
           display_name: displayName,
+          avatar,
           industry,
           source: 'supabase_phone_auth_alias',
           source_ref: authUser.id,
@@ -159,6 +163,37 @@ module.exports = async function handler(req, res) {
         })
       }).catch(() => null);
     }
+
+    await Promise.all([
+      supa(`huaban_friendships?tenant_id=eq.${TENANT_ID}&friend_code=eq.${encodeURIComponent(friendCode)}`, {
+        method: 'PATCH',
+        headers: { Prefer: 'return=minimal' },
+        body: JSON.stringify({
+          friend_name: displayName,
+          friend_phone: phone,
+          friend_industry: industry,
+          friend_avatar: avatar
+        })
+      }).catch(() => null),
+      supa(`huaban_referral_events?tenant_id=eq.${TENANT_ID}&inviter_code=eq.${encodeURIComponent(friendCode)}`, {
+        method: 'PATCH',
+        headers: { Prefer: 'return=minimal' },
+        body: JSON.stringify({
+          inviter_name: displayName,
+          inviter_phone: phone,
+          inviter_avatar: avatar
+        })
+      }).catch(() => null),
+      supa(`huaban_referral_events?tenant_id=eq.${TENANT_ID}&referee_code=eq.${encodeURIComponent(friendCode)}`, {
+        method: 'PATCH',
+        headers: { Prefer: 'return=minimal' },
+        body: JSON.stringify({
+          referee_name: displayName,
+          referee_phone: phone,
+          referee_avatar: avatar
+        })
+      }).catch(() => null)
+    ]);
 
     return res.status(200).json({
       ok: true,

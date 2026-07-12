@@ -288,6 +288,10 @@ function authAccessToken(){
 function isPhoneVerified(phone=''){
   return normalizePhone(phone)&&normalizePhone(phone)===normalizePhone(verifiedPhone())&&Boolean(accountUid())&&!accountSyncError();
 }
+function hasRegisteredAccount(){
+  const user=getUser();
+  return Boolean(authAccessToken()||isPhoneVerified(user.phone)||accountUid()||verifiedPhone());
+}
 let identityCodesCache=null;
 let profileSummaryCache=null;
 async function loadProfileSummary(force=false){
@@ -470,6 +474,10 @@ async function saveIdentity(){
   saveProfile({display_name:name,industry,phone,avatar});
   const p=getPassenger();
   setLocal('au_passenger',{...p,name:name||p.name||'华伴用户',industry:industry||p.industry||'',phone:phone||p.phone||'',avatar,ref:getFriendCode(),logged_in:true,profile_ready:true,login_source:p.login_source||'profile_page'});
+  await syncProfileAccount({name:name||'华伴用户',industry,phone,avatar}).catch(error=>{
+    console.warn('账号资料同步失败',error);
+    $('verifyHint').textContent=`资料已保存到本机，但后台资料同步失败：${error.message||'请重新验证手机号'}`;
+  });
   let referralBound=false;
   try{
     const result=await completeReferralJoinFromProfile({name:name||'华伴用户',industry,phone,avatar});
@@ -530,6 +538,35 @@ async function completeReferralJoinFromProfile(user={},pendingOverride=null){
     clearPendingReferral();
   }
   return result;
+}
+async function syncProfileAccount(user={}){
+  const token=authAccessToken();
+  const phone=normalizePhone(user.phone||'');
+  if(!token||!phone||!isE164Phone(phone))return null;
+  const data=await postJson('/api/auth-phone-sync',{
+    accessToken:token,
+    phone,
+    name:user.name||'华伴用户',
+    industry:user.industry||'',
+    avatar:user.avatar||'👤',
+    friendCode:getFriendCode(),
+    source:'profile_save'
+  });
+  const account=data.account||{};
+  if(account.account_uid)localStorage.setItem('huaban_account_uid',account.account_uid);
+  if(account.id)localStorage.setItem('huaban_account_id',account.id);
+  if(account.phone_verified_at)localStorage.setItem('huaban_phone_verified_at',account.phone_verified_at);
+  if(account.friend_code){
+    const oldCode=getFriendCode();
+    const canonical=normalizeReferralCode(account.friend_code);
+    if(canonical&&canonical!==oldCode){
+      localStorage.setItem('huaban_device_friend_code',canonical);
+      localStorage.setItem(`huaban_device_alias_${oldCode}`,canonical);
+    }
+  }
+  profileSummaryCache=null;
+  identityCodesCache=null;
+  return data;
 }
 async function retryPendingReferralAfterVerified(){
   const user=getUser();
@@ -747,10 +784,18 @@ async function loadStats(){
   $('points').textContent='0';
   $('pointsBreakdown').textContent=authAccessToken()
     ? `积分账本暂时无法读取，请重新验证手机号或检查服务端接口。待绑定 ${pendingLocal}`
+    : hasRegisteredAccount()
+      ? `本浏览器后台登录令牌已失效。请重新发送验证码同步后台账本，积分和好友以后台记录为准。待绑定 ${pendingLocal}`
     : `完成手机号验证后，积分、推荐关系和身份码会从后台账本读取。待绑定 ${pendingLocal}`;
 }
 async function loadFriends(){
-  const hasServerIdentity=Boolean(authAccessToken());
+  const hasServerIdentity=hasRegisteredAccount();
+  if(hasServerIdentity&&!authAccessToken()){
+    window.__profileFriendList=[];
+    $('friendCount').textContent='0';
+    $('friendList').innerHTML='<div class="empty">本浏览器后台登录令牌已失效。请重新发送验证码同步后台好友关系，不再显示本机缓存好友。</div>';
+    return;
+  }
   let list=hasServerIdentity?[]:localFriendStore();
   const summary=await loadProfileSummary().catch(error=>{
     if(hasServerIdentity)$('friendList').innerHTML=`<div class="empty">后台好友关系读取失败：${esc(error.message||'请重新验证手机号')}</div>`;
@@ -940,8 +985,21 @@ async function refreshLocationNow(){
     const accuracy=Number(pos.coords.accuracy||0);
     const geo=await reverseGeocode(lat,lng);
     if(!geo?.address){
-      renderLocation();
-      toast('已定位，但未识别到详细地址，请手动添加');
+      const manual=prompt('已定位，但未识别到详细地址。请输入门牌号、街道、公司名或服务地点，用来保存到地址簿。','');
+      if(manual&&manual.trim()){
+        const saved=rememberAddress({
+          lat,
+          lng,
+          accuracy,
+          address:manual.trim(),
+          city:'',
+          source:'profile_geolocation_manual_fallback'
+        },'家');
+        toast(saved?'地址已保存':'已定位，未保存地址');
+      }else{
+        renderLocation();
+        toast('已定位，但未识别到详细地址，请手动添加');
+      }
       return;
     }
     const saved=rememberAddress({

@@ -17597,8 +17597,8 @@ async function acceptIncomingFriendCode(friendCode='',source='qr_open',cardBy=''
   refreshProfileFriendStats().catch(()=>null);
   const needProfile=!hasReferralBindableIdentity(refereeProfile);
   await agentSay(needProfile
-    ? `${inviter}已经在你的好友列表里了：${companionEscape(friendName)}。先填姓名、电话、职业中的任意一项，我就会锁定推荐关联并记录积分。`
-    : `${inviter}已经在你的好友列表里了：${companionEscape(friendName)}。你也会出现在对方的华伴好友里，积分会自动记录。`,120);
+    ? `${inviter}已经在你的好友列表里了：${companionEscape(friendName)}。先填姓名、电话、职业中的任意一项，我会尝试锁定推荐关联；积分以个人中心后台账本为准。`
+    : `${inviter}已经在你的好友列表里了：${companionEscape(friendName)}。你也会出现在对方的华伴好友里；积分以个人中心后台账本为准。`,120);
   if(needProfile){
     setTimeout(()=>renderUserSetupCard(),360);
   }
