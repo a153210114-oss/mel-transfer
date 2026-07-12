@@ -362,10 +362,10 @@ function rememberPendingReferral(code='',meta={}){
 function readPendingReferral(){
   const params=new URLSearchParams(location.search);
   const queryCode=normalizeReferralCode(
+    params.get('ref') ||
     sessionStorage.getItem('incoming_ref') ||
     sessionStorage.getItem('incoming_friend_code') ||
     params.get('friend') ||
-    params.get('ref') ||
     ''
   );
   if(queryCode){
@@ -489,8 +489,8 @@ async function postJson(url,data){
   if(!res.ok)throw new Error(json.error||'请求失败');
   return json;
 }
-async function completeReferralJoinFromProfile(user={}){
-  const pending=readPendingReferral();
+async function completeReferralJoinFromProfile(user={},pendingOverride=null){
+  const pending=pendingOverride||readPendingReferral();
   const inviterCode=normalizeReferralCode(pending?.code||'');
   const refereeCode=getFriendCode();
   if(!pending||!inviterCode||!refereeCode||inviterCode===refereeCode||!hasReferralBindableIdentity(user))return null;
@@ -517,7 +517,7 @@ async function completeReferralJoinFromProfile(user={}){
       refereeCode,
       inviter,
       referee,
-      source:'profile_page_save_referral',
+      source:'profile_page_verified_referral',
       cardBy:pending.cardBy||''
     });
   }catch(e){
@@ -528,6 +528,25 @@ async function completeReferralJoinFromProfile(user={}){
     localStorage.setItem(localKey,'1');
     localStorage.setItem(`huaban_friend_code_added_${inviterCode}`,'1');
     clearPendingReferral();
+  }
+  return result;
+}
+async function retryPendingReferralAfterVerified(){
+  const user=getUser();
+  if(!isPhoneVerified(user.phone)||!readPendingReferral())return null;
+  const result=await completeReferralJoinFromProfile({
+    name:user.name||'华伴用户',
+    industry:user.industry,
+    phone:user.phone,
+    avatar:user.avatar
+  });
+  if(result?.ok){
+    profileSummaryCache=null;
+    identityCodesCache=null;
+    await Promise.allSettled([loadStats(),loadFriends()]);
+    toast('推荐关系和积分已补记');
+  }else if(result?.error){
+    $('verifyHint').textContent=`手机号已注册，推荐关系待处理：${result.error}`;
   }
   return result;
 }
@@ -561,6 +580,7 @@ async function sendPhoneCode(){
 }
 async function verifyPhoneCode(){
   const user=getUser();
+  const pendingBeforeVerify=readPendingReferral();
   const code=$('codeInput').value.trim();
   const phone=normalizePhone(user.phone);
   if(!phone){toast('请先填写手机号');return;}
@@ -610,9 +630,19 @@ async function verifyPhoneCode(){
     const p=getPassenger();
     setLocal('au_passenger',{...p,account_uid:account.account_uid||p.account_uid||'',ref:account.friend_code||p.ref||getFriendCode(),phone_verified:true,phone_verified_at:account.phone_verified_at||new Date().toISOString(),logged_in:true,profile_ready:true});
     $('codeInput').value='';
-    await completeReferralJoinFromProfile({name:user.name||'华伴用户',industry:user.industry,phone,avatar:user.avatar}).catch(()=>null);
+    const referralResult=await completeReferralJoinFromProfile({
+      name:user.name||'华伴用户',
+      industry:user.industry,
+      phone,
+      avatar:user.avatar
+    },pendingBeforeVerify).catch(error=>({ok:false,error:error.message||'推荐关系绑定失败'}));
     renderIdentity();
-    toast('注册验证完成');
+    await Promise.allSettled([loadStats(),loadFriends()]);
+    if(referralResult?.ok)toast('注册验证完成，推荐关系和积分已记录');
+    else if(referralResult?.error){
+      $('verifyHint').textContent=`注册完成，但推荐关系未入账：${referralResult.error}`;
+      toast('注册完成，推荐关系待同步');
+    }else toast('注册验证完成');
   }catch(e){
     const msg=authErrorMessage(e,'验证码验证失败');
     if(/huaban_accounts|huaban_identity_links|schema cache|账号同步|Could not find the table/i.test(String(e?.message||''))){
@@ -720,9 +750,14 @@ async function loadStats(){
     : `完成手机号验证后，积分、推荐关系和身份码会从后台账本读取。待绑定 ${pendingLocal}`;
 }
 async function loadFriends(){
-  let list=localFriendStore();
-  const summary=await loadProfileSummary().catch(()=>null);
+  const hasServerIdentity=Boolean(authAccessToken());
+  let list=hasServerIdentity?[]:localFriendStore();
+  const summary=await loadProfileSummary().catch(error=>{
+    if(hasServerIdentity)$('friendList').innerHTML=`<div class="empty">后台好友关系读取失败：${esc(error.message||'请重新验证手机号')}</div>`;
+    return null;
+  });
   if(Array.isArray(summary?.friends)){
+    list=[];
     summary.friends.forEach(friend=>{list=mergeFriend(list,friend)});
   }
   for(const friend of list.slice(0,30)){
@@ -730,16 +765,18 @@ async function loadFriends(){
     if(!code||(friend.phone&&friend.industry&&!isGenericFriendName(friend.name)))continue;
     // 好友补全必须走服务端接口；这里保留已有本地信息，不再用 anon key 直接查身份表。
   }
-  saveLocalFriendStore(list);
+  if(!hasServerIdentity)saveLocalFriendStore(list);
+  window.__profileFriendList=list;
   $('friendCount').textContent=String(list.length);
   $('friendList').innerHTML=list.length?list.slice(0,20).map(friend=>`
     <button class="item" type="button" onclick="openFriendDetail('${jsString(friend.code||'')}')" style="width:100%;text-align:left;color:inherit;font:inherit;cursor:pointer;">
       <div class="item-avatar">${avatarMarkup(friend.avatar||'👤')}</div>
       <div class="item-main"><strong>${esc(friend.name||friend.code||'华伴好友')}</strong><em>${esc(friend.industry||friend.phone||friend.code||'本地连接')} · ${esc(formatDate(friend.addedAt)||'')}</em></div>
-    </button>`).join(''):'<div class="empty">还没有好友。分享身份码或名片后，会在这里显示。</div>';
+    </button>`).join(''):(hasServerIdentity?'<div class="empty">后台还没有好友关系记录。被推荐人完成手机号验证后，关系和积分会从后台账本显示。</div>':'<div class="empty">还没有好友。分享身份码或名片后，会在这里显示。</div>');
 }
 function openFriendDetail(code=''){
-  const target=localFriendStore().find(friend=>String(friend.code||'').toUpperCase()===String(code||'').toUpperCase());
+  const source=Array.isArray(window.__profileFriendList)?window.__profileFriendList:localFriendStore();
+  const target=source.find(friend=>String(friend.code||'').toUpperCase()===String(code||'').toUpperCase());
   if(!target){toast('好友资料还在同步');return;}
   window.__profileFriendPayloads=window.__profileFriendPayloads||{};
   const payloadKey=`friend_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
@@ -772,7 +809,8 @@ function openFriendDetail(code=''){
   document.body.appendChild(overlay);
 }
 function goFriendChat(payloadKey='',code=''){
-  const friend=window.__profileFriendPayloads?.[payloadKey]||localFriendStore().find(item=>String(item.code||'').toUpperCase()===String(code||'').toUpperCase())||{code};
+  const source=Array.isArray(window.__profileFriendList)?window.__profileFriendList:localFriendStore();
+  const friend=window.__profileFriendPayloads?.[payloadKey]||source.find(item=>String(item.code||'').toUpperCase()===String(code||'').toUpperCase())||{code};
   sessionStorage.setItem('huaban_profile_target_friend',JSON.stringify(friend));
   location.href=`ai.html?intent=friend_chat&friend=${encodeURIComponent(code||friend.code||'')}`;
 }
@@ -932,6 +970,7 @@ function addManualAddress(){
 async function init(){
   renderIdentity();
   renderLocation();
+  await retryPendingReferralAfterVerified().catch(()=>null);
   await loadFriends().catch(()=>null);
   await Promise.allSettled([loadStats(),loadOrders()]);
 }
