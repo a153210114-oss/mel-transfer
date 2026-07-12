@@ -1368,6 +1368,10 @@ const USER_NAME_KEY = 'huaban_user_name';
 const USER_AVATAR_KEY = 'huaban_user_avatar';
 const USER_INDUSTRY_KEY = 'huaban_user_industry';
 window._ttsVoice = 'FunAudioLLM/CosyVoice2-0.5B:diana';
+function isLegacyTravelAgentAvatar(value=''){
+  const clean=String(value||'').trim();
+  return /✈|飞行员|机场|司机/.test(clean) || ['👩‍✈️','🧑‍✈️','👨‍✈️','👩‍✈','🧑‍✈','👨‍✈'].includes(clean);
+}
 // 恢复已存性别（含currentGender同步）
 (function(){
   const g = localStorage.getItem('au_gender');
@@ -1382,16 +1386,16 @@ window._ttsVoice = 'FunAudioLLM/CosyVoice2-0.5B:diana';
   const savedTitle=localStorage.getItem(AGENT_TITLE_KEY)||'';
   const savedEmoji=localStorage.getItem(AGENT_EMOJI_KEY)||'';
   const oldDefaultName=/^(小墨|小本)$/.test(savedName);
-  const oldDefaultTitle=!savedTitle||savedTitle==='出行管家';
-  const oldDefaultEmoji=!savedEmoji||['👩‍✈️','🧑‍✈️','👨‍✈️'].includes(savedEmoji);
+  const oldDefaultTitle=!savedTitle||/出行管家|贴心旅伴|旅行|旅游|机场|司机/.test(savedTitle);
+  const oldDefaultEmoji=!savedEmoji||isLegacyTravelAgentAvatar(savedEmoji);
   if(oldDefaultName&&oldDefaultTitle&&oldDefaultEmoji){
     localStorage.removeItem(AGENT_NAME_KEY);
     localStorage.removeItem(AGENT_TITLE_KEY);
     localStorage.removeItem(AGENT_EMOJI_KEY);
   }
   if(oldDefaultName)localStorage.removeItem(AGENT_NAME_KEY);
-  if(savedTitle==='出行管家')localStorage.removeItem(AGENT_TITLE_KEY);
-  if(['👩‍✈️','🧑‍✈️','👨‍✈️'].includes(savedEmoji))localStorage.removeItem(AGENT_EMOJI_KEY);
+  if(oldDefaultTitle)localStorage.removeItem(AGENT_TITLE_KEY);
+  if(isLegacyTravelAgentAvatar(savedEmoji))localStorage.removeItem(AGENT_EMOJI_KEY);
 })();
 agentName = getSavedAgentName();
 agentTitle = getSavedAgentTitle() || agentTitle;
@@ -1899,7 +1903,8 @@ const chatArea=document.getElementById('chat-area');
 function scrollBottom(){setTimeout(()=>{chatArea.scrollTop=chatArea.scrollHeight;},100);}
 
 function isDefaultAgentEmoji(value=agentEmoji){
-  return ['logo','👩‍✈️','🧑‍✈️','👨‍✈️',''].includes(String(value||'').trim());
+  const clean=String(value||'').trim();
+  return !clean || clean==='logo' || isLegacyTravelAgentAvatar(clean);
 }
 
 function agentAvatarMarkup(value=agentEmoji){
@@ -2391,11 +2396,11 @@ function inferUserIntentProfile(userMsg='', botReply=''){
 
 // ── AI 旅行伙伴养成 ──
 const COMPANION_LEVELS=[
-  {name:'初遇伙伴',min:0,max:39},
-  {name:'贴心旅伴',min:40,max:99},
-  {name:'城市达人',min:100,max:199},
-  {name:'旅行专家',min:200,max:359},
-  {name:'全球管家',min:360,max:Infinity}
+  {name:'初识伙伴',min:0,max:39},
+  {name:'共建伙伴',min:40,max:99},
+  {name:'城市伙伴',min:100,max:199},
+  {name:'服务达人',min:200,max:359},
+  {name:'全球共建者',min:360,max:Infinity}
 ];
 const COMPANION_VOICE_STAGES=[
   {label:'童声',speed:1.15},
@@ -2871,7 +2876,7 @@ function updateCompanionEntryButton(forceShow=false, options={}){
     <span class="companion-entry-avatar">${agentAvatarMarkup()}</span>
     <span class="companion-entry-meta">
       <span class="companion-entry-level">Lv.${levelIndex} ${companionEscape(level.name)}</span>
-      <span class="companion-entry-xp">${state.xp} 互动记录</span>
+      <span class="companion-entry-xp">${state.xp} 使用记录</span>
     </span>`;
 }
 
@@ -2925,7 +2930,7 @@ function rewardCompanionAction(type, options={}){
   state.lastActiveDate=today;
   saveCompanion(state);
   renderCompanionCard();
-  if(rule.say)companionSay(`+${rule.xp||0} 互动记录 · ${rule.say}`);
+  if(rule.say)companionSay(`+${rule.xp||0} 使用记录 · ${rule.say}`);
   return rule.xp||0;
 }
 
@@ -4247,7 +4252,7 @@ function defaultAgentNameForGender(userGender=currentGender){
 }
 
 function defaultAgentEmojiForGender(userGender=currentGender){
-  return userGender==='female'?'🧑‍✈️':'👩‍✈️';
+  return 'logo';
 }
 
 function cleanAgentName(value){
@@ -4262,7 +4267,8 @@ function cleanAgentEmoji(value){
   const clean=String(value||'').trim();
   if(!clean)return 'logo';
   if(clean==='logo')return 'logo';
-  return clean.slice(0,4);
+  if(isLegacyTravelAgentAvatar(clean))return 'logo';
+  return Array.from(clean).slice(0,2).join('');
 }
 
 function getSavedAgentName(){
