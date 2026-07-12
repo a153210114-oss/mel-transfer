@@ -21,6 +21,16 @@ function text(value = '', max = 120) {
   return String(value || '').trim().slice(0, max);
 }
 
+function firstCode(rows = [], preferredTypes = []) {
+  const list = Array.isArray(rows) ? rows : [];
+  for (const type of preferredTypes) {
+    const found = list.find(row => code(row.link_type) === code(type) && code(row.friend_code));
+    if (found) return code(found.friend_code);
+  }
+  const any = list.find(row => code(row.friend_code));
+  return code(any?.friend_code || '');
+}
+
 async function supa(path, options = {}) {
   const res = await fetch(`${SUPA_URL}/rest/v1/${path}`, {
     ...options,
@@ -70,13 +80,18 @@ module.exports = async function handler(req, res) {
     const phone = normalizePhone(body.phone || authPhone);
     if (phone !== authPhone) return res.status(403).json({ error: '手机号与验证码登录账号不一致' });
 
-    const friendCode = code(body.friendCode);
+    const requestedFriendCode = code(body.friendCode);
+    const existingAccounts = await supa(`huaban_accounts?tenant_id=eq.${TENANT_ID}&normalized_phone=eq.${encodeURIComponent(phone)}&order=created_at.asc&limit=1&select=id,account_uid,friend_code,phone_verified_at,created_at`).catch(() => []);
+    const existingAccount = Array.isArray(existingAccounts) ? existingAccounts[0] : null;
+    const identityRows = await supa(`huaban_identity_links?tenant_id=eq.${TENANT_ID}&normalized_phone=eq.${encodeURIComponent(phone)}&status=eq.active&order=created_at.asc&limit=50&select=friend_code,link_type,created_at`).catch(() => []);
+    const canonicalFromLinks = firstCode(identityRows, ['verified_account_phone', 'huaban_user_profile', 'referral_identity']);
+    const friendCode = canonicalFromLinks || code(existingAccount?.friend_code) || requestedFriendCode;
     const displayName = text(body.name || authUser.user_metadata?.name || '华伴用户', 40);
     const industry = text(body.industry || '', 80);
     const verifiedAt = authUser.phone_confirmed_at || authUser.confirmed_at || new Date().toISOString();
     const account = {
       tenant_id: TENANT_ID,
-      account_uid: authUser.id,
+      account_uid: existingAccount?.account_uid || authUser.id,
       primary_phone: phone,
       normalized_phone: phone,
       display_name: displayName,
@@ -86,6 +101,8 @@ module.exports = async function handler(req, res) {
       fields: {
         industry,
         auth_user_id: authUser.id,
+        requested_friend_code: requestedFriendCode,
+        canonical_friend_code: friendCode,
         provider: 'supabase_phone_auth',
         last_verify_source: body.source || 'profile_page'
       }
@@ -116,13 +133,42 @@ module.exports = async function handler(req, res) {
       })
     }).catch(() => null);
 
+    if (requestedFriendCode && requestedFriendCode !== friendCode) {
+      await supa('huaban_identity_links', {
+        method: 'POST',
+        headers: { Prefer: 'return=minimal' },
+        body: JSON.stringify({
+          tenant_id: TENANT_ID,
+          phone,
+          normalized_phone: phone,
+          friend_code: requestedFriendCode,
+          display_name: displayName,
+          industry,
+          source: 'supabase_phone_auth_alias',
+          source_ref: authUser.id,
+          link_type: 'device_alias_phone',
+          status: 'active',
+          owner_code: requestedFriendCode,
+          fields: {
+            account_uid: row.account_uid || authUser.id,
+            phone_verified: true,
+            user_visible: false,
+            canonical_friend_code: friendCode,
+            alias_reason: 'same_phone_cross_browser'
+          }
+        })
+      }).catch(() => null);
+    }
+
     return res.status(200).json({
       ok: true,
       account: {
         id: row.id || '',
         account_uid: row.account_uid || authUser.id,
         phone_verified_at: row.phone_verified_at || verifiedAt,
-        friend_code: row.friend_code || friendCode
+        friend_code: friendCode,
+        requested_friend_code: requestedFriendCode,
+        canonical_changed: Boolean(requestedFriendCode && requestedFriendCode !== friendCode)
       }
     });
   } catch (error) {

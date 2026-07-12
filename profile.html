@@ -561,8 +561,16 @@ async function verifyPhoneCode(){
     localStorage.setItem('huaban_account_id',account.id||auth?.user?.id||auth?.session?.user?.id||'');
     localStorage.setItem('huaban_phone_verified_phone',phone);
     localStorage.setItem('huaban_phone_verified_at',account.phone_verified_at||new Date().toISOString());
+    if(account.friend_code){
+      const oldCode=getFriendCode();
+      const canonical=normalizeReferralCode(account.friend_code);
+      if(canonical&&canonical!==oldCode){
+        localStorage.setItem('huaban_device_friend_code',canonical);
+        localStorage.setItem(`huaban_device_alias_${oldCode}`,canonical);
+      }
+    }
     const p=getPassenger();
-    setLocal('au_passenger',{...p,account_uid:account.account_uid||p.account_uid||'',phone_verified:true,phone_verified_at:account.phone_verified_at||new Date().toISOString(),logged_in:true,profile_ready:true});
+    setLocal('au_passenger',{...p,account_uid:account.account_uid||p.account_uid||'',ref:account.friend_code||p.ref||getFriendCode(),phone_verified:true,phone_verified_at:account.phone_verified_at||new Date().toISOString(),logged_in:true,profile_ready:true});
     $('codeInput').value='';
     await completeReferralJoinFromProfile({name:user.name||'华伴用户',industry:user.industry,phone,avatar:user.avatar}).catch(()=>null);
     renderIdentity();
