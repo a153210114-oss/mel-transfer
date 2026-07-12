@@ -1,8 +1,10 @@
 const fs = require('fs');
 
-const html = fs.readFileSync('index.html', 'utf8');
-const SUPA_URL = html.match(/const SUPA_URL='([^']+)'/)?.[1];
-const SUPA_KEY = html.match(/const SUPA_KEY='([^']+)'/)?.[1];
+const html = ['index.html', 'ai.html', 'api/local-search.js']
+  .map((file) => fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '')
+  .join('\n');
+const SUPA_URL = html.match(/(?:const\s+SUPA_URL|const\s+DEFAULT_SUPA_URL)\s*=\s*'([^']+)'/)?.[1];
+const SUPA_KEY = html.match(/(?:const\s+SUPA_KEY|const\s+DEFAULT_SUPA_KEY)\s*=\s*'([^']+)'/)?.[1];
 
 if (!SUPA_URL || !SUPA_KEY) {
   throw new Error('Missing Supabase config in index.html');

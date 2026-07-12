@@ -31,6 +31,15 @@ function firstCode(rows = [], preferredTypes = []) {
   return code(any?.friend_code || '');
 }
 
+function uniqueCodes(list = []) {
+  const seen = new Set();
+  return list.map(code).filter(item => {
+    if (!item || seen.has(item)) return false;
+    seen.add(item);
+    return true;
+  });
+}
+
 async function supa(path, options = {}) {
   const res = await fetch(`${SUPA_URL}/rest/v1/${path}`, {
     ...options,
@@ -81,6 +90,7 @@ module.exports = async function handler(req, res) {
     if (phone !== authPhone) return res.status(403).json({ error: '手机号与验证码登录账号不一致' });
 
     const requestedFriendCode = code(body.friendCode);
+    const requestedCodes = uniqueCodes([requestedFriendCode, ...(Array.isArray(body.identityCodes) ? body.identityCodes : [])]);
     const existingAccounts = await supa(`huaban_accounts?tenant_id=eq.${TENANT_ID}&normalized_phone=eq.${encodeURIComponent(phone)}&order=created_at.asc&limit=1&select=id,account_uid,friend_code,phone_verified_at,created_at`).catch(() => []);
     const existingAccount = Array.isArray(existingAccounts) ? existingAccounts[0] : null;
     const identityRows = await supa(`huaban_identity_links?tenant_id=eq.${TENANT_ID}&normalized_phone=eq.${encodeURIComponent(phone)}&status=eq.active&order=created_at.asc&limit=50&select=friend_code,link_type,created_at`).catch(() => []);
@@ -136,23 +146,23 @@ module.exports = async function handler(req, res) {
       })
     }).catch(() => null);
 
-    if (requestedFriendCode && requestedFriendCode !== friendCode) {
-      await supa('huaban_identity_links', {
+    const aliasCodes = requestedCodes.filter(item => item && item !== friendCode);
+    await Promise.all(aliasCodes.map(aliasCode => supa('huaban_identity_links', {
         method: 'POST',
         headers: { Prefer: 'return=minimal' },
         body: JSON.stringify({
           tenant_id: TENANT_ID,
           phone,
           normalized_phone: phone,
-          friend_code: requestedFriendCode,
+          friend_code: aliasCode,
           display_name: displayName,
           avatar,
           industry,
           source: 'supabase_phone_auth_alias',
-          source_ref: authUser.id,
+          source_ref: `${authUser.id}_${aliasCode}`,
           link_type: 'device_alias_phone',
           status: 'active',
-          owner_code: requestedFriendCode,
+          owner_code: aliasCode,
           fields: {
             account_uid: row.account_uid || authUser.id,
             phone_verified: true,
@@ -161,11 +171,11 @@ module.exports = async function handler(req, res) {
             alias_reason: 'same_phone_cross_browser'
           }
         })
-      }).catch(() => null);
-    }
+      }).catch(() => null)));
 
+    const patchCodes = uniqueCodes([friendCode, ...aliasCodes]);
     await Promise.all([
-      supa(`huaban_friendships?tenant_id=eq.${TENANT_ID}&friend_code=eq.${encodeURIComponent(friendCode)}`, {
+      ...patchCodes.map(item => supa(`huaban_friendships?tenant_id=eq.${TENANT_ID}&friend_code=eq.${encodeURIComponent(item)}`, {
         method: 'PATCH',
         headers: { Prefer: 'return=minimal' },
         body: JSON.stringify({
@@ -174,8 +184,8 @@ module.exports = async function handler(req, res) {
           friend_industry: industry,
           friend_avatar: avatar
         })
-      }).catch(() => null),
-      supa(`huaban_referral_events?tenant_id=eq.${TENANT_ID}&inviter_code=eq.${encodeURIComponent(friendCode)}`, {
+      }).catch(() => null)),
+      ...patchCodes.map(item => supa(`huaban_referral_events?tenant_id=eq.${TENANT_ID}&inviter_code=eq.${encodeURIComponent(item)}`, {
         method: 'PATCH',
         headers: { Prefer: 'return=minimal' },
         body: JSON.stringify({
@@ -183,8 +193,8 @@ module.exports = async function handler(req, res) {
           inviter_phone: phone,
           inviter_avatar: avatar
         })
-      }).catch(() => null),
-      supa(`huaban_referral_events?tenant_id=eq.${TENANT_ID}&referee_code=eq.${encodeURIComponent(friendCode)}`, {
+      }).catch(() => null)),
+      ...patchCodes.map(item => supa(`huaban_referral_events?tenant_id=eq.${TENANT_ID}&referee_code=eq.${encodeURIComponent(item)}`, {
         method: 'PATCH',
         headers: { Prefer: 'return=minimal' },
         body: JSON.stringify({
@@ -192,7 +202,7 @@ module.exports = async function handler(req, res) {
           referee_phone: phone,
           referee_avatar: avatar
         })
-      }).catch(() => null)
+      }).catch(() => null))
     ]);
 
     return res.status(200).json({
@@ -203,7 +213,8 @@ module.exports = async function handler(req, res) {
         phone_verified_at: row.phone_verified_at || verifiedAt,
         friend_code: friendCode,
         requested_friend_code: requestedFriendCode,
-        canonical_changed: Boolean(requestedFriendCode && requestedFriendCode !== friendCode)
+        canonical_changed: Boolean(requestedFriendCode && requestedFriendCode !== friendCode),
+        alias_codes: aliasCodes
       }
     });
   } catch (error) {

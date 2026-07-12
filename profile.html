@@ -280,6 +280,21 @@ function accountSyncError(){
 function authAccessToken(){
   return String(localStorage.getItem('huaban_auth_access_token')||'').trim();
 }
+function collectLocalIdentityCodes(){
+  const codes=[
+    getFriendCode(),
+    getPassenger().ref,
+    localStorage.getItem('huaban_device_friend_code')||''
+  ];
+  for(let i=0;i<localStorage.length;i++){
+    const key=localStorage.key(i)||'';
+    if(key.startsWith('huaban_device_alias_')){
+      codes.push(key.replace('huaban_device_alias_',''));
+      codes.push(localStorage.getItem(key)||'');
+    }
+  }
+  return uniqueCodes(codes);
+}
 function isPhoneVerified(phone=''){
   return normalizePhone(phone)&&normalizePhone(phone)===normalizePhone(verifiedPhone())&&Boolean(accountUid())&&!accountSyncError();
 }
@@ -295,7 +310,8 @@ async function loadProfileSummary(force=false){
   if(!token)return null;
   profileSummaryCache=await postJson('/api/profile-summary',{
     accessToken:token,
-    friendCode:getFriendCode()
+    friendCode:getFriendCode(),
+    identityCodes:collectLocalIdentityCodes()
   }).catch(error=>{
     if(/登录状态|jwt|token|expired|invalid/i.test(String(error?.message||''))){
       localStorage.removeItem('huaban_auth_access_token');
@@ -528,6 +544,7 @@ async function syncProfileAccount(user={}){
     industry:user.industry||'',
     avatar:user.avatar||'👤',
     friendCode:getFriendCode(),
+    identityCodes:collectLocalIdentityCodes(),
     source:'profile_save'
   });
   const account=data.account||{};
@@ -624,6 +641,7 @@ async function verifyPhoneCode(){
       name:user.name,
       industry:user.industry,
       friendCode:getFriendCode(),
+      identityCodes:collectLocalIdentityCodes(),
       source:'profile_page'
     });
     const account=data.account||{};

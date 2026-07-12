@@ -93,11 +93,15 @@ module.exports = async function handler(req, res) {
     const phone = normalizePhone(authUser.phone || body.phone || '');
     if (!authUser.id || !phone) return res.status(401).json({ error: '手机号登录状态无效' });
 
-    const codes = [body.friendCode];
+    const codes = [body.friendCode, ...(Array.isArray(body.identityCodes) ? body.identityCodes : [])];
     const accounts = await supa(`huaban_accounts?tenant_id=eq.${TENANT_ID}&normalized_phone=eq.${encodeURIComponent(phone)}&order=created_at.asc&limit=20&select=friend_code,display_name,fields`).catch(error => {
       throw new Error(/schema cache|Could not find the table|PGRST205/i.test(error.message) ? '数据库身份表未创建：huaban_accounts' : error.message);
     });
-    (Array.isArray(accounts) ? accounts : []).forEach(row => codes.push(row.friend_code));
+    (Array.isArray(accounts) ? accounts : []).forEach(row => {
+      codes.push(row.friend_code);
+      codes.push(row.fields?.requested_friend_code);
+      codes.push(row.fields?.canonical_friend_code);
+    });
 
     const links = await supa(`huaban_identity_links?tenant_id=eq.${TENANT_ID}&normalized_phone=eq.${encodeURIComponent(phone)}&status=eq.active&order=created_at.asc&limit=120&select=friend_code,fields`).catch(error => {
       throw new Error(/schema cache|Could not find the table|PGRST205/i.test(error.message) ? '数据库身份表未创建：huaban_identity_links' : error.message);
@@ -106,6 +110,26 @@ module.exports = async function handler(req, res) {
       codes.push(row.friend_code);
       codes.push(row.fields?.canonical_friend_code);
     });
+
+    const friendPhoneRows = await supa(`huaban_friendships?tenant_id=eq.${TENANT_ID}&friend_phone=eq.${encodeURIComponent(phone)}&status=eq.active&order=created_at.desc&limit=500&select=friend_code,fields`).catch(() => []);
+    (Array.isArray(friendPhoneRows) ? friendPhoneRows : []).forEach(row => {
+      codes.push(row.friend_code);
+      codes.push(row.fields?.friend?.code);
+    });
+
+    const inviterPhoneRows = await supa(`huaban_referral_events?tenant_id=eq.${TENANT_ID}&inviter_phone=eq.${encodeURIComponent(phone)}&status=eq.confirmed&order=created_at.desc&limit=500&select=inviter_code,direct_referrer_code,fields`).catch(() => []);
+    (Array.isArray(inviterPhoneRows) ? inviterPhoneRows : []).forEach(row => {
+      codes.push(row.inviter_code);
+      codes.push(row.direct_referrer_code);
+      codes.push(row.fields?.direct_referrer_code);
+    });
+
+    const refereePhoneRows = await supa(`huaban_referral_events?tenant_id=eq.${TENANT_ID}&referee_phone=eq.${encodeURIComponent(phone)}&status=eq.confirmed&order=created_at.desc&limit=500&select=referee_code,fields`).catch(() => []);
+    (Array.isArray(refereePhoneRows) ? refereePhoneRows : []).forEach(row => {
+      codes.push(row.referee_code);
+      codes.push(row.fields?.referee?.code);
+    });
+
     const identityCodes = uniqueCodes(codes);
 
     let base = 0, direct = 0, second = 0, pending = 0;
