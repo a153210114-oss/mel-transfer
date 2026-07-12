@@ -281,6 +281,32 @@ function accountUid(){
 function isPhoneVerified(phone=''){
   return normalizePhone(phone)&&normalizePhone(phone)===normalizePhone(verifiedPhone())&&Boolean(accountUid());
 }
+let identityCodesCache=null;
+function uniqueCodes(list=[]){
+  const seen=new Set();
+  return list.map(normalizeReferralCode).filter(code=>{
+    if(!code||seen.has(code))return false;
+    seen.add(code);
+    return true;
+  });
+}
+async function loadIdentityCodes(force=false){
+  if(identityCodesCache&&!force)return identityCodesCache;
+  const user=getUser();
+  const phone=normalizePhone(user.phone||verifiedPhone());
+  const codes=[getFriendCode(),getPassenger().ref];
+  if(phone){
+    const accounts=await supaGet(`huaban_accounts?tenant_id=eq.${TENANT_ID}&normalized_phone=eq.${encodeURIComponent(phone)}&order=created_at.asc&limit=20&select=friend_code`).catch(()=>[]);
+    (Array.isArray(accounts)?accounts:[]).forEach(row=>codes.push(row.friend_code));
+    const links=await supaGet(`huaban_identity_links?tenant_id=eq.${TENANT_ID}&normalized_phone=eq.${encodeURIComponent(phone)}&status=eq.active&order=created_at.asc&limit=120&select=friend_code,fields`).catch(()=>[]);
+    (Array.isArray(links)?links:[]).forEach(row=>{
+      codes.push(row.friend_code);
+      codes.push(row.fields?.canonical_friend_code);
+    });
+  }
+  identityCodesCache=uniqueCodes(codes);
+  return identityCodesCache;
+}
 function avatarMarkup(value){
   const clean=String(value||'👤').trim();
   if(clean==='logo')return '<img src="assets/brand/huaban-logo-v1.png" alt="">';
@@ -649,17 +675,25 @@ function showPointsDetail(){
   document.body.appendChild(modal);
 }
 async function loadStats(){
-  const myCode=getFriendCode();
+  const identityCodes=await loadIdentityCodes(true);
   const user=getUser();
   let base=0,direct=0,second=0,pending=0;
   if(user.phone){
     const contacts=await supaGet(`contacts?phone=eq.${encodeURIComponent(user.phone)}&tenant_id=eq.${TENANT_ID}&select=voucher_balance`).catch(()=>[]);
     base=Number(contacts?.[0]?.voucher_balance||0)||0;
   }
-  const events=await supaGet(`huaban_point_events?tenant_id=eq.${TENANT_ID}&owner_code=eq.${encodeURIComponent(myCode)}&order=created_at.desc&limit=300&select=points,action,status,fields,related_code`).catch(()=>[]);
+  const events=[];
+  for(const ownerCode of identityCodes){
+    const rows=await supaGet(`huaban_point_events?tenant_id=eq.${TENANT_ID}&owner_code=eq.${encodeURIComponent(ownerCode)}&order=created_at.desc&limit=300&select=id,event_key,points,action,status,fields,related_code`).catch(()=>[]);
+    if(Array.isArray(rows))events.push(...rows);
+  }
   const creditedDirect=new Set();
   const creditedSecond=new Set();
+  const seenEvents=new Set();
   (Array.isArray(events)?events:[]).forEach(row=>{
+    const eventId=String(row.event_key||row.id||'');
+    if(eventId&&seenEvents.has(eventId))return;
+    if(eventId)seenEvents.add(eventId);
     const pts=Number(row.points)||0;
     const status=String(row.status||'').toLowerCase();
     const action=String(row.action||'');
@@ -671,28 +705,48 @@ async function loadStats(){
       else base+=pts;
     }else pending+=pts;
   });
-  const referrals=await supaGet(`huaban_referral_events?tenant_id=eq.${TENANT_ID}&inviter_code=eq.${encodeURIComponent(myCode)}&status=eq.confirmed&order=created_at.desc&limit=300&select=referee_code,points_awarded,credit_locked`).catch(()=>[]);
+  const referrals=[];
+  for(const ownerCode of identityCodes){
+    const rows=await supaGet(`huaban_referral_events?tenant_id=eq.${TENANT_ID}&inviter_code=eq.${encodeURIComponent(ownerCode)}&status=eq.confirmed&order=created_at.desc&limit=300&select=id,referee_code,points_awarded,credit_locked`).catch(()=>[]);
+    if(Array.isArray(rows))referrals.push(...rows);
+  }
+  const seenReferrals=new Set();
   (Array.isArray(referrals)?referrals:[]).forEach(row=>{
+    const referralId=String(row.id||row.referee_code||'');
+    if(referralId&&seenReferrals.has(referralId))return;
+    if(referralId)seenReferrals.add(referralId);
     const code=String(row.referee_code||'').toUpperCase();
     if(code&&!creditedDirect.has(code)&&!row.credit_locked){direct+=Number(row.points_awarded)||POINTS_RULES.referral_join;creditedDirect.add(code)}
   });
-  const secondRows=await supaGet(`huaban_referral_events?tenant_id=eq.${TENANT_ID}&second_level_referrer_code=eq.${encodeURIComponent(myCode)}&status=eq.confirmed&order=created_at.desc&limit=300&select=referee_code`).catch(()=>[]);
+  const secondRows=[];
+  for(const ownerCode of identityCodes){
+    const rows=await supaGet(`huaban_referral_events?tenant_id=eq.${TENANT_ID}&second_level_referrer_code=eq.${encodeURIComponent(ownerCode)}&status=eq.confirmed&order=created_at.desc&limit=300&select=id,referee_code`).catch(()=>[]);
+    if(Array.isArray(rows))secondRows.push(...rows);
+  }
+  const seenSecondRows=new Set();
   (Array.isArray(secondRows)?secondRows:[]).forEach(row=>{
+    const secondId=String(row.id||row.referee_code||'');
+    if(secondId&&seenSecondRows.has(secondId))return;
+    if(secondId)seenSecondRows.add(secondId);
     const code=String(row.referee_code||'').toUpperCase();
     if(code&&!creditedSecond.has(code)){second+=POINTS_RULES.referral_second_level_join;creditedSecond.add(code)}
   });
-  const pendingRemote=await supaGet(`huaban_identity_links?tenant_id=eq.${TENANT_ID}&inviter_code=eq.${encodeURIComponent(myCode)}&link_type=eq.pending_referral_invite&status=eq.active&order=created_at.desc&limit=300&select=normalized_phone,phone,display_name`).catch(()=>[]);
+  const pendingRemote=[];
+  for(const ownerCode of identityCodes){
+    const rows=await supaGet(`huaban_identity_links?tenant_id=eq.${TENANT_ID}&inviter_code=eq.${encodeURIComponent(ownerCode)}&link_type=eq.pending_referral_invite&status=eq.active&order=created_at.desc&limit=300&select=normalized_phone,phone,display_name`).catch(()=>[]);
+    if(Array.isArray(rows))pendingRemote.push(...rows);
+  }
   const pendingLocal=pendingReferralInvitesStore().filter(item=>String(item.status||'')!=='已绑定').length;
   const total=base+direct+second+pending;
   $('points').textContent=String(total);
-  $('pointsBreakdown').textContent=`基础 ${base} · 一级 ${direct} · 二级 ${second} · 审核中 ${pending} · 待绑定 ${pendingLocal+(Array.isArray(pendingRemote)?pendingRemote.length:0)}`;
+  $('pointsBreakdown').textContent=`基础 ${base} · 一级 ${direct} · 二级 ${second} · 审核中 ${pending} · 待绑定 ${pendingLocal+pendingRemote.length} · 归集 ${identityCodes.length} 个身份码`;
 }
 async function loadFriends(){
-  const myCode=getFriendCode();
+  const identityCodes=await loadIdentityCodes();
   let list=localFriendStore();
-  const remote=await supaGet(`huaban_friendships?tenant_id=eq.${TENANT_ID}&owner_code=eq.${encodeURIComponent(myCode)}&status=eq.active&order=created_at.desc&limit=120&select=*`).catch(()=>[]);
-  if(Array.isArray(remote)){
-    remote.forEach(row=>{
+  for(const ownerCode of identityCodes){
+    const remote=await supaGet(`huaban_friendships?tenant_id=eq.${TENANT_ID}&owner_code=eq.${encodeURIComponent(ownerCode)}&status=eq.active&order=created_at.desc&limit=120&select=*`).catch(()=>[]);
+    if(Array.isArray(remote))remote.forEach(row=>{
       const code=String(row.friend_code||row.fields?.friend?.code||'').toUpperCase();
       if(!code)return;
       list=mergeFriend(list,{code,name:row.friend_name||row.fields?.friend?.name||`华伴好友 ${code}`,phone:row.friend_phone||'',industry:row.friend_industry||'',avatar:row.friend_avatar||'👤',source:row.source||'friendship_sync',addedAt:row.created_at});
