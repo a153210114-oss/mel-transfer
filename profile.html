@@ -186,12 +186,27 @@ async function supaInsert(table,data){
   const res=await fetch(SUPA_URL+'/rest/v1/'+table,{method:'POST',headers:{apikey:SUPA_KEY,Authorization:'Bearer '+SUPA_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(data)});
   return res.ok;
 }
-async function supaAuthPost(path,data){
-  const res=await fetch(SUPA_URL+'/auth/v1/'+path,{
+function authErrorMessage(error, fallback='手机号验证请求失败'){
+  const raw=String(error?.message||error||'');
+  if(/aborted|abort|timeout|timed out|超时/i.test(raw))return '验证码发送超时。请稍后重试；如果朋友手机一直收不到，要检查 Twilio/Supabase 短信发送记录。';
+  if(/twilio|sms|message|provider/i.test(raw))return raw;
+  if(/rate|too many|频繁/i.test(raw))return '验证码发送过于频繁，请稍后再试。';
+  return raw||fallback;
+}
+async function supaAuthPost(path,data,{timeout=25000}={}){
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),timeout);
+  let res;
+  try{
+    res=await fetch(SUPA_URL+'/auth/v1/'+path,{
     method:'POST',
     headers:{apikey:SUPA_KEY,Authorization:'Bearer '+SUPA_KEY,'Content-Type':'application/json'},
-    body:JSON.stringify(data)
-  });
+    body:JSON.stringify(data),
+    signal:controller.signal
+    });
+  }finally{
+    clearTimeout(timer);
+  }
   const json=await res.json().catch(()=>({}));
   if(!res.ok)throw new Error(json.msg||json.message||json.error_description||json.error||'手机号验证请求失败');
   return json;
@@ -461,12 +476,14 @@ async function sendPhoneCode(){
     saveProfile({phone});
     const p=getPassenger();
     setLocal('au_passenger',{...p,phone});
-    await supaAuthPost('otp',{phone});
-    $('verifyHint').textContent='验证码已发送，10 分钟内有效。';
+    $('verifyHint').textContent='正在发送验证码...';
+    await supaAuthPost('otp',{phone},{timeout:25000});
+    $('verifyHint').textContent='验证码已发送，10 分钟内有效。若 1 分钟内未收到，请检查垃圾短信/拦截；试用短信服务可能只支持已验证号码。';
     toast('验证码已发送');
   }catch(e){
-    $('verifyHint').textContent=e.message||'验证码发送失败';
-    toast(e.message||'验证码发送失败');
+    const msg=authErrorMessage(e,'验证码发送失败');
+    $('verifyHint').textContent=msg;
+    toast(msg);
   }finally{
     btn.disabled=false;
     btn.textContent=old;
@@ -492,7 +509,7 @@ async function verifyPhoneCode(){
       phone,
       token:code,
       type:'sms'
-    });
+    },{timeout:25000});
     const data=await postJson('/api/auth-phone-sync',{
       accessToken:auth?.access_token||auth?.session?.access_token||'',
       phone,
@@ -513,8 +530,9 @@ async function verifyPhoneCode(){
     renderIdentity();
     toast(data.ok===false?'验证完成，账号资料待后台同步':'注册验证完成');
   }catch(e){
-    $('verifyHint').textContent=e.message||'验证码验证失败';
-    toast(e.message||'验证码验证失败');
+    const msg=authErrorMessage(e,'验证码验证失败');
+    $('verifyHint').textContent=msg;
+    toast(msg);
   }finally{
     btn.disabled=false;
     btn.textContent=old;
