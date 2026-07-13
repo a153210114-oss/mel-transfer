@@ -41,6 +41,7 @@ function cleanText(value = '', max = 1200) {
 
 function normalizeContent(input = {}) {
   const cards = Array.isArray(input.cards) ? input.cards.slice(0, 6) : [];
+  const sections = Array.isArray(input.sections) ? input.sections.slice(0, 24) : [];
   return {
     heroTitle: cleanText(input.heroTitle, 80),
     heroVersion: cleanText(input.heroVersion, 80),
@@ -61,7 +62,17 @@ function normalizeContent(input = {}) {
     startBody: cleanText(input.startBody, 700),
     startPrimaryCta: cleanText(input.startPrimaryCta, 40),
     startSecondaryCta: cleanText(input.startSecondaryCta, 40),
-    footer: cleanText(input.footer, 260)
+    footer: cleanText(input.footer, 260),
+    pageTitle: cleanText(input.pageTitle, 120),
+    pageSubtitle: cleanText(input.pageSubtitle, 260),
+    pageIntro: cleanText(input.pageIntro, 900),
+    updatedLabel: cleanText(input.updatedLabel, 80),
+    ctaText: cleanText(input.ctaText, 60),
+    ctaHref: cleanText(input.ctaHref, 160),
+    sections: sections.map(section => ({
+      title: cleanText(section?.title, 120),
+      body: cleanText(section?.body, 2000)
+    })).filter(section => section.title || section.body)
   };
 }
 

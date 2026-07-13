@@ -56,6 +56,7 @@
     .hidden { display: none !important; }
     textarea { width: 100%; min-height: 110px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel2); color: var(--text); padding: 12px; outline: none; resize: vertical; }
     .site-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 14px 0; }
+    .site-toolbar select { min-height: 40px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel2); color: var(--text); padding: 0 12px; font-weight: 800; }
     .site-status { color: var(--muted); font-size: 13px; }
     .site-editor { background: #f7faf8; color: #111820; border-radius: 16px; padding: 18px; border: 1px solid rgba(255,255,255,.16); }
     .site-editor .official-nav { min-height: 62px; display: flex; justify-content: space-between; gap: 12px; align-items: center; }
@@ -80,6 +81,12 @@
     .site-editor input, .site-editor textarea { width: 100%; border-radius: 10px; border: 1px solid #d3dde3; background: rgba(255,255,255,.92); color: #111820; padding: 10px 12px; outline: none; text-align: inherit; }
     .site-editor textarea { min-height: 86px; }
     .site-editor input:focus, .site-editor textarea:focus { border-color: #10c978; box-shadow: 0 0 0 3px rgba(16,201,120,.16); }
+    .secondary-editor { display: grid; gap: 16px; }
+    .secondary-editor .page-head { background: #fff; border: 1px solid #dfe7eb; border-radius: 8px; padding: 20px; text-align: center; }
+    .secondary-editor .page-head input { font-size: 30px; font-weight: 950; margin-bottom: 10px; }
+    .secondary-editor .page-section { background: #fff; border: 1px solid #dfe7eb; border-radius: 8px; padding: 16px; }
+    .secondary-editor .page-section input { font-size: 18px; font-weight: 900; margin-bottom: 10px; }
+    .secondary-editor .page-tools { display: flex; justify-content: space-between; gap: 10px; align-items: center; margin-bottom: 10px; }
     @media (max-width: 860px) {
       .shell { grid-template-columns: 1fr; }
       .side { position: sticky; top: 0; z-index: 2; }
@@ -173,6 +180,13 @@
           <h3>官网管理</h3>
           <p>这里编辑的是官网同一套内容。保存只进草稿；发布后，官网读取已发布版本。所有文字都可以直接在对应位置修改。</p>
           <div class="site-toolbar">
+            <select id="sitePageSelect" aria-label="选择编辑页面">
+              <option value="official_home">官网首页</option>
+              <option value="terms">规则边界 / 用户协议</option>
+              <option value="privacy">隐私政策</option>
+              <option value="support">支持与反馈</option>
+              <option value="app_download">APP 使用说明</option>
+            </select>
             <button class="btn" id="siteReloadBtn">刷新线上</button>
             <button class="btn" id="siteSaveBtn">保存草稿</button>
             <button class="btn primary" id="sitePublishBtn">发布上线</button>
@@ -227,6 +241,23 @@
             <textarea data-site-input="footer" aria-label="页脚文案"></textarea>
           </footer>
         </div>
+        <div class="site-editor secondary-editor hidden" id="secondaryEditor">
+          <section class="page-head">
+            <input data-page-input="pageTitle" aria-label="页面标题">
+            <input data-page-input="updatedLabel" aria-label="更新日期或副标题">
+            <textarea data-page-input="pageSubtitle" aria-label="页面副标题"></textarea>
+            <textarea data-page-input="pageIntro" aria-label="顶部说明"></textarea>
+            <div class="official-actions" style="justify-content:center;">
+              <input class="official-btn primary" data-page-input="ctaText" aria-label="按钮文案">
+              <input class="official-btn" data-page-input="ctaHref" aria-label="按钮链接">
+            </div>
+          </section>
+          <div class="page-tools">
+            <strong>页面内容段落</strong>
+            <button class="btn" type="button" id="addPageSectionBtn">增加段落</button>
+          </div>
+          <div id="pageSections"></div>
+        </div>
       </section>
 
       <section class="section" id="section-compliance">
@@ -275,7 +306,63 @@
       startSecondaryCta: '隐私政策',
       footer: '© 华伴 AI+ · 华人先行，多语种服务所有人 · 没有投资动作，不是传销，不是虚拟货币。'
     };
-    let siteContentLoaded = false;
+    const SECONDARY_DEFAULTS = {
+      terms: {
+        pageTitle: '华伴用户协议',
+        updatedLabel: '更新日期：2026年7月11日',
+        pageSubtitle: '使用华伴，即表示你理解并同意本协议。',
+        pageIntro: '华伴提供 AI 对话、需求整理、提醒、本地连接、服务线索和供给侧展示等能力。华伴可以协助整理信息，但不替代用户的最终决定。',
+        ctaText: '联系支持',
+        ctaHref: '/support',
+        sections: [
+          { title: '服务定位', body: '华伴是智能体 AI 和信息协助工具。华伴可以帮助用户整理信息、生成确认卡、提供建议和匹配线索，但不替代用户的最终决定。' },
+          { title: '用户责任', body: '用户不得发布违法、欺诈、骚扰、歧视、色情、暴力或侵权内容，不得冒充他人或提供虚假资质、虚假服务、虚假商品。涉及交易、服务、线下见面、专业服务时，应自行核验对方身份、资质和风险。' },
+          { title: '贡献积分性质与兑换规则', body: '华伴积分用于记录真实使用、反馈、推荐、资料完善、供给提交、交易确认和履约确认等贡献。积分不是现金、证券、股权、债权、金融产品、加密资产或固定收益承诺，不支持买卖、赠与、转让、代持或用户之间流通。' },
+          { title: '监管与合规复核', body: '华伴当前定位为 AI 信息整理、供需匹配、交易记录和贡献积分工具，不向用户募集资金，不接受用户以投资目的出资。若产品形态、支付/兑换方式、规模或监管规则变化，华伴会重新评估相关合规义务。' }
+        ]
+      },
+      privacy: {
+        pageTitle: '华伴隐私政策',
+        updatedLabel: '更新日期：2026年7月11日',
+        pageSubtitle: '说明数据收集、使用、权限和删除方式。',
+        pageIntro: '华伴尽量只在提供功能所必需的范围内收集和使用信息，并让用户自行决定是否提供更多资料。',
+        ctaText: '提交数据请求',
+        ctaHref: '/support',
+        sections: [
+          { title: '我们可能收集的信息', body: '账号与名片信息、身份绑定与验证信息、聊天与需求信息、设备与访问记录、位置相关信息、图片/相机/语音/通讯录使用记录，以及交易、积分与合规记录。' },
+          { title: '我们如何使用信息', body: '用于整理需求、生成确认卡、服务匹配、名片分享、推荐关系绑定、积分计算、争议处理、产品优化、安全风控、合规留痕和用户授权后的个人数据库使用。' },
+          { title: '权限说明', body: '麦克风用于语音输入和语音交互；相机/相册用于扫码、图片识别和截图整理；通讯录仅在用户主动选择联系人时使用；定位用于本地城市、出行和附近服务判断；通知用于提醒和状态提示。' },
+          { title: '数据删除与联系', body: '如果你希望查询、更正或删除相关信息，请通过支持页联系我们。涉及交易确认、履约证明、积分流水、兑换申请、争议、安全事件、税务或监管要求的记录，可能按法律和合规要求保留更长时间。' }
+        ]
+      },
+      support: {
+        pageTitle: '华伴支持与反馈',
+        updatedLabel: '公测阶段',
+        pageSubtitle: '有问题，告诉华伴就行。',
+        pageIntro: '试用感觉好，请推荐给好友；感觉不好，请告诉华伴 AI。反馈会帮助华伴把真实功能做扎实。',
+        ctaText: '先聊一句',
+        ctaHref: '/ai',
+        sections: [
+          { title: '可以反馈什么', body: '功能不好用、回答不自然、流程太麻烦、服务者资料可疑、名片内容不实、疑似诈骗、信息删除或更正请求、合作和服务者审核问题。' },
+          { title: '联系渠道', body: '当前公测阶段，请优先在华伴 AI 内直接说“我要反馈”或“我要举报”。华伴会记录到后台，由运营人员跟进。备用邮箱可在正式上架前补充。' },
+          { title: '相关文件', body: '隐私政策：/privacy；用户协议：/terms。' }
+        ]
+      },
+      app_download: {
+        pageTitle: '把华伴放到身边',
+        updatedLabel: '轻量使用',
+        pageSubtitle: '先放到手机桌面就够了。完整 App 开放后，语音、提醒和消息会更稳定。',
+        pageIntro: '无需商店审核，下次一点就能回到华伴。后续 iPhone TestFlight、App Store 或 Android 安装包开放后，这里会直接显示入口。',
+        ctaText: '先聊一句',
+        ctaHref: '/ai',
+        sections: [
+          { title: '方式一：放到手机桌面', body: 'iPhone 用户用 Safari 打开后，点分享按钮，选择“添加到主屏幕”。Android 用户可在 Chrome 菜单里选择“安装应用”或“添加到主屏幕”。' },
+          { title: '方式二：完整版本', body: '完整版本适合重度使用。等 iPhone TestFlight、App Store 或 Android 安装包开放后，这里会直接显示入口。' }
+        ]
+      }
+    };
+    let currentSitePage = 'official_home';
+    let siteContentLoaded = '';
 
     function $(id) { return document.getElementById(id); }
 
@@ -314,6 +401,19 @@
     function setSiteStatus(message) {
       const node = $('siteStatus');
       if (node) node.textContent = message;
+    }
+
+    function defaultContentFor(pageKey) {
+      return pageKey === 'official_home' ? SITE_DEFAULT_CONTENT : (SECONDARY_DEFAULTS[pageKey] || SECONDARY_DEFAULTS.support);
+    }
+
+    function isHomePage() {
+      return currentSitePage === 'official_home';
+    }
+
+    function setEditorMode() {
+      $('siteEditor').classList.toggle('hidden', !isHomePage());
+      $('secondaryEditor').classList.toggle('hidden', isHomePage());
     }
 
     function ensureSiteCards() {
@@ -367,27 +467,85 @@
       return content;
     }
 
+    function renderPageSections(sections = []) {
+      const box = $('pageSections');
+      box.innerHTML = '';
+      const list = sections.length ? sections : [{ title: '', body: '' }];
+      list.forEach((section, index) => {
+        const article = document.createElement('article');
+        article.className = 'page-section';
+        article.innerHTML = `
+          <div class="page-tools">
+            <strong>段落 ${index + 1}</strong>
+            <button class="btn" type="button" data-remove-page-section="${index}">删除</button>
+          </div>
+          <input data-page-section-title="${index}" aria-label="段落${index + 1}标题">
+          <textarea data-page-section-body="${index}" aria-label="段落${index + 1}正文"></textarea>
+        `;
+        box.appendChild(article);
+        article.querySelector(`[data-page-section-title="${index}"]`).value = section.title || '';
+        article.querySelector(`[data-page-section-body="${index}"]`).value = section.body || '';
+      });
+    }
+
+    function fillSecondaryEditor(content = {}) {
+      const data = { ...defaultContentFor(currentSitePage), ...content };
+      document.querySelectorAll('[data-page-input]').forEach(input => {
+        input.value = data[input.dataset.pageInput] || '';
+      });
+      renderPageSections(Array.isArray(data.sections) ? data.sections : []);
+    }
+
+    function collectSecondaryEditor() {
+      const content = { ...defaultContentFor(currentSitePage), sections: [] };
+      document.querySelectorAll('[data-page-input]').forEach(input => {
+        content[input.dataset.pageInput] = input.value.trim();
+      });
+      document.querySelectorAll('[data-page-section-title]').forEach(title => {
+        const index = Number(title.dataset.pageSectionTitle);
+        const body = document.querySelector(`[data-page-section-body="${index}"]`);
+        content.sections[index] = {
+          title: title.value.trim(),
+          body: body ? body.value.trim() : ''
+        };
+      });
+      content.sections = content.sections.filter(section => section && (section.title || section.body));
+      return content;
+    }
+
+    function fillCurrentEditor(content = {}) {
+      setEditorMode();
+      if (isHomePage()) fillSiteEditor(content);
+      else fillSecondaryEditor(content);
+    }
+
+    function collectCurrentEditor() {
+      return isHomePage() ? collectSiteEditor() : collectSecondaryEditor();
+    }
+
     async function loadSiteContent(force = false) {
-      if (siteContentLoaded && !force) return;
-      ensureSiteCards();
-      setSiteStatus('正在读取官网内容...');
+      if (siteContentLoaded === currentSitePage && !force) return;
+      setEditorMode();
+      if (isHomePage()) ensureSiteCards();
+      const label = $('sitePageSelect')?.selectedOptions?.[0]?.textContent || '页面';
+      setSiteStatus(`正在读取${label}...`);
       try {
-        const res = await fetch('/api/site-content?page=official_home&admin=1', {
+        const res = await fetch(`/api/site-content?page=${encodeURIComponent(currentSitePage)}&admin=1`, {
           cache: 'no-store',
           headers: { 'X-Admin-Token': adminToken() }
         });
         const json = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(json.error || '读取失败');
-        const source = json.draft?.content || json.published?.content || SITE_DEFAULT_CONTENT;
-        fillSiteEditor(source);
+        const source = json.draft?.content || json.published?.content || defaultContentFor(currentSitePage);
+        fillCurrentEditor(source);
         const draftVersion = json.draft?.version ? `草稿 v${json.draft.version}` : '暂无草稿';
         const publishedVersion = json.published?.version ? `已发布 v${json.published.version}` : '暂无发布版本';
         setSiteStatus(`${draftVersion} · ${publishedVersion}`);
-        siteContentLoaded = true;
+        siteContentLoaded = currentSitePage;
       } catch (error) {
-        fillSiteEditor(SITE_DEFAULT_CONTENT);
+        fillCurrentEditor(defaultContentFor(currentSitePage));
         setSiteStatus(`${error.message}；已载入默认官网内容`);
-        siteContentLoaded = true;
+        siteContentLoaded = currentSitePage;
       }
     }
 
@@ -400,17 +558,17 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             token: adminToken(),
-            page: 'official_home',
+            page: currentSitePage,
             admin: true,
             action,
-            content: collectSiteEditor()
+            content: collectCurrentEditor()
           })
         });
         const json = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(json.error || '保存失败');
         const version = isPublish ? json.published?.version : json.draft?.version;
         setSiteStatus(isPublish ? `已发布上线 v${version || ''}` : `草稿已保存 v${version || ''}`);
-        siteContentLoaded = false;
+        siteContentLoaded = '';
         await loadSiteContent(true);
       } catch (error) {
         setSiteStatus(error.message);
@@ -447,6 +605,24 @@
     $('siteReloadBtn').addEventListener('click', () => loadSiteContent(true));
     $('siteSaveBtn').addEventListener('click', () => saveSiteContent('save'));
     $('sitePublishBtn').addEventListener('click', () => saveSiteContent('publish'));
+    $('sitePageSelect').addEventListener('change', event => {
+      currentSitePage = event.target.value;
+      siteContentLoaded = '';
+      loadSiteContent(true);
+    });
+    $('addPageSectionBtn').addEventListener('click', () => {
+      const data = collectSecondaryEditor();
+      data.sections.push({ title: '', body: '' });
+      renderPageSections(data.sections);
+    });
+    $('pageSections').addEventListener('click', event => {
+      const btn = event.target.closest('[data-remove-page-section]');
+      if (!btn) return;
+      const index = Number(btn.dataset.removePageSection);
+      const data = collectSecondaryEditor();
+      data.sections.splice(index, 1);
+      renderPageSections(data.sections);
+    });
 
     verifySession().then(ok => { if (ok) showApp(); });
   </script>

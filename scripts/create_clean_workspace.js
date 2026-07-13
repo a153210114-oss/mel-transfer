@@ -37,6 +37,7 @@ const FILES = [
   'api/verify-code.js',
   'api/video-image.js',
   'lib/model-router.js',
+  'assets/site-page-runtime.js',
   'assets/brand/apple-touch-icon.png',
   'assets/brand/huaban-logo-v1.png',
   'assets/brand/icon-192.png',

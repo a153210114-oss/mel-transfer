@@ -40,7 +40,7 @@
     }
   </style>
 </head>
-<body>
+<body data-site-page="app_download">
   <main class="page">
     <div class="top">
       <div class="brand"><img src="assets/brand/huaban-logo-v1.png" alt="">华伴</div>
@@ -48,22 +48,22 @@
     </div>
 
     <section class="hero">
-      <h1>把华伴放到身边</h1>
-      <p class="lead">轻量使用，先放到手机桌面就够了。长期使用，后续 App 开放后，语音、提醒和消息会更稳定。</p>
+      <h1 data-download-title>把华伴放到身边</h1>
+      <p class="lead" data-download-lead>轻量使用，先放到手机桌面就够了。长期使用，后续 App 开放后，语音、提醒和消息会更稳定。</p>
       <div class="device" id="device-pill">正在识别设备...</div>
     </section>
 
-    <section class="card">
+    <section class="card" data-download-section="0">
       <h2>方式一：放到手机桌面</h2>
       <p>最快开始。无需商店审核，下次一点就能回到华伴。</p>
       <div class="steps" id="pwa-steps"></div>
       <div class="actions">
         <button class="btn" type="button" id="install-btn">放到手机</button>
-        <a class="btn ghost" href="/ai">先聊一句</a>
+        <a class="btn ghost" href="/ai" data-download-primary>先聊一句</a>
       </div>
     </section>
 
-    <section class="card">
+    <section class="card" data-download-section="1">
       <h2>方式二：完整版本</h2>
       <p>完整版本适合重度使用。等 iPhone TestFlight、App Store 或 Android 安装包开放后，这里会直接显示入口。</p>
       <div class="actions">
@@ -73,9 +73,10 @@
       </div>
     </section>
 
-    <div class="note">除了需要与被需要，生活不该被打扰。华伴 AI，一个更出色的你。</div>
+    <div class="note" data-download-note>除了需要与被需要，生活不该被打扰。华伴 AI，一个更出色的你。</div>
   </main>
 
+  <script src="assets/site-page-runtime.js"></script>
   <script>
     let deferredInstallPrompt=null;
     window.addEventListener('beforeinstallprompt',event=>{
