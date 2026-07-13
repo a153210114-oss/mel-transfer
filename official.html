@@ -1,1027 +1,179 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>华伴 AI+｜先和华伴说一句</title>
-<meta name="description" content="华伴 AI+ 是一款会执行任务的实用 AI 工具。找本地需要你的人、找服务、整理资料、反馈问题、分享华伴，都先和华伴说一句。">
-<meta name="keywords" content="华伴, Huaban, 华伴AI, 海外华人AI, 供需匹配, 海外生活, 华人服务, 本地好友, 墨尔本华人, AI工具, AI执行, 本地连接, 贡献共享">
-<link rel="canonical" href="https://www.huabanapp.com/">
-<link rel="icon" href="assets/brand/icon-192.png">
-<link rel="apple-touch-icon" sizes="180x180" href="assets/brand/apple-touch-icon.png">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="华伴">
-<meta property="og:title" content="华伴 AI+｜先和华伴说一句">
-<meta property="og:description" content="找本地需要你的人、找服务、整理资料、反馈问题、分享华伴，都先和华伴说一句。">
-<meta property="og:url" content="https://www.huabanapp.com/">
-<meta property="og:image" content="https://www.huabanapp.com/assets/brand/huaban-logo-v1.png">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="华伴 AI+｜先和华伴说一句">
-<meta name="twitter:description" content="找本地需要你的人、找服务、整理资料、反馈问题、分享华伴，都先和华伴说一句。">
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  "name": "华伴 AI+",
-  "alternateName": "Huaban AI",
-  "applicationCategory": "LifestyleApplication",
-  "operatingSystem": "Web",
-  "url": "https://www.huabanapp.com/",
-  "description": "华伴 AI+ 是一款会执行任务的实用 AI 工具。找本地需要你的人、找服务、整理资料、反馈问题、分享华伴，都先和华伴说一句。",
-  "offers": {
-    "@type": "Offer",
-    "price": "0",
-    "priceCurrency": "AUD"
-  }
-}
-</script>
-<style>
-:root {
-  --bg: #f7faf9;
-  --ink: #102033;
-  --muted: #5d6b7c;
-  --line: rgba(15, 40, 70, 0.12);
-  --green: #16b77b;
-  --cyan: #1ca7d8;
-  --gold: #e7a72f;
-  --blue: #162b55;
-  --panel: #ffffff;
-  --soft: #edf7f4;
-}
-* { box-sizing: border-box; }
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
-  color: var(--ink);
-  background: var(--bg);
-}
-a { color: inherit; text-decoration: none; }
-.nav {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  background: rgba(247,250,249,0.92);
-  backdrop-filter: blur(14px);
-  border-bottom: 1px solid var(--line);
-}
-.nav-inner {
-  width: min(1120px, calc(100vw - 32px));
-  margin: 0 auto;
-  min-height: 68px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-weight: 950;
-  cursor: pointer;
-}
-.brand img {
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  object-fit: contain;
-  background: #fff;
-}
-.brand span { font-size: 18px; }
-.nav-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-.nav-link {
-  color: var(--muted);
-  font-size: 14px;
-  font-weight: 800;
-}
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 42px;
-  padding: 0 16px;
-  border-radius: 12px;
-  border: 1px solid var(--line);
-  font-weight: 900;
-  background: #fff;
-}
-.btn.primary {
-  border: 0;
-  color: #04140e;
-  background: linear-gradient(135deg, #2bd18e, #41c5ef);
-}
-.site-lang-switch {
-  position: fixed;
-  right: max(16px, env(safe-area-inset-right));
-  top: max(14px, env(safe-area-inset-top));
-  z-index: 40;
-  border: 1px solid rgba(15,40,70,0.12);
-  background: rgba(255,255,255,0.88);
-  color: var(--ink);
-  border-radius: 999px;
-  min-height: 38px;
-  padding: 0 12px;
-  font: 900 12px/1 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
-  box-shadow: 0 10px 28px rgba(16,32,51,0.12);
-  backdrop-filter: blur(14px);
-}
-.ai-summon {
-  position: fixed;
-  right: max(18px, env(safe-area-inset-right));
-  bottom: max(20px, env(safe-area-inset-bottom));
-  z-index: 30;
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  min-height: 52px;
-  padding: 8px 14px 8px 8px;
-  border-radius: 999px;
-  border: 1px solid rgba(22,183,123,0.24);
-  background: rgba(255,255,255,0.92);
-  box-shadow: 0 14px 34px rgba(16,32,51,0.16);
-  font-size: 14px;
-  font-weight: 950;
-  color: var(--ink);
-  backdrop-filter: blur(14px);
-}
-.ai-summon img {
-  width: 36px;
-  height: 36px;
-  border-radius: 11px;
-  object-fit: cover;
-  box-shadow: 0 0 0 1px rgba(16,32,51,0.06);
-}
-.ai-summon::before {
-  content: "";
-  position: absolute;
-  inset: -7px;
-  border-radius: inherit;
-  border: 1px solid rgba(22,183,123,0.18);
-  animation: summonPulse 2.4s ease-out infinite;
-  pointer-events: none;
-}
-@keyframes summonPulse {
-  0% { opacity: .72; transform: scale(.96); }
-  70%,100% { opacity: 0; transform: scale(1.12); }
-}
-.hero {
-  width: min(1120px, calc(100vw - 32px));
-  margin: 0 auto;
-  min-height: calc(100vh - 68px);
-  display: grid;
-  grid-template-columns: minmax(0, 1.08fr) minmax(320px, 0.92fr);
-  align-items: center;
-  gap: 44px;
-  padding: 42px 0 58px;
-}
-.eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  border: 1px solid rgba(22,183,123,0.22);
-  background: rgba(22,183,123,0.09);
-  color: #087552;
-  border-radius: 999px;
-  padding: 8px 12px;
-  font-size: 13px;
-  font-weight: 950;
-}
-h1 {
-  margin: 18px 0 0;
-  font-size: clamp(40px, 7vw, 78px);
-  line-height: 1.04;
-  letter-spacing: 0;
-}
-.hero-copy {
-  margin: 20px 0 0;
-  color: var(--muted);
-  font-size: 18px;
-  line-height: 1.85;
-  max-width: 690px;
-}
-.hero-copy + .hero-copy {
-  margin-top: 8px;
-}
-.hero-actions {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-top: 28px;
-}
-.hero-points {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0,1fr));
-  gap: 10px;
-  margin-top: 28px;
-}
-.point {
-  border: 1px solid var(--line);
-  background: rgba(255,255,255,0.74);
-  border-radius: 14px;
-  padding: 13px;
-}
-.point strong {
-  display: block;
-  font-size: 14px;
-  margin-bottom: 5px;
-}
-.point span {
-  display: block;
-  color: var(--muted);
-  font-size: 12px;
-  line-height: 1.55;
-}
-.phone-wrap {
-  display: flex;
-  justify-content: center;
-}
-.phone {
-  width: min(360px, 100%);
-  aspect-ratio: 9 / 16;
-  border-radius: 34px;
-  background: #0b1528;
-  padding: 12px;
-  border: 1px solid rgba(15,40,70,0.16);
-  box-shadow: 0 28px 70px rgba(20, 54, 88, 0.22);
-}
-.screen {
-  height: 100%;
-  border-radius: 26px;
-  background: linear-gradient(180deg, #f8fffc, #eaf6ff);
-  overflow: hidden;
-  padding: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.phone-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  color: #476070;
-  font-size: 12px;
-  font-weight: 900;
-}
-.ai-card {
-  margin-top: 18px;
-  border: 1px solid rgba(22,183,123,0.18);
-  background: #fff;
-  border-radius: 22px;
-  padding: 18px;
-}
-.ai-card img {
-  width: 62px;
-  height: 62px;
-  display: block;
-  border-radius: 16px;
-  object-fit: contain;
-  margin-bottom: 12px;
-}
-.ai-card strong {
-  display: block;
-  font-size: 22px;
-  line-height: 1.28;
-}
-.ai-card p {
-  margin: 10px 0 0;
-  color: var(--muted);
-  line-height: 1.7;
-  font-size: 14px;
-}
-.bubble {
-  border-radius: 18px;
-  padding: 13px 14px;
-  line-height: 1.65;
-  font-size: 14px;
-}
-.bubble.user {
-  align-self: flex-end;
-  background: #daf8e8;
-  color: #0f5136;
-  max-width: 86%;
-}
-.bubble.ai {
-  background: #fff;
-  border: 1px solid rgba(15,40,70,0.09);
-  color: #21354a;
-}
-.section {
-  width: min(1120px, calc(100vw - 32px));
-  margin: 0 auto;
-  padding: 70px 0;
-}
-.section h2 {
-  margin: 0;
-  font-size: clamp(28px, 4vw, 44px);
-  line-height: 1.18;
-}
-.section-lead {
-  color: var(--muted);
-  font-size: 17px;
-  line-height: 1.8;
-  margin: 14px 0 0;
-  max-width: 760px;
-}
-.cards {
-  margin-top: 28px;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 16px;
-}
-.card {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  padding: 22px;
-  min-height: 190px;
-}
-.card-icon {
-  width: 44px;
-  height: 44px;
-  display: grid;
-  place-items: center;
-  border-radius: 12px;
-  background: var(--soft);
-  font-size: 24px;
-  margin-bottom: 16px;
-}
-.card h3 {
-  margin: 0;
-  font-size: 19px;
-}
-.card p {
-  color: var(--muted);
-  line-height: 1.8;
-  margin: 10px 0 0;
-  font-size: 14px;
-}
-.band {
-  background: #10223d;
-  color: #fff;
-}
-.band .section-lead,
-.band .card p { color: rgba(255,255,255,0.68); }
-.band .card {
-  background: rgba(255,255,255,0.06);
-  border-color: rgba(255,255,255,0.12);
-}
-.band .card-icon { background: rgba(255,255,255,0.1); }
-.video-strip {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 18px;
-  align-items: center;
-  margin-top: 26px;
-  padding: 22px;
-  border: 1px solid var(--line);
-  border-radius: 22px;
-  background: #fff;
-}
-.video-strip strong {
-  display: block;
-  font-size: 22px;
-  line-height: 1.25;
-}
-.video-strip p {
-  color: var(--muted);
-  line-height: 1.75;
-  margin: 8px 0 0;
-}
-.cta {
-  display: grid;
-  grid-template-columns: 1fr 260px;
-  gap: 28px;
-  align-items: center;
-  background: #fff;
-  border: 1px solid var(--line);
-  border-radius: 24px;
-  padding: 28px;
-}
-.cta h2 { margin-bottom: 12px; }
-.cta p {
-  color: var(--muted);
-  line-height: 1.8;
-}
-.qr {
-  text-align: center;
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  padding: 16px;
-  background: #f8fbfa;
-}
-.qr img {
-  width: 190px;
-  height: 190px;
-  object-fit: contain;
-  display: block;
-  margin: 0 auto 10px;
-}
-footer {
-  border-top: 1px solid var(--line);
-  padding: 28px 0;
-  color: var(--muted);
-}
-.footer-inner {
-  width: min(1120px, calc(100vw - 32px));
-  margin: 0 auto;
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-  font-size: 13px;
-}
-.identity-home {
-  width: min(920px, calc(100vw - 32px));
-  min-height: 100vh;
-  margin: 0 auto;
-  padding: 48px 0 72px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-}
-.identity-logo {
-  width: 86px;
-  height: 86px;
-  border-radius: 24px;
-  background: #fff;
-  box-shadow: 0 16px 44px rgba(16,32,51,0.11);
-  object-fit: contain;
-}
-.identity-home h1 {
-  margin-top: 24px;
-  max-width: 760px;
-}
-.identity-tabs {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  justify-content: center;
-  margin-top: 28px;
-}
-.identity-tab-wrap {
-  display: grid;
-  gap: 8px;
-  justify-items: center;
-}
-.identity-tab-subtitle {
-  font-size: 13px;
-  font-weight: 900;
-  color: var(--accent);
-  line-height: 1.35;
-}
-.identity-tab {
-  min-height: 44px;
-  border: 1px solid var(--line);
-  background: #fff;
-  color: var(--ink);
-  border-radius: 999px;
-  padding: 0 18px;
-  font: inherit;
-  font-size: 15px;
-  font-weight: 950;
-  cursor: pointer;
-}
-.identity-tab.active {
-  border-color: transparent;
-  color: #03150e;
-  background: linear-gradient(135deg, #2bd18e, #41c5ef);
-  box-shadow: 0 12px 28px rgba(22,183,123,0.18);
-}
-.identity-panel {
-  width: min(760px, 100%);
-  margin-top: 24px;
-  border: 1px solid var(--line);
-  border-radius: 22px;
-  background: rgba(255,255,255,0.82);
-  padding: 28px;
-  text-align: left;
-  box-shadow: 0 18px 50px rgba(16,32,51,0.08);
-}
-.identity-panel h2 {
-  margin: 0;
-  font-size: clamp(24px, 4vw, 36px);
-  line-height: 1.22;
-}
-.identity-panel p {
-  margin: 14px 0 0;
-  color: var(--muted);
-  font-size: 17px;
-  line-height: 1.82;
-}
-.identity-list {
-  display: grid;
-  gap: 10px;
-  margin: 20px 0 0;
-  padding: 0;
-  list-style: none;
-}
-.identity-list li {
-  border: 1px solid rgba(15,40,70,0.09);
-  border-radius: 14px;
-  background: #f8fbfa;
-  padding: 13px 14px;
-  color: #25394e;
-  line-height: 1.65;
-}
-.identity-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 24px;
-}
-.identity-hook-note {
-  margin-top: 16px;
-  color: #667085;
-  font-size: 12px;
-  line-height: 1.78;
-  text-align: left;
-}
-.identity-hook-note strong {
-  color: #3a4a5f;
-  font-weight: 900;
-}
-.identity-form {
-  display: grid;
-  gap: 10px;
-  margin-top: 18px;
-}
-.identity-field {
-  display: grid;
-  gap: 6px;
-}
-.identity-field label {
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 900;
-}
-.identity-field input {
-  width: 100%;
-  min-height: 46px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: #fff;
-  color: var(--ink);
-  font: 15px/1.4 inherit;
-  padding: 0 13px;
-  outline: none;
-}
-.identity-field input:focus {
-  border-color: rgba(22,183,123,0.55);
-  box-shadow: 0 0 0 4px rgba(22,183,123,0.11);
-}
-.identity-note {
-  margin-top: 12px;
-  color: var(--muted);
-  font-size: 13px;
-  line-height: 1.7;
-}
-@media (max-width: 860px) {
-  .nav-inner { min-height: 62px; }
-  .nav-link { display: none; }
-  .nav-actions .btn:not(.primary) { display: none; }
-  .hero { grid-template-columns: 1fr; min-height: auto; padding-top: 34px; }
-  .phone-wrap { order: -1; }
-  .phone { max-width: 320px; }
-  .hero-points, .cards, .cta, .video-strip { grid-template-columns: 1fr; }
-  .section { padding: 48px 0; }
-  .qr { width: min(260px, 100%); }
-  .ai-summon { right: 14px; bottom: 14px; padding-right: 10px; }
-  .ai-summon span { display: none; }
-  .identity-home { padding-top: 32px; justify-content: flex-start; }
-  .identity-logo { width: 74px; height: 74px; border-radius: 21px; }
-  .identity-panel { padding: 22px; }
-  .identity-actions .btn { width: 100%; }
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>华伴 AI+ | 海外华人必备智能体</title>
+  <meta name="description" content="华伴 AI+ 1.1：智能匹配供需，AI 协助交易双方整理共识、确认履约和记录积分。">
+  <link rel="canonical" href="https://www.huabanapp.com/">
+  <link rel="icon" href="assets/brand/huaban-logo-v1.png">
+  <style>
+    :root {
+      --ink: #111820;
+      --muted: #637083;
+      --line: #dfe7eb;
+      --brand: #10c978;
+      --brand-dark: #059669;
+      --gold: #a57918;
+      --bg: #f7faf8;
+      --card: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); }
+    a { color: inherit; text-decoration: none; }
+    .wrap { width: min(1080px, calc(100% - 32px)); margin: 0 auto; }
+    .nav { min-height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 900; }
+    .brand img { width: 42px; height: 42px; border-radius: 12px; background: #fff; }
+    .nav-actions { display: flex; gap: 10px; align-items: center; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; border-radius: 999px; padding: 0 18px; font-weight: 900; border: 1px solid var(--line); background: #fff; }
+    .btn.primary { background: var(--brand); color: #06150d; border-color: transparent; }
+    .hero { min-height: calc(100dvh - 72px); display: grid; align-items: center; padding: 34px 0 56px; }
+    .hero-inner { display: grid; gap: 26px; text-align: center; justify-items: center; }
+    .logo-mark { width: 82px; height: 82px; border-radius: 22px; background: #fff; box-shadow: 0 14px 40px rgba(16,201,120,.16); }
+    h1 { font-size: clamp(44px, 9vw, 92px); line-height: 1.02; margin: 0; letter-spacing: 0; }
+    .version { display: inline-flex; align-items: center; border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 8px 16px; font-weight: 900; }
+    .subtitle { font-size: clamp(19px, 3vw, 28px); line-height: 1.55; max-width: 860px; margin: 0; font-weight: 800; }
+    .hook { color: var(--gold); font-weight: 900; max-width: 860px; line-height: 1.65; }
+    .cta-row { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+    .section { padding: 58px 0; border-top: 1px solid var(--line); }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 22px; min-height: 170px; }
+    .card h3 { margin: 0 0 12px; font-size: 22px; }
+    .card p { margin: 0; color: var(--muted); line-height: 1.75; }
+    .wide { max-width: 860px; margin: 0 auto; text-align: center; }
+    .wide h2 { font-size: clamp(28px, 5vw, 48px); margin: 0 0 14px; }
+    .wide p { color: var(--muted); line-height: 1.85; font-size: 17px; }
+    .fine { color: var(--muted); font-size: 13px; line-height: 1.7; }
+    footer { padding: 32px 0 42px; color: var(--muted); border-top: 1px solid var(--line); }
+    @media (max-width: 760px) {
+      .nav { align-items: flex-start; padding-top: 14px; }
+      .nav-actions { flex-direction: column; align-items: stretch; }
+      .btn { min-height: 38px; padding: 0 14px; font-size: 14px; }
+      .grid { grid-template-columns: 1fr; }
+      .hero { min-height: auto; }
+    }
+  </style>
 </head>
 <body>
-<button class="site-lang-switch" id="siteLangSwitch" type="button" onclick="cycleSiteLanguage()" aria-label="切换语言">Auto</button>
-<main>
-  <section class="identity-home" aria-label="华伴 AI+ 首页">
-    <img class="identity-logo" src="assets/brand/huaban-logo-v1.png" alt="华伴">
-    <h1 id="siteMainTitle">服务海外华人本地生活的智能应用</h1>
-    <p class="section-lead" id="siteMainSubtitle" style="text-align:center;margin-top:14px;">无需费时费力在一堆搜索结果中徒劳无果，也不会被带偏。</p>
-    <div class="identity-tabs" role="tablist" aria-label="选择华伴入口">
-      <div class="identity-tab-wrap">
-        <div class="identity-tab-subtitle">真实贡献会被看见</div>
-        <button class="identity-tab active" type="button" data-role="share">共建一程</button>
-      </div>
-      <div class="identity-tab-wrap">
-        <div class="identity-tab-subtitle">从本地需求开始</div>
-        <button class="identity-tab" type="button" data-role="now">先让它办</button>
-      </div>
-      <div class="identity-tab-wrap">
-        <div class="identity-tab-subtitle">一点就能回来</div>
-        <button class="identity-tab" type="button" data-role="pocket">随手可用</button>
-      </div>
-    </div>
-    <article class="identity-panel" aria-live="polite">
-      <h2 id="identityTitle"></h2>
-      <p id="identityLead"></p>
-      <ul class="identity-list" id="identityList"></ul>
-      <div id="identityExtra"></div>
-      <div class="identity-actions">
-        <a class="btn primary" id="identityAction" href="/ai?ref=share_growth">去试一句</a>
-        <a class="btn" id="identitySecondaryAction" href="app-download.html?ref=identity_home">放到手机</a>
-      </div>
-      <div class="identity-hook-note" id="siteHookNote"><strong>区块链浪潮，你错过了比特币；AI 浪潮已经到来，这一次先别只做旁观者。</strong> 华伴只记录真实使用、有效反馈、真实分享和被审核的贡献；不承诺收益，不靠拉人头，未来按公开规则共享。</div>
-    </article>
-  </section>
-</main>
+  <header class="wrap nav">
+    <a class="brand" href="/">
+      <img src="assets/brand/huaban-logo-v1.png" alt="华伴">
+      <span>华伴 AI+</span>
+    </a>
+    <nav class="nav-actions">
+      <a class="btn" href="/profile">个人中心</a>
+      <a class="btn primary" href="/ai">进入华伴</a>
+    </nav>
+  </header>
 
-<footer>
-  <div class="footer-inner">
-    <span>华伴 AI+ · 服务海外华人本地生活的智能应用</span>
-    <span>huabanapp.com</span>
-  </div>
-</footer>
-<script>
-const SUPA_URL = 'https://gxocvpmgfjvmmkkbswgo.supabase.co';
-const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b2N2cG1nZmp2bW1ra2Jzd2dvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyNDc4NzAsImV4cCI6MjA5NTgyMzg3MH0.ExUNuOP8YyHQmItY6cdl1Euj7nOXqQq-rQT5-7aNerE';
-const SITE_LANG_KEY='huaban_site_language_mode';
-const SITE_TZ_LANG=[
-  [/Tokyo/i,'ja'],[/Seoul/i,'ko'],[/Bangkok/i,'th'],[/Jakarta/i,'id'],[/Ho_Chi_Minh|Hanoi/i,'vi'],
-  [/Berlin|Zurich|Vienna/i,'de'],[/Paris/i,'fr'],[/Rome/i,'it'],[/Madrid/i,'es'],[/Amsterdam/i,'nl'],[/Lisbon|Sao_Paulo/i,'pt'],
-  [/Dubai|Riyadh/i,'ar'],[/Istanbul/i,'tr'],[/Moscow/i,'ru']
-];
-const SITE_LANG_META={zh:{html:'zh-CN',label:'中文'},en:{html:'en',label:'EN'},ja:{html:'ja',label:'日本語'},ko:{html:'ko',label:'한국어'},th:{html:'th',label:'ไทย'},id:{html:'id',label:'ID'},vi:{html:'vi',label:'VI'},de:{html:'de',label:'DE'},fr:{html:'fr',label:'FR'},it:{html:'it',label:'IT'},es:{html:'es',label:'ES'},nl:{html:'nl',label:'NL'},pt:{html:'pt',label:'PT'},ar:{html:'ar',label:'AR'},tr:{html:'tr',label:'TR'},ru:{html:'ru',label:'RU'}};
-const SITE_I18N={
-  zh:{title:'服务海外华人本地生活的智能应用',subtitle:'无需费时费力在一堆搜索结果中徒劳无果，也不会被带偏。',hookNote:'区块链浪潮，你错过了比特币；AI 浪潮已经到来，这一次先别只做旁观者。 华伴只记录真实使用、有效反馈、真实分享和被审核的贡献；不承诺收益，不靠拉人头，未来按公开规则共享。',tabSubs:['真实贡献会被看见','从本地需求开始','一点就能回来'],tabBtns:['共建一程','先让它办','随手可用'],businessSub:'真实贡献会被看见',lifeSub:'从本地需求开始',businessBtn:'共建一程',lifeBtn:'先让它办',open:'现在就试',download:'放到手机',footer:'华伴 AI+ · 服务海外华人本地生活的智能应用'},
-  en:{title:'A smart local-life app for overseas Chinese',subtitle:'No more wasting time in messy search results, and no more being led off track.',hookNote:'Many people missed the blockchain wave. The AI wave is here; this time, do not stay only as a spectator. Huaban records real use, useful feedback, real sharing, and reviewed contribution only; no income promise, no headcount game, just transparent rules.',tabSubs:['Real contribution is seen','Start with local needs','One tap back'],tabBtns:['Build Together','Let It Work','Keep It Close'],businessSub:'Real contribution is seen',lifeSub:'Start with local needs',businessBtn:'Build Together',lifeBtn:'Let It Work',open:'Try Now',download:'Keep on Phone',footer:'Huaban AI+ · Smart local life for overseas Chinese',
-    business:{title:'Let the right customers find you',lead:'No complicated signup. Leave your phone and industry first; add Huaban to your phone when you want timely demand alerts.',items:['For local service providers, shops, drivers, translators, lawyers, accountants, restaurants, delivery, tours, and product suppliers.','Huaban organizes your industry, city, service area, and contact details, then matches them intelligently.','No need to stare at a page. Huaban reminds you when a suitable need appears.']},
-    life:{title:'Find what you really need',lead:'Stop getting lost in fragmented information.',items:['No more wasting time in a pile of search results.','Tell Huaban what you need; it keeps the goal clear and moves it forward.','Save your time and attention for your family and your life.']}},
-  ja:{title:'海外華人の現地生活を支えるAIアプリ',subtitle:'検索結果に迷わず、必要なことに集中できます。',tabSubs:['Real contribution is seen','Start with local needs','One tap back'],tabBtns:['Build Together','Let It Work','Keep It Close'],open:'Try Now',download:'Keep on Phone',footer:'華伴 AI+ · 海外華人の現地生活AI'},
-  ko:{title:'해외 중국인을 위한 현지 생활 AI 앱',subtitle:'복잡한 검색 결과에 헤매지 않고 필요한 일에 집중합니다.',tabSubs:['Real contribution is seen','Start with local needs','One tap back'],tabBtns:['Build Together','Let It Work','Keep It Close'],open:'Try Now',download:'Keep on Phone',footer:'Huaban AI+ · 해외 중국인 현지 생활 AI'},
-  th:{title:'แอป AI ชีวิตท้องถิ่นสำหรับชาวจีนโพ้นทะเล',subtitle:'ไม่ต้องเสียเวลาในผลค้นหาที่สับสน',tabSubs:['Real contribution is seen','Start with local needs','One tap back'],tabBtns:['Build Together','Let It Work','Keep It Close'],open:'Try Now',download:'Keep on Phone',footer:'Huaban AI+ · AI ชีวิตท้องถิ่น'},
-  de:{title:'KI-App fur das lokale Leben von Chinesen im Ausland',subtitle:'Nicht in Suchergebnissen verlieren, sondern gezielt weiterkommen.',tabSubs:['Real contribution is seen','Start with local needs','One tap back'],tabBtns:['Build Together','Let It Work','Keep It Close'],open:'Try Now',download:'Keep on Phone',footer:'Huaban AI+ · Lokales Leben im Ausland'},
-  fr:{title:'Application IA pour la vie locale des Chinois d’outre-mer',subtitle:'Ne vous perdez plus dans des resultats de recherche confus.',tabSubs:['Real contribution is seen','Start with local needs','One tap back'],tabBtns:['Build Together','Let It Work','Keep It Close'],open:'Try Now',download:'Keep on Phone',footer:'Huaban AI+ · Vie locale avec IA'},
-  es:{title:'App de IA para la vida local de chinos en el extranjero',subtitle:'Sin perder tiempo entre resultados de busqueda confusos.',tabSubs:['Real contribution is seen','Start with local needs','One tap back'],tabBtns:['Build Together','Let It Work','Keep It Close'],open:'Try Now',download:'Keep on Phone',footer:'Huaban AI+ · Vida local con IA'},
-  pt:{title:'App de IA para a vida local de chineses no exterior',subtitle:'Sem se perder em resultados de busca confusos.',tabSubs:['Real contribution is seen','Start with local needs','One tap back'],tabBtns:['Build Together','Let It Work','Keep It Close'],open:'Try Now',download:'Keep on Phone',footer:'Huaban AI+ · Vida local com IA'}
-};
-let currentIdentityRole='share';
-let identityCopy = {
-  share: {
-    title: '把早期参与，留下真实记录',
-    lead: '使用、反馈、分享、带来真实需求和服务资料，都会成为可核验的贡献。华伴按规则记录，不靠拉人头，不做空口承诺。',
-    href: '/ai?ref=share_growth',
-    actionLabel: '去试一句',
-    secondaryHref: 'app-download.html?ref=share_growth',
-    secondaryLabel: '放到手机',
-    mode: 'plain',
-    items: [
-      '早期使用、有效反馈、真实推荐、提交供给资料和促成服务，都会沉淀为贡献记录。',
-      '可分配净收益的 80% 进入共享池，未来按不可更改的 Web3 规则自动分配。',
-      '越早参与越容易占住真实贡献位置，但所有回馈都以真实使用、审核和规则为准。'
-    ]
-  },
-  now: {
-    title: '先从本地连接开始',
-    lead: '第一版先让华伴把你推给本地需要的人，也帮你找到本地可用的人、服务和资源。',
-    href: '/ai?ref=local_match',
-    actionLabel: '让它试办',
-    secondaryHref: 'app-download.html?ref=local_match',
-    secondaryLabel: '放到手机',
-    mode: 'plain',
-    items: [
-      '你有技能、服务、商品、经验或资源，可以先让华伴整理成能被匹配的资料。',
-      '你有需求，直接告诉华伴；它会整理目标、补齐关键信息，并尝试找到本地可联系对象。',
-      '今天从事业、生活、学习的真实任务起步，未来延伸到机器人和智能生活入口。'
-    ]
-  },
-  pocket: {
-    title: '让华伴留在手机里',
-    lead: '官网只负责介绍和下载。真正使用时，把华伴添加到手机桌面，下次一点就能回来。',
-    href: 'app-download.html?ref=identity_pocket',
-    actionLabel: '看放置方法',
-    secondaryHref: '/ai?ref=pocket_ready',
-    secondaryLabel: '先聊一句',
-    mode: 'plain',
-    items: [
-      'iPhone 用 Safari 打开后，点分享按钮，再选择添加到主屏幕。',
-      '安卓用浏览器打开后，点菜单，再选择添加到主屏幕或安装应用。',
-      '以后找人、找服务、反馈问题、分享华伴，都先对 AI 说一句话，由它调出对应按键。'
-    ]
-  }
-};
+  <main>
+    <section class="hero">
+      <div class="wrap hero-inner">
+        <img class="logo-mark" src="assets/brand/huaban-logo-v1.png" alt="华伴">
+        <h1 data-site="heroTitle">海外华人必备智能体</h1>
+        <div class="version" data-site="heroVersion">版本 1.1：智能交易工具</div>
+        <p class="subtitle" data-site="heroSubtitle">智能匹配，没有佣金差价！聚焦目标，不再费时费力！智能合约，保障自愿公平。</p>
+        <p class="hook" data-site="heroHook">区块链浪潮，你错过了比特币；AI 浪潮已经到来，这一次先别只做旁观者。</p>
+        <div class="cta-row">
+          <a class="btn primary" href="/ai" data-site="primaryCta">共识、共建、共享</a>
+          <a class="btn" href="#about" data-site="secondaryCta">认识华伴</a>
+          <a class="btn" href="/terms" data-site="rulesCta">规则边界</a>
+        </div>
+        <p class="fine" data-site="finePrint">积分和权益以平台规则、后台账本和合规边界为准；积分不是证券、虚拟货币或投资凭证，不支持私下转让。</p>
+      </div>
+    </section>
 
-async function loadPublishedSiteCopy() {
-  try {
-    const res = await fetch(`${SUPA_URL}/rest/v1/beta_leads?channel=eq.site_page_settings&order=created_at.desc&limit=1&select=fields`, {
-      cache: 'no-store',
-      headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, 'Cache-Control': 'no-cache' }
-    });
-    if (!res.ok) return;
-    const rows = await res.json();
-    const settings = rows?.[0]?.fields?.settings;
-    if (!settings || typeof settings !== 'object') return;
-    const isDualEntry = !settings.homeVersion || settings.homeVersion === 'dual_entry';
-    if (!isDualEntry) return;
-    if (settings.mainTitle) document.getElementById('siteMainTitle').textContent = settings.mainTitle;
-    if (settings.mainSubtitle) document.getElementById('siteMainSubtitle').textContent = settings.mainSubtitle;
-    if (settings.roles) {
-      const mappedRoles = {
-        business: settings.roles.business || settings.roles.supplier || settings.roles.creator,
-        life: settings.roles.life || settings.roles.family || settings.roles.student
-      };
-      identityCopy = {
-        ...identityCopy,
-        ...Object.fromEntries(Object.entries(mappedRoles).filter(([, copy]) => copy).map(([role, copy]) => [
-          role,
-          { ...identityCopy[role], ...copy, href: identityCopy[role]?.href || '/ai' }
-        ]))
-      };
+    <section class="section" id="about">
+      <div class="wrap wide">
+        <h2 data-site="aboutTitle">华伴是什么</h2>
+        <p data-site="aboutBody">华伴 1.1 先帮助用户智能匹配供需。AI 协助交易双方收集沟通内容，整理服务内容、价格、时间、地点、责任边界和支付方式，形成可确认的共识。双方确认后进入履约，履约完成后共同确认，系统记录信用、履约证明和积分贡献。</p>
+        <p data-site="aboutExtra">推广期间，用户可以先创建一张可扩展名片：让别人知道你是谁、能提供什么、在哪里服务。名片可以分享推广，后续可升级为店铺、交易空间或商务中心。</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap grid">
+        <article class="card">
+          <h3 data-site-card-title="0">华伴智能合约</h3>
+          <p data-site-card-body="0">推广激励机制合约化：推荐关系、积分流水、等级权重和共享规则进入后台账本，按规则执行。</p>
+        </article>
+        <article class="card">
+          <h3 data-site-card-title="1">交易智能合约</h3>
+          <p data-site-card-body="1">AI 做中立共识整理员，帮助双方把事实说清楚，把确认记录留下来。</p>
+        </article>
+        <article class="card">
+          <h3 data-site-card-title="2">卖方实用</h3>
+          <p data-site-card-body="2">成交越多，华伴越懂卖方如何讲解商品或服务，逐步沉淀成交话术和交易模板。</p>
+        </article>
+        <article class="card">
+          <h3 data-site-card-title="3">可扩展名片</h3>
+          <p data-site-card-body="3">推广期先从业务名片开始：展示服务、商品、案例和联系入口，未来可创建行业店铺和商务中心。</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap wide">
+        <h2 data-site="startTitle">从这里起步</h2>
+        <p data-site="startBody">第一版先协助华人打理生意：创建可扩展名片、找本地需要你的人、找服务、整理交易共识、保存信用记录。未来再扩展店铺、商务中心、生活、学习、个人数据库和机器人场景。</p>
+        <div class="cta-row">
+          <a class="btn primary" href="/ai" data-site="startPrimaryCta">一句话交给华伴</a>
+          <a class="btn" href="/privacy" data-site="startSecondaryCta">隐私政策</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap fine" data-site="footer">© 华伴 AI+ · 华人先行，多语种服务所有人 · 没有投资动作，不是传销，不是虚拟货币。</div>
+  </footer>
+  <script>
+    const SITE_DEFAULT_CONTENT = {
+      heroTitle: '海外华人必备智能体',
+      heroVersion: '版本 1.1：智能交易工具',
+      heroSubtitle: '智能匹配，没有佣金差价！聚焦目标，不再费时费力！智能合约，保障自愿公平。',
+      heroHook: '区块链浪潮，你错过了比特币；AI 浪潮已经到来，这一次先别只做旁观者。',
+      primaryCta: '共识、共建、共享',
+      secondaryCta: '认识华伴',
+      rulesCta: '规则边界',
+      finePrint: '积分和权益以平台规则、后台账本和合规边界为准；积分不是证券、虚拟货币或投资凭证，不支持私下转让。',
+      aboutTitle: '华伴是什么',
+      aboutBody: '华伴 1.1 先帮助用户智能匹配供需。AI 协助交易双方收集沟通内容，整理服务内容、价格、时间、地点、责任边界和支付方式，形成可确认的共识。双方确认后进入履约，履约完成后共同确认，系统记录信用、履约证明和积分贡献。',
+      aboutExtra: '推广期间，用户可以先创建一张可扩展名片：让别人知道你是谁、能提供什么、在哪里服务。名片可以分享推广，后续可升级为店铺、交易空间或商务中心。',
+      cards: [
+        { title: '华伴智能合约', body: '推广激励机制合约化：推荐关系、积分流水、等级权重和共享规则进入后台账本，按规则执行。' },
+        { title: '交易智能合约', body: 'AI 做中立共识整理员，帮助双方把事实说清楚，把确认记录留下来。' },
+        { title: '卖方实用', body: '成交越多，华伴越懂卖方如何讲解商品或服务，逐步沉淀成交话术和交易模板。' },
+        { title: '可扩展名片', body: '推广期先从业务名片开始：展示服务、商品、案例和联系入口，未来可创建行业店铺和商务中心。' }
+      ],
+      startTitle: '从这里起步',
+      startBody: '第一版先协助华人打理生意：创建可扩展名片、找本地需要你的人、找服务、整理交易共识、保存信用记录。未来再扩展店铺、商务中心、生活、学习、个人数据库和机器人场景。',
+      startPrimaryCta: '一句话交给华伴',
+      startSecondaryCta: '隐私政策',
+      footer: '© 华伴 AI+ · 华人先行，多语种服务所有人 · 没有投资动作，不是传销，不是虚拟货币。'
+    };
+
+    function applySiteContent(content = {}) {
+      const data = { ...SITE_DEFAULT_CONTENT, ...content };
+      Object.keys(SITE_DEFAULT_CONTENT).forEach(key => {
+        if (key === 'cards') return;
+        const node = document.querySelector(`[data-site="${key}"]`);
+        if (node && data[key]) node.textContent = data[key];
+      });
+      (Array.isArray(data.cards) ? data.cards : []).forEach((card, index) => {
+        const title = document.querySelector(`[data-site-card-title="${index}"]`);
+        const body = document.querySelector(`[data-site-card-body="${index}"]`);
+        if (title && card.title) title.textContent = card.title;
+        if (body && card.body) body.textContent = card.body;
+      });
     }
-  } catch(e) {}
-}
 
-function getSiteLanguageMode(){
-  const saved=localStorage.getItem(SITE_LANG_KEY);
-  return ['auto','zh','en'].includes(saved)?saved:'auto';
-}
-function getSiteLocalLanguage(){
-  const nav=(navigator.language||'').toLowerCase();
-  if(nav.startsWith('zh'))return 'zh';
-  const direct=['ja','ko','th','id','vi','de','fr','it','es','nl','pt','ar','tr','ru'].find(code=>nav.startsWith(code));
-  if(direct)return direct;
-  const tz=Intl.DateTimeFormat().resolvedOptions().timeZone||'';
-  return (SITE_TZ_LANG.find(([pattern])=>pattern.test(tz))||[])[1]||'en';
-}
-function getSiteActiveLanguage(){
-  const mode=getSiteLanguageMode();
-  return mode==='auto'?getSiteLocalLanguage():mode;
-}
-function siteText(key){
-  const lang=getSiteActiveLanguage();
-  return SITE_I18N[lang]?.[key] || SITE_I18N.en?.[key] || SITE_I18N.zh?.[key] || key;
-}
-function siteFormText(key){
-  const en={
-    phone:'Phone',
-    industry:'Industry',
-    phonePlaceholder:'Enter phone number so customers can find you',
-    industryPlaceholder:'e.g. electrician / airport transfer / accountant / restaurant',
-    save:'Save to Huaban',
-    note:'Saved into Huaban first. To receive demand alerts in time, download or add Huaban to your home screen.',
-    need:'What do you need now?',
-    needPlaceholder:'e.g. find an electrician, arrange airport pickup, plan a weekly trip',
-    tell:'Tell Huaban'
-  };
-  const zh={
-    phone:'手机号',
-    industry:'行业',
-    phonePlaceholder:'填写手机号，让客户找到你',
-    industryPlaceholder:'例如：电工 / 接送机 / 会计 / 中餐馆',
-    save:'保存到华伴系统',
-    note:'保存后先进入华伴系统。想及时收到需求提醒，请把华伴放到手机；不着急也可以之后再回来查看。',
-    need:'现在想解决什么',
-    needPlaceholder:'例如：找电工、安排接机、做一周行程',
-    tell:'把需求告诉华伴'
-  };
-  return (getSiteActiveLanguage()==='zh'?zh:en)[key]||key;
-}
-function siteCopyFor(role){
-  const lang=getSiteActiveLanguage();
-  return SITE_I18N[lang]?.[role] ? {...identityCopy[role],...SITE_I18N[lang][role]} : identityCopy[role];
-}
-function siteLanguageLabel(){
-  const mode=getSiteLanguageMode();
-  if(mode==='zh')return '中文';
-  if(mode==='en')return 'EN';
-  const lang=getSiteActiveLanguage();
-  return `Auto · ${SITE_LANG_META[lang]?.label||lang.toUpperCase()}`;
-}
-function cycleSiteLanguage(){
-  const order=['auto','zh','en'];
-  const next=order[(order.indexOf(getSiteLanguageMode())+1)%order.length];
-  localStorage.setItem(SITE_LANG_KEY,next);
-  applySiteI18n();
-  renderIdentity(currentIdentityRole);
-}
-function applySiteI18n(){
-  const lang=getSiteActiveLanguage();
-  document.documentElement.lang=SITE_LANG_META[lang]?.html||'en';
-  document.title=lang==='zh'?'华伴 AI+｜服务海外华人本地生活的智能应用':'Huaban AI+ | Smart local life for overseas Chinese';
-  document.getElementById('siteMainTitle').textContent=siteText('title');
-  document.getElementById('siteMainSubtitle').textContent=siteText('subtitle');
-  const i18n=SITE_I18N[lang]||SITE_I18N.zh;
-  const tabSubs=i18n.tabSubs||SITE_I18N.en.tabSubs||SITE_I18N.zh.tabSubs;
-  const tabBtns=i18n.tabBtns||SITE_I18N.en.tabBtns||SITE_I18N.zh.tabBtns;
-  document.querySelectorAll('.identity-tab-wrap').forEach((wrap,index)=>{
-    const sub=wrap.querySelector('.identity-tab-subtitle');
-    const tab=wrap.querySelector('.identity-tab');
-    if(sub&&tabSubs[index])sub.textContent=tabSubs[index];
-    if(tab&&tabBtns[index])tab.textContent=tabBtns[index];
-  });
-  const actions=document.querySelectorAll('.identity-actions .btn');
-  if(actions[0])actions[0].textContent=siteText('open');
-  if(actions[1])actions[1].textContent=siteText('download');
-  const footer=document.querySelector('.footer-inner span:first-child');
-  if(footer)footer.textContent=siteText('footer');
-  const hookNote=document.getElementById('siteHookNote');
-  if(hookNote){
-    const note=siteText('hookNote');
-    const parts=note.split('。 ');
-    hookNote.innerHTML=parts.length>1?`<strong>${parts[0]}。</strong> ${parts.slice(1).join('。 ')}`:note;
-  }
-  const langBtn=document.getElementById('siteLangSwitch');
-  if(langBtn)langBtn.textContent=siteLanguageLabel();
-}
-
-function renderIdentity(role) {
-  currentIdentityRole=role||'share';
-  applySiteI18n();
-  const copy = siteCopyFor(currentIdentityRole) || identityCopy.share;
-  document.getElementById('identityTitle').textContent = copy.title;
-  document.getElementById('identityLead').textContent = copy.lead;
-  document.getElementById('identityList').innerHTML = copy.items.map(item => `<li>${item}</li>`).join('');
-  const primaryAction=document.getElementById('identityAction');
-  const secondaryAction=document.getElementById('identitySecondaryAction');
-  primaryAction.href = copy.href;
-  primaryAction.textContent = copy.actionLabel || siteText('open');
-  if(secondaryAction){
-    secondaryAction.href = copy.secondaryHref || 'app-download.html?ref=identity_home';
-    secondaryAction.textContent = copy.secondaryLabel || siteText('download');
-  }
-  document.getElementById('identityExtra').innerHTML = copy.mode === 'business' ? `
-    <div class="identity-form">
-      <div class="identity-field">
-        <label for="businessPhone">${siteFormText('phone')}</label>
-        <input id="businessPhone" inputmode="tel" placeholder="${siteFormText('phonePlaceholder')}">
-      </div>
-      <div class="identity-field">
-        <label for="businessIndustry">${siteFormText('industry')}</label>
-        <input id="businessIndustry" placeholder="${siteFormText('industryPlaceholder')}">
-      </div>
-      <button class="btn primary" type="button" onclick="submitBusinessEntry()">${siteFormText('save')}</button>
-      <div class="identity-note">${siteFormText('note')}</div>
-    </div>` : copy.mode === 'life' ? `
-    <div class="identity-form">
-      <div class="identity-field">
-        <label for="lifeNeed">${siteFormText('need')}</label>
-        <input id="lifeNeed" placeholder="${siteFormText('needPlaceholder')}">
-      </div>
-      <button class="btn primary" type="button" onclick="startLifeNeed()">${siteFormText('tell')}</button>
-    </div>` : '';
-  document.querySelectorAll('.identity-tab').forEach(tab => {
-    tab.classList.toggle('active', tab.dataset.role === role);
-  });
-}
-
-async function submitBusinessEntry() {
-  const phone = document.getElementById('businessPhone')?.value.trim();
-  const industry = document.getElementById('businessIndustry')?.value.trim();
-  if (!phone || !industry) {
-    alert('先填写手机号和行业。');
-    return;
-  }
-  try {
-    await fetch(`${SUPA_URL}/rest/v1/beta_leads`, {
-      method: 'POST',
-      headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-      body: JSON.stringify({
-        lead_type: 'supply',
-        channel: 'homepage_business_helper',
-        need_type: 'business_entry',
-        name: industry,
-        contact: phone,
-        status: 'new',
-        stage: 'homepage_minimal_entry',
-        message: `官网本地资料录入\n手机号：${phone}\n行业：${industry}`,
-        fields: { phone, industry, minimal_entry: true, source: 'homepage_dual_entry' }
-      })
-    });
-    const deviceCode = localStorage.getItem('huaban_device_friend_code') || makeFriendCode();
-    localStorage.setItem('huaban_device_friend_code', deviceCode);
-    const normalizedPhone = phone.replace(/[\s().-]/g, '');
-    await fetch(`${SUPA_URL}/rest/v1/huaban_identity_links`, {
-      method: 'POST',
-      headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-      body: JSON.stringify({
-        phone,
-        normalized_phone: normalizedPhone,
-        friend_code: deviceCode,
-        display_name: industry,
-        industry,
-        source: 'homepage_business_helper',
-        source_ref: deviceCode,
-        link_type: 'homepage_supply_entry',
-        status: 'active',
-        fields: { minimal_entry: true, pending_activation: true, user_visible: false }
-      })
-    });
-    await fetch(`${SUPA_URL}/rest/v1/huaban_growth_events`, {
-      method: 'POST',
-      headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-      body: JSON.stringify({
-        anonymous_id: deviceCode,
-        user_code: deviceCode,
-        user_phone: phone,
-        event_name: 'supplier_profile_submitted',
-        ref_code: new URLSearchParams(location.search).get('ref') || '',
-        channel: 'homepage',
-        campaign: 'dual_entry_business',
-        city: '',
-        country: '',
-        page: location.pathname || '/',
-        source_url: location.href,
-        metadata: { phone, industry, minimal_entry: true, source: 'homepage_dual_entry' }
-      })
-    });
-  } catch(e) {}
-  persistBusinessEntryLocally(phone, industry);
-  alert('已经记录。想及时收到需求提醒，请把华伴放到手机；不着急也可以之后再回来查看。');
-  location.href = `/ai?ref=business_helper&from=homepage_supply&phone=${encodeURIComponent(phone)}&industry=${encodeURIComponent(industry)}`;
-}
-
-function parseLocalJson(key, fallback = {}) {
-  try { return JSON.parse(localStorage.getItem(key) || '') || fallback; }
-  catch(e) { return fallback; }
-}
-
-function makeFriendCode() {
-  return Math.random().toString(36).substring(2, 8).toUpperCase();
-}
-
-function persistBusinessEntryLocally(phone, industry) {
-  const now = new Date().toISOString();
-  const cleanPhone = String(phone || '').trim();
-  const cleanIndustry = String(industry || '').trim();
-  const existingPassenger = parseLocalJson('au_passenger');
-  const existingProfile = parseLocalJson('au_profile');
-  const existingSupplier = parseLocalJson('huaban_supplier_application');
-  const fixedCode = String(
-    localStorage.getItem('huaban_device_friend_code') ||
-    existingPassenger.ref ||
-    makeFriendCode()
-  ).replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-
-  localStorage.setItem('huaban_device_friend_code', fixedCode);
-  localStorage.setItem('huaban_user_industry', cleanIndustry);
-  localStorage.setItem('huaban_home_intro_done', '1');
-  localStorage.setItem('huaban_homepage_business_entry_done', '1');
-  localStorage.setItem('huaban_homepage_business_entry', JSON.stringify({
-    phone: cleanPhone,
-    industry: cleanIndustry,
-    source: 'homepage_business_helper',
-    createdAt: now
-  }));
-  localStorage.setItem('au_profile', JSON.stringify({
-    ...existingProfile,
-    phone: cleanPhone,
-    industry: cleanIndustry
-  }));
-  localStorage.setItem('au_passenger', JSON.stringify({
-    ...existingPassenger,
-    phone: cleanPhone,
-    industry: cleanIndustry,
-    ref: fixedCode,
-    logged_in: true,
-    profile_ready: true,
-    login_source: existingPassenger.login_source || 'homepage_business_entry'
-  }));
-  localStorage.setItem('huaban_supplier_application', JSON.stringify({
-    ...existingSupplier,
-    status: existingSupplier.status || 'draft',
-    phone: cleanPhone,
-    contact: cleanPhone,
-    industry: cleanIndustry,
-    service_type: existingSupplier.service_type || cleanIndustry,
-    service_type_label: existingSupplier.service_type_label || cleanIndustry,
-    source: 'homepage_business_helper',
-    minimal_entry: true,
-    updatedAt: now
-  }));
-}
-
-function startLifeNeed() {
-  const text = document.getElementById('lifeNeed')?.value.trim();
-  location.href = `/ai?ref=life_butler${text ? `&q=${encodeURIComponent(text)}` : ''}`;
-}
-
-document.querySelectorAll('.identity-tab').forEach(tab => {
-  tab.addEventListener('click', () => renderIdentity(tab.dataset.role));
-});
-
-const refRole = new URLSearchParams(location.search).get('ref');
-const roleByRef = {
-  share_growth: 'share',
-  supplier_income: 'share',
-  business_helper: 'now',
-  local_match: 'now',
-  life_butler: 'now',
-  student_free: 'now',
-  family_ai: 'now',
-  identity_pocket: 'pocket',
-  app_download: 'pocket'
-};
-loadPublishedSiteCopy().finally(() => renderIdentity(roleByRef[refRole] || 'share'));
-</script>
+    fetch('/api/site-content?page=official_home', { cache: 'no-store' })
+      .then(res => res.ok ? res.json() : null)
+      .then(json => { if (json && json.content) applySiteContent(json.content); })
+      .catch(() => {});
+  </script>
 </body>
 </html>
