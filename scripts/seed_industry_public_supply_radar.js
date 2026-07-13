@@ -1,7 +1,7 @@
 const fs = require('fs');
 const crypto = require('crypto');
 
-const html = ['index.html', 'ai.html', 'api/local-search.js']
+const html = ['index.html', 'ai.html']
   .map((file) => fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '')
   .join('\n');
 const taxonomy = JSON.parse(fs.readFileSync('assets/data/industry-taxonomy.json', 'utf8'));

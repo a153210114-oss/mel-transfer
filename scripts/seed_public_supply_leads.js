@@ -1,6 +1,6 @@
 const fs = require('fs');
 
-const html = ['index.html', 'ai.html', 'api/local-search.js']
+const html = ['index.html', 'ai.html']
   .map((file) => fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '')
   .join('\n');
 const SUPA_URL = html.match(/(?:const\s+SUPA_URL|const\s+DEFAULT_SUPA_URL)\s*=\s*'([^']+)'/)?.[1];
