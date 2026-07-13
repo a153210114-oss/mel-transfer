@@ -1,4 +1,4 @@
-const CACHE_NAME = 'huaban-mobile-shell-v7';
+const CACHE_NAME = 'huaban-mobile-shell-v11-clean-gate';
 const APP_SHELL = [
   '/',
   '/index.html',
