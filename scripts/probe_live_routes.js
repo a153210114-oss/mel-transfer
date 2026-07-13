@@ -5,7 +5,7 @@ const ROUTES = [
   { name: '官网页', path: '/official', expect: [200] },
   { name: '后台页', path: '/admin', expect: [200] },
   { name: '官网发布内容接口', path: '/api/site-content', query: { page: 'official_home' }, expect: [200, 404, 503] },
-  { name: '后台官网管理接口', path: '/api/admin-site-content', query: { page: 'official_home' }, expect: [401, 503] }
+  { name: '后台官网管理接口', path: '/api/site-content', query: { page: 'official_home', admin: '1' }, expect: [401, 503] }
 ];
 
 function buildUrl(route) {

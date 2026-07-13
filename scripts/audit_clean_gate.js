@@ -13,7 +13,6 @@ const files = [
   'terms.html',
   'support.html',
   'api/chat.js',
-  'api/admin-site-content.js',
   'api/site-content.js',
   'api/profile-summary.js',
   'api/referral-bind.js',
