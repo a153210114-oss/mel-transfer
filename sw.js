@@ -1,8 +1,9 @@
-const CACHE_NAME = 'huaban-mobile-shell-v11-clean-gate';
+const CACHE_NAME = 'huaban-mobile-shell-v12-recruit';
 const APP_SHELL = [
   '/',
   '/index.html',
   '/official.html',
+  '/recruit.html',
   '/ai.html',
   '/manifest.json',
   '/assets/brand/huaban-logo-v1.png',

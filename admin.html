@@ -69,7 +69,16 @@
     .site-editor .editable-title { font-size: clamp(38px, 7vw, 76px); line-height: 1.05; font-weight: 950; }
     .site-editor .editable-version { border: 1px solid #dfe7eb; background: #fff; border-radius: 999px; padding: 8px 16px; font-weight: 900; }
     .site-editor .editable-subtitle { font-size: clamp(18px, 2.6vw, 26px); line-height: 1.55; max-width: 840px; font-weight: 800; }
-    .site-editor .editable-hook { color: #a57918; font-weight: 900; max-width: 860px; line-height: 1.65; }
+    .site-editor .editable-hook {
+      color: #a57918;
+      font-weight: 900;
+      max-width: 860px;
+      line-height: 1.65;
+      border-radius: 14px;
+      border-color: rgba(165,121,24,.28);
+      background: #fffaf0;
+      box-shadow: 0 10px 28px rgba(165,121,24,.12);
+    }
     .site-editor .editable-section { padding: 34px 0; border-top: 1px solid #dfe7eb; }
     .site-editor .editable-wide { max-width: 860px; margin: 0 auto; text-align: center; }
     .site-editor .editable-wide h2, .site-editor .editable-wide .editable-h2 { font-size: clamp(26px, 4vw, 44px); font-weight: 950; margin-bottom: 12px; }
@@ -79,14 +88,32 @@
     .site-editor .editable-card h3 { margin: 0 0 10px; font-size: 20px; }
     .site-editor .editable-footer { padding: 22px 0 6px; border-top: 1px solid #dfe7eb; color: #637083; font-size: 13px; line-height: 1.7; }
     .site-editor input, .site-editor textarea { width: 100%; border-radius: 10px; border: 1px solid #d3dde3; background: rgba(255,255,255,.92); color: #111820; padding: 10px 12px; outline: none; text-align: inherit; }
-    .site-editor textarea { min-height: 86px; }
+    .site-editor textarea { min-height: 86px; resize: vertical; }
+    .site-editor textarea::-webkit-resizer { background: transparent; }
     .site-editor input:focus, .site-editor textarea:focus { border-color: #10c978; box-shadow: 0 0 0 3px rgba(16,201,120,.16); }
+    .site-editor .btn { background: #fff; color: #111820; border: 1px solid #d3dde3; }
+    .site-editor .btn:hover { border-color: #10c978; box-shadow: 0 0 0 3px rgba(16,201,120,.12); }
     .secondary-editor { display: grid; gap: 16px; }
     .secondary-editor .page-head { background: #fff; border: 1px solid #dfe7eb; border-radius: 8px; padding: 20px; text-align: center; }
     .secondary-editor .page-head input { font-size: 30px; font-weight: 950; margin-bottom: 10px; }
     .secondary-editor .page-section { background: #fff; border: 1px solid #dfe7eb; border-radius: 8px; padding: 16px; }
     .secondary-editor .page-section input { font-size: 18px; font-weight: 900; margin-bottom: 10px; }
     .secondary-editor .page-tools { display: flex; justify-content: space-between; gap: 10px; align-items: center; margin-bottom: 10px; }
+    .site-editor .page-tools .btn {
+      min-width: 78px;
+      min-height: 36px;
+      border-radius: 999px;
+      background: #fff;
+      color: #111820;
+      border: 1px solid #d3dde3;
+      box-shadow: none;
+      opacity: 1;
+    }
+    .site-editor .page-tools .btn[data-remove-page-section] {
+      color: #a33d2c;
+      border-color: #efd1c9;
+      background: #fff7f4;
+    }
     @media (max-width: 860px) {
       .shell { grid-template-columns: 1fr; }
       .side { position: sticky; top: 0; z-index: 2; }
@@ -290,7 +317,7 @@
       primaryCta: '共识、共建、共享',
       secondaryCta: '认识华伴',
       rulesCta: '规则边界',
-      finePrint: '积分和权益以平台规则、后台账本和合规边界为准；积分不是证券、虚拟货币或投资凭证，不支持私下转让。',
+      finePrint: '积分和权益以平台规则、后台账本和合规边界为准；积分不是证券、虚拟货币或投资凭证，没有转让功能。',
       aboutTitle: '华伴是什么',
       aboutBody: '华伴 1.1 先帮助用户智能匹配供需。AI 协助交易双方收集沟通内容，整理服务内容、价格、时间、地点、责任边界和支付方式，形成可确认的共识。双方确认后进入履约，履约完成后共同确认，系统记录信用、履约证明和积分贡献。',
       aboutExtra: '推广期间，用户可以先创建一张可扩展名片：让别人知道你是谁、能提供什么、在哪里服务。名片可以分享推广，后续可升级为店铺、交易空间或商务中心。',
@@ -437,6 +464,9 @@
         ...content,
         cards: Array.isArray(content.cards) && content.cards.length ? content.cards : SITE_DEFAULT_CONTENT.cards
       };
+      if (data.finePrint) {
+        data.finePrint = data.finePrint.replace('不支持私下转让。', '没有转让功能。');
+      }
       document.querySelectorAll('[data-site-input]').forEach(input => {
         const key = input.dataset.siteInput;
         input.value = data[key] || '';

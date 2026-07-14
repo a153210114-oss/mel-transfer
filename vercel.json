@@ -83,7 +83,15 @@
     },
     {
       "source": "/partner-recruit",
-      "destination": "/partner-recruit.html"
+      "destination": "/recruit.html"
+    },
+    {
+      "source": "/recruit",
+      "destination": "/recruit.html"
+    },
+    {
+      "source": "/join",
+      "destination": "/recruit.html"
     },
     {
       "source": "/app",
@@ -95,7 +103,7 @@
     },
     {
       "source": "/partners",
-      "destination": "/partner-recruit.html"
+      "destination": "/recruit.html"
     },
     {
       "source": "/video",
