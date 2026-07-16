@@ -1,0 +1,126 @@
+{
+  "generated_at": "2026-07-16T13:23:30.986Z",
+  "rule": "Only clean files may enter HuaBan 1.1 formal system.",
+  "report": [
+    {
+      "file": "official.html",
+      "status": "clean",
+      "findings": []
+    },
+    {
+      "file": "index.html",
+      "status": "clean",
+      "findings": []
+    },
+    {
+      "file": "recruit.html",
+      "status": "clean",
+      "findings": []
+    },
+    {
+      "file": "partner-recruit.html",
+      "status": "clean",
+      "findings": []
+    },
+    {
+      "file": "ai.html",
+      "status": "clean",
+      "findings": []
+    },
+    {
+      "file": "profile.html",
+      "status": "clean",
+      "findings": []
+    },
+    {
+      "file": "admin.html",
+      "status": "clean",
+      "findings": []
+    },
+    {
+      "file": "privacy.html",
+      "status": "clean",
+      "findings": []
+    },
+    {
+      "file": "terms.html",
+      "status": "clean",
+      "findings": []
+    },
+    {
+      "file": "support.html",
+      "status": "clean",
+      "findings": []
+    },
+    {
+      "file": "api/chat.js",
+      "status": "clean",
+      "findings": []
+    },
+    {
+      "file": "api/demand-cards.js",
+      "status": "clean",
+      "findings": []
+    },
+    {
+      "file": "api/site-content.js",
+      "status": "clean",
+      "findings": []
+    },
+    {
+      "file": "api/recruit-apply.js",
+      "status": "clean",
+      "findings": []
+    },
+    {
+      "file": "api/profile-summary.js",
+      "status": "clean",
+      "findings": []
+    },
+    {
+      "file": "api/referral-bind.js",
+      "status": "clean",
+      "findings": []
+    },
+    {
+      "file": "api/send-code.js",
+      "status": "clean",
+      "findings": []
+    },
+    {
+      "file": "api/verify-code.js",
+      "status": "clean",
+      "findings": []
+    },
+    {
+      "file": "api/auth-phone-sync.js",
+      "status": "clean",
+      "findings": []
+    },
+    {
+      "file": "sw.js",
+      "status": "clean",
+      "findings": []
+    },
+    {
+      "file": "vercel.json",
+      "status": "clean",
+      "findings": []
+    },
+    {
+      "file": "README.md",
+      "status": "clean",
+      "findings": []
+    },
+    {
+      "file": "workflows/demand_flywheel_schema.sql",
+      "status": "clean",
+      "findings": []
+    },
+    {
+      "file": "workflows/recruitment_region_quota_schema.sql",
+      "status": "clean",
+      "findings": []
+    }
+  ]
+}

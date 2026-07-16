@@ -6,6 +6,8 @@ const root = path.resolve(__dirname, '..');
 const files = [
   'official.html',
   'index.html',
+  'recruit.html',
+  'partner-recruit.html',
   'ai.html',
   'profile.html',
   'admin.html',
@@ -13,7 +15,9 @@ const files = [
   'terms.html',
   'support.html',
   'api/chat.js',
+  'api/demand-cards.js',
   'api/site-content.js',
+  'api/recruit-apply.js',
   'api/profile-summary.js',
   'api/referral-bind.js',
   'api/send-code.js',
@@ -21,7 +25,9 @@ const files = [
   'api/auth-phone-sync.js',
   'sw.js',
   'vercel.json',
-  'README.md'
+  'README.md',
+  'workflows/demand_flywheel_schema.sql',
+  'workflows/recruitment_region_quota_schema.sql'
 ];
 
 const rules = [

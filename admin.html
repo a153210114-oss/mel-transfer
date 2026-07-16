@@ -148,6 +148,7 @@
         <button class="active" data-section="overview">总览</button>
         <button data-section="identity">身份与推荐</button>
         <button data-section="points">积分账本</button>
+        <button data-section="demand">需求与协作</button>
         <button data-section="supply">供给资料</button>
         <button data-section="contract">交易确认</button>
         <button data-section="content">官网管理</button>
@@ -190,6 +191,18 @@
           <div class="row"><div><b>推荐积分</b><span>完成身份确认后记录。</span></div><button class="btn">待接接口</button></div>
           <div class="row"><div><b>交易积分</b><span>双方确认完整履约后双方各自记录。</span></div><button class="btn">待接接口</button></div>
         </div>
+      </section>
+
+      <section class="section" id="section-demand">
+        <div class="card">
+          <h3>需求与协作</h3>
+          <p>用户一句话生成需求卡。供给库暂时没有匹配时，系统生成协作找线索任务；用户可以邀请真实服务者进入华伴，推荐关系和贡献奖励先进入后台账本，审核后确认。</p>
+          <div class="site-toolbar">
+            <button class="btn primary" id="demandReloadBtn" type="button">刷新需求</button>
+            <span class="site-status" id="demandStatus">尚未读取需求卡</span>
+          </div>
+        </div>
+        <div class="list" id="demandList"></div>
       </section>
 
       <section class="section" id="section-supply">
@@ -303,6 +316,7 @@
       overview: '总览',
       identity: '身份与推荐',
       points: '积分账本',
+      demand: '需求与协作',
       supply: '供给资料',
       contract: '交易确认',
       content: '官网管理',
@@ -393,6 +407,15 @@
 
     function $(id) { return document.getElementById(id); }
 
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
     async function adminAuth(action, payload = {}) {
       const res = await fetch('/api/admin-auth', {
         method: 'POST',
@@ -423,6 +446,109 @@
 
     function adminToken() {
       return localStorage.getItem(TOKEN_KEY) || '';
+    }
+
+    function demandStatusLabel(status) {
+      const map = {
+        need_info: '待补充',
+        human_review: '待人工确认',
+        matching: '匹配中',
+        matched: '已匹配',
+        closed: '已关闭',
+        cancelled: '已取消'
+      };
+      return map[status] || status || '已记录';
+    }
+
+    function setDemandStatus(message) {
+      const node = $('demandStatus');
+      if (node) node.textContent = message;
+    }
+
+    function demandTime(value) {
+      if (!value) return '';
+      try {
+        return new Date(value).toLocaleString('zh-CN', { hour12: false });
+      } catch (error) {
+        return value;
+      }
+    }
+
+    function renderDemandList(demands = [], tasks = []) {
+      const box = $('demandList');
+      if (!box) return;
+      const taskMap = new Map();
+      tasks.forEach(task => {
+        const key = task.demand_id || '';
+        if (!taskMap.has(key)) taskMap.set(key, []);
+        taskMap.get(key).push(task);
+      });
+      if (!demands.length) {
+        box.innerHTML = '<div class="card"><p>还没有需求卡。前台用户说“我想找墨尔本电工”后会显示在这里。</p></div>';
+        return;
+      }
+      box.innerHTML = demands.map(item => {
+        const linkedTasks = taskMap.get(item.id) || [];
+        const firstTask = linkedTasks[0] || null;
+        const invite = firstTask?.invite_url || '';
+        const missing = Array.isArray(item.missing_fields) && item.missing_fields.length
+          ? ` · 缺：${escapeHtml(item.missing_fields.join('、'))}`
+          : '';
+        return `
+          <div class="row" style="align-items:flex-start;">
+            <div style="min-width:0;">
+              <b>${escapeHtml(item.summary || item.raw_text || '未命名需求')}</b>
+              <span>
+                ${escapeHtml(item.city || '未填城市')} · ${escapeHtml(item.service_type || item.service_type_code || '本地服务')} ·
+                状态：${escapeHtml(demandStatusLabel(item.status))} ·
+                供给匹配：${Number(item.supply_match_count || 0)}${missing}<br>
+                来源：${escapeHtml(item.source_ref || item.requester_code || '未知')} · ${escapeHtml(demandTime(item.created_at))}
+              </span>
+              ${invite ? `<div style="margin-top:8px;"><span>供给方邀请链接：</span><a href="${escapeHtml(invite)}" target="_blank" rel="noopener" style="color:var(--brand);">${escapeHtml(invite)}</a></div>` : ''}
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
+              <button class="btn" type="button" onclick="updateDemandStatus('${escapeHtml(item.id)}','need_info')">待补充</button>
+              <button class="btn" type="button" onclick="updateDemandStatus('${escapeHtml(item.id)}','matching')">匹配中</button>
+              <button class="btn primary" type="button" onclick="updateDemandStatus('${escapeHtml(item.id)}','matched')">已匹配</button>
+              <button class="btn" type="button" onclick="updateDemandStatus('${escapeHtml(item.id)}','closed')">关闭</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function loadDemandCards(force = false) {
+      setDemandStatus('正在读取需求卡...');
+      try {
+        const res = await fetch('/api/demand-cards?limit=50', {
+          cache: 'no-store',
+          headers: { 'X-Admin-Token': adminToken() }
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(json.error || '读取需求卡失败');
+        renderDemandList(json.demands || [], json.tasks || []);
+        setDemandStatus(`已读取 ${json.demands?.length || 0} 条需求`);
+      } catch (error) {
+        renderDemandList([], []);
+        setDemandStatus(error.message);
+      }
+    }
+
+    async function updateDemandStatus(id, status) {
+      setDemandStatus('正在更新状态...');
+      try {
+        const res = await fetch('/api/demand-cards', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Token': adminToken() },
+          body: JSON.stringify({ id, status, token: adminToken() })
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(json.error || '更新失败');
+        setDemandStatus('状态已更新');
+        await loadDemandCards(true);
+      } catch (error) {
+        setDemandStatus(error.message);
+      }
     }
 
     function setSiteStatus(message) {
@@ -630,8 +756,10 @@
       $('section-' + key).classList.add('active');
       $('pageTitle').textContent = titleMap[key] || '华伴后台';
       if (key === 'content') loadSiteContent();
+      if (key === 'demand') loadDemandCards();
     });
 
+    $('demandReloadBtn').addEventListener('click', () => loadDemandCards(true));
     $('siteReloadBtn').addEventListener('click', () => loadSiteContent(true));
     $('siteSaveBtn').addEventListener('click', () => saveSiteContent('save'));
     $('sitePublishBtn').addEventListener('click', () => saveSiteContent('publish'));
@@ -653,6 +781,8 @@
       data.sections.splice(index, 1);
       renderPageSections(data.sections);
     });
+
+    window.updateDemandStatus = updateDemandStatus;
 
     verifySession().then(ok => { if (ok) showApp(); });
   </script>
