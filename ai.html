@@ -8,13 +8,13 @@
   <link rel="icon" href="assets/brand/huaban-logo-v1.png">
   <style>
     :root {
-      color-scheme: light dark;
-      --bg: #101419;
-      --panel: #18212b;
-      --panel-2: #202b36;
-      --line: rgba(255,255,255,.12);
-      --text: #eef5f1;
-      --muted: rgba(238,245,241,.68);
+      color-scheme: light;
+      --bg: #f7f8f5;
+      --panel: #ffffff;
+      --panel-2: #f0f2ee;
+      --line: rgba(15, 23, 18, .1);
+      --text: #111820;
+      --muted: rgba(17, 24, 32, .55);
       --brand: #13c96b;
       --brand-2: #00a878;
       --gold: #f6d76b;
@@ -47,27 +47,44 @@
       display: grid;
       grid-template-rows: auto 1fr auto;
       background:
-        radial-gradient(circle at 80% -10%, rgba(19,201,107,.16), transparent 35%),
-        linear-gradient(180deg, #0d1218 0%, #11161c 100%);
+        radial-gradient(circle at 50% 4%, rgba(19,201,107,.08), transparent 30%),
+        linear-gradient(180deg, #fbfcfa 0%, #f3f5f1 100%);
     }
 
     .topbar {
-      min-height: 74px;
-      padding: max(14px, env(safe-area-inset-top)) 16px 12px;
+      min-height: 82px;
+      padding: max(14px, env(safe-area-inset-top)) 22px 12px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      border-bottom: 1px solid var(--line);
-      background: rgba(13,18,24,.9);
-      backdrop-filter: blur(16px);
+      border-bottom: 0;
+      background: transparent;
       z-index: 3;
     }
 
+    .round-nav {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      border: 1px solid rgba(17,24,32,.06);
+      background: rgba(255,255,255,.86);
+      box-shadow: 0 12px 30px rgba(17,24,32,.08);
+      display: grid;
+      place-items: center;
+      color: #141a20;
+      font-size: 23px;
+      font-weight: 800;
+    }
+
+    .round-nav img {
+      width: 30px;
+      height: 30px;
+      border-radius: 9px;
+      object-fit: contain;
+    }
+
     .brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      min-width: 0;
+      display: none;
     }
 
     .brand img {
@@ -98,52 +115,54 @@
       text-overflow: ellipsis;
     }
 
-    .identity-pill {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      border: 1px solid rgba(19,201,107,.32);
-      background: rgba(19,201,107,.1);
-      color: #dfffea;
-      border-radius: 999px;
-      padding: 8px 10px;
-      min-width: 0;
-      max-width: 46vw;
-    }
-
-    .identity-pill img {
-      width: 24px;
-      height: 24px;
-      border-radius: 8px;
-      background: #fff;
-    }
-
-    .identity-pill .meta {
-      display: grid;
-      gap: 1px;
-      min-width: 0;
-      text-align: left;
-    }
-
-    .identity-pill b {
-      font-size: 12px;
-      color: var(--brand);
-      white-space: nowrap;
-    }
-
-    .identity-pill small {
-      font-size: 11px;
-      color: rgba(238,245,241,.7);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
     .chat {
       overflow-y: auto;
-      padding: 16px 14px 24px;
+      padding: 0 16px 24px;
       scroll-behavior: smooth;
       -webkit-overflow-scrolling: touch;
+    }
+
+    .home-hero {
+      min-height: calc(100dvh - 210px);
+      display: grid;
+      place-items: center;
+      text-align: center;
+      color: #1a211c;
+      padding-bottom: 56px;
+    }
+
+    .home-hero.hidden {
+      display: none;
+    }
+
+    .hero-inner {
+      display: grid;
+      place-items: center;
+      gap: 14px;
+    }
+
+    .hero-inner img {
+      width: 54px;
+      height: 54px;
+      border-radius: 16px;
+      background: #fff;
+      box-shadow: 0 14px 36px rgba(19,201,107,.12);
+    }
+
+    .hero-inner h1 {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", "Songti SC", serif;
+      font-size: clamp(26px, 8vw, 38px);
+      font-weight: 500;
+      letter-spacing: 0;
+    }
+
+    .hero-inner p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.6;
+      max-width: 300px;
     }
 
     .msg-row {
@@ -208,7 +227,7 @@
 
     .chip {
       border: 1px solid var(--line);
-      background: rgba(255,255,255,.06);
+      background: rgba(17,24,32,.05);
       color: var(--text);
       border-radius: 999px;
       padding: 8px 11px;
@@ -224,26 +243,45 @@
     }
 
     .composer {
-      padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
-      border-top: 1px solid var(--line);
-      background: rgba(16,20,25,.96);
-      backdrop-filter: blur(18px);
+      padding: 10px 22px calc(14px + env(safe-area-inset-bottom));
+      border-top: 0;
+      background: transparent;
       display: grid;
       gap: 10px;
       z-index: 4;
     }
 
     .input-line {
+      position: relative;
       display: grid;
-      grid-template-columns: 44px 44px 1fr 44px 54px;
+      grid-template-columns: 1fr 42px 42px 42px;
       gap: 8px;
       align-items: center;
+      min-height: 70px;
+      padding: 18px 10px 10px;
+      border: 1px solid rgba(17,24,32,.07);
+      border-radius: 24px;
+      background: rgba(255,255,255,.92);
+      box-shadow: 0 18px 44px rgba(17,24,32,.1);
+    }
+
+    .composer-version {
+      position: absolute;
+      top: 5px;
+      left: 18px;
+      pointer-events: none;
+      color: rgba(17,24,32,.48);
+      font-size: 10px;
+      font-weight: 850;
+      letter-spacing: 0;
+      line-height: 1;
+      white-space: nowrap;
     }
 
     .icon-btn, .send-btn {
       height: 42px;
-      border-radius: 10px;
-      border: 1px solid var(--line);
+      border-radius: 50%;
+      border: 0;
       background: var(--panel-2);
       display: grid;
       place-items: center;
@@ -258,8 +296,8 @@
     }
 
     .send-btn {
-      background: var(--brand);
-      color: #06130b;
+      background: #111820;
+      color: #fff;
       font-size: 15px;
       font-weight: 800;
     }
@@ -273,15 +311,16 @@
       min-width: 0;
       height: 42px;
       border-radius: 10px;
-      border: 1px solid var(--line);
-      background: var(--panel-2);
+      border: 0;
+      background: transparent;
       color: var(--text);
-      padding: 0 12px;
+      padding: 0 2px;
       outline: none;
+      font-size: 17px;
     }
 
     .text-input::placeholder {
-      color: rgba(238,245,241,.46);
+      color: rgba(17,24,32,.38);
     }
 
     .tool-grid {
@@ -304,6 +343,11 @@
       place-items: center;
       gap: 5px;
       padding: 10px 6px;
+    }
+
+    .tool.emergency {
+      border-color: rgba(255,104,104,.46);
+      background: rgba(255,104,104,.12);
     }
 
     .tool b {
@@ -438,6 +482,200 @@
       pointer-events: auto;
     }
 
+    .drawer-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 39;
+      background: rgba(18, 22, 20, .18);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s ease;
+    }
+
+    .drawer-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .side-drawer {
+      position: fixed;
+      inset: 0 auto 0 0;
+      z-index: 40;
+      width: min(82vw, 348px);
+      transform: translateX(-104%);
+      transition: transform .24s ease;
+      background: rgba(255,255,255,.96);
+      color: #111820;
+      box-shadow: 20px 0 60px rgba(17,24,32,.14);
+      padding: max(42px, env(safe-area-inset-top)) 24px max(22px, env(safe-area-inset-bottom));
+      overflow-y: auto;
+    }
+
+    .side-drawer.open {
+      transform: translateX(0);
+    }
+
+    .drawer-title {
+      margin: 0 0 28px;
+      font-family: Georgia, "Times New Roman", "Songti SC", serif;
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .drawer-section {
+      display: grid;
+      gap: 6px;
+      margin: 20px 0 26px;
+    }
+
+    .drawer-label {
+      color: rgba(17,24,32,.44);
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    .drawer-item {
+      display: grid;
+      grid-template-columns: 32px 1fr;
+      gap: 12px;
+      align-items: center;
+      min-height: 48px;
+      border-radius: 14px;
+      background: transparent;
+      color: #151b22;
+      text-align: left;
+      font-size: 18px;
+      font-weight: 650;
+    }
+
+    .drawer-item b {
+      width: 30px;
+      height: 30px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      color: #161b20;
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .drawer-item small {
+      display: block;
+      margin-top: 2px;
+      color: rgba(17,24,32,.46);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .drawer-new {
+      position: sticky;
+      bottom: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      margin-top: 26px;
+      padding: 13px 20px;
+      border-radius: 999px;
+      background: #111820;
+      color: #fff;
+      font-weight: 850;
+      box-shadow: 0 16px 34px rgba(17,24,32,.18);
+    }
+
+    .launch-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: max(18px, env(safe-area-inset-top)) 18px max(18px, env(safe-area-inset-bottom));
+      background: rgba(7, 10, 13, .72);
+      backdrop-filter: blur(18px);
+    }
+
+    .launch-overlay.open {
+      display: flex;
+    }
+
+    .launch-card {
+      width: min(520px, 100%);
+      border: 1px solid rgba(19,201,107,.24);
+      border-radius: 22px;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(19,201,107,.2), transparent 38%),
+        linear-gradient(180deg, #f8fbf7 0%, #eef6f1 100%);
+      color: #111820;
+      box-shadow: 0 24px 80px rgba(0,0,0,.36);
+      padding: 24px 18px 18px;
+      text-align: center;
+    }
+
+    .launch-card img {
+      width: 74px;
+      height: 74px;
+      border-radius: 20px;
+      background: #fff;
+      object-fit: contain;
+      box-shadow: 0 12px 28px rgba(19,201,107,.16);
+    }
+
+    .launch-card h1 {
+      margin: 16px 0 12px;
+      font-size: clamp(24px, 7vw, 38px);
+      line-height: 1.14;
+      letter-spacing: 0;
+    }
+
+    .launch-copy {
+      display: grid;
+      gap: 10px;
+      margin: 0 auto 16px;
+      text-align: left;
+      color: rgba(17,24,32,.82);
+      line-height: 1.72;
+      font-size: 16px;
+      font-weight: 800;
+    }
+
+    .launch-copy p {
+      margin: 0;
+    }
+
+    .launch-line {
+      color: #986d16;
+      text-align: center;
+      font-size: 18px;
+      font-weight: 950;
+    }
+
+    .launch-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .launch-actions button {
+      min-height: 46px;
+      border-radius: 999px;
+      font-weight: 900;
+      padding: 10px 12px;
+    }
+
+    .launch-primary {
+      background: var(--brand);
+      color: #06130b;
+    }
+
+    .launch-secondary {
+      background: #fff;
+      color: #15201a;
+      border: 1px solid rgba(17,24,32,.12);
+    }
+
     @media (min-width: 820px) {
       .chat { padding-inline: max(18px, calc((100vw - 880px) / 2)); }
       .composer { padding-inline: max(14px, calc((100vw - 880px) / 2)); }
@@ -455,23 +693,21 @@
 <body>
   <main class="app">
     <header class="topbar">
-      <button class="brand" id="brandHome" type="button" aria-label="打开官网">
+      <button class="round-nav" id="drawerBtn" type="button" aria-label="打开功能菜单">≡</button>
+      <button class="round-nav" id="profileBtn" type="button" aria-label="个人中心">
         <img src="assets/brand/huaban-logo-v1.png" alt="华伴">
-        <span class="brand-title">
-          <strong>华伴 AI+</strong>
-          <span>1.1 智能匹配与交易确认</span>
-        </span>
-      </button>
-      <button class="identity-pill" id="profileBtn" type="button" aria-label="个人中心">
-        <img src="assets/brand/huaban-logo-v1.png" alt="">
-        <span class="meta">
-          <b id="levelText">一级</b>
-          <small id="pointText">读取积分中</small>
-        </span>
       </button>
     </header>
 
-    <section class="chat" id="chat" aria-live="polite"></section>
+    <section class="chat" id="chat" aria-live="polite">
+      <div class="home-hero" id="homeHero">
+        <div class="hero-inner">
+          <img src="assets/brand/huaban-logo-v1.png" alt="华伴">
+          <h1 id="homeGreeting">你好，老板</h1>
+          <p>一句话告诉华伴：找人、找服务、交易确认、紧急互助，都从这里开始。</p>
+        </div>
+      </div>
+    </section>
 
     <footer class="composer">
       <div class="tool-grid" id="toolGrid">
@@ -480,19 +716,41 @@
         <button class="tool" type="button" data-tool="share"><b>↗</b><span>分享华伴</span></button>
         <button class="tool" type="button" data-tool="match"><b>◎</b><span>智能匹配</span></button>
         <button class="tool" type="button" data-tool="contract"><b>□</b><span>交易确认</span></button>
+        <button class="tool emergency" type="button" data-tool="emergency"><b>!</b><span>紧急互助</span></button>
         <button class="tool" type="button" data-tool="location"><b>⌖</b><span>发送位置</span></button>
         <button class="tool" type="button" data-tool="points"><b>◇</b><span>积分规则</span></button>
         <button class="tool" type="button" data-tool="feedback"><b>!</b><span>反馈问题</span></button>
       </div>
       <div class="input-line">
-        <button class="icon-btn" id="voiceModeBtn" type="button" aria-label="语音模式">▥</button>
-        <button class="icon-btn" id="voiceInputBtn" type="button" aria-label="语音输入">⌕</button>
+        <span class="composer-version">V1.1 智能交易 · 紧急互助</span>
         <input class="text-input" id="messageInput" placeholder="直接告诉华伴你要做什么" autocomplete="off">
-        <button class="icon-btn" id="menuBtn" type="button" aria-label="功能菜单">＋</button>
-        <button class="send-btn" id="sendBtn" type="button" disabled>发送</button>
+        <button class="icon-btn" id="menuBtn" type="button" aria-label="了解华伴">＋</button>
+        <button class="icon-btn" id="voiceInputBtn" type="button" aria-label="语音输入">⌕</button>
+        <button class="send-btn" id="sendBtn" type="button" disabled>▥</button>
       </div>
     </footer>
   </main>
+
+  <div class="drawer-backdrop" id="drawerBackdrop"></div>
+  <aside class="side-drawer" id="sideDrawer" aria-label="华伴菜单">
+    <h2 class="drawer-title">华伴</h2>
+    <div class="drawer-section">
+      <div class="drawer-label">功能菜单</div>
+      <button class="drawer-item" type="button" data-drawer-tool="emergency"><b>!</b><span>紧急救助<small>快速求助，附近互助</small></span></button>
+      <button class="drawer-item" type="button" data-drawer-tool="match"><b>◎</b><span>智能匹配<small>找本地需要你的人和服务</small></span></button>
+      <button class="drawer-item" type="button" data-drawer-tool="contract"><b>□</b><span>交易确认<small>整理共识、确认履约</small></span></button>
+      <button class="drawer-item" type="button" data-drawer-tool="social_circle"><b>○</b><span>兴趣圈子<small>附近圈骨架，暂不上线</small></span></button>
+    </div>
+    <div class="drawer-section">
+      <div class="drawer-label">个人中心</div>
+      <button class="drawer-item" type="button" data-drawer-tool="profile"><b>☻</b><span>名片<small>身份、职业和可扩展名片</small></span></button>
+      <button class="drawer-item" type="button" data-drawer-tool="points"><b>◇</b><span>积分<small id="drawerPointText">读取中</small></span></button>
+      <button class="drawer-item" type="button" data-drawer-tool="location"><b>⌖</b><span>地址<small>家、公司、服务地点</small></span></button>
+      <button class="drawer-item" type="button" data-drawer-tool="share"><b>↗</b><span>分享<small>邀请朋友试用华伴</small></span></button>
+      <button class="drawer-item" type="button" data-drawer-tool="orders"><b>▤</b><span>订单<small>交易记录和履约状态</small></span></button>
+    </div>
+    <button class="drawer-new" type="button" onclick="startNewChat()">＋ 新对话</button>
+  </aside>
 
   <div class="backdrop" id="backdrop"></div>
   <section class="sheet" id="sheet" aria-modal="true" role="dialog">
@@ -503,9 +761,29 @@
     <div id="sheetBody"></div>
   </section>
 
+  <section class="launch-overlay" id="launchOverlay" aria-modal="true" role="dialog" aria-labelledby="launchTitle">
+    <div class="launch-card">
+      <img src="assets/brand/huaban-logo-v1.png" alt="华伴">
+      <h1 id="launchTitle">蓄势待发，一发千钧。</h1>
+      <div class="launch-copy">
+        <p>错过互联网，也许只是晚了一步；错过区块链，也许只是没看懂。</p>
+        <p>AI 浪潮已经来了，不投钱，不赌币，不用拉人头。</p>
+        <p>只需下载、使用、分享。</p>
+        <p>华伴不赚差价不抽佣；正在起飞，懂的人及早上车。不懂的永远不懂。</p>
+      </div>
+      <div class="launch-line">对华伴的信任，源于刻入系统规则</div>
+      <div class="launch-line">点击查看积分等级奖励规则</div>
+      <div class="launch-actions">
+        <button class="launch-primary" type="button" onclick="openLaunchPoints()">点击查看</button>
+        <button class="launch-secondary" type="button" onclick="closeLaunchPromo()">关闭</button>
+      </div>
+    </div>
+  </section>
+
   <script>
     const API_ORIGIN = 'https://www.huabanapp.com';
     const LOGO = 'assets/brand/huaban-logo-v1.png';
+    const GOOGLE_GEOCODE_KEY = 'AIzaSyAHGLzz7_TpG2MLnqT1kCROeNIzRr-EQac';
     const STORE = {
       accessToken: 'huaban_auth_access_token',
       friendCode: 'huaban_device_friend_code',
@@ -519,7 +797,12 @@
       profile: null,
       busy: false,
       voiceMode: false,
-      lastLocation: null
+      lastLocation: null,
+      lastMapUrl: '',
+      lastEmergencyMapUrl: '',
+      lastContractOrderNo: '',
+      emergencyHelperDraft: {},
+      pendingEmergencyText: ''
     };
 
     const $ = (id) => document.getElementById(id);
@@ -530,10 +813,14 @@
     const toolGrid = $('toolGrid');
     const voiceModeBtn = $('voiceModeBtn');
     const voiceInputBtn = $('voiceInputBtn');
+    const drawerBtn = $('drawerBtn');
+    const sideDrawer = $('sideDrawer');
+    const drawerBackdrop = $('drawerBackdrop');
     const sheet = $('sheet');
     const sheetTitle = $('sheetTitle');
     const sheetBody = $('sheetBody');
     const backdrop = $('backdrop');
+    const launchOverlay = $('launchOverlay');
 
     function apiUrl(path) {
       return location.protocol === 'file:' ? `${API_ORIGIN}${path}` : path;
@@ -558,6 +845,20 @@
 
     function localName() {
       return localStorage.getItem(STORE.name) || '华伴用户';
+    }
+
+    function displayName() {
+      const name = localName();
+      return name && name !== '华伴用户' ? name : '老板';
+    }
+
+    function dayGreeting() {
+      const hour = new Date().getHours();
+      if (hour < 5) return '夜深了';
+      if (hour < 11) return '早上好';
+      if (hour < 14) return '中午好';
+      if (hour < 18) return '下午好';
+      return '晚上好';
     }
 
     function localIndustry() {
@@ -591,6 +892,7 @@
     }
 
     function addMessage(role, content, options = {}) {
+      $('homeHero')?.classList.add('hidden');
       const row = document.createElement('div');
       row.className = `msg-row ${role === 'user' ? 'user' : 'assistant'}`;
       const avatar = role === 'user'
@@ -625,8 +927,12 @@
       const points = state.profile?.points?.total ?? 0;
       const stage = state.profile?.release?.stage || 1;
       const friendCount = state.profile?.friends?.length ?? 0;
-      $('levelText').textContent = `${stage}级`;
-      $('pointText').textContent = `${points}积分 · ${friendCount}好友`;
+      const levelText = $('levelText');
+      const pointText = $('pointText');
+      const drawerPointText = $('drawerPointText');
+      if (levelText) levelText.textContent = `${stage}级`;
+      if (pointText) pointText.textContent = `${points}积分 · ${friendCount}好友`;
+      if (drawerPointText) drawerPointText.textContent = `${points}积分 · ${friendCount}好友 · ${stage}级`;
     }
 
     async function loadProfileSummary() {
@@ -666,6 +972,68 @@
     function closeSheet() {
       sheet.classList.remove('open');
       backdrop.classList.remove('open');
+    }
+
+    function openDrawer() {
+      sideDrawer?.classList.add('open');
+      drawerBackdrop?.classList.add('open');
+    }
+
+    function closeDrawer() {
+      sideDrawer?.classList.remove('open');
+      drawerBackdrop?.classList.remove('open');
+    }
+
+    function startNewChat() {
+      closeDrawer();
+      chat.innerHTML = `
+        <div class="home-hero" id="homeHero">
+          <div class="hero-inner">
+            <img src="${LOGO}" alt="华伴">
+            <h1 id="homeGreeting">${escapeHtml(dayGreeting())}，${escapeHtml(displayName())}</h1>
+            <p>一句话告诉华伴：找人、找服务、交易确认、紧急互助，都从这里开始。</p>
+          </div>
+        </div>
+      `;
+      input.focus();
+    }
+
+    function showResourceHub() {
+      openSheet('了解华伴', `
+        <div class="card"><strong>政策文件</strong><br>服务条款、隐私政策、积分说明和合规边界集中在这里。</div>
+        <div class="sheet-actions">
+          <button class="primary-btn" onclick="location.href='terms.html'">服务条款</button>
+          <button class="secondary-btn" onclick="location.href='privacy.html'">隐私政策</button>
+        </div>
+        <div class="card"><strong>公司介绍</strong><br>华伴是面向海外华人的 AI 智能体入口，先把本地需求、服务、交易确认和互助跑顺。</div>
+        <div class="sheet-actions">
+          <button class="secondary-btn" onclick="location.href='index.html'">打开官网</button>
+          <button class="secondary-btn" onclick="location.href='recruit.html'">共建招募</button>
+        </div>
+        <div class="card"><strong>华伴通知</strong><br>当前重点：智能匹配、交易确认、紧急互助、积分账本和可扩展名片。</div>
+        <div class="card"><strong>公告</strong><br>兴趣圈子、店铺/商务中心和更多城市测试入口暂未开放，后续按地区逐步上线。</div>
+        <div class="sheet-actions">
+          <button class="primary-btn" onclick="showPoints()">查看积分规则</button>
+          <button class="secondary-btn" onclick="closeSheet()">关闭</button>
+        </div>
+      `);
+    }
+
+    function showLaunchPromo() {
+      const action = new URLSearchParams(location.search).get('action') || '';
+      if (action === 'emergency_request' || action === 'emergency_helper') return;
+      if (sessionStorage.getItem('huaban_launch_promo_closed') === '1') return;
+      launchOverlay?.classList.add('open');
+    }
+
+    function closeLaunchPromo() {
+      sessionStorage.setItem('huaban_launch_promo_closed', '1');
+      launchOverlay?.classList.remove('open');
+    }
+
+    function openLaunchPoints() {
+      closeLaunchPromo();
+      showPoints();
     }
 
     function shareLink() {
@@ -767,7 +1135,9 @@
           我是华伴 AI，这次临时会话我只做一件事：帮卖方把交易说清楚，让买方一眼能确认。双方在华伴内确认交易内容，并在完成后共同确认履约完整，系统就会保存交易共识、履约证明、信用记录和积分贡献。
         </div>
         <div class="field"><label>服务或商品</label><input id="contractService" placeholder="例如：水管维修、家政清洁、奶粉代购"></div>
-        <div class="field"><label>价格和支付方式</label><input id="contractPrice" placeholder="例如：AUD 99，完成后转账"></div>
+        <div class="field"><label>需方预算</label><input id="buyerBudget" placeholder="例如：AUD 60-80"></div>
+        <div class="field"><label>供方报价</label><input id="sellerQuote" placeholder="例如：AUD 90-100"></div>
+        <div class="field"><label>支付方式</label><input id="paymentMethod" placeholder="例如：完成后转账、现金、PayID"></div>
         <div class="field"><label>时间和地点</label><input id="contractTimePlace" placeholder="例如：今天 18:00，客户家里"></div>
         <div class="field"><label>责任边界和完成标准</label><textarea id="contractTerms" rows="4" placeholder="包含什么、不包含什么、如何算完成、售后怎么处理"></textarea></div>
         <label class="notice"><input id="contractAgree" type="checkbox"> 双方已阅读并同意服务条款和隐私政策，确认本卡片只整理事实和共识，不替任何一方作最终决定。</label>
@@ -778,25 +1148,165 @@
       `);
     }
 
-    function buildContractCard() {
+    function parsePriceRange(text = '') {
+      const raw = String(text || '').trim();
+      if (!raw) return null;
+      const currency = raw.match(/(?:AUD|USD|CAD|NZD|RMB|CNY|HKD|SGD|EUR|GBP|¥|\$|澳币|澳元|人民币)/i)?.[0] || '';
+      const nums = (raw.match(/\d+(?:\.\d+)?/g) || []).map(Number).filter(Number.isFinite);
+      if (!nums.length) return null;
+      const min = Math.min(nums[0], nums[1] ?? nums[0]);
+      const max = Math.max(nums[0], nums[1] ?? nums[0]);
+      return { min, max, single: nums.length === 1, currency, raw };
+    }
+
+    function formatSuggestedPrice(value, currency = '') {
+      const rounded = Math.round(Number(value) * 100) / 100;
+      const text = Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2).replace(/\.?0+$/, '');
+      return `${currency ? `${currency} ` : ''}${text}`.trim();
+    }
+
+    function formatPriceRange(range, currency = '') {
+      if (!range) return '待补充';
+      const unit = currency || range.currency || '';
+      return `最低 ${formatSuggestedPrice(range.min, unit)} · 最高 ${formatSuggestedPrice(range.max, unit)}`;
+    }
+
+    function buildPriceSuggestion(buyerText = '', sellerText = '') {
+      const buyer = parsePriceRange(buyerText);
+      const seller = parsePriceRange(sellerText);
+      const currency = buyer?.currency || seller?.currency || '';
+      if (!buyer || !seller) {
+        return {
+          text: '',
+          buyerRange: formatPriceRange(buyer, currency),
+          sellerRange: formatPriceRange(seller, currency),
+          note: '需方预算和供方报价不完整，暂不生成建议价。'
+        };
+      }
+      let value;
+      let basis;
+      const overlapMin = Math.max(buyer.min, seller.min);
+      const overlapMax = Math.min(buyer.max, seller.max);
+      if (overlapMin <= overlapMax) {
+        value = (overlapMin + overlapMax) / 2;
+        basis = '双方价格区间有交叉，取交叉区间中点。';
+      } else if (buyer.max < seller.min) {
+        value = (buyer.max + seller.min) / 2;
+        basis = '双方区间不重叠，取最接近的两个价格平均。';
+      } else {
+        value = (seller.max + buyer.min) / 2;
+        basis = '双方区间不重叠，取最接近的两个价格平均。';
+      }
+      if (buyer.single && seller.single) {
+        value = (buyer.max + seller.min) / 2;
+        basis = '双方都是单价，取两个价格平均。';
+      }
+      return {
+        text: formatSuggestedPrice(value, currency),
+        buyerRange: formatPriceRange(buyer, currency),
+        sellerRange: formatPriceRange(seller, currency),
+        note: `${basis} 仅为建议，最终价格由双方确认。`
+      };
+    }
+
+    async function buildContractCard() {
       const agree = document.getElementById('contractAgree')?.checked;
       if (!agree) {
         alert('请先勾选双方同意。');
         return;
       }
       const service = document.getElementById('contractService').value.trim();
-      const price = document.getElementById('contractPrice').value.trim();
+      const buyerBudget = document.getElementById('buyerBudget').value.trim();
+      const sellerQuote = document.getElementById('sellerQuote').value.trim();
+      const paymentMethod = document.getElementById('paymentMethod').value.trim();
       const timePlace = document.getElementById('contractTimePlace').value.trim();
       const terms = document.getElementById('contractTerms').value.trim();
+      const priceSuggestion = buildPriceSuggestion(buyerBudget, sellerQuote);
       closeSheet();
-      addAssistant(`
+      const pending = addAssistant('我正在生成交易确认卡，并写入后台订单池...');
+      try {
+        const res = await fetch(apiUrl('/api/demand-cards'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'create_transaction_contract',
+            requester_code: ensureFriendCode(),
+            requester_phone: verifiedPhone(),
+            buyer_name: localName(),
+            buyer_contact: verifiedPhone(),
+            service,
+            buyer_budget: buyerBudget,
+            seller_quote: sellerQuote,
+            payment_method: paymentMethod,
+            time_place: timePlace,
+            terms,
+            price_suggestion: priceSuggestion,
+            city: state.lastLocation?.city || '',
+            location_address: state.lastLocation?.address || '',
+            source_channel: 'ai_contract_card',
+            ...sourceContext()
+          })
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(json.error || `transaction ${res.status}`);
+        state.lastContractOrderNo = json.order?.order_no || '';
+        pending.querySelector('.bubble').innerHTML = `
         <strong>交易确认卡</strong><br>
+        编号：${escapeHtml(state.lastContractOrderNo || '已记录')}<br>
         服务/商品：${escapeHtml(service || '待补充')}<br>
-        价格/支付：${escapeHtml(price || '待补充')}<br>
+        需方预算：${escapeHtml(buyerBudget || '待补充')}<br>
+        需方区间：${escapeHtml(priceSuggestion.buyerRange || '待补充')}<br>
+        供方报价：${escapeHtml(sellerQuote || '待补充')}<br>
+        供方区间：${escapeHtml(priceSuggestion.sellerRange || '待补充')}<br>
+        建议撮合价：${escapeHtml(priceSuggestion.text || '待补充')}<br>
+        价格依据：${escapeHtml(priceSuggestion.note)}<br>
+        支付方式：${escapeHtml(paymentMethod || '待补充')}<br>
         时间/地点：${escapeHtml(timePlace || '待补充')}<br>
         责任边界/完成标准：${escapeHtml(terms || '待补充')}<br><br>
-        买方确认前可以直接说哪里要改；卖方补充后，我会重新整理。双方确认履约完成后，各自形成交易积分贡献。
-      `);
+        买方确认前可以直接说哪里要改；卖方补充后，我会重新整理。双方确认内容后进入履约，双方确认履约完成后，各自形成 50 分交易积分贡献。
+        `;
+        addAssistant('请双方分别确认。任何一方没确认，都不算完整履约。', `
+          <button class="chip primary" onclick="confirmCurrentTransaction('agreement','buyer')">买方确认内容</button>
+          <button class="chip primary" onclick="confirmCurrentTransaction('agreement','seller')">卖方确认内容</button>
+          <button class="chip" onclick="confirmCurrentTransaction('fulfillment','buyer')">买方确认履约</button>
+          <button class="chip" onclick="confirmCurrentTransaction('fulfillment','seller')">卖方确认履约</button>
+        `);
+      } catch (error) {
+        pending.querySelector('.bubble').innerHTML = `交易确认卡暂时没有写入后台：${escapeHtml(error.message || '未知错误')}。`;
+      }
+    }
+
+    async function confirmCurrentTransaction(stage, role) {
+      if (!state.lastContractOrderNo) {
+        addAssistant('还没有可确认的交易卡。请先生成交易确认卡。');
+        return;
+      }
+      const label = `${role === 'buyer' ? '买方' : '卖方'}${stage === 'agreement' ? '确认内容' : '确认履约'}`;
+      const pending = addAssistant(`正在记录：${label}...`);
+      try {
+        const res = await fetch(apiUrl('/api/demand-cards'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'confirm_transaction',
+            order_no: state.lastContractOrderNo,
+            stage,
+            role,
+            actor_code: ensureFriendCode(),
+            actor_name: localName(),
+            note: label
+          })
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(json.error || `confirm ${res.status}`);
+        const status = json.order?.status || '已记录';
+        pending.querySelector('.bubble').innerHTML = `${escapeHtml(label)}已记录。当前状态：${escapeHtml(status)}。`;
+        if (status === 'completed') {
+          addAssistant('双方已确认履约完整。系统已标记双方各 50 分交易积分待入账，以后台积分账本为准。');
+        }
+      } catch (error) {
+        pending.querySelector('.bubble').innerHTML = `确认失败：${escapeHtml(error.message || '未知错误')}。`;
+      }
     }
 
     function showMatchPrompt() {
@@ -804,6 +1314,238 @@
       input.value = '我想找本地';
       input.focus();
       sendBtn.disabled = false;
+    }
+
+    function showEmergencyHelp() {
+      openSheet('紧急互助', `
+        <div class="card">
+          紧急求助不会一点就发出。请用一句话说明发生了什么、需要什么帮助，确认后华伴会自动读取定位并发送给范围内帮助者。
+        </div>
+        <p class="notice">如有人身危险、事故、急病、走失或犯罪风险，请先联系当地紧急电话，再用华伴同步互助信息。</p>
+        <div class="field"><label>一句话求助</label><textarea id="emergencyRequestText" rows="4" placeholder="例如：车坏在路边，需要附近会修车的人帮忙"></textarea></div>
+        <div class="sheet-actions">
+          <button class="primary-btn" onclick="confirmEmergencySend()">确认发送紧急互助</button>
+          <button class="secondary-btn" onclick="closeSheet()">取消</button>
+        </div>
+      `);
+    }
+
+    function startEmergencyRequest() {
+      closeSheet();
+      input.value = '紧急求助：';
+      input.placeholder = '请直接说发生了什么、在哪里、需要什么帮助';
+      input.focus();
+      sendBtn.disabled = false;
+      addAssistant('请直接告诉我：发生了什么、需要什么帮助。发送时我会自动读取当前位置并加入紧急求助；如果定位不准，你再补一句具体地址。');
+    }
+
+    function showEmergencySendConfirm(text = '') {
+      state.pendingEmergencyText = String(text || '').trim();
+      openSheet('确认紧急求助', `
+        <div class="card">
+          我识别到这可能是紧急互助。为了避免误触，确认后才会发送。发送时会自动读取当前位置，并附上地图链接。
+        </div>
+        <p class="notice">如有人身危险、事故、急病、走失或犯罪风险，请先联系当地紧急电话。</p>
+        <div class="field"><label>求助内容</label><textarea id="emergencyRequestText" rows="4" placeholder="请说清楚发生了什么、需要什么帮助">${escapeHtml(state.pendingEmergencyText)}</textarea></div>
+        <div class="sheet-actions">
+          <button class="primary-btn" onclick="confirmEmergencySend()">确认发送</button>
+          <button class="secondary-btn" onclick="closeSheet()">取消</button>
+        </div>
+      `);
+    }
+
+    async function confirmEmergencySend() {
+      const text = (document.getElementById('emergencyRequestText')?.value || state.pendingEmergencyText || '').trim();
+      if (!text || text.length < 4) {
+        alert('请先用一句话说明发生了什么、需要什么帮助。');
+        return;
+      }
+      state.pendingEmergencyText = '';
+      closeSheet();
+      setBusy(true);
+      try {
+        await createEmergencyHelpRequest(text);
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    function showEmergencyHelperRegistry() {
+      openSheet('加入紧急互助志愿者', `
+        <div class="card">
+          加入前请先阅读提示。紧急互助是自愿协助，不是专业急救、警务、消防或医疗服务；遇到人身危险、事故、急病、走失或犯罪风险，应优先联系当地紧急电话。
+        </div>
+        <p class="notice">
+          你可以随时关闭提醒或退出帮助者名录。华伴只负责协助发送、匹配、记录和提醒；是否响应、如何帮助，由你根据自身安全、能力和当地法律自行判断。
+        </p>
+        <label class="notice"><input id="emergencyLegalAgree" type="checkbox"> 我已阅读并理解以上提示，愿意在自身安全和能力范围内参与紧急互助。</label>
+        <div class="sheet-actions">
+          <button class="primary-btn" onclick="showEmergencyHelperAppAuthorization()">下一步：授权 App</button>
+          <button class="secondary-btn" onclick="showEmergencyHelp()">返回</button>
+        </div>
+      `);
+    }
+
+    function showEmergencyHelperAppAuthorization() {
+      const agreed = document.getElementById('emergencyLegalAgree')?.checked;
+      if (!agreed) {
+        alert('请先阅读提示并勾选同意。');
+        return;
+      }
+      state.emergencyHelperDraft = {
+        legal_acknowledged: true,
+        legal_terms_version: 'emergency_mutual_aid_v1_20260718'
+      };
+      openSheet('授权 App 强提醒', `
+        <div class="card">
+          下载 App 后，紧急互助会使用系统通知、震动和高优先级提醒。你授权后，只有在你设定范围内出现紧急互助需求时才会提醒。
+        </div>
+        <p class="notice">
+          你可以在华伴 App 或手机系统设置里关闭提醒。关闭后，你仍可保留名录资料，但不会收到紧急强提醒。
+        </p>
+        <label class="notice"><input id="emergencyAppAuthorize" type="checkbox"> 我同意 App 在我设定范围内发送紧急互助提醒，并知道以后可以关闭。</label>
+        <div class="sheet-actions">
+          <button class="primary-btn" onclick="showEmergencyHelperScopeForm()">下一步：选择范围</button>
+          <button class="secondary-btn" onclick="showEmergencyHelperRegistry()">上一步</button>
+        </div>
+      `);
+    }
+
+    function showEmergencyHelperScopeForm() {
+      const authorized = document.getElementById('emergencyAppAuthorize')?.checked;
+      if (!authorized) {
+        alert('请先确认是否授权 App 紧急提醒。');
+        return;
+      }
+      state.emergencyHelperDraft = {
+        ...(state.emergencyHelperDraft || {}),
+        app_alert_authorized: true,
+        app_alert_can_disable: true
+      };
+      openSheet('加入帮助者名录', `
+        <div class="card">
+          最后一步：选择你愿意参与紧急互助的范围，并注明你能提供什么帮助。以后范围内有求助时，App 会提醒你，多位帮助者可以同时响应。
+        </div>
+        <div class="field"><label>你能提供什么帮助</label><input id="emergencyNeed" placeholder="例如：开车接送、翻译、修车、陪同报警、联系家属"></div>
+        <div class="field"><label>特殊急救技能或资质</label><input id="emergencySkill" placeholder="例如：CPR、急救证、护士/医生、儿童老人照护、道路救援"></div>
+        <div class="field"><label>常驻地点或可到达区域</label><input id="emergencyPlace" placeholder="例如：Glen Waverley 附近，或详细地址"></div>
+        <div class="field"><label>愿意参与范围</label><input id="emergencyRange" placeholder="例如：3公里内、5公里内、东南区、只限本社区"></div>
+        <div class="field"><label>联系方式</label><input id="emergencyContact" placeholder="手机号、微信或可联系的方式"></div>
+        <div class="field"><label>补充说明</label><textarea id="emergencyNote" rows="3" placeholder="人数、是否安全、需要什么工具、能等多久"></textarea></div>
+        <label class="notice"><input id="emergencyConfirm" type="checkbox"> 我确认以上资料可进入帮助者名录，并按我设定的范围接收紧急互助提醒。</label>
+        <div class="sheet-actions">
+          <button class="primary-btn" onclick="submitEmergencyOffer()">确认加入</button>
+          <button class="secondary-btn" onclick="showEmergencyHelperAppAuthorization()">上一步</button>
+        </div>
+      `);
+    }
+
+    function emergencyPayload(mode) {
+      const need = document.getElementById('emergencyNeed')?.value.trim() || '';
+      const skill = document.getElementById('emergencySkill')?.value.trim() || '';
+      const place = document.getElementById('emergencyPlace')?.value.trim() || '';
+      const range = document.getElementById('emergencyRange')?.value.trim() || '';
+      const contact = document.getElementById('emergencyContact')?.value.trim() || '';
+      const note = document.getElementById('emergencyNote')?.value.trim() || '';
+      return {
+        mode,
+        need,
+        skill,
+        place,
+        range,
+        contact,
+        note,
+        location_address: state.lastLocation?.address || '',
+        location_city: state.lastLocation?.city || '',
+        location_url: state.lastLocation?.url || ''
+      };
+    }
+
+    async function createEmergencyHelpRequest(text) {
+      const pending = addAssistant('我正在读取当前位置，并把紧急求助写入后台...');
+      try {
+        const emergencyLocation = await getCurrentLocationSnapshot({ silent: true }).catch(() => null);
+        const json = await createDemandCard(text, {
+          urgency: 'urgent',
+          priority: 'high',
+          need_type: 'emergency_help',
+          service_type: '紧急互助',
+          service_type_code: 'emergency_help',
+          area: emergencyLocation?.address || emergencyLocation?.city || emergencyLocation?.url || '',
+          location_address: emergencyLocation?.address || '',
+          location_city: emergencyLocation?.city || '',
+          location_url: emergencyLocation?.url || '',
+          location_lat: emergencyLocation?.lat || '',
+          location_lng: emergencyLocation?.lng || '',
+          location_accuracy: emergencyLocation?.accuracy || '',
+          location_source: emergencyLocation ? 'auto_emergency_geolocation' : 'not_available',
+          app_delivery_required: true,
+          notification_priority: 'critical',
+          helper_match_mode: 'multi_helper_within_range'
+        });
+        const locationLine = emergencyLocation
+          ? `<br>位置：${escapeHtml(emergencyLocation.address || emergencyLocation.url || '已获取坐标')}`
+          : '<br>位置：暂未获取，请补充具体地址或重新允许定位。';
+        state.lastEmergencyMapUrl = emergencyLocation?.url || '';
+        pending.querySelector('.bubble').innerHTML = `紧急求助已进入后台：${escapeHtml(json.demand?.summary || text)}。${locationLine}`;
+        addAssistant('这不是一对一派单。系统会优先寻找范围内多位帮助者，App 端强提醒，后台保留人工确认和安全留痕。', `
+          ${state.lastEmergencyMapUrl ? '<button class="chip primary" onclick="openEmergencyMap()">打开地图</button>' : '<button class="chip primary" onclick="showEmergencyHelp()">补充地址</button>'}
+          <button class="chip" onclick="showEmergencyHelp()">继续补充</button>
+          <button class="chip" onclick="shareHuaban()">分享给附近朋友</button>
+        `);
+      } catch (error) {
+        pending.querySelector('.bubble').innerHTML = `紧急求助暂时没有写入后台：${escapeHtml(error.message || '未知错误')}。`;
+      }
+    }
+
+    async function submitEmergencyOffer() {
+      const data = emergencyPayload('offer');
+      const confirmed = document.getElementById('emergencyConfirm')?.checked;
+      if (!confirmed) {
+        alert('请先确认愿意进入帮助者名录。');
+        return;
+      }
+      if (!data.range && !data.place) {
+        alert('请填写愿意帮助范围。');
+        return;
+      }
+      if (!data.need && !data.contact) {
+        alert('请至少填写你能提供什么帮助或联系方式。');
+        return;
+      }
+      closeSheet();
+      const pending = addAssistant('我正在把你加入紧急互助帮助者名录...');
+      try {
+        const res = await fetch(apiUrl('/api/demand-cards'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'register_emergency_helper',
+            submitter_code: ensureFriendCode(),
+            submitter_phone: verifiedPhone(),
+            name: localName(),
+            contact: data.contact || verifiedPhone(),
+            city: data.location_city || data.place,
+            service_area: data.range || data.place,
+            availability: data.need,
+            special_skills: data.skill,
+            note: [data.need, data.skill ? `特殊技能：${data.skill}` : '', data.place, data.range, data.note, data.location_address, data.location_url].filter(Boolean).join('；'),
+            source: 'emergency_help_offer',
+            app_delivery_required: true,
+            app_alert_authorized: Boolean(state.emergencyHelperDraft?.app_alert_authorized),
+            app_alert_can_disable: true,
+            legal_acknowledged: Boolean(state.emergencyHelperDraft?.legal_acknowledged),
+            legal_terms_version: state.emergencyHelperDraft?.legal_terms_version || 'emergency_mutual_aid_v1_20260718',
+            notification_priority: 'critical',
+            helper_match_mode: 'multi_helper_within_range'
+          })
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(json.error || `demand-cards ${res.status}`);
+        pending.querySelector('.bubble').innerHTML = '已确认进入帮助者名录。以后你设定范围内有紧急互助需求时，App 会按紧急优先级提醒你；你可以选择是否响应，也可以随时关闭提醒或退出名录。';
+      } catch (error) {
+        pending.querySelector('.bubble').innerHTML = `帮助者名录暂时没有写入后台：${escapeHtml(error.message || '未知错误')}。`;
+      }
     }
 
     function demandStatusLabel(status) {
@@ -841,13 +1583,14 @@
       `, actions);
     }
 
-    async function createDemandCard(text) {
+    async function createDemandCard(text, extra = {}) {
       const payload = {
         text,
         requester_code: ensureFriendCode(),
         requester_phone: verifiedPhone(),
         city: state.lastLocation?.city || '',
-        ...sourceContext()
+        ...sourceContext(),
+        ...extra
       };
       const res = await fetch(apiUrl('/api/demand-cards'), {
         method: 'POST',
@@ -867,40 +1610,161 @@
       sendBtn.disabled = false;
     }
 
-    function sendLocation() {
-      if (!navigator.geolocation) {
-        addAssistant('当前浏览器不支持定位。你可以在个人中心手动添加家、公司或服务地址。');
+    function isDetailedStreetAddress(value = '') {
+      const address = String(value || '').trim();
+      const hasNumber = /(\b\d{1,6}[a-zA-Z]?(?:\s*[-/]\s*\d{1,6}[a-zA-Z]?)?\b|[一二三四五六七八九十百千万0-9]+号)/.test(address);
+      const hasStreetName = /(street|st\b|road|rd\b|avenue|ave\b|drive|dr\b|lane|ln\b|court|ct\b|place|pl\b|crescent|cres\b|parade|pde\b|boulevard|blvd\b|terrace|tce\b|way\b|highway|hwy\b|路|街|道|巷|弄|大道)/i.test(address);
+      return hasNumber && hasStreetName;
+    }
+
+    function addressComponent(components = [], type = '') {
+      const item = (components || []).find(c => (c.types || []).includes(type));
+      return item ? String(item.long_name || '').trim() : '';
+    }
+
+    function cityFromAddressComponents(components = []) {
+      return addressComponent(components, 'locality')
+        || addressComponent(components, 'postal_town')
+        || addressComponent(components, 'administrative_area_level_2')
+        || addressComponent(components, 'administrative_area_level_1');
+    }
+
+    async function reverseGeocodeAddress(lat, lng) {
+      try {
+        const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_GEOCODE_KEY}&language=zh-CN`);
+        const json = await res.json();
+        const results = Array.isArray(json.results) ? json.results : [];
+        const mapped = results.map(result => {
+          const components = result.address_components || [];
+          const formatted = String(result.formatted_address || '').trim();
+          const streetNumber = addressComponent(components, 'street_number');
+          const route = addressComponent(components, 'route');
+          return {
+            address: formatted,
+            city: cityFromAddressComponents(components),
+            hasStreetAddress: Boolean(streetNumber && route) || isDetailedStreetAddress(formatted)
+          };
+        }).filter(item => item.address);
+        return mapped.find(item => item.hasStreetAddress) || mapped[0] || null;
+      } catch (error) {
+        return null;
+      }
+    }
+
+    function saveReadableLocationSnapshot(locationInfo) {
+      try {
+        localStorage.setItem('huaban_current_location', JSON.stringify({
+          ...locationInfo,
+          updatedAt: new Date().toISOString()
+        }));
+        if (locationInfo.city) localStorage.setItem('huaban_region_city', locationInfo.city);
+      } catch (error) {}
+    }
+
+    function openMap(url) {
+      const target = String(url || state.lastMapUrl || '').trim();
+      if (!target) {
+        addAssistant('还没有可打开的地图位置。请先定位，或在消息里补充详细地址。');
         return;
       }
-      addAssistant('我正在请求当前位置。网页端只能拿到浏览器允许的定位结果；详细地址可以在个人中心标注为家、公司或服务地点。');
-      navigator.geolocation.getCurrentPosition((pos) => {
-        const lat = pos.coords.latitude.toFixed(6);
-        const lng = pos.coords.longitude.toFixed(6);
-        const url = `https://www.google.com/maps?q=${lat},${lng}`;
-        state.lastLocation = { lat, lng, url };
-        addAssistant(`当前位置已生成地图链接：<a href="${url}" target="_blank" rel="noopener">打开地图</a><br>如果这是常用地点，请到个人中心把它标注为家、公司或服务地点。`, `
+      window.open(target, '_blank', 'noopener');
+    }
+
+    function openLastMap() {
+      openMap(state.lastMapUrl);
+    }
+
+    function openEmergencyMap() {
+      openMap(state.lastEmergencyMapUrl || state.lastMapUrl);
+    }
+
+    function copyLastMap() {
+      return copyText(state.lastMapUrl).then(() => addAssistant('地图链接已复制。'));
+    }
+
+    function getCurrentLocationSnapshot(options = {}) {
+      const silent = Boolean(options.silent);
+      return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+          if (!silent) addAssistant('当前浏览器不支持定位。你可以在个人中心手动添加家、公司或服务地址。');
+          reject(new Error('当前设备不支持定位'));
+          return;
+        }
+        if (!silent) addAssistant('我正在定位，并尝试识别门牌号和街名。');
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+          const lat = pos.coords.latitude.toFixed(6);
+          const lng = pos.coords.longitude.toFixed(6);
+          const accuracy = Number(pos.coords.accuracy || 0);
+          const geo = await reverseGeocodeAddress(lat, lng);
+          const query = geo?.address || `${lat},${lng}`;
+          const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+          const snapshot = {
+            lat,
+            lng,
+            accuracy,
+            url,
+            address: geo?.address || '',
+            city: geo?.city || '',
+            hasStreetAddress: Boolean(geo?.hasStreetAddress)
+          };
+          state.lastLocation = snapshot;
+          state.lastMapUrl = url;
+          if (snapshot.hasStreetAddress) {
+            saveReadableLocationSnapshot({
+              ...snapshot,
+              source: options.source || 'ai_geolocation'
+            });
+          }
+          resolve(snapshot);
+        }, (error) => {
+          if (!silent) {
+            addAssistant(`定位没有完成：${escapeHtml(error.message || '浏览器没有返回位置')}。请检查浏览器定位权限，或在个人中心手动添加地址。`);
+          }
+          reject(error);
+        }, { enableHighAccuracy: true, timeout: options.timeout || 12000, maximumAge: 0 });
+      });
+    }
+
+    function sendLocation() {
+      getCurrentLocationSnapshot().then((snapshot) => {
+        if (snapshot.hasStreetAddress) {
+          addAssistant(`当前位置：${escapeHtml(snapshot.address)}<br><a href="${snapshot.url}" target="_blank" rel="noopener">打开地图</a>`, `
+            <button class="chip primary" onclick="location.href='profile.html'">保存到地址簿</button>
+            <button class="chip" onclick="openLastMap()">调用地图</button>
+            <button class="chip" onclick="copyLastMap()">复制地图链接</button>
+          `);
+          return;
+        }
+        addAssistant(`已定位，但还没有识别到门牌号和街名。<br><a href="${snapshot.url}" target="_blank" rel="noopener">打开地图</a><br>请到个人中心补完整地址。`, `
           <button class="chip primary" onclick="location.href='profile.html'">去个人中心标注</button>
-          <button class="chip" onclick="copyText('${url}').then(()=>addAssistant('地图链接已复制。'))">复制地图链接</button>
+          <button class="chip" onclick="openLastMap()">调用地图</button>
+          <button class="chip" onclick="copyLastMap()">复制地图链接</button>
         `);
-      }, (error) => {
-        addAssistant(`定位没有完成：${escapeHtml(error.message || '浏览器没有返回位置')}。请检查浏览器定位权限，或在个人中心手动添加地址。`);
-      }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 });
+      }).catch(() => {});
     }
 
     function toggleTools() {
-      toolGrid.classList.toggle('open');
+      showResourceHub();
     }
 
     function handleTool(tool) {
-      toolGrid.classList.remove('open');
+      toolGrid?.classList.remove('open');
+      closeDrawer();
       if (tool === 'official') location.href = 'index.html';
       if (tool === 'profile') location.href = 'profile.html';
       if (tool === 'share') shareHuaban();
       if (tool === 'match') showMatchPrompt();
       if (tool === 'contract') showContractGuide();
+      if (tool === 'emergency') showEmergencyHelp();
       if (tool === 'location') sendLocation();
       if (tool === 'points') showPoints();
       if (tool === 'feedback') showFeedbackPrompt();
+      if (tool === 'social_circle') showSocialCirclePreview();
+      if (tool === 'orders') location.href = 'profile.html#orders';
+    }
+
+    function showSocialCirclePreview() {
+      addAssistant('兴趣社交圈还没有上线。华伴会先把它做成附近圈骨架：按城市、距离、兴趣、行业和可信身份组织，未来再开放发布和加入。');
     }
 
     function startVoiceInput() {
@@ -925,12 +1789,15 @@
 
     function toggleVoiceMode() {
       state.voiceMode = !state.voiceMode;
-      voiceModeBtn.classList.toggle('active', state.voiceMode);
+      voiceModeBtn?.classList.toggle('active', state.voiceMode);
       input.placeholder = state.voiceMode ? '按麦克风说话，或直接输入' : '直接告诉华伴你要做什么';
       if (state.voiceMode) startVoiceInput();
     }
 
     function detectIntent(text) {
+      if (/加入.*(志愿|帮助者)|提供.*(帮助|互助)|我愿意.*(帮助|救助)|帮助者名录|志愿者/.test(text)) return 'emergency_helper';
+      if (/紧急求助|紧急互助|求助|急需帮助|救急|帮忙|需要.*帮助|出事|危险|车坏|走失|事故/.test(text)) return 'emergency';
+      if (/兴趣|社交圈|附近圈|附近的人|同城圈|圈子|发帖|发布动态|加入圈/.test(text)) return 'social_circle';
       if (/积分|等级|权益|奖励/.test(text)) return 'points';
       if (/分享|推荐|邀请|二维码|名片推广/.test(text)) return 'share';
       if (/个人中心|注册|登录|手机号|验证码|身份/.test(text)) return 'profile';
@@ -946,8 +1813,12 @@
         '你是华伴 AI+ 1.1 的主助手。',
         '定位：服务华人先行，再多语种服务所有人的实用 AI 工具。',
         '当前版本核心：智能匹配供需，协助交易双方整理服务内容、价格、时间、责任边界、支付方式，形成可确认的共识。',
+        '紧急互助：用户直接用语音或文字描述求助，AI 协助整理并发送为高优先级记录；帮助者需自愿设定范围并进入帮助者名录。App 端根据 native_app_push、critical_alert、range_matched 和 helper_opt_in 标记触发强提醒、震动和响应确认。',
+        '兴趣社交圈/附近圈是规划中的第三功能：先准备城市、距离、兴趣、行业、发布、加入和审核骨架；当前不要引导用户发布或加入，也不要说已经上线。',
+        '价格建议规则：先列出需方最低价、需方最高价、供方最低价、供方最高价；再找双方最接近的两个价格，取平均值作为建议价；如果双方价格区间有重叠，就取重叠区间中点。所有价格只作建议，必须由双方确认。',
         '不要编造已完成的系统动作；涉及积分、推荐关系、交易记录时，要说明以系统账本为准。手机号验证码通过后即完成用户身份确认，不要再增加额外身份确认阶段。',
-        '保持简洁、可靠、可执行。用户要找人或服务时，先澄清需求，再引导生成确认卡或去个人中心完善身份。',
+        '保持极简、可靠、可执行。默认最多 3 句，每句不超过 28 个字。用户没问原理时，不解释背景。',
+        '用户要找人或服务时，只说：我理解的需求、还缺什么、下一步怎么做。信息足够时直接推进。',
         '不要主动带出历史旧业务定位；除非用户明确提出某个具体服务，否则始终围绕智能匹配、交易确认、积分记录和个人中心。'
       ].join('\n');
       const res = await fetch(apiUrl('/api/chat'), {
@@ -974,6 +1845,11 @@
 
       if (intent === 'points') return showPoints();
       if (intent === 'share') return shareHuaban();
+      if (intent === 'emergency_helper') return showEmergencyHelperRegistry();
+      if (intent === 'emergency') {
+        return showEmergencySendConfirm(text);
+      }
+      if (intent === 'social_circle') return showSocialCirclePreview();
       if (intent === 'profile') {
         addAssistant('身份、手机号验证、积分和好友关系都在个人中心统一查看。', `<button class="chip primary" onclick="location.href='profile.html'">打开个人中心</button>`);
         return;
@@ -1074,16 +1950,21 @@
     }
 
     function bootstrapMessages() {
-      addAssistant(
-        '我是华伴 AI。现在我先帮你把真实需求说清楚、把能提供服务的人留下来、把推荐和贡献记进后台账本。你不用研究功能键，直接一句话指挥我：例如“我想找墨尔本电工”“帮我生成服务名片”“我要分享华伴”。我能做的会继续推进，暂时做不到的会记录成需求或协作任务，让更多人一起补上。',
-        `<button class="chip primary" onclick="showMatchPrompt()">智能匹配</button>
-         <button class="chip" onclick="location.href='profile.html'">创建名片</button>
-         <button class="chip" onclick="showContractGuide()">交易确认</button>
-         <button class="chip" onclick="shareHuaban()">分享华伴</button>
-         <button class="chip" onclick="location.href='profile.html'">个人中心</button>`
-      );
+      const greeting = $('homeGreeting');
+      if (greeting) greeting.textContent = `${dayGreeting()}，${displayName()}`;
       applyIncomingReferral();
       applyIncomingSupplyInvite();
+      applyActionFromUrl();
+    }
+
+    function applyActionFromUrl() {
+      const action = new URLSearchParams(location.search).get('action') || '';
+      if (action === 'emergency_helper') {
+        setTimeout(showEmergencyHelperRegistry, 120);
+      }
+      if (action === 'emergency_request') {
+        setTimeout(showEmergencyHelp, 120);
+      }
     }
 
     input.addEventListener('input', () => {
@@ -1098,22 +1979,43 @@
     sendBtn.addEventListener('click', sendCurrentMessage);
     menuBtn.addEventListener('click', toggleTools);
     voiceInputBtn.addEventListener('click', startVoiceInput);
-    voiceModeBtn.addEventListener('click', toggleVoiceMode);
-    $('brandHome').addEventListener('click', () => { location.href = 'index.html'; });
+    voiceModeBtn?.addEventListener('click', toggleVoiceMode);
+    drawerBtn?.addEventListener('click', openDrawer);
+    drawerBackdrop?.addEventListener('click', closeDrawer);
+    sideDrawer?.addEventListener('click', (event) => {
+      const btn = event.target.closest('[data-drawer-tool]');
+      if (btn) handleTool(btn.dataset.drawerTool);
+    });
     $('profileBtn').addEventListener('click', () => { location.href = 'profile.html'; });
     $('sheetClose').addEventListener('click', closeSheet);
     backdrop.addEventListener('click', closeSheet);
-    toolGrid.addEventListener('click', (event) => {
+    toolGrid?.addEventListener('click', (event) => {
       const btn = event.target.closest('[data-tool]');
       if (btn) handleTool(btn.dataset.tool);
     });
 
     window.closeSheet = closeSheet;
+    window.openDrawer = openDrawer;
+    window.closeDrawer = closeDrawer;
+    window.startNewChat = startNewChat;
+    window.showResourceHub = showResourceHub;
+    window.closeLaunchPromo = closeLaunchPromo;
+    window.openLaunchPoints = openLaunchPoints;
     window.showPoints = showPoints;
     window.shareHuaban = shareHuaban;
     window.showMatchPrompt = showMatchPrompt;
     window.showContractGuide = showContractGuide;
     window.buildContractCard = buildContractCard;
+    window.showEmergencyHelp = showEmergencyHelp;
+    window.showEmergencySendConfirm = showEmergencySendConfirm;
+    window.confirmEmergencySend = confirmEmergencySend;
+    window.showEmergencyHelperRegistry = showEmergencyHelperRegistry;
+    window.showEmergencyHelperAppAuthorization = showEmergencyHelperAppAuthorization;
+    window.showEmergencyHelperScopeForm = showEmergencyHelperScopeForm;
+    window.submitEmergencyOffer = submitEmergencyOffer;
+    window.openLastMap = openLastMap;
+    window.openEmergencyMap = openEmergencyMap;
+    window.copyLastMap = copyLastMap;
     window.shareSupplyInvite = shareSupplyInvite;
     window.copyText = copyText;
     window.addAssistant = addAssistant;
@@ -1122,6 +2024,7 @@
     updateHeader();
     bootstrapMessages();
     loadProfileSummary();
+    showLaunchPromo();
   </script>
 </body>
 </html>
