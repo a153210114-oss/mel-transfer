@@ -186,9 +186,58 @@
     const statusNode = document.getElementById('formStatus');
     if (params.get('ref')) form.ref_code.value = params.get('ref');
 
+    function visitorId() {
+      try {
+        const key = 'huaban_site_visitor_id';
+        const existing = localStorage.getItem(key);
+        if (existing) return existing;
+        const next = (crypto.randomUUID && crypto.randomUUID()) || String(Date.now()) + Math.random().toString(16).slice(2);
+        localStorage.setItem(key, next);
+        return next;
+      } catch (error) {
+        return '';
+      }
+    }
+
+    function trackSite(eventName) {
+      let sessionId = '';
+      try {
+        sessionId = sessionStorage.getItem('huaban_site_session_id') || '';
+        if (!sessionId) {
+          sessionId = String(Date.now()) + Math.random().toString(16).slice(2);
+          sessionStorage.setItem('huaban_site_session_id', sessionId);
+        }
+      } catch (error) {}
+      fetch('/api/site-content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'track_event',
+          event_name: eventName,
+          page_key: 'recruit',
+          page_path: location.pathname || '/recruit',
+          page_url: location.href,
+          ref_code: params.get('ref') || '',
+          channel: params.get('channel') || '',
+          campaign: params.get('campaign') || 'recruit_page',
+          visitor_id: visitorId(),
+          session_id: sessionId,
+          device_type: /Mobi|Android|iPhone/i.test(navigator.userAgent) ? 'mobile' : 'desktop',
+          browser: navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome') ? 'Safari' : 'Browser',
+          title: document.title,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || '',
+          screen: `${screen.width}x${screen.height}`
+        }),
+        keepalive: true
+      }).catch(() => {});
+    }
+
+    trackSite('page_view');
+
     form.addEventListener('submit', async event => {
       event.preventDefault();
       statusNode.textContent = '正在提交...';
+      trackSite('submit_recruit_start');
       const data = Object.fromEntries(new FormData(form).entries());
       data.channel = params.get('channel') || '';
       data.campaign = params.get('campaign') || 'recruit_page';
@@ -203,8 +252,10 @@
         const json = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(json.error || '提交失败');
         form.reset();
+        trackSite('submit_recruit_success');
         statusNode.textContent = '已收到申请。墨尔本用户会优先进入测试；其他地区先登记，后续按开放节奏联系。';
       } catch (error) {
+        trackSite('submit_recruit_error');
         statusNode.textContent = error.message || '提交失败，请稍后再试';
       }
     });

@@ -39,10 +39,30 @@ function cleanText(value = '', max = 1200) {
   return String(value || '').replace(/\u0000/g, '').trim().slice(0, max);
 }
 
+function clientIp(req) {
+  const forwarded = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+  return forwarded || String(req.socket?.remoteAddress || '');
+}
+
+function todayStartIso() {
+  const date = new Date();
+  date.setHours(0, 0, 0, 0);
+  return date.toISOString();
+}
+
+function normalizeLegacyCopy(content = {}) {
+  if (!content || typeof content !== 'object') return content;
+  const next = { ...content };
+  if (typeof next.finePrint === 'string') {
+    next.finePrint = next.finePrint.replace('不支持私下转让。', '没有转让功能。');
+  }
+  return next;
+}
+
 function normalizeContent(input = {}) {
   const cards = Array.isArray(input.cards) ? input.cards.slice(0, 6) : [];
   const sections = Array.isArray(input.sections) ? input.sections.slice(0, 24) : [];
-  return {
+  return normalizeLegacyCopy({
     heroTitle: cleanText(input.heroTitle, 80),
     heroVersion: cleanText(input.heroVersion, 80),
     heroSubtitle: cleanText(input.heroSubtitle, 180),
@@ -73,7 +93,7 @@ function normalizeContent(input = {}) {
       title: cleanText(section?.title, 120),
       body: cleanText(section?.body, 2000)
     })).filter(section => section.title || section.body)
-  };
+  });
 }
 
 async function supa(path, options = {}) {
@@ -96,7 +116,9 @@ async function supa(path, options = {}) {
 
 async function getLatest(pageKey, status) {
   const rows = await supa(`huaban_site_content?tenant_id=eq.${TENANT_ID}&page_key=eq.${encodeURIComponent(pageKey)}&status=eq.${status}&order=version.desc&limit=1&select=id,page_key,status,content,version,published_at,updated_at`);
-  return Array.isArray(rows) ? rows[0] : null;
+  const row = Array.isArray(rows) ? rows[0] : null;
+  if (row?.content) row.content = normalizeLegacyCopy(row.content);
+  return row;
 }
 
 async function upsertContent(pageKey, status, content) {
@@ -119,6 +141,68 @@ async function upsertContent(pageKey, status, content) {
   return Array.isArray(rows) ? rows[0] : rows;
 }
 
+async function getRecruitmentReport() {
+  const rows = await supa(`huaban_recruitment_applications?tenant_id=eq.${TENANT_ID}&order=created_at.desc&limit=500&select=id,applicant_name,phone,email,country,city,region_key,role_type,industry,ref_code,channel,campaign,status,created_at`);
+  const list = Array.isArray(rows) ? rows : [];
+  const today = todayStartIso();
+  return {
+    ok: true,
+    total: list.length,
+    today: list.filter(row => String(row.created_at || '') >= today).length,
+    melbourne: list.filter(row => String(row.city || '').toLowerCase().includes('melbourne') || String(row.city || '').includes('墨尔本')).length,
+    pending: list.filter(row => ['submitted', 'reviewing'].includes(row.status)).length,
+    rows: list.slice(0, 80)
+  };
+}
+
+async function getSiteLogReport() {
+  const rows = await supa(`huaban_site_events?tenant_id=eq.${TENANT_ID}&order=created_at.desc&limit=500&select=id,event_name,page_key,page_path,ref_code,channel,campaign,visitor_id,device_type,browser,created_at`);
+  const list = Array.isArray(rows) ? rows : [];
+  const today = todayStartIso();
+  const visitors = new Set(list.map(row => row.visitor_id).filter(Boolean));
+  return {
+    ok: true,
+    total: list.length,
+    today: list.filter(row => String(row.created_at || '') >= today).length,
+    recruit: list.filter(row => String(row.page_path || '').includes('recruit') || row.page_key === 'recruit').length,
+    visitors: visitors.size,
+    rows: list.slice(0, 100)
+  };
+}
+
+async function trackSiteEvent(req, res) {
+  const body = req.body || {};
+  const url = cleanText(body.page_url, 500);
+  const pagePath = cleanText(body.page_path, 180) || '/';
+  const payload = {
+    tenant_id: TENANT_ID,
+    event_name: cleanText(body.event_name || 'page_view', 60),
+    page_key: cleanText(body.page_key, 80),
+    page_path: pagePath,
+    page_url: url,
+    ref_code: cleanText(body.ref_code, 80),
+    channel: cleanText(body.channel, 80),
+    campaign: cleanText(body.campaign, 80),
+    visitor_id: cleanText(body.visitor_id, 120),
+    session_id: cleanText(body.session_id, 120),
+    device_type: cleanText(body.device_type, 40),
+    browser: cleanText(body.browser, 80),
+    user_agent: cleanText(req.headers['user-agent'], 320),
+    ip_hash: crypto.createHash('sha256').update(clientIp(req)).digest('hex'),
+    metadata: {
+      title: cleanText(body.title, 160),
+      timezone: cleanText(body.timezone, 80),
+      screen: cleanText(body.screen, 80)
+    }
+  };
+  await supa('huaban_site_events', {
+    method: 'POST',
+    headers: { Prefer: 'return=minimal' },
+    body: JSON.stringify(payload)
+  });
+  return res.status(200).json({ ok: true });
+}
+
 async function handleAdmin(req, res, pageKey) {
   const token = req.method === 'GET'
     ? String(req.headers['x-admin-token'] || req.query?.token || '')
@@ -126,6 +210,9 @@ async function handleAdmin(req, res, pageKey) {
   if (!verifyAdminToken(token)) return res.status(401).json({ error: '后台登录已过期' });
 
   if (req.method === 'GET') {
+    const report = String(req.query?.report || '').toLowerCase();
+    if (report === 'recruit_stats') return res.status(200).json(await getRecruitmentReport());
+    if (report === 'site_logs') return res.status(200).json(await getSiteLogReport());
     const draft = await getLatest(pageKey, 'draft');
     const published = await getLatest(pageKey, 'published');
     return res.status(200).json({ ok: true, draft, published });
@@ -155,6 +242,9 @@ module.exports = async function handler(req, res) {
     const pageKey = String((req.method === 'GET' ? req.query?.page : req.body?.page) || 'official_home').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 80) || 'official_home';
     if (req.query?.admin === '1' || req.body?.admin) {
       return handleAdmin(req, res, pageKey);
+    }
+    if (req.method === 'POST' && String(req.body?.action || '') === 'track_event') {
+      return trackSiteEvent(req, res);
     }
     if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
     const row = await getLatest(pageKey, 'published');

@@ -190,6 +190,55 @@
       .then(res => res.ok ? res.json() : null)
       .then(json => { if (json && json.content) applySiteContent(json.content); })
       .catch(() => {});
+
+    function visitorId() {
+      try {
+        const key = 'huaban_site_visitor_id';
+        const existing = localStorage.getItem(key);
+        if (existing) return existing;
+        const next = (crypto.randomUUID && crypto.randomUUID()) || String(Date.now()) + Math.random().toString(16).slice(2);
+        localStorage.setItem(key, next);
+        return next;
+      } catch (error) {
+        return '';
+      }
+    }
+
+    function trackSite(eventName) {
+      const params = new URLSearchParams(location.search);
+      const data = {
+        action: 'track_event',
+        event_name: eventName,
+        page_key: 'official_home',
+        page_path: location.pathname || '/',
+        page_url: location.href,
+        ref_code: params.get('ref') || '',
+        channel: params.get('channel') || '',
+        campaign: params.get('campaign') || '',
+        visitor_id: visitorId(),
+        session_id: sessionStorage.getItem('huaban_site_session_id') || '',
+        device_type: /Mobi|Android|iPhone/i.test(navigator.userAgent) ? 'mobile' : 'desktop',
+        browser: navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome') ? 'Safari' : 'Browser',
+        title: document.title,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || '',
+        screen: `${screen.width}x${screen.height}`
+      };
+      if (!data.session_id) {
+        data.session_id = String(Date.now()) + Math.random().toString(16).slice(2);
+        sessionStorage.setItem('huaban_site_session_id', data.session_id);
+      }
+      fetch('/api/site-content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+        keepalive: true
+      }).catch(() => {});
+    }
+
+    trackSite('page_view');
+    document.querySelectorAll('a[href="/recruit"], a[href="/ai"], a[href="/profile"]').forEach(link => {
+      link.addEventListener('click', () => trackSite(`click_${link.getAttribute('href').replace('/', '') || 'home'}`));
+    });
   </script>
 </body>
 </html>

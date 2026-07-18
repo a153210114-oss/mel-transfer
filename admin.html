@@ -32,6 +32,11 @@
     .nav { display: grid; gap: 8px; }
     .nav button { text-align: left; border-radius: 10px; background: transparent; padding: 12px; color: var(--muted); }
     .nav button.active, .nav button:hover { background: rgba(17,201,120,.13); color: #dfffea; }
+    .nav-group { display: grid; gap: 6px; }
+    .nav-sub { display: none; gap: 4px; padding-left: 12px; border-left: 1px solid rgba(255,255,255,.12); margin-left: 12px; }
+    .nav-group.open .nav-sub { display: grid; }
+    .nav-sub button { min-height: 34px; padding: 8px 10px; font-size: 13px; border-radius: 8px; }
+    .nav-sub button.active { background: rgba(17,201,120,.22); color: #dfffea; }
     .main { min-width: 0; padding: 24px; }
     .top { display: flex; justify-content: space-between; gap: 16px; align-items: center; margin-bottom: 20px; }
     h1 { margin: 0; font-size: 26px; }
@@ -58,6 +63,15 @@
     .site-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 14px 0; }
     .site-toolbar select { min-height: 40px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel2); color: var(--text); padding: 0 12px; font-weight: 800; }
     .site-status { color: var(--muted); font-size: 13px; }
+    .data-panel { display: grid; gap: 14px; margin-top: 14px; }
+    .mini-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; }
+    .mini-card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+    .mini-card span { display: block; color: var(--muted); font-size: 13px; }
+    .mini-card strong { display: block; font-size: 26px; color: var(--brand); margin-top: 6px; }
+    .table { width: 100%; border-collapse: collapse; overflow: hidden; border-radius: 12px; border: 1px solid var(--line); }
+    .table th, .table td { padding: 11px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    .table th { color: #dfffea; background: rgba(17,201,120,.1); font-size: 13px; }
+    .table td { color: var(--muted); font-size: 13px; line-height: 1.55; }
     .site-editor { background: #f7faf8; color: #111820; border-radius: 16px; padding: 18px; border: 1px solid rgba(255,255,255,.16); }
     .site-editor .official-nav { min-height: 62px; display: flex; justify-content: space-between; gap: 12px; align-items: center; }
     .site-editor .official-brand { display: flex; align-items: center; gap: 10px; font-weight: 900; }
@@ -151,7 +165,15 @@
         <button data-section="demand">需求与协作</button>
         <button data-section="supply">供给资料</button>
         <button data-section="contract">交易确认</button>
-        <button data-section="content">官网管理</button>
+        <div class="nav-group" id="contentNavGroup">
+          <button data-section="content">官网管理</button>
+          <div class="nav-sub" id="contentSubNav" aria-label="官网管理子菜单">
+            <button class="active" data-content-tab="official_home">首页编辑</button>
+            <button data-content-tab="secondary_pages">二级页面</button>
+            <button data-content-tab="site_logs">浏览数据</button>
+            <button data-content-tab="recruit_stats">报名统计</button>
+          </div>
+        </div>
         <button data-section="compliance">合规留痕</button>
         <button data-section="ops">接口状态</button>
       </nav>
@@ -298,6 +320,22 @@
           </div>
           <div id="pageSections"></div>
         </div>
+        <div class="data-panel hidden" id="siteLogsPanel">
+          <div class="mini-grid" id="siteLogMetrics"></div>
+          <div class="card">
+            <h3>最近浏览日志</h3>
+            <p class="sub">记录页面访问、来源参数、设备类型和入口动作。</p>
+            <div id="siteLogTable"></div>
+          </div>
+        </div>
+        <div class="data-panel hidden" id="recruitStatsPanel">
+          <div class="mini-grid" id="recruitMetrics"></div>
+          <div class="card">
+            <h3>最近报名</h3>
+            <p class="sub">来自招募页的报名申请，按地区、城市、参与方向和来源统计。</p>
+            <div id="recruitTable"></div>
+          </div>
+        </div>
       </section>
 
       <section class="section" id="section-compliance">
@@ -403,6 +441,7 @@
       }
     };
     let currentSitePage = 'official_home';
+    let currentContentTab = 'official_home';
     let siteContentLoaded = '';
 
     function $(id) { return document.getElementById(id); }
@@ -556,6 +595,145 @@
       if (node) node.textContent = message;
     }
 
+    function setContentSubActive(tab) {
+      document.querySelectorAll('[data-content-tab]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.contentTab === tab);
+      });
+    }
+
+    function showContentPanels(mode) {
+      const isLogs = mode === 'site_logs';
+      const isRecruit = mode === 'recruit_stats';
+      $('siteLogsPanel').classList.toggle('hidden', !isLogs);
+      $('recruitStatsPanel').classList.toggle('hidden', !isRecruit);
+      if (isLogs || isRecruit) {
+        $('siteEditor').classList.add('hidden');
+        $('secondaryEditor').classList.add('hidden');
+        $('sitePageSelect').disabled = true;
+        $('siteSaveBtn').classList.add('hidden');
+        $('sitePublishBtn').classList.add('hidden');
+        return;
+      }
+      $('sitePageSelect').disabled = false;
+      $('siteSaveBtn').classList.remove('hidden');
+      $('sitePublishBtn').classList.remove('hidden');
+    }
+
+    function renderMiniMetrics(targetId, metrics = []) {
+      const box = $(targetId);
+      if (!box) return;
+      box.innerHTML = metrics.map(item => `
+        <div class="mini-card">
+          <span>${escapeHtml(item.label)}</span>
+          <strong>${escapeHtml(item.value)}</strong>
+        </div>
+      `).join('');
+    }
+
+    function renderTable(targetId, headers = [], rows = []) {
+      const box = $(targetId);
+      if (!box) return;
+      if (!rows.length) {
+        box.innerHTML = '<p class="sub">暂时没有记录。</p>';
+        return;
+      }
+      box.innerHTML = `
+        <table class="table">
+          <thead><tr>${headers.map(header => `<th>${escapeHtml(header.label)}</th>`).join('')}</tr></thead>
+          <tbody>
+            ${rows.map(row => `
+              <tr>${headers.map(header => `<td>${escapeHtml(typeof header.value === 'function' ? header.value(row) : row[header.value])}</td>`).join('')}</tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    async function loadRecruitStats() {
+      try {
+        const res = await fetch('/api/site-content?admin=1&report=recruit_stats', {
+          cache: 'no-store',
+          headers: { 'X-Admin-Token': adminToken() }
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(json.error || '读取报名统计失败');
+        renderMiniMetrics('recruitMetrics', [
+          { label: '总报名', value: json.total || 0 },
+          { label: '今日新增', value: json.today || 0 },
+          { label: '墨尔本', value: json.melbourne || 0 },
+          { label: '待处理', value: json.pending || 0 }
+        ]);
+        renderTable('recruitTable', [
+          { label: '时间', value: row => demandTime(row.created_at) },
+          { label: '姓名', value: 'applicant_name' },
+          { label: '城市', value: row => `${row.country || ''} ${row.city || ''}`.trim() },
+          { label: '方向', value: 'role_type' },
+          { label: '来源', value: row => [row.ref_code, row.channel, row.campaign].filter(Boolean).join(' / ') || '自然进入' },
+          { label: '状态', value: 'status' }
+        ], json.rows || []);
+        setSiteStatus(`报名统计已更新 · 共 ${json.total || 0} 条`);
+      } catch (error) {
+        renderMiniMetrics('recruitMetrics', [{ label: '读取失败', value: '!' }, { label: '原因', value: error.message }]);
+        renderTable('recruitTable', [], []);
+        setSiteStatus(error.message);
+      }
+    }
+
+    async function loadSiteLogs() {
+      try {
+        const res = await fetch('/api/site-content?admin=1&report=site_logs', {
+          cache: 'no-store',
+          headers: { 'X-Admin-Token': adminToken() }
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(json.error || '读取浏览数据失败');
+        renderMiniMetrics('siteLogMetrics', [
+          { label: '总访问', value: json.total || 0 },
+          { label: '今日访问', value: json.today || 0 },
+          { label: '招募页访问', value: json.recruit || 0 },
+          { label: '独立访客', value: json.visitors || 0 }
+        ]);
+        renderTable('siteLogTable', [
+          { label: '时间', value: row => demandTime(row.created_at) },
+          { label: '页面', value: 'page_path' },
+          { label: '动作', value: 'event_name' },
+          { label: '来源', value: row => [row.ref_code, row.channel, row.campaign].filter(Boolean).join(' / ') || '自然进入' },
+          { label: '设备', value: row => row.device_type || row.browser || '' }
+        ], json.rows || []);
+        setSiteStatus(`浏览数据已更新 · 共 ${json.total || 0} 条`);
+      } catch (error) {
+        renderMiniMetrics('siteLogMetrics', [{ label: '还不能看', value: '未接通' }, { label: '下一步', value: '检查日志表' }]);
+        $('siteLogTable').innerHTML = `<p class="sub">${escapeHtml(error.message)}</p>`;
+        setSiteStatus(error.message);
+      }
+    }
+
+    function showContentTab(tab) {
+      currentContentTab = tab;
+      setContentSubActive(tab);
+      if (tab === 'site_logs') {
+        showContentPanels(tab);
+        setSiteStatus('正在读取浏览数据...');
+        loadSiteLogs();
+        return;
+      }
+      if (tab === 'recruit_stats') {
+        showContentPanels(tab);
+        setSiteStatus('正在读取报名统计...');
+        loadRecruitStats();
+        return;
+      }
+      showContentPanels(tab);
+      if (tab === 'secondary_pages' && currentSitePage === 'official_home') {
+        currentSitePage = 'terms';
+      } else if (tab === 'official_home') {
+        currentSitePage = 'official_home';
+      }
+      $('sitePageSelect').value = currentSitePage;
+      siteContentLoaded = '';
+      loadSiteContent(true);
+    }
+
     function defaultContentFor(pageKey) {
       return pageKey === 'official_home' ? SITE_DEFAULT_CONTENT : (SECONDARY_DEFAULTS[pageKey] || SECONDARY_DEFAULTS.support);
     }
@@ -565,6 +743,7 @@
     }
 
     function setEditorMode() {
+      if (currentContentTab === 'site_logs' || currentContentTab === 'recruit_stats') return;
       $('siteEditor').classList.toggle('hidden', !isHomePage());
       $('secondaryEditor').classList.toggle('hidden', isHomePage());
     }
@@ -755,8 +934,20 @@
       const key = btn.dataset.section;
       $('section-' + key).classList.add('active');
       $('pageTitle').textContent = titleMap[key] || '华伴后台';
-      if (key === 'content') loadSiteContent();
+      $('contentNavGroup')?.classList.toggle('open', key === 'content');
+      if (key === 'content') showContentTab(currentContentTab || 'official_home');
       if (key === 'demand') loadDemandCards();
+    });
+    $('contentSubNav').addEventListener('click', event => {
+      const btn = event.target.closest('[data-content-tab]');
+      if (!btn) return;
+      event.stopPropagation();
+      document.querySelectorAll('[data-section]').forEach(item => item.classList.toggle('active', item.dataset.section === 'content'));
+      document.querySelectorAll('.section').forEach(item => item.classList.remove('active'));
+      $('section-content').classList.add('active');
+      $('pageTitle').textContent = '官网管理';
+      $('contentNavGroup').classList.add('open');
+      showContentTab(btn.dataset.contentTab);
     });
 
     $('demandReloadBtn').addEventListener('click', () => loadDemandCards(true));
@@ -765,6 +956,8 @@
     $('sitePublishBtn').addEventListener('click', () => saveSiteContent('publish'));
     $('sitePageSelect').addEventListener('change', event => {
       currentSitePage = event.target.value;
+      currentContentTab = currentSitePage === 'official_home' ? 'official_home' : 'secondary_pages';
+      setContentSubActive(currentContentTab);
       siteContentLoaded = '';
       loadSiteContent(true);
     });
