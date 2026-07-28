@@ -4349,6 +4349,17 @@
       return data;
     }
 
+    async function locationApi(body = {}) {
+      const response = await fetch('/api/site-content', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ action: 'location_tool', ...body })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'location_failed');
+      return data;
+    }
+
     function toast(message) {
       notice.textContent = message;
       notice.classList.add('show');
@@ -4635,10 +4646,7 @@
         return;
       }
       locationHint.textContent = '正在调用 Google 地址服务...';
-      const data = await api('/locations', {
-        method: 'POST',
-        body: JSON.stringify({ action: 'search', query: text, city: 'Melbourne' })
-      });
+      const data = await locationApi({ locationMode: 'search', query: text, city: 'Melbourne' });
       renderLocations(data.results || []);
       if (!data.results?.length) locationHint.textContent = '没有找到地址，可以换个关键词。';
     }
@@ -4651,13 +4659,10 @@
       locationHint.textContent = '正在读取当前位置...';
       navigator.geolocation.getCurrentPosition(async (position) => {
         try {
-          const data = await api('/locations', {
-            method: 'POST',
-            body: JSON.stringify({
-              action: 'reverse_geocode',
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude
-            })
+          const data = await locationApi({
+            locationMode: 'reverse_geocode',
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
           });
           renderLocations(data.results || []);
         } catch (error) {

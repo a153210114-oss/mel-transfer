@@ -6,6 +6,7 @@ const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPA_SE
 const SUPPLY_RADAR_STATE_PAGE = 'supply_radar_state';
 const SYSTEM_MONITOR_STATE_PAGE = 'system_monitor_state';
 const PUBLIC_ORIGIN = (process.env.PUBLIC_ORIGIN || 'https://www.huabanapp.com').replace(/\/+$/, '');
+const GOOGLE_MAPS_KEY = process.env.GOOGLE_MAPS_API_KEY || process.env.GOOGLE_GEOCODING_API_KEY || '';
 
 function cors(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -238,6 +239,91 @@ async function supa(path, options = {}) {
   }
   if (res.status === 204) return null;
   return res.json().catch(() => null);
+}
+
+function numberOrNull(value) {
+  if (value === null || value === undefined || value === '') return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
+function googleAddressComponents(components = []) {
+  const out = {};
+  for (const item of components) {
+    const types = item.types || [];
+    const longName = cleanText(item.long_name || '', 160);
+    if (types.includes('street_number')) out.street_number = longName;
+    if (types.includes('route')) out.street = longName;
+    if (types.includes('locality')) out.city = longName;
+    if (types.includes('postal_town') && !out.city) out.city = longName;
+    if (types.includes('administrative_area_level_2')) out.district = longName;
+    if (types.includes('sublocality') || types.includes('sublocality_level_1')) out.suburb = longName;
+    if (types.includes('administrative_area_level_1')) out.state = cleanText(item.short_name || longName, 80);
+    if (types.includes('country')) out.country = longName;
+    if (types.includes('postal_code')) out.postal_code = longName;
+  }
+  return out;
+}
+
+function googlePrecision(types = []) {
+  if (types.includes('street_address') || types.includes('premise') || types.includes('subpremise')) return 'premise';
+  if (types.includes('route')) return 'street';
+  if (types.includes('sublocality') || types.includes('sublocality_level_1')) return 'suburb';
+  if (types.includes('locality')) return 'city';
+  if (types.includes('administrative_area_level_1')) return 'state';
+  if (types.includes('country')) return 'country';
+  return 'coordinate';
+}
+
+function normalizeGoogleLocation(result = {}) {
+  const location = result.geometry?.location || {};
+  const placeId = cleanText(result.place_id || '', 180);
+  return {
+    ...googleAddressComponents(result.address_components || []),
+    latitude: numberOrNull(location.lat),
+    longitude: numberOrNull(location.lng),
+    formatted_address: cleanText(result.formatted_address || '', 360),
+    place_id: placeId,
+    google_maps_uri: placeId ? `https://www.google.com/maps/place/?q=place_id:${encodeURIComponent(placeId)}` : '',
+    precision_level: googlePrecision(result.types || []),
+    raw_components: result
+  };
+}
+
+async function googleGeocode(params = {}) {
+  if (!GOOGLE_MAPS_KEY) throw new Error('Google Maps API Key 未配置');
+  const url = new URL('https://maps.googleapis.com/maps/api/geocode/json');
+  url.searchParams.set('language', params.language || 'zh-CN');
+  url.searchParams.set('region', params.region || 'au');
+  url.searchParams.set('key', GOOGLE_MAPS_KEY);
+  if (params.latlng) url.searchParams.set('latlng', params.latlng);
+  if (params.address) url.searchParams.set('address', params.address);
+  const response = await fetch(url);
+  const json = await response.json();
+  if (!response.ok || json.status !== 'OK') {
+    throw new Error(`Google Geocoding ${response.status} ${json.status || ''}${json.error_message ? `: ${json.error_message}` : ''}`);
+  }
+  return (json.results || []).map(normalizeGoogleLocation);
+}
+
+async function handleLocationAction(req, res) {
+  const body = req.body || {};
+  const mode = cleanText(body.locationMode || body.mode || '', 40);
+  if (mode === 'search') {
+    const query = cleanText(body.query || body.address || '', 260);
+    if (!query) return res.status(400).json({ error: '请输入地点或地址' });
+    const city = cleanText(body.city || 'Melbourne', 80);
+    const results = await googleGeocode({ address: `${query} ${city} Australia`, language: body.language || 'zh-CN' });
+    return res.status(200).json({ ok: true, results: results.slice(0, 6) });
+  }
+  if (mode === 'reverse_geocode') {
+    const lat = numberOrNull(body.latitude ?? body.lat);
+    const lng = numberOrNull(body.longitude ?? body.lng);
+    if (lat === null || lng === null) return res.status(400).json({ error: '缺少有效经纬度' });
+    const results = await googleGeocode({ latlng: `${lat},${lng}`, language: body.language || 'zh-CN' });
+    return res.status(200).json({ ok: true, results: results.slice(0, 6), location: results[0] || null });
+  }
+  return res.status(400).json({ error: '未知位置动作' });
 }
 
 function isDuplicateDbError(error) {
@@ -3996,6 +4082,9 @@ module.exports = async function handler(req, res) {
     }
     if (req.query?.admin === '1' || req.body?.admin) {
       return handleAdmin(req, res, pageKey);
+    }
+    if (req.method === 'POST' && String(req.body?.action || '') === 'location_tool') {
+      return handleLocationAction(req, res);
     }
     if (req.method === 'POST' && String(req.body?.action || '') === 'submit_user_feedback') {
       const feedback = await createUserFeedback({ ...(req.body || {}), source: req.body?.source || 'ai_chat' });
