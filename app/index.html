@@ -4562,7 +4562,6 @@
         <div class="location-search">
           <input id="locationSearchInput" aria-label="搜索地点" placeholder="搜索地点">
           <button id="locationSearchBtn" type="button">搜索</button>
-          <button id="locationQuickConfirmBtn" type="button">完成</button>
         </div>
         <p id="locationHint" class="location-hint">可搜索地点，也可以使用当前位置。发送前会显示标准地址。</p>
         <div id="locationResults" class="location-results"></div>
@@ -4788,7 +4787,6 @@
     const locationSearchBtn = document.querySelector('#locationSearchBtn');
     const locationCurrentBtn = document.querySelector('#locationCurrentBtn');
     const locationSendBtn = document.querySelector('#locationSendBtn');
-    const locationQuickConfirmBtn = document.querySelector('#locationQuickConfirmBtn');
     const locationBottomConfirmBtn = document.querySelector('#locationBottomConfirmBtn');
     const locationHint = document.querySelector('#locationHint');
     const locationResults = document.querySelector('#locationResults');
@@ -6697,7 +6695,6 @@
     });
 
     locationSendBtn.addEventListener('click', confirmLocationSelection);
-    locationQuickConfirmBtn.addEventListener('click', confirmLocationSelection);
     locationBottomConfirmBtn.addEventListener('click', confirmLocationSelection);
 
     aiVoiceBtn.addEventListener('click', () => {
