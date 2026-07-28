@@ -126,6 +126,7 @@ const defaultState = {
     reviewStatus: 'approved'
   },
   friendships: [],
+  referrals: [],
   messages: {
     mia: [
       { id: 'msg_1', from: 'mia', body: '我看到你收藏了 Carlton 那条动态，这周末要不要一起去？', dataSource: 'seed' },
@@ -398,6 +399,54 @@ function saveState() {
 
 if (!existsSync(statePath)) {
   saveState();
+}
+
+function cleanCode(value = '') {
+  return String(value || '').replace(/[^a-zA-Z0-9_-]/g, '').trim().toUpperCase();
+}
+
+function cleanRelated(value = '') {
+  return String(value || '').replace(/[^a-zA-Z0-9_.:-]/g, '').trim().toUpperCase().slice(0, 120);
+}
+
+function localPointEventKey({ ownerCode = '', action = '', relatedCode = '' } = {}) {
+  const owner = cleanCode(ownerCode);
+  const related = cleanRelated(relatedCode || owner);
+  return owner && action ? `huaban:local:${owner}:${action}:${related || owner}` : '';
+}
+
+function awardLocalPoint({ ownerCode = '', action = '', points = 0, relatedCode = '', reason = '', fields = {} } = {}) {
+  const eventKey = localPointEventKey({ ownerCode, action, relatedCode });
+  if (!eventKey) return { skipped: true, reason: 'missing_event_key' };
+  const existing = state.growth.events.find((item) => item.eventKey === eventKey);
+  if (existing) return { ...existing, duplicate: true };
+  const event = {
+    id: `growth_${Date.now()}_${state.growth.events.length}`,
+    eventKey,
+    eventType: action,
+    growthChannel: 'invitation',
+    pointsDelta: Number(points || 0),
+    basePoints: Number(points || 0),
+    status: 'confirmed',
+    ownerCode: cleanCode(ownerCode),
+    relatedCode: cleanCode(relatedCode),
+    reason,
+    refType: 'referral',
+    refId: cleanCode(relatedCode),
+    fields,
+    createdAt: new Date().toISOString()
+  };
+  state.growth.events.unshift(event);
+  state.growth.pointsBalance += event.pointsDelta;
+  return event;
+}
+
+function firstReferrerFor(refereeCode = '') {
+  const referee = cleanCode(refereeCode);
+  const row = (state.referrals || [])
+    .filter((item) => cleanCode(item.refereeCode) === referee && item.status === 'confirmed')
+    .sort((a, b) => String(a.createdAt || '').localeCompare(String(b.createdAt || '')))[0];
+  return cleanCode(row?.inviterCode);
 }
 
 function isTestItem(item) {
@@ -1139,6 +1188,77 @@ async function handleApi(req, res) {
       state.friendships.push(friendship);
       saveState();
       sendJson(res, 201, { ok: true, friendship });
+      return true;
+    }
+
+    if (req.method === 'POST' && path === '/api/v1/referrals/bind') {
+      const body = await readJson(req);
+      const inviterCode = cleanCode(body.inviterCode);
+      const refereeCode = cleanCode(body.refereeCode);
+      if (!inviterCode || !refereeCode) {
+        sendJson(res, 400, { error: '缺少推荐关系信息' });
+        return true;
+      }
+      if (inviterCode === refereeCode) {
+        sendJson(res, 400, { error: '不能自我推荐' });
+        return true;
+      }
+
+      state.referrals ||= [];
+      const existingFirst = firstReferrerFor(refereeCode);
+      const firstReferrerCode = existingFirst || inviterCode;
+      const isFirstReferrer = firstReferrerCode === inviterCode;
+      const secondLevelCode = isFirstReferrer ? firstReferrerFor(inviterCode) : '';
+      const secondEligible = Boolean(secondLevelCode && secondLevelCode !== inviterCode && secondLevelCode !== refereeCode);
+      let referral = state.referrals.find((item) => cleanCode(item.inviterCode) === inviterCode && cleanCode(item.refereeCode) === refereeCode);
+
+      if (!referral) {
+        referral = {
+          id: `referral_${Date.now()}_${state.referrals.length}`,
+          inviterCode,
+          refereeCode,
+          directReferrerCode: inviterCode,
+          secondLevelReferrerCode: secondEligible ? secondLevelCode : '',
+          referralDepth: secondEligible ? 2 : 1,
+          creditLocked: !isFirstReferrer,
+          source: body.source || 'local_referral_test',
+          status: 'confirmed',
+          dataSource: body.dataSource || TEST_SOURCE,
+          createdAt: new Date().toISOString()
+        };
+        state.referrals.push(referral);
+      }
+
+      const direct = isFirstReferrer
+        ? awardLocalPoint({
+            ownerCode: inviterCode,
+            action: 'direct_referral_verified',
+            points: 20,
+            relatedCode: refereeCode,
+            reason: '一级推荐用户真实加入',
+            fields: { referral_id: referral.id, ref_level: 1, source: 'local_referral_bind' }
+          })
+        : { skipped: true, reason: 'first_referrer_locked' };
+      const second = secondEligible
+        ? awardLocalPoint({
+            ownerCode: secondLevelCode,
+            action: 'second_level_referral_verified',
+            points: 6,
+            relatedCode: refereeCode,
+            reason: '二级推荐用户真实加入',
+            fields: { referral_id: referral.id, ref_level: 2, direct_referrer_code: inviterCode, source: 'local_referral_bind' }
+          })
+        : null;
+
+      saveState();
+      sendJson(res, 200, {
+        ok: true,
+        first_referrer_code: firstReferrerCode,
+        credit_locked: !isFirstReferrer,
+        second_level_referrer_code: secondEligible ? secondLevelCode : '',
+        event: referral,
+        points: { direct, second }
+      });
       return true;
     }
 

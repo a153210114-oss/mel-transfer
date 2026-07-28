@@ -20,9 +20,11 @@ V1.1 先保留 8 条主工作流。第一阶段不追求复杂编排，先保证
 ```bash
 npm run agents:live
 npm run promo:live
+npm run referral:live
 ```
 
 原则：Agent 只能在动作确认后写积分事件；不能只因用户输入提示词就发积分。
+二级推荐必须按 A→B→C 验证：B 获得一级推荐积分，A 获得二级推荐积分，重复提交不能重复入账。
 
 所有工作流必须写入 `hb_automation_jobs`，AI 相关步骤必须写入 `hb_ai_logs`。
 
