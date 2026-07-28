@@ -5,6 +5,7 @@
 - `hb_users`：账号主体，保存手机号、状态、最后登录时间。
 - `hb_identity_codes`：用户短身份码，用于展示、搜索和二维码名片。
 - `hb_profiles`：个人资料，包括昵称、头像、城市、简介和语言。
+- `hb_location_addresses`：统一结构化地址对象。老系统坐标、用户资料、动态、小店和需求卡都可挂到这里；保存 `lat/lng`、国家、省州、城市、区域、街名、门牌、邮编、`formatted_address`、`place_id`、来源、精度、可见级别和用户确认状态。
 - `hb_ai_companions`：用户自己的 AI 伙伴设置，包括名字、形象、活泼程度、语气和节日皮肤。
 - `hb_cards`：公开名片，承载二维码、可见性、行业和兴趣标签。
 
@@ -52,3 +53,34 @@
 - `hb_demand_cards`：用户真实需求卡，用于 AI 整理、人工复核和供需匹配。
 - `hb_site_content`：官网内容草稿和发布版本。
 - `hb_site_events`：官网访问、点击、来源和设备日志。
+
+## 位置与地址
+
+老系统只有坐标时，不直接把坐标当成最终地址。迁移流程为：
+
+1. 继续保留 `latitude` / `longitude`。
+2. 调用 Google Geocoding API 反向解析，写入 `hb_location_addresses`。
+3. `address_verified = false`，`verification_status = needs_user_confirmation`。
+4. 前端提示用户确认或补充门牌、街名、区域。
+5. 公开展示按 `visibility_level` 分层：公开动态默认展示城市/区域，小店和到店服务在授权后展示更精确地址，后台可审计完整地址对象。
+
+产品交互要求：
+
+- Google 地图本身有地址标注能力，但部分中文用户不会准确使用。
+- 华伴允许用户只发送定位、输入模糊地址或说“我在附近/这个店旁边”。
+- AI 根据坐标和文本调用 Google Map 生成候选地址。
+- 用户只需选择“这个地址正确 / 只显示大概区域 / 我要修改门牌街名”。
+- 未确认前，地址对象只能作为 `needs_user_confirmation` 使用，不能当成精确公开地址。
+
+迁移命令：
+
+```bash
+npm run locations:reverse-geocode -- --limit=50
+npm run locations:reverse-geocode -- --limit=50 --write
+```
+
+需要环境变量：
+
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `GOOGLE_MAPS_API_KEY`

@@ -15,6 +15,15 @@ V1.1 当前确认的外部接口只有两个：
 
 其他外部 API 暂不作为第一阶段生产依赖。小店/API 自动化可以先保存授权配置、字段映射和待审核状态，等后台确认后再接具体供应商。
 
+Google Map 使用边界：
+
+- 前端只使用被域名和 API 类型限制的公开 Key。
+- 后端反向解析、批量迁移、Places 搜索使用服务端环境变量，不把 Key 写入前端。
+- Google 返回的数据必须标记 `addressSource = reverse_geocode | google_place`。
+- 坐标反解出的门牌、街名、区域需要用户确认后才视为精确地址。
+- 公开展示默认降级到城市/区域；完整地址仅在用户授权、服务履约或后台审计场景显示。
+- Google 地图本身支持地址标注，但部分中文用户不会准确使用；华伴前端要提供“AI 帮我补全地址 / 只显示大概区域 / 我来手动修改”的确认流程。
+
 ## AI Model Slots
 
 当前 AI 能力按 6 个模型位管理：
@@ -116,12 +125,65 @@ Response:
   "displayName": "小华",
   "avatarUrl": "https://example.com/avatar.jpg",
   "city": "Melbourne",
+  "location": {
+    "latitude": -37.8136,
+    "longitude": 144.9631,
+    "formattedAddress": "Melbourne VIC, Australia",
+    "placeId": "google_place_id",
+    "visibilityLevel": "city",
+    "addressVerified": false
+  },
   "bio": "刚到墨尔本，喜欢咖啡和徒步。",
   "languages": ["zh-CN", "en"]
 }
 ```
 
 用户头像可编辑。公开头像变更需要写入审核记录，确保身份码、推荐关系和积分流水仍可追踪。
+
+位置字段规则：
+
+- `latitude` / `longitude` 是底层定位依据。
+- `formattedAddress` 是展示地址，不等同于已确认精确地址。
+- `placeId` 优先保存 Google Place ID，便于后续更新和去重。
+- `visibilityLevel` 可选：`private`、`friends`、`city`、`public`、`admin_only`。
+- 老数据只有坐标时，后端批量反解后写入 `hb_location_addresses`，并要求用户确认。
+- 用户不会使用 Google 地址标注时，可以只发定位或输入模糊地址，由 AI 调用 Google Map 解析后给出候选地址，再让用户一键确认或修改。
+
+### POST `/locations/reverse-geocode`
+
+服务端根据坐标解析地址。生产环境应限制调用频率和权限。
+
+```json
+{
+  "entityType": "user_profile",
+  "entityId": "uuid",
+  "latitude": -37.8136,
+  "longitude": 144.9631,
+  "visibilityLevel": "city"
+}
+```
+
+Response:
+
+```json
+{
+  "locationAddress": {
+    "country": "Australia",
+    "state": "VIC",
+    "city": "Melbourne",
+    "suburb": "Melbourne",
+    "street": "",
+    "streetNumber": "",
+    "postalCode": "3000",
+    "formattedAddress": "Melbourne VIC 3000, Australia",
+    "placeId": "google_place_id",
+    "addressSource": "reverse_geocode",
+    "precisionLevel": "city",
+    "addressVerified": false,
+    "verificationStatus": "needs_user_confirmation"
+  }
+}
+```
 
 ## AI Companion
 

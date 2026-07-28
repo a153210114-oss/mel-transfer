@@ -8,7 +8,8 @@
     "build": "node scripts/build-static.mjs",
     "probe:live": "node scripts/probe-live.mjs",
     "e2e:live": "node scripts/e2e-live.mjs",
-    "scenario:live": "node scripts/scenario-live.mjs"
+    "scenario:live": "node scripts/scenario-live.mjs",
+    "locations:reverse-geocode": "node scripts/reverse-geocode-legacy-locations.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.54.0"
