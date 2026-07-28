@@ -143,6 +143,8 @@ const defaultState = {
     distributionRule: '华伴净利润 80% 进入分配池；每满 42 万美元按贡献值分配一次；单人累计 100 万美元封顶。',
     waitlistRule: '4200 万积分释放完后，新贡献进入候补记账；有回流积分再按时间顺序转为有效积分。',
     tasks: [
+      { id: 'task_prompt_d1', title: '完成 3 次简单 AI 提示词操作', pointsReward: 6 },
+      { id: 'task_prompt_d3', title: '完成 1 次多步骤 AI 指令', pointsReward: 6 },
       { id: 'task_invite_3', title: '邀请 3 位华人朋友完成名片', pointsReward: 120 },
       { id: 'task_city_notes', title: '整理 5 条 Melbourne 本地生活动态', pointsReward: 80 },
       { id: 'task_feedback', title: '提交 1 条有效产品反馈', pointsReward: 50 }
@@ -191,7 +193,7 @@ const defaultState = {
       scene: '简单提示词 / 多提示词 / 语义任务 / 图文视频生成 / 表单制作 / 自动化配置',
       status: 'active',
       updatedAt: '2026-07-28T08:00:00.000Z',
-      body: '将用户语音或文字拆解为意图、槽位和动作计划；单一功能可直接执行，多步骤和高风险任务必须请求确认、审核或授权。'
+      body: '将用户语音或文字拆解为意图、槽位和动作计划；单一功能可直接执行，多步骤和高风险任务必须请求确认、审核或授权。提示词训练按 D1-D5 难度指数奖励积分，并记录真实表达样本用于优化 AI 理解。'
     }
   ],
   cityContentQueue: [
