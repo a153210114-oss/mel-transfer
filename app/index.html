@@ -140,7 +140,7 @@
 
     main {
       overflow: auto;
-      padding: 0 18px 136px;
+      padding: 0 18px 186px;
     }
 
     .ai-hero {
@@ -673,7 +673,7 @@
       top: 0;
       z-index: 2;
       display: grid;
-      grid-template-columns: 44px minmax(0, 1fr) 44px;
+      grid-template-columns: 44px minmax(0, 1fr) auto;
       align-items: center;
       min-height: 50px;
       margin: 0 -18px 8px;
@@ -700,6 +700,12 @@
       color: var(--ink);
       font-size: 21px;
       line-height: 1;
+    }
+
+    .dynamic-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 2px;
     }
 
     .home-feed-title {
@@ -1962,6 +1968,7 @@
       z-index: 8;
       display: none;
       overflow: auto;
+      padding-bottom: 68px;
       background: #ededed;
       color: #111820;
     }
@@ -2308,7 +2315,7 @@
       width: 34px;
       height: 34px;
       border-radius: 999px 999px 999px 0;
-      background: var(--green);
+      background: var(--brand);
       transform: translate(-50%, -50%) rotate(-45deg);
       box-shadow: 0 12px 28px rgba(24, 197, 110, .28);
     }
@@ -2344,7 +2351,7 @@
 
     .location-search {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 74px;
+      grid-template-columns: minmax(0, 1fr) 60px 60px;
       gap: 10px;
       align-items: center;
       margin-bottom: 14px;
@@ -2356,7 +2363,7 @@
       border: 0;
       border-radius: 12px;
       padding: 0 14px;
-      background: #fff;
+      background: #f4f6f5;
       color: #111820;
       font-size: var(--text-md);
       font-weight: 400;
@@ -2368,7 +2375,7 @@
     .location-confirm {
       height: 42px;
       border-radius: 12px;
-      background: var(--green);
+      background: var(--brand);
       color: #fff;
       font-size: var(--text-sm);
       font-weight: 600;
@@ -2422,7 +2429,17 @@
 
     .location-result.selected {
       border-color: rgba(24, 197, 110, .46);
-      box-shadow: inset 3px 0 0 var(--green);
+      box-shadow: inset 3px 0 0 var(--brand);
+    }
+
+    #locationPage .page-nav {
+      position: sticky;
+      top: 0;
+      z-index: 12;
+    }
+
+    #locationPage .location-panel {
+      padding-bottom: calc(132px + env(safe-area-inset-bottom));
     }
 
     .location-confirm {
@@ -2737,7 +2754,7 @@
       position: fixed;
       left: max(12px, calc((100vw - 520px) / 2 + 12px));
       right: max(12px, calc((100vw - 520px) / 2 + 12px));
-      bottom: calc(42px + env(safe-area-inset-bottom));
+      bottom: calc(88px + env(safe-area-inset-bottom));
       display: grid;
       grid-template-columns: 32px minmax(0, 1fr) 32px 32px 34px;
       gap: 4px;
@@ -2808,11 +2825,11 @@
       position: fixed;
       left: max(0px, calc((100vw - 520px) / 2));
       right: max(0px, calc((100vw - 520px) / 2));
-      bottom: 0;
+      bottom: calc(42px + env(safe-area-inset-bottom));
       z-index: 5;
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      padding: 1px 12px calc(1px + env(safe-area-inset-bottom));
+      grid-template-columns: repeat(4, 1fr);
+      padding: 4px 12px 6px;
       border-top: 1px solid rgba(17, 24, 32, .08);
       background: rgba(255, 255, 255, .96);
       backdrop-filter: blur(18px);
@@ -2850,29 +2867,6 @@
 
     .tab-btn.active {
       color: var(--brand);
-    }
-
-    .publish-tab {
-      align-content: center;
-    }
-
-    .publish-tab .tab-icon {
-      width: 42px;
-      height: 29px;
-      border-radius: 10px;
-      background: linear-gradient(135deg, var(--hb-green), var(--hb-blue));
-      color: #fff;
-      box-shadow: 0 8px 18px rgba(24, 197, 110, .24);
-    }
-
-    .publish-tab .tab-icon svg {
-      width: 24px;
-      height: 23px;
-      stroke-width: 2.1;
-    }
-
-    .publish-tab span:last-child {
-      display: none;
     }
 
     .tab-btn > span:last-child {
@@ -3140,7 +3134,6 @@
         </div>
 
         <div class="quick surface-hidden">
-          <button id="publishFocusBtn" class="primary" type="button">+ 发布动态<span>图文/视频/文字</span></button>
           <button type="button" data-ai-command="帮我匹配当地朋友">AI 匹配<span>当地/异地/异国</span></button>
           <button type="button" data-ai-command="搜索附近咖啡活动">AI 搜索<span>动态/市集/名片</span></button>
         </div>
@@ -3230,7 +3223,10 @@
             <div class="dynamic-nav" aria-label="动态页眉">
               <button type="button" data-menu-target="homePage" aria-label="返回">‹</button>
               <strong>动态</strong>
-              <button id="dynamicMoreBtn" type="button" aria-label="动态菜单">…</button>
+              <div class="dynamic-actions">
+                <button id="dynamicPublishBtn" type="button" aria-label="发布动态">+</button>
+                <button id="dynamicMoreBtn" type="button" aria-label="动态菜单">…</button>
+              </div>
             </div>
             <div class="section-title home-feed-title">
               <h2>动态</h2>
@@ -4389,9 +4385,11 @@
         <div class="location-search">
           <input id="locationSearchInput" aria-label="搜索地点" placeholder="搜索地点">
           <button id="locationSearchBtn" type="button">搜索</button>
+          <button id="locationQuickConfirmBtn" type="button">完成</button>
         </div>
         <p id="locationHint" class="location-hint">可搜索地点，也可以使用当前位置。发送前会显示标准地址。</p>
         <div id="locationResults" class="location-results"></div>
+        <button id="locationBottomConfirmBtn" class="location-confirm show" type="button">确认位置</button>
       </div>
     </section>
 
@@ -4422,12 +4420,6 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1 12H6L5 8Z"></path><path d="M8 8a4 4 0 0 1 8 0"></path></svg>
         </span>
         <span>市集</span>
-      </button>
-      <button id="publishTabBtn" class="tab-btn publish-tab" type="button" aria-label="发布">
-        <span class="tab-icon">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
-        </span>
-        <span>发布</span>
       </button>
       <button class="tab-btn" type="button" data-tab-target="nearbyPage">
         <span class="tab-icon">
@@ -4574,7 +4566,7 @@
     const aiChatInput = document.querySelector('#aiChatInput');
     const unreadFloat = document.querySelector('#unreadFloat');
     const publishSheet = document.querySelector('#publishSheet');
-    const publishTabBtn = document.querySelector('#publishTabBtn');
+    const dynamicPublishBtn = document.querySelector('#dynamicPublishBtn');
     const publishCancelBtn = document.querySelector('#publishCancelBtn');
     const publishDraftSheet = document.querySelector('#publishDraftSheet');
     const publishDraftCancelBtn = document.querySelector('#publishDraftCancelBtn');
@@ -4609,6 +4601,8 @@
     const locationSearchBtn = document.querySelector('#locationSearchBtn');
     const locationCurrentBtn = document.querySelector('#locationCurrentBtn');
     const locationSendBtn = document.querySelector('#locationSendBtn');
+    const locationQuickConfirmBtn = document.querySelector('#locationQuickConfirmBtn');
+    const locationBottomConfirmBtn = document.querySelector('#locationBottomConfirmBtn');
     const locationHint = document.querySelector('#locationHint');
     const locationResults = document.querySelector('#locationResults');
     const aiInput = document.querySelector('#aiInput');
@@ -5370,6 +5364,41 @@
       window.setTimeout(() => locationSearchInput.focus(), 120);
     }
 
+    function currentLocationSelection() {
+      if (selectedLocation) return selectedLocation;
+      const manualAddress = locationSearchInput.value.trim();
+      if (!manualAddress) return null;
+      return {
+        formatted_address: manualAddress,
+        city: 'Melbourne',
+        source: 'manual_input'
+      };
+    }
+
+    function confirmLocationSelection() {
+      const location = currentLocationSelection();
+      if (!location) {
+        locationHint.textContent = '先搜索地点，或点左侧定位按钮读取当前位置。';
+        locationSearchInput.focus();
+        return;
+      }
+      selectedLocation = location;
+      if (locationReturnTarget === 'publish') {
+        const address = location.formatted_address || '';
+        publishEditorText.value = `${publishEditorText.value.trim()}${publishEditorText.value.trim() ? '\n' : ''}📍 ${address}`.trim();
+        closeTopPage();
+        openPublishEditor(publishSource);
+        toast('位置已加入动态。');
+        locationReturnTarget = 'chat';
+        return;
+      }
+      const targetInput = document.querySelector('#chatPage.open #fullChatInput') || aiInput;
+      targetInput.value = `发送位置：${location.formatted_address || ''}`;
+      closeTopPage();
+      targetInput.focus();
+      toast('位置已填入当前对话框，确认后再发送。');
+    }
+
     function addChatAttachmentPreview(files, sourceLabel) {
       const selected = Array.from(files || []);
       if (!selected.length) return;
@@ -5524,9 +5553,7 @@
       }
     }
 
-    document.querySelector('#publishFocusBtn').addEventListener('click', openPublishEntry);
-
-    publishTabBtn.addEventListener('click', openPublishEntry);
+    dynamicPublishBtn.addEventListener('click', openPublishEntry);
     publishCancelBtn.addEventListener('click', () => setPublishSheet(false));
     publishSheet.addEventListener('click', (event) => {
       if (event.target === publishSheet) {
@@ -6274,31 +6301,15 @@
     });
 
     locationCurrentBtn.addEventListener('click', () => {
+      locationHint.textContent = '正在请求定位权限...';
       reverseCurrentLocation().catch(() => {
         locationHint.textContent = '当前位置解析失败。';
       });
     });
 
-    locationSendBtn.addEventListener('click', () => {
-      if (!selectedLocation) {
-        toast('先选择一个位置。');
-        return;
-      }
-      if (locationReturnTarget === 'publish') {
-        const address = selectedLocation.formatted_address || '';
-        publishEditorText.value = `${publishEditorText.value.trim()}${publishEditorText.value.trim() ? '\n' : ''}📍 ${address}`.trim();
-        closeTopPage();
-        openPublishEditor(publishSource);
-        toast('位置已加入动态。');
-        locationReturnTarget = 'chat';
-        return;
-      }
-      const targetInput = document.querySelector('#chatPage.open #fullChatInput') || aiInput;
-      targetInput.value = `发送位置：${selectedLocation.formatted_address || ''}`;
-      closeTopPage();
-      targetInput.focus();
-      toast('位置已填入当前对话框，确认后再发送。');
-    });
+    locationSendBtn.addEventListener('click', confirmLocationSelection);
+    locationQuickConfirmBtn.addEventListener('click', confirmLocationSelection);
+    locationBottomConfirmBtn.addEventListener('click', confirmLocationSelection);
 
     aiVoiceBtn.addEventListener('click', () => {
       aiForm.classList.add('voice-mode');
