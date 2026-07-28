@@ -3703,10 +3703,10 @@
           </form>
           <div id="chatMorePanel" class="chat-more" aria-label="聊天功能菜单">
             <div class="tool-page tool-grid active" data-tool-page="1">
-              <button class="tool-cell" type="button"><span class="tool-icon"><svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z"></path><path d="m4 16 5-5 4 4 2-2 5 5"></path></svg></span><span>照片</span></button>
-              <button class="tool-cell" type="button"><span class="tool-icon"><svg viewBox="0 0 24 24"><path d="M7 8h10v10H7z"></path><path d="M9 8l1-3h4l1 3"></path><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"></path></svg></span><span>拍摄</span></button>
-              <button class="tool-cell" type="button"><span class="tool-icon"><svg viewBox="0 0 24 24"><path d="M4 7h11v10H4z"></path><path d="m15 11 5-3v8l-5-3"></path></svg></span><span>视频通话</span></button>
-              <button class="tool-cell" type="button"><span class="tool-icon"><svg viewBox="0 0 24 24"><path d="M12 21s7-6.1 7-12a7 7 0 1 0-14 0c0 5.9 7 12 7 12Z"></path><path d="M12 11.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"></path></svg></span><span>位置</span></button>
+              <button class="tool-cell" type="button" data-chat-tool="photo"><span class="tool-icon"><svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z"></path><path d="m4 16 5-5 4 4 2-2 5 5"></path></svg></span><span>照片</span></button>
+              <button class="tool-cell" type="button" data-chat-tool="camera"><span class="tool-icon"><svg viewBox="0 0 24 24"><path d="M7 8h10v10H7z"></path><path d="M9 8l1-3h4l1 3"></path><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"></path></svg></span><span>拍摄</span></button>
+              <button class="tool-cell" type="button" data-chat-tool="video_call"><span class="tool-icon"><svg viewBox="0 0 24 24"><path d="M4 7h11v10H4z"></path><path d="m15 11 5-3v8l-5-3"></path></svg></span><span>视频通话</span></button>
+              <button class="tool-cell" type="button" data-chat-tool="location"><span class="tool-icon"><svg viewBox="0 0 24 24"><path d="M12 21s7-6.1 7-12a7 7 0 1 0-14 0c0 5.9 7 12 7 12Z"></path><path d="M12 11.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"></path></svg></span><span>位置</span></button>
               <button class="tool-cell" type="button" data-open-page="payPage"><span class="tool-icon"><svg viewBox="0 0 24 24"><path d="M5 6h14v12H5z"></path><path d="M8 10h8"></path><path d="M8 14h5"></path></svg></span><span>收付款</span></button>
               <button class="tool-cell" type="button"><span class="tool-icon"><svg viewBox="0 0 24 24"><path d="M4 9h16v11H4z"></path><path d="M12 9v11"></path><path d="M4 13h16"></path><path d="M8 9c-3-3 1-6 4 0 3-6 7-3 4 0"></path></svg></span><span>礼物</span></button>
               <button class="tool-cell" type="button"><span class="tool-icon"><svg viewBox="0 0 24 24"><path d="M6 8h12"></path><path d="m14 4 4 4-4 4"></path><path d="M18 16H6"></path><path d="m10 12-4 4 4 4"></path></svg></span><span>转账</span></button>
@@ -3715,7 +3715,7 @@
             <div class="tool-page tool-grid" data-tool-page="2">
               <button class="tool-cell" type="button"><span class="tool-icon"><svg viewBox="0 0 24 24"><path d="m12 4 7 4v8l-7 4-7-4V8l7-4Z"></path></svg></span><span>收藏</span></button>
               <button class="tool-cell" type="button" data-card="me"><span class="tool-icon"><svg viewBox="0 0 24 24"><path d="M5 5h14v14H5z"></path><path d="M8 8h3v3H8z"></path><path d="M14 8h2v2h-2z"></path><path d="M8 14h2v2H8z"></path><path d="M14 14h2v2h-2z"></path></svg></span><span>个人名片</span></button>
-              <button class="tool-cell" type="button"><span class="tool-icon"><svg viewBox="0 0 24 24"><path d="M4 6h7l2 2h7v10H4z"></path></svg></span><span>文件</span></button>
+              <button class="tool-cell" type="button" data-chat-tool="file"><span class="tool-icon"><svg viewBox="0 0 24 24"><path d="M4 6h7l2 2h7v10H4z"></path></svg></span><span>文件</span></button>
               <button class="tool-cell" type="button"><span class="tool-icon"><svg viewBox="0 0 24 24"><path d="M5 7h14v10H5z"></path><path d="M8 10h8"></path><path d="M8 14h5"></path></svg></span><span>卡券</span></button>
               <button class="tool-cell" type="button"><span class="tool-icon"><svg viewBox="0 0 24 24"><path d="M9 18V6l10-2v12"></path><path d="M9 18a3 2 0 1 1-6 0 3 2 0 0 1 6 0Z"></path><path d="M19 16a3 2 0 1 1-6 0 3 2 0 0 1 6 0Z"></path></svg></span><span>音乐</span></button>
             </div>
@@ -4352,6 +4352,9 @@
         <input id="publishAlbumInput" type="file" accept="image/*" multiple hidden>
         <input id="publishCameraInput" type="file" accept="image/*,video/*" capture="environment" hidden>
         <input id="publishFileInput" type="file" hidden>
+        <input id="chatPhotoInput" type="file" accept="image/*" multiple hidden>
+        <input id="chatCameraInput" type="file" accept="image/*,video/*" capture="environment" hidden>
+        <input id="chatFileInput" type="file" hidden>
         <textarea id="publishEditorText" class="publish-caption" aria-label="动态配文" placeholder="说点什么，或让 AI 帮你整理成动态配文..."></textarea>
         <div class="publish-editor-tools" aria-label="编辑工具">
           <button id="publishAiPolishBtn" class="primary-light" type="button">AI 整理</button>
@@ -4615,6 +4618,9 @@
     const aiMoreBtn = document.querySelector('#aiMoreBtn');
     const aiMoreSheet = document.querySelector('#aiMoreSheet');
     const aiMoreCancelBtn = document.querySelector('#aiMoreCancelBtn');
+    const chatPhotoInput = document.querySelector('#chatPhotoInput');
+    const chatCameraInput = document.querySelector('#chatCameraInput');
+    const chatFileInput = document.querySelector('#chatFileInput');
     const testModeState = document.querySelector('#testModeState');
 
     let activeProfile = 'me';
@@ -5364,6 +5370,49 @@
       window.setTimeout(() => locationSearchInput.focus(), 120);
     }
 
+    function addChatAttachmentPreview(files, sourceLabel) {
+      const selected = Array.from(files || []);
+      if (!selected.length) return;
+      const names = selected.slice(0, 3).map((file) => file.name || '未命名文件');
+      const more = selected.length > names.length ? ` 等 ${selected.length} 个文件` : '';
+      const line = document.createElement('div');
+      line.className = 'chat-line me';
+      line.innerHTML = `
+        <div class="bubble me"></div>
+        <button class="avatar avatar-button" type="button" data-card="me" aria-label="查看我的资料">
+          <img src="../assets/brand/huaban-logo-v1.png" alt="我的资料">
+        </button>
+      `;
+      line.querySelector('.bubble').textContent = `${sourceLabel}：${names.join('、')}${more}`;
+      chatThread.append(line);
+      line.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      toast('已加入当前对话预览；真实上传和发送还需要媒体接口闭环。');
+    }
+
+    function runChatTool(toolName) {
+      if (toolName === 'photo') {
+        chatPhotoInput.click();
+        return;
+      }
+      if (toolName === 'camera') {
+        chatCameraInput.click();
+        return;
+      }
+      if (toolName === 'file') {
+        chatFileInput.click();
+        return;
+      }
+      if (toolName === 'location') {
+        openLocationPicker('chat');
+        return;
+      }
+      if (toolName === 'video_call') {
+        toast('视频通话需要实时音视频服务，当前只标为待接入。');
+        return;
+      }
+      toast('这个工具还没有闭环，已进入待开发清单。');
+    }
+
     function closeTopPage() {
       const pages = [...document.querySelectorAll('.phone-page.open')];
       pages.at(-1)?.classList.remove('open');
@@ -6006,6 +6055,11 @@
         });
       }
       if (tool && !tool.dataset.card) {
+        if (tool.dataset.chatTool) {
+          chatMorePanel.classList.remove('open');
+          runChatTool(tool.dataset.chatTool);
+          return;
+        }
         if (tool.dataset.openPage) {
           openPage(tool.dataset.openPage);
           chatMorePanel.classList.remove('open');
@@ -6013,6 +6067,21 @@
         }
         toast(`${tool.textContent.trim()}入口已打开。`);
       }
+    });
+
+    chatPhotoInput.addEventListener('change', (event) => {
+      addChatAttachmentPreview(event.target.files, '照片');
+      event.target.value = '';
+    });
+
+    chatCameraInput.addEventListener('change', (event) => {
+      addChatAttachmentPreview(event.target.files, '拍摄');
+      event.target.value = '';
+    });
+
+    chatFileInput.addEventListener('change', (event) => {
+      addChatAttachmentPreview(event.target.files, '文件');
+      event.target.value = '';
     });
 
     document.querySelector('#fullChatForm').addEventListener('submit', async (event) => {
@@ -6174,19 +6243,22 @@
         return;
       }
       if (action.dataset.aiMore === 'location') {
-        openOperation('位置', ['发送位置', '共享实时位置']);
-        operationList.querySelectorAll('.profile-row').forEach((button, index) => {
-          button.addEventListener('click', () => {
-            if (index === 0) {
-              openLocationPicker();
-              return;
-            }
-            toast('共享实时位置需要原生 App 权限，先进入待开发清单。');
-          }, { once: true });
-        });
+        openLocationPicker('chat');
         return;
       }
-      openOperation(title, ['选择对象', '让 AI 辅助处理', '确认发送']);
+      if (action.dataset.aiMore === 'album') {
+        chatPhotoInput.click();
+        return;
+      }
+      if (action.dataset.aiMore === 'camera') {
+        chatCameraInput.click();
+        return;
+      }
+      if (action.dataset.aiMore === 'file') {
+        chatFileInput.click();
+        return;
+      }
+      toast(`${title}需要原生能力或服务端接口，当前只标为待接入。`);
     });
 
     locationSearchBtn.addEventListener('click', () => {
@@ -6221,9 +6293,11 @@
         locationReturnTarget = 'chat';
         return;
       }
-      aiInput.value = `发送位置：${selectedLocation.formatted_address || ''}`;
+      const targetInput = document.querySelector('#chatPage.open #fullChatInput') || aiInput;
+      targetInput.value = `发送位置：${selectedLocation.formatted_address || ''}`;
       closeTopPage();
-      toast('位置已填入对话框。');
+      targetInput.focus();
+      toast('位置已填入当前对话框，确认后再发送。');
     });
 
     aiVoiceBtn.addEventListener('click', () => {
