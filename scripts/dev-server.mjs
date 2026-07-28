@@ -892,6 +892,13 @@ function resolveAiCommand(text = '') {
     };
   }
 
+  if (query.includes('打开添加好友') || query.includes('打开添加朋友') || query.includes('添加好友') || query.includes('添加朋友') || query.includes('加好友')) {
+    return {
+      action: 'open_add_friend',
+      message: '已打开添加朋友。'
+    };
+  }
+
   if (query.includes('匹配') || query.includes('推荐朋友') || query.includes('附近的人') || normalized.includes('match')) {
     return {
       action: 'match_cards',
@@ -921,7 +928,7 @@ function resolveAiCommand(text = '') {
     };
   }
 
-  if (query.includes('菜单') || query.includes('加好友') || query.includes('扫一扫') || query.includes('收付款')) {
+  if (query.includes('菜单') || query.includes('扫一扫') || query.includes('收付款')) {
     return {
       action: 'open_menu',
       message: '已打开左上角功能菜单。'
