@@ -11,7 +11,15 @@ function cors(res) {
 }
 
 function normalizePhone(phone = '') {
-  return String(phone || '').replace(/[\s().-]/g, '').trim();
+  let raw = String(phone || '').replace(/[\s().-]/g, '').trim();
+  if (!raw) return '';
+  if (raw.startsWith('00')) raw = `+${raw.slice(2)}`;
+  if (raw.startsWith('+')) return `+${raw.slice(1).replace(/\D/g, '')}`;
+  const digits = raw.replace(/\D/g, '');
+  if (/^04\d{8}$/.test(digits)) return `+61${digits.slice(1)}`;
+  if (/^4\d{8}$/.test(digits)) return `+61${digits}`;
+  if (/^61\d{9}$/.test(digits)) return `+${digits}`;
+  return digits;
 }
 
 function codeHash(phone = '', code = '') {

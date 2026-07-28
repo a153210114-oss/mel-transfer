@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const TENANT_ID = process.env.TENANT_ID || '00000000-0000-0000-0000-000000000001';
 const SUPA_URL = process.env.SUPABASE_URL || 'https://gxocvpmgfjvmmkkbswgo.supabase.co';
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPA_SERVICE_ROLE_KEY || '';
+const { handlePhoneVerifiedScenario } = require('../lib/scenario-events');
 
 function cors(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -11,7 +12,15 @@ function cors(res) {
 }
 
 function normalizePhone(phone = '') {
-  return String(phone || '').replace(/[\s().-]/g, '').trim();
+  let raw = String(phone || '').replace(/[\s().-]/g, '').trim();
+  if (!raw) return '';
+  if (raw.startsWith('00')) raw = `+${raw.slice(2)}`;
+  if (raw.startsWith('+')) return `+${raw.slice(1).replace(/\D/g, '')}`;
+  const digits = raw.replace(/\D/g, '');
+  if (/^04\d{8}$/.test(digits)) return `+61${digits.slice(1)}`;
+  if (/^4\d{8}$/.test(digits)) return `+61${digits}`;
+  if (/^61\d{9}$/.test(digits)) return `+${digits}`;
+  return digits;
 }
 
 function codeHash(phone = '', code = '') {
@@ -45,6 +54,42 @@ async function supa(path, options = {}) {
   }
   if (res.status === 204) return null;
   return res.json().catch(() => null);
+}
+
+async function claimSupplyProfilesByPhone(normalizedPhone = '', friendCode = '', accountUidValue = '') {
+  const phone = normalizePhone(normalizedPhone);
+  const ownerCode = String(friendCode || '').replace(/[^a-zA-Z0-9_-]/g, '').toUpperCase();
+  if (!phone || !ownerCode) return 0;
+  const claimedAt = new Date().toISOString();
+  const patch = {
+    claimed_phone: phone,
+    claimed_by_code: ownerCode,
+    claimed_at: claimedAt,
+    verification_status: 'phone_verified_claimed',
+    status: 'active',
+    fields: {
+      claimed: true,
+      claim_mode: 'phone_verification',
+      claimed_by_code: ownerCode,
+      account_uid: accountUidValue || '',
+      claimed_at: claimedAt
+    }
+  };
+  const filters = [
+    `normalized_contact=eq.${encodeURIComponent(phone)}`,
+    `claimed_phone=eq.${encodeURIComponent(phone)}`,
+    `contact=eq.${encodeURIComponent(phone)}`
+  ];
+  let count = 0;
+  for (const filter of filters) {
+    const rows = await supa(`huaban_supply_profiles?tenant_id=eq.${TENANT_ID}&${filter}`, {
+      method: 'PATCH',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify(patch)
+    }).catch(() => []);
+    if (Array.isArray(rows)) count += rows.length;
+  }
+  return count;
 }
 
 module.exports = async function handler(req, res) {
@@ -134,14 +179,31 @@ module.exports = async function handler(req, res) {
       }).catch(() => null);
     }
 
+    const claimedSupplyCount = await claimSupplyProfilesByPhone(phone, row.friend_code || friendCode, row.account_uid).catch(() => 0);
+    let signupPoint = null;
+    let signupPointError = '';
+    try {
+      signupPoint = await handlePhoneVerifiedScenario({
+        ownerCode: row.friend_code || friendCode,
+        source: 'verify_code',
+        accountUid: row.account_uid || '',
+        phone
+      });
+    } catch (error) {
+      signupPointError = error.message || '积分账本写入失败';
+      console.error('verify-code point event error', error);
+    }
+
     return res.status(200).json({
       ok: true,
       account: {
         id: row.id || '',
         account_uid: row.account_uid,
         phone_verified_at: row.phone_verified_at,
-        friend_code: row.friend_code || friendCode
-      }
+        friend_code: row.friend_code || friendCode,
+        claimed_supply_count: claimedSupplyCount
+      },
+      points: { signup: signupPoint, error: signupPointError }
     });
   } catch (error) {
     console.error('verify-code error', error);

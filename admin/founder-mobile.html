@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>华伴创始人手机端</title>
+  <style>
+    :root {
+      --ink: #111820;
+      --muted: #737b83;
+      --line: rgba(17, 24, 32, .08);
+      --brand: #18c56e;
+      --red: #e63b3b;
+      --panel: #fff;
+      --bg: #f4f6f5;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .app {
+      min-height: 100vh;
+      max-width: 520px;
+      margin: 0 auto;
+      padding: calc(18px + env(safe-area-inset-top)) 14px calc(20px + env(safe-area-inset-bottom));
+    }
+
+    header {
+      min-height: 68px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    h1,
+    h2,
+    p {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: 20px;
+    }
+
+    .badge {
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #111820;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .hero {
+      padding: 18px;
+      border-radius: 12px;
+      background:
+        linear-gradient(135deg, rgba(24, 197, 110, .16), transparent 48%),
+        linear-gradient(145deg, #fff, #fff7f7);
+      border: 1px solid var(--line);
+    }
+
+    .hero p {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1.45;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .stat {
+      min-height: 112px;
+      padding: 14px;
+      border-radius: 10px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+    }
+
+    .stat span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .stat b {
+      display: block;
+      margin-top: 10px;
+      font-size: 30px;
+      line-height: 1;
+    }
+
+    .stat strong {
+      display: block;
+      margin-top: 8px;
+      color: var(--red);
+      font-size: 13px;
+    }
+
+    .section {
+      margin-top: 14px;
+      padding: 14px;
+      border-radius: 12px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+    }
+
+    .section h2 {
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+
+    .row {
+      min-height: 54px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 12px;
+      border-top: 1px solid var(--line);
+    }
+
+    .row:first-of-type {
+      border-top: 0;
+    }
+
+    .row span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .row b {
+      font-size: 15px;
+    }
+
+    .ratio {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+      padding: 12px;
+      border-radius: 10px;
+      background: #fff7f7;
+      color: #6f2020;
+      font-size: 13px;
+      font-weight: 900;
+      line-height: 1.45;
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <h1>创始人端</h1>
+      <span class="badge">Internal</span>
+    </header>
+
+    <section class="hero">
+      <h2 id="levelName">积分等级</h2>
+      <p>创始人账号使用同一套积分等级规则；区别是用户侧有效释放 2 分，系统自动给创始人与系统建设账户入账 1 分。</p>
+      <div class="stats">
+        <div class="stat">
+          <span>创始人积分</span>
+          <b id="founderPoints">--</b>
+          <strong id="founderLevel">--</strong>
+        </div>
+        <div class="stat">
+          <span>用户侧已释放</span>
+          <b id="userPoints">--</b>
+          <strong id="ratioText">--</strong>
+        </div>
+      </div>
+      <div class="ratio" id="ratioNote">读取内部飞轮数据中。</div>
+    </section>
+
+    <section class="section">
+      <h2>今日增量</h2>
+      <div class="row"><span>创始人积分新增</span><b id="todayFounder">--</b></div>
+      <div class="row"><span>用户端积分入账</span><b id="todayUser">--</b></div>
+      <div class="row"><span>增长事件</span><b id="todayEvents">--</b></div>
+    </section>
+
+    <section class="section">
+      <h2>燃料来源</h2>
+      <div id="channels"></div>
+    </section>
+  </main>
+
+  <script>
+    const number = new Intl.NumberFormat('zh-CN');
+
+    function render(data) {
+      document.querySelector('#levelName').textContent = `${data.releaseLevel || data.founderLevelName} 积分档位`;
+      document.querySelector('#founderPoints').textContent = number.format(data.founderPoints);
+      document.querySelector('#founderLevel').textContent = data.releaseLevel || data.founderLevelCode;
+      document.querySelector('#userPoints').textContent = number.format(data.userReleasedPoints || data.userPointsCredited);
+      document.querySelector('#ratioText').textContent = `1:${data.userPointsRatio}`;
+      document.querySelector('#ratioNote').textContent = `你看到 ${number.format(data.founderPoints)} 创始人积分，就知道用户侧已经有效释放 ${number.format(data.userReleasedPoints || data.userPointsCredited)} 积分。`;
+      document.querySelector('#todayFounder').textContent = `+${number.format(data.today.founderPointsDelta)}`;
+      document.querySelector('#todayUser').textContent = `+${number.format(data.today.userPointsCreditedDelta)}`;
+      document.querySelector('#todayEvents').textContent = number.format(data.today.activeGrowthEvents);
+
+      document.querySelector('#channels').replaceChildren(...data.channels.map((channel) => {
+        const row = document.createElement('div');
+        row.className = 'row';
+        row.innerHTML = `<span></span><b></b>`;
+        row.querySelector('span').textContent = `${channel.name} · 用户端 ${number.format(channel.userPointsCredited)}`;
+        row.querySelector('b').textContent = number.format(channel.founderPoints);
+        return row;
+      }));
+    }
+
+    const fallback = {
+      founderPoints: 10000,
+      releaseLevel: 'L8',
+      userReleasedPoints: 20000,
+      userPointsRatio: 2,
+      today: {
+        founderPointsDelta: 420,
+        userPointsCreditedDelta: 840,
+        activeGrowthEvents: 36
+      },
+      channels: [
+        { name: '邀请入账', founderPoints: 3600, userPointsCredited: 7200 },
+        { name: '动态互动', founderPoints: 2800, userPointsCredited: 5600 },
+        { name: '城市反馈', founderPoints: 1900, userPointsCredited: 3800 },
+        { name: '活动共建', founderPoints: 1700, userPointsCredited: 3400 }
+      ]
+    };
+
+    fetch('/api/v1/internal/founder/growth')
+      .then((response) => response.json())
+      .then(render)
+      .catch(() => {
+        render(fallback);
+      });
+  </script>
+</body>
+</html>

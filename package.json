@@ -1,22 +1,16 @@
 {
-  "name": "huaban-ai-companion",
-  "version": "1.0.0",
+  "name": "huaban-v1-1-new",
+  "version": "0.1.0",
   "private": true,
+  "description": "Huaban V1.1 local social and communication network prototype.",
   "scripts": {
-    "start": "vercel dev",
-    "probe:live": "node scripts/probe_live_routes.js",
-    "cap:sync": "cap sync",
-    "cap:android": "cap open android",
-    "cap:ios": "cap open ios"
+    "dev": "node scripts/dev-server.mjs",
+    "build": "node scripts/build-static.mjs",
+    "probe:live": "node scripts/probe-live.mjs",
+    "e2e:live": "node scripts/e2e-live.mjs",
+    "scenario:live": "node scripts/scenario-live.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.54.0"
-  },
-  "devDependencies": {
-    "@capacitor/android": "^8.4.1",
-    "@capacitor/cli": "^8.4.1",
-    "@capacitor/core": "^8.4.1",
-    "@capacitor/ios": "^8.4.1",
-    "vercel": "^44.2.8"
   }
 }

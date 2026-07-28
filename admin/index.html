@@ -1,0 +1,663 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>华伴后台</title>
+  <style>
+    :root {
+      --hb-green: #18c56e;
+      --hb-green-dark: #087d4c;
+      --hb-blue: #25a8f2;
+      --hb-blue-soft: #eaf6ff;
+      --hb-amber: #f6b62f;
+      --hb-amber-soft: #fff6df;
+      --hb-ink: #111820;
+      --hb-muted: #68737c;
+      --hb-bg: #f6f8f5;
+      --hb-panel: #ffffff;
+      --hb-line: rgba(17, 24, 32, .08);
+      --hb-danger: #e64a4a;
+      --ink: var(--hb-ink);
+      --muted: var(--hb-muted);
+      --line: var(--hb-line);
+      --soft: var(--hb-bg);
+      --panel: var(--hb-panel);
+      --green: var(--hb-green);
+      --red: var(--hb-danger);
+      --blue: var(--hb-blue);
+      --amber: var(--hb-amber);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--soft);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .app {
+      min-height: 100vh;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 18px 14px 40px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 0 14px;
+    }
+
+    h1, h2, h3, p { margin: 0; }
+
+    h1 { font-size: 24px; font-weight: 950; }
+    h2 { font-size: 16px; }
+    h3 { font-size: 14px; }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand img {
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: 0 8px 22px rgba(0, 0, 0, .08);
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 750;
+    }
+
+    button,
+    a.button {
+      min-height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 12px;
+      border: 0;
+      border-radius: 8px;
+      background: var(--ink);
+      color: #fff;
+      font-weight: 900;
+      text-decoration: none;
+    }
+
+    button.secondary,
+    a.secondary {
+      background: #fff;
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 2px 0 12px;
+    }
+
+    .tab {
+      white-space: nowrap;
+      background: #fff;
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+
+    .tab.active {
+      background: linear-gradient(135deg, var(--hb-green), var(--hb-blue));
+      color: #fff;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .data-mode {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 12px;
+      padding: 10px 12px;
+      border: 1px solid rgba(208, 138, 0, .24);
+      border-radius: 10px;
+      background: var(--hb-amber-soft);
+      color: #6e4a00;
+      font-size: 12px;
+      font-weight: 850;
+      line-height: 1.45;
+    }
+
+    .stat,
+    .panel,
+    .module-card {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--panel);
+    }
+
+    .stat {
+      padding: 12px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .stat b {
+      display: block;
+      margin-bottom: 2px;
+      color: var(--ink);
+      font-size: 22px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .module-card {
+      padding: 12px;
+      text-align: left;
+      color: var(--ink);
+      cursor: pointer;
+    }
+
+    .module-card.active {
+      outline: 2px solid var(--green);
+    }
+
+    .module-card p {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .panel {
+      overflow: hidden;
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      min-height: 52px;
+      padding: 0 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .rows { padding: 0 12px; }
+
+    .row {
+      min-height: 58px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 12px;
+      border-top: 1px solid var(--line);
+      font-size: 14px;
+      font-weight: 850;
+    }
+
+    .row:first-child { border-top: 0; }
+
+    .row small {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+      font-weight: 750;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 0 9px;
+      border-radius: 999px;
+      background: #f2f5f3;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .pill.ok { background: #ecfff4; color: var(--hb-green-dark); }
+    .pill.warn { background: var(--hb-amber-soft); color: #8a5b00; }
+    .pill.bad { background: #fff0f0; color: var(--red); }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 88px;
+      margin-top: 8px;
+      padding: 10px;
+      resize: vertical;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      font: inherit;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 720px) {
+      .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .data-mode { grid-template-columns: 1fr; }
+      header { align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div class="brand">
+        <img src="/assets/brand/huaban-logo-v1.png" alt="华伴">
+        <div>
+          <h1>华伴后台</h1>
+          <p id="updatedAt" class="muted">读取中</p>
+        </div>
+      </div>
+      <div class="actions">
+        <a class="button secondary" href="/admin/founder-mobile.html">创始人端</a>
+        <a class="button secondary" href="/admin/ops-center.html">巡检中心</a>
+      </div>
+    </header>
+
+    <nav class="tabs" id="tabs"></nav>
+
+    <section class="data-mode">
+      <div id="dataModeText">读取数据来源中</div>
+      <button id="resetTestDataBtn" class="secondary" type="button">清理本地测试数据</button>
+    </section>
+
+    <section class="stats">
+      <div class="stat"><b id="statUsers">--</b>用户</div>
+      <div class="stat"><b id="statDynamics">--</b>动态</div>
+      <div class="stat"><b id="statReviews">--</b>待审核</div>
+      <div class="stat"><b id="statInspection">--</b>巡检</div>
+    </section>
+
+    <section class="grid" id="modules"></section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2 id="panelTitle">用户管理</h2>
+          <p id="panelNote" class="muted">用户资料、状态、积分摘要</p>
+        </div>
+        <button id="refreshBtn" type="button">刷新</button>
+      </div>
+      <div class="rows" id="rows"></div>
+    </section>
+  </main>
+
+  <script>
+    const moduleMeta = {
+      users: ['用户管理', '用户资料、状态、积分摘要'],
+      dynamics: ['动态管理', '朋友圈、视频号、附近内容统一管理'],
+      relations: ['名片关系', '好友分组、来源、关系链'],
+      city: ['城市内容', '待审核内容、服务名片、城市动态'],
+      supply: ['供给侧', '旧供给资料、用户提交名片、行业分类和服务区域'],
+      radar: ['雷达', '小批量、无固定规律、可暂停的供给采集任务'],
+      demand: ['需求匹配', '用户真实需求、缺口任务和供需匹配'],
+      website: ['官网管理', '官网首页、规则、隐私、支持页面的草稿和发布'],
+      ai: ['AI Prompt', '语音召唤、搜索匹配、积分解释口径'],
+      n8n: ['n8n 工作流', '授权、审核、执行、日志、重试和回滚'],
+      automation: ['自动化任务', 'n8n 与后端任务记录'],
+      growth: ['积分等级', '用户端和创始人端同一套积分等级'],
+      stats: ['数据统计', '核心运营数据摘要']
+    };
+
+    let active = 'users';
+    let overview = null;
+
+    async function request(path, options) {
+      const response = await fetch(path, options);
+      if (!response.ok) throw new Error(`${path} ${response.status}`);
+      return response.json();
+    }
+
+    function setStats(data) {
+      document.querySelector('#statUsers').textContent = data.stats.users;
+      document.querySelector('#statDynamics').textContent = data.stats.dynamics;
+      document.querySelector('#statReviews').textContent = data.stats.pendingReviews;
+      document.querySelector('#statInspection').textContent = data.stats.inspectionStatus;
+      document.querySelector('#updatedAt').textContent = `最近更新：${new Date(data.generatedAt).toLocaleString('zh-CN')}`;
+      const test = data.testCounts || {};
+      const base = data.baselineCounts || {};
+      document.querySelector('#dataModeText').textContent =
+        `本地真测模式：总数含测试写入。基线动态 ${base.dynamics ?? 0} / 测试动态 ${test.dynamics ?? 0}，基线供给 ${base.supplyProfiles ?? 0} / 测试供给 ${test.supplyProfiles ?? 0}，测试积分增量 ${test.pointsDelta ?? 0}。接生产库前这些不算真实业务数据。`;
+    }
+
+    function renderNav(data) {
+      const tabs = data.modules.map((item) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = `tab ${item.id === active ? 'active' : ''}`;
+        button.textContent = item.title;
+        button.addEventListener('click', () => {
+          active = item.id;
+          renderNav(overview);
+          renderModules(overview);
+          loadModule();
+        });
+        return button;
+      });
+      document.querySelector('#tabs').replaceChildren(...tabs);
+    }
+
+    function renderModules(data) {
+      const cards = data.modules.map((item) => {
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = `module-card ${item.id === active ? 'active' : ''}`;
+        card.innerHTML = `<h3></h3><p></p>`;
+        card.querySelector('h3').textContent = item.title;
+        card.querySelector('p').textContent = item.summary;
+        card.addEventListener('click', () => {
+          active = item.id;
+          renderNav(overview);
+          renderModules(overview);
+          loadModule();
+        });
+        return card;
+      });
+      document.querySelector('#modules').replaceChildren(...cards);
+    }
+
+    function row(title, detail, right = '') {
+      const node = document.createElement('div');
+      node.className = 'row';
+      node.innerHTML = `<div><strong></strong><small></small></div><span class="pill"></span>`;
+      node.querySelector('strong').textContent = title;
+      node.querySelector('small').textContent = detail;
+      node.querySelector('.pill').textContent = right;
+      return node;
+    }
+
+    async function renderUsers() {
+      const data = await request('/api/v1/admin/users');
+      return data.users.map((item) => row(item.name, `${item.city} · ${item.geoGroup} · ${item.pointsBalance} 分 · ${item.lastSeenLabel}`, item.status));
+    }
+
+    async function renderDynamics() {
+      const data = await request('/api/v1/admin/dynamics');
+      return data.dynamics.map((item) => row(item.authorName, `${item.city} · ${item.dynamicType}/${item.mediaType} · ${item.content}`, item.publishedLabel));
+    }
+
+    async function renderRelations() {
+      const data = await request('/api/v1/admin/friendships');
+      return data.groups.map((item) => row(item.name, `好友地域分组，当前 ${item.count} 人`, item.id));
+    }
+
+    async function renderCity() {
+      const data = await request('/api/v1/admin/city-content');
+      return data.queue.map((item) => {
+        const node = row(item.title, `${item.city} · ${item.type} · 风险 ${item.risk}`, item.status);
+        const actions = document.createElement('div');
+        actions.className = 'actions';
+        const approve = document.createElement('button');
+        approve.type = 'button';
+        approve.className = 'secondary';
+        approve.textContent = '通过';
+        approve.addEventListener('click', async () => {
+          await request('/api/v1/admin/city-content/review', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ id: item.id, status: 'approved' })
+          });
+          await loadAll();
+        });
+        actions.append(approve);
+        node.append(actions);
+        return node;
+      });
+    }
+
+    async function renderAi() {
+      const data = await request('/api/v1/admin/ai-prompts');
+      return data.prompts.map((item) => {
+        const node = row(item.name, `${item.scene} · ${new Date(item.updatedAt).toLocaleString('zh-CN')}`, item.status);
+        const textarea = document.createElement('textarea');
+        textarea.value = item.body;
+        textarea.addEventListener('change', async () => {
+          await request('/api/v1/admin/ai-prompts', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ id: item.id, body: textarea.value })
+          });
+          await loadAll();
+        });
+        node.querySelector('div').append(textarea);
+        return node;
+      });
+    }
+
+    async function renderSupply() {
+      const data = await request('/api/v1/admin/supply/profiles');
+      const add = document.createElement('div');
+      add.className = 'row';
+      add.innerHTML = `<div><strong>手动添加供给方</strong><small>旧后台能力迁回：姓名、电话、行业、城市、备注，保存后生成待认领供给资料</small><textarea placeholder="格式：姓名，电话，行业，城市，备注"></textarea></div><button class="secondary" type="button">保存</button>`;
+      add.querySelector('button').addEventListener('click', async () => {
+        const parts = add.querySelector('textarea').value.split(/[,，]/).map((item) => item.trim());
+        await request('/api/v1/admin/supply/profiles', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            name: parts[0],
+            contact: parts[1],
+            serviceType: parts[2],
+            city: parts[3] || 'Melbourne',
+            intro: parts[4] || ''
+          })
+        });
+        await loadAll();
+      });
+      return [
+        add,
+        ...data.profiles.map((item) => row(item.name, `${item.city} · ${item.serviceType} · ${item.contact} · ${item.serviceArea} · ${item.intro}`, `${item.status}/${item.verificationStatus}`))
+      ];
+    }
+
+    async function renderRadar() {
+      const [radar, tasks, processing] = await Promise.all([
+        request('/api/v1/admin/supply/radar'),
+        request('/api/v1/admin/supply/tasks'),
+        request('/api/v1/admin/supply/processing')
+      ]);
+      const control = document.createElement('div');
+      control.className = 'row';
+      control.innerHTML = `<div><strong>雷达试扫一次</strong><small>当前：${radar.enabled ? '已启用' : '已暂停'} · ${radar.decision} · ${radar.lastSkippedReason || '可运行'} · 冷却 ${radar.cooldownMinutes} 分钟</small></div><button type="button">试扫</button>`;
+      control.querySelector('button').addEventListener('click', async () => {
+        await request('/api/v1/admin/supply/radar/tick', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ force: true })
+        });
+        await loadAll();
+      });
+      return [
+        control,
+        ...tasks.tasks.map((item) => row(item.searchQuery, `${item.city} · ${item.categoryName} · ${item.languageLane} · 已入库 ${item.storedCount}`, item.status)),
+        ...processing.items.map((item) => row(item.title, `${item.source} · ${item.city}`, item.status))
+      ];
+    }
+
+    async function renderDemand() {
+      const data = await request('/api/v1/admin/demands');
+      return data.demands.map((item) => row(item.rawText, `${item.city} ${item.area} · ${item.serviceType} · ${item.timeText} · ${item.budgetText} · 匹配 ${item.supplyMatchCount}`, item.status));
+    }
+
+    async function renderWebsite() {
+      const page = await request('/api/v1/admin/website/content?page=official_home');
+      const node = document.createElement('div');
+      node.className = 'row';
+      node.innerHTML = `<div><strong>官网首页</strong><small>保存只进草稿；发布后官网读取已发布版本。版本 ${page.version || 0} · ${page.status || 'draft'}</small><textarea></textarea></div><div class="actions"><button class="secondary" type="button" data-action="draft">保存草稿</button><button type="button" data-action="publish">发布</button></div>`;
+      node.querySelector('textarea').value = JSON.stringify(page.content || {}, null, 2);
+      node.querySelector('[data-action="draft"]').addEventListener('click', async () => {
+        await saveWebsite(node, false);
+      });
+      node.querySelector('[data-action="publish"]').addEventListener('click', async () => {
+        await saveWebsite(node, true);
+      });
+      return [
+        node,
+        row('规则边界 / 用户协议', '官网管理预留页面：terms', 'draft'),
+        row('隐私政策', '官网管理预留页面：privacy', 'draft'),
+        row('支持与反馈', '官网管理预留页面：support', 'draft'),
+        row('APP 使用说明', '官网管理预留页面：app_download', 'draft')
+      ];
+    }
+
+    async function saveWebsite(node, publish) {
+      let content = {};
+      try {
+        content = JSON.parse(node.querySelector('textarea').value || '{}');
+      } catch (error) {
+        alert('官网内容 JSON 格式不对');
+        return;
+      }
+      await request('/api/v1/admin/website/content', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ pageKey: 'official_home', content, publish })
+      });
+      await loadAll();
+    }
+
+    async function renderAutomation() {
+      const data = await request('/api/v1/admin/automation-jobs');
+      if (!data.jobs.length) return [row('暂无任务', '点击巡检中心或审核内容后会产生任务记录', 'empty')];
+      return data.jobs.map((item) => row(item.jobName, `${new Date(item.createdAt).toLocaleString('zh-CN')} · ${JSON.stringify(item.payload)}`, item.status));
+    }
+
+    async function renderN8n() {
+      const data = await request('/api/v1/admin/n8n-workflows');
+      const intro = row(
+        'n8n 是自动化执行引擎',
+        'AI 负责生成建议和配置；用户授权、后台审核通过后，n8n 才执行 API 同步、提醒、服务卡更新、线索整理和 Webhook 回调。',
+        '核心'
+      );
+      return [
+        intro,
+        ...data.workflows.map((item) => row(
+          item.workflowName,
+          `${item.workflowId} · ${item.triggerType} · 所属 ${item.ownerUserId} · 授权范围：${item.authorizationScope} · 最近结果：${item.lastResult} · 重试 ${item.retryCount} 次 · ${item.rollbackNote}`,
+          item.status
+        ))
+      ];
+    }
+
+    async function renderGrowth() {
+      const data = await request('/api/v1/admin/growth');
+      return [
+        row('用户积分等级', `${data.userGrowth.pointsBalance} 有效积分 · ${data.userGrowth.releaseLevel} · ${data.userGrowth.releaseRatio}`, '用户端'),
+        row('创始人系统入账', `${data.founderGrowth.founderPoints} 分 · 用户侧已释放 ${data.founderGrowth.userReleasedPoints} 分`, '2:1'),
+        row('分配口径', data.userGrowth.distributionRule, '合规')
+      ];
+    }
+
+    async function renderStats() {
+      const [data, audit, live] = await Promise.all([
+        request('/api/v1/admin/stats'),
+        request('/api/v1/admin/test-data/audit?hours=48'),
+        request('/api/v1/admin/live-audit')
+      ]);
+      const summary = live.summary || {};
+      const recent = summary.recent48h || {};
+      const liveRows = live.connected
+        ? [
+          row('原库只读审计结论', `用户 ${summary.users ?? 0}、身份码 ${summary.identityCodes ?? 0}、推荐事件 ${summary.referralEvents ?? 0}、好友关系 ${summary.friendships ?? 0}、积分 ${summary.totalPoints ?? 0}、confirmed ${summary.confirmedPoints ?? 0}、积分流水 ${summary.pointEvents ?? 0}、供给 ${summary.supplyProfiles ?? 0}、有联系方式 ${summary.supplyWithContact ?? 0}`, live.verdict),
+          row('原库近 48 小时变化', `用户 ${recent.accounts ?? 0}、身份链接 ${recent.identityLinks ?? 0}、好友 ${recent.friendships ?? 0}、推荐 ${recent.referralEvents ?? 0}、积分流水 ${recent.pointEvents ?? 0}、供给 ${recent.supplyProfiles ?? 0}`, '48h'),
+          ...(live.errors || []).map((item) => row('原库读取错误', item, 'error')),
+          ...(live.relationChecks || []).map((item) => row(`原库只读 · ${item.label}`, item.detail, item.ok ? '通过' : '需复核')),
+          ...(live.userRows || []).map((item) => row(
+            `原库用户 · ${item.name}`,
+            `手机 ${item.phone || '缺失'} · 主码 ${item.friendCode || '缺失'} · 身份码 ${item.identityCodes.join('、') || '缺失'} · 积分 ${item.totalPoints} / confirmed ${item.confirmedPoints} · 积分流水 ${item.pointEvents} · 好友 ${item.friendships} · 推荐 ${item.referrals}`,
+            item.identityCodeCount ? item.status : '缺身份'
+          )),
+          ...(live.pointActionSummary || []).map((item) => row(
+            `积分动作 · ${item.action}`,
+            `流水 ${item.events} 条 · 总分 ${item.points} · confirmed ${item.confirmed} · 待处理/其他 ${item.pending}`,
+            'ledger'
+          )),
+          ...((live.samples && live.samples.supplyWithContact) || []).map((item) => row(
+            `供给样本 · ${item.name || '未命名'}`,
+            `${item.city || '未知城市'} · ${item.service_type || item.serviceType || '未知服务'} · ${item.contact || item.normalized_contact || item.claimed_phone || item.website || '联系方式字段在扩展资料'} · ${item.status || ''}/${item.verification_status || ''}`,
+            item.source_channel || item.source_mode || 'supply'
+          ))
+        ]
+        : [
+          row('原库只读审计结论', live.warning || '未连接原库，只能看本地模拟数据，不能确认线上身份码、推荐关系和积分。', 'unverified')
+        ];
+      return [
+        ...liveRows,
+        row('近 48 小时测试审计', `检查 ${audit.relationSummary.checked} 条关联，夯实 ${audit.relationSummary.solid} 条，薄弱 ${audit.relationSummary.weak} 条。动态 ${audit.counts.dynamics}、好友 ${audit.counts.friendships}、消息 ${audit.counts.messages}、供给 ${audit.counts.supplyProfiles}、积分增量 ${audit.counts.pointsDelta}`, audit.relationSummary.weak ? '需处理' : 'solid'),
+        ...audit.relations.map((item) => row(`${item.type} · ${item.id}`, `${item.title} · 用户 ${item.userId} -> 对象 ${item.targetId || '后台'} · 用户关联 ${item.linkedToUser ? '成立' : '缺失'} · 后台关联 ${item.linkedToBackend ? '成立' : '缺失'}`, item.status)),
+        ...Object.entries(data).map(([key, value]) => row(key, '后台运营统计摘要', String(value)))
+      ];
+    }
+
+    async function loadModule() {
+      const meta = moduleMeta[active];
+      document.querySelector('#panelTitle').textContent = meta[0];
+      document.querySelector('#panelNote').textContent = meta[1];
+      const loaders = {
+        users: renderUsers,
+        dynamics: renderDynamics,
+        relations: renderRelations,
+        city: renderCity,
+        supply: renderSupply,
+        radar: renderRadar,
+        demand: renderDemand,
+        website: renderWebsite,
+        ai: renderAi,
+        n8n: renderN8n,
+        automation: renderAutomation,
+        growth: renderGrowth,
+        stats: renderStats
+      };
+      document.querySelector('#rows').replaceChildren(...await loaders[active]());
+    }
+
+    async function loadAll() {
+      overview = await request('/api/v1/admin/overview');
+      setStats(overview);
+      renderNav(overview);
+      renderModules(overview);
+      await loadModule();
+    }
+
+    document.querySelector('#refreshBtn').addEventListener('click', loadAll);
+    document.querySelector('#resetTestDataBtn').addEventListener('click', async () => {
+      await request('/api/v1/admin/test-data/reset', { method: 'POST' });
+      await loadAll();
+    });
+    loadAll();
+  </script>
+</body>
+</html>

@@ -2,6 +2,7 @@ const TENANT_ID = process.env.TENANT_ID || '00000000-0000-0000-0000-000000000001
 const SUPA_URL = process.env.SUPABASE_URL || 'https://gxocvpmgfjvmmkkbswgo.supabase.co';
 const SUPA_ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.SUPA_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b2N2cG1nZmp2bW1ra2Jzd2dvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyNDc4NzAsImV4cCI6MjA5NTgyMzg3MH0.ExUNuOP8YyHQmItY6cdl1Euj7nOXqQq-rQT5-7aNerE';
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPA_SERVICE_ROLE_KEY || '';
+const { handleCardSavedScenario, handleCardSharedScenario, handlePhoneVerifiedScenario, handleProfileSavedScenario } = require('../lib/scenario-events');
 
 function cors(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -10,7 +11,15 @@ function cors(res) {
 }
 
 function normalizePhone(phone = '') {
-  return String(phone || '').replace(/[\s().-]/g, '').trim();
+  let raw = String(phone || '').replace(/[\s().-]/g, '').trim();
+  if (!raw) return '';
+  if (raw.startsWith('00')) raw = `+${raw.slice(2)}`;
+  if (raw.startsWith('+')) return `+${raw.slice(1).replace(/\D/g, '')}`;
+  const digits = raw.replace(/\D/g, '');
+  if (/^04\d{8}$/.test(digits)) return `+61${digits.slice(1)}`;
+  if (/^4\d{8}$/.test(digits)) return `+61${digits}`;
+  if (/^61\d{9}$/.test(digits)) return `+${digits}`;
+  return digits;
 }
 
 function code(value = '') {
@@ -19,6 +28,16 @@ function code(value = '') {
 
 function text(value = '', max = 120) {
   return String(value || '').trim().slice(0, max);
+}
+
+function isGenericDisplayName(value = '') {
+  const clean = text(value, 80);
+  return !clean || /^华伴用户$/i.test(clean) || /^华伴好友\s+[A-Z0-9_-]+$/i.test(clean);
+}
+
+function meaningfulText(value = '', max = 120) {
+  const clean = text(value, max);
+  return clean && !isGenericDisplayName(clean) ? clean : '';
 }
 
 function firstCode(rows = [], preferredTypes = []) {
@@ -38,6 +57,86 @@ function uniqueCodes(list = []) {
     seen.add(item);
     return true;
   });
+}
+
+async function claimSupplyProfilesByPhone(phone = '', friendCode = '', authUserId = '') {
+  const normalizedPhone = normalizePhone(phone);
+  const ownerCode = code(friendCode);
+  if (!normalizedPhone || !ownerCode) return 0;
+  const patch = {
+    claimed_phone: normalizedPhone,
+    claimed_by_code: ownerCode,
+    claimed_at: new Date().toISOString(),
+    verification_status: 'phone_verified_claimed',
+    status: 'active',
+    fields: {
+      claimed: true,
+      claim_mode: 'phone_verification',
+      claimed_by_code: ownerCode,
+      auth_user_id: authUserId,
+      claimed_at: new Date().toISOString()
+    }
+  };
+  const paths = [
+    `huaban_supply_profiles?tenant_id=eq.${TENANT_ID}&normalized_contact=eq.${encodeURIComponent(normalizedPhone)}`,
+    `huaban_supply_profiles?tenant_id=eq.${TENANT_ID}&claimed_phone=eq.${encodeURIComponent(normalizedPhone)}`,
+    `huaban_supply_profiles?tenant_id=eq.${TENANT_ID}&contact=eq.${encodeURIComponent(normalizedPhone)}`
+  ];
+  let claimed = 0;
+  for (const path of paths) {
+    const rows = await supa(path, {
+      method: 'PATCH',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify(patch)
+    }).catch(() => []);
+    if (Array.isArray(rows)) claimed += rows.length;
+  }
+  return claimed;
+}
+
+async function markPreviousPhoneReplaced(previousPhone = '', nextPhone = '', friendCode = '', authUserId = '') {
+  const oldPhone = normalizePhone(previousPhone);
+  const newPhone = normalizePhone(nextPhone);
+  const ownerCode = code(friendCode);
+  if (!oldPhone || !newPhone || oldPhone === newPhone || !ownerCode) return { accounts: 0, links: 0 };
+  const now = new Date().toISOString();
+  const replacementFields = {
+      phone_replaced: true,
+      replaced_by_phone: newPhone,
+      replaced_by_code: ownerCode,
+      replaced_by_auth_user_id: authUserId || '',
+      replaced_at: now
+  };
+  const accountMatches = await supa(`huaban_accounts?tenant_id=eq.${TENANT_ID}&normalized_phone=eq.${encodeURIComponent(oldPhone)}&friend_code=eq.${encodeURIComponent(ownerCode)}&select=id,fields`).catch(() => []);
+  const accountRows = [];
+  for (const row of Array.isArray(accountMatches) ? accountMatches : []) {
+    const patched = await supa(`huaban_accounts?id=eq.${encodeURIComponent(row.id)}`, {
+      method: 'PATCH',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({
+        status: 'phone_replaced',
+        fields: { ...(row.fields || {}), ...replacementFields }
+      })
+    }).catch(() => []);
+    if (Array.isArray(patched)) accountRows.push(...patched);
+  }
+  const linkMatches = await supa(`huaban_identity_links?tenant_id=eq.${TENANT_ID}&normalized_phone=eq.${encodeURIComponent(oldPhone)}&owner_code=eq.${encodeURIComponent(ownerCode)}&status=eq.active&select=id,fields`).catch(() => []);
+  const linkRows = [];
+  for (const row of Array.isArray(linkMatches) ? linkMatches : []) {
+    const patched = await supa(`huaban_identity_links?id=eq.${encodeURIComponent(row.id)}`, {
+      method: 'PATCH',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({
+        status: 'phone_replaced',
+        fields: { ...(row.fields || {}), ...replacementFields }
+      })
+    }).catch(() => []);
+    if (Array.isArray(patched)) linkRows.push(...patched);
+  }
+  return {
+    accounts: Array.isArray(accountRows) ? accountRows.length : 0,
+    links: Array.isArray(linkRows) ? linkRows.length : 0
+  };
 }
 
 async function supa(path, options = {}) {
@@ -91,14 +190,25 @@ module.exports = async function handler(req, res) {
 
     const requestedFriendCode = code(body.friendCode);
     const requestedCodes = uniqueCodes([requestedFriendCode, ...(Array.isArray(body.identityCodes) ? body.identityCodes : [])]);
-    const existingAccounts = await supa(`huaban_accounts?tenant_id=eq.${TENANT_ID}&normalized_phone=eq.${encodeURIComponent(phone)}&order=created_at.asc&limit=1&select=id,account_uid,friend_code,phone_verified_at,created_at`).catch(() => []);
-    const existingAccount = Array.isArray(existingAccounts) ? existingAccounts[0] : null;
+    const existingAccounts = await supa(`huaban_accounts?tenant_id=eq.${TENANT_ID}&normalized_phone=eq.${encodeURIComponent(phone)}&order=created_at.asc&limit=1&select=id,account_uid,friend_code,display_name,phone_verified_at,created_at,status,fields`).catch(() => []);
+    const rawExistingAccount = Array.isArray(existingAccounts) ? existingAccounts[0] : null;
+    const existingAccount = String(rawExistingAccount?.status || '').toLowerCase() === 'phone_replaced' ? null : rawExistingAccount;
     const identityRows = await supa(`huaban_identity_links?tenant_id=eq.${TENANT_ID}&normalized_phone=eq.${encodeURIComponent(phone)}&status=eq.active&order=created_at.asc&limit=50&select=friend_code,link_type,created_at`).catch(() => []);
     const canonicalFromLinks = firstCode(identityRows, ['verified_account_phone', 'huaban_user_profile', 'referral_identity']);
     const friendCode = canonicalFromLinks || code(existingAccount?.friend_code) || requestedFriendCode;
-    const displayName = text(body.name || authUser.user_metadata?.name || '华伴用户', 40);
-    const industry = text(body.industry || '', 80);
-    const avatar = text(body.avatar || '👤', 20) || '👤';
+    const incomingName = meaningfulText(body.name || authUser.user_metadata?.name || '', 40);
+    const existingName = meaningfulText(existingAccount?.display_name || existingAccount?.fields?.display_name || '', 40);
+    const displayName = incomingName || existingName || '华伴用户';
+    const hasMeaningfulDisplayName = !isGenericDisplayName(displayName);
+    const industry = text(body.industry || existingAccount?.fields?.industry || '', 80);
+    const incomingAvatar = text(body.avatar || '', 800);
+    const existingAvatar = text(existingAccount?.fields?.avatar || '', 800);
+    const avatar = incomingAvatar && incomingAvatar !== '👤' ? incomingAvatar : (existingAvatar || incomingAvatar || '👤');
+    const city = text(body.city || existingAccount?.fields?.city || '', 80);
+    const locationAddress = text(body.location_address || existingAccount?.fields?.location_address || '', 220);
+    const locationLat = Number(body.location_lat || existingAccount?.fields?.location_lat || 0) || null;
+    const locationLng = Number(body.location_lng || existingAccount?.fields?.location_lng || 0) || null;
+    const nearbyVisible = body.nearby_visible === true && Boolean(locationLat && locationLng);
     const verifiedAt = authUser.phone_confirmed_at || authUser.confirmed_at || new Date().toISOString();
     const account = {
       tenant_id: TENANT_ID,
@@ -115,6 +225,13 @@ module.exports = async function handler(req, res) {
         requested_friend_code: requestedFriendCode,
         canonical_friend_code: friendCode,
         avatar,
+        city,
+        location_address: locationAddress,
+        location_lat: locationLat,
+        location_lng: locationLng,
+        location_accuracy: Number(body.location_accuracy || existingAccount?.fields?.location_accuracy || 0) || null,
+        nearby_visible: nearbyVisible,
+        nearby_updated_at: city || locationLat || locationLng ? new Date().toISOString() : existingAccount?.fields?.nearby_updated_at || '',
         provider: 'supabase_phone_auth',
         last_verify_source: body.source || 'profile_page'
       }
@@ -179,7 +296,7 @@ module.exports = async function handler(req, res) {
         method: 'PATCH',
         headers: { Prefer: 'return=minimal' },
         body: JSON.stringify({
-          friend_name: displayName,
+          ...(hasMeaningfulDisplayName ? { friend_name: displayName } : {}),
           friend_phone: phone,
           friend_industry: industry,
           friend_avatar: avatar
@@ -189,7 +306,7 @@ module.exports = async function handler(req, res) {
         method: 'PATCH',
         headers: { Prefer: 'return=minimal' },
         body: JSON.stringify({
-          inviter_name: displayName,
+          ...(hasMeaningfulDisplayName ? { inviter_name: displayName } : {}),
           inviter_phone: phone,
           inviter_avatar: avatar
         })
@@ -198,12 +315,57 @@ module.exports = async function handler(req, res) {
         method: 'PATCH',
         headers: { Prefer: 'return=minimal' },
         body: JSON.stringify({
-          referee_name: displayName,
+          ...(hasMeaningfulDisplayName ? { referee_name: displayName } : {}),
           referee_phone: phone,
           referee_avatar: avatar
         })
       }).catch(() => null))
     ]);
+    const replacedPhone = await markPreviousPhoneReplaced(body.previousPhone || '', phone, friendCode, authUser.id).catch(() => ({ accounts: 0, links: 0 }));
+    const claimedSupplyCount = await claimSupplyProfilesByPhone(phone, friendCode, authUser.id).catch(() => 0);
+    const pointResults = {};
+    const explicitProfileSave = body.source === 'profile_save' || body.explicitProfileSave === true;
+    let pointError = '';
+    try {
+      pointResults.signup = await handlePhoneVerifiedScenario({
+        ownerCode: friendCode,
+        source: 'auth_phone_sync',
+        accountUid: row.account_uid || authUser.id,
+        phone,
+        fields: { auth_user_id: authUser.id }
+      });
+      if (explicitProfileSave) {
+        pointResults.profile = await handleProfileSavedScenario({
+          ownerCode: friendCode,
+          source: 'profile_save',
+          accountUid: row.account_uid || authUser.id,
+          phone,
+          name: displayName,
+          industry,
+          fields: { auth_user_id: authUser.id }
+        });
+        if (body.cardSaved || body.cardShared) {
+          pointResults.card = await handleCardSavedScenario({
+            ownerCode: friendCode,
+            source: 'profile_save',
+            accountUid: row.account_uid || authUser.id,
+            phone,
+            fields: { auth_user_id: authUser.id }
+          });
+        }
+        if (body.cardShared) {
+          pointResults.card_shared = await handleCardSharedScenario({
+            ownerCode: friendCode,
+            source: 'profile_share',
+            accountUid: row.account_uid || authUser.id,
+            fields: { auth_user_id: authUser.id, share_mode: body.shareMode || 'profile_card' }
+          });
+        }
+      }
+    } catch (error) {
+      pointError = error.message || '积分账本写入失败';
+      console.error('auth-phone-sync point event error', error);
+    }
 
     return res.status(200).json({
       ok: true,
@@ -214,8 +376,11 @@ module.exports = async function handler(req, res) {
         friend_code: friendCode,
         requested_friend_code: requestedFriendCode,
         canonical_changed: Boolean(requestedFriendCode && requestedFriendCode !== friendCode),
-        alias_codes: aliasCodes
-      }
+        alias_codes: aliasCodes,
+        replaced_phone: replacedPhone,
+        claimed_supply_count: claimedSupplyCount
+      },
+      points: { ...pointResults, error: pointError }
     });
   } catch (error) {
     console.error('auth-phone-sync error', error);

@@ -1,7 +1,10 @@
-node_modules
-.vercel
-.env
-.env.local
 .DS_Store
-.backup-*
-huaban-clean-current-*.tar.gz
+node_modules/
+dist/
+data/dev-state.json
+tmp/
+.env
+.env.*
+!.env.example
+.vercel/
+.vercel
