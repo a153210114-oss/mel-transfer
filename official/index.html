@@ -71,6 +71,70 @@
       font-weight: 950;
     }
 
+    .hero-points {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      max-width: 560px;
+      margin-top: 24px;
+    }
+
+    .hero-points span {
+      min-height: 72px;
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, .82);
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 720;
+    }
+
+    .hero-points b {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--ink);
+      font-size: 20px;
+      font-weight: 860;
+    }
+
+    .recruit-strip {
+      margin-top: 18px;
+      padding: 14px;
+      border: 1px solid rgba(24, 197, 110, .22);
+      border-radius: 8px;
+      background: rgba(240, 250, 244, .88);
+      color: #174a34;
+      line-height: 1.55;
+      font-size: 14px;
+      font-weight: 720;
+    }
+
+    .download-panel {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 18px;
+      align-items: center;
+      padding: 20px;
+      border: 1px solid rgba(24, 197, 110, .2);
+      border-radius: 8px;
+      background:
+        linear-gradient(135deg, rgba(37, 168, 242, .09), transparent 48%),
+        linear-gradient(135deg, rgba(24, 197, 110, .14), rgba(255, 255, 255, .96));
+    }
+
+    .download-panel h2 {
+      font-size: clamp(28px, 4vw, 44px);
+    }
+
+    .download-panel p {
+      margin-top: 10px;
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 15px;
+      font-weight: 720;
+    }
+
     .brand img {
       width: 36px;
       height: 36px;
@@ -408,7 +472,8 @@
 
     @media (max-width: 900px) {
       .hero,
-      .logic {
+      .logic,
+      .download-panel {
         grid-template-columns: 1fr;
       }
 
@@ -435,6 +500,10 @@
         grid-template-columns: 1fr;
       }
 
+      .hero-points {
+        grid-template-columns: 1fr;
+      }
+
       h1 {
         font-size: 48px;
       }
@@ -449,23 +518,30 @@
         <span>华伴 AI</span>
       </a>
       <nav class="nav" aria-label="官网导航">
-        <a href="/app/">用户端</a>
-        <a href="/admin/">后台</a>
-        <a class="primary" href="#logic">设计骨架</a>
+        <a href="#features">功能</a>
+        <a href="#recruit">招募</a>
+        <a href="#download">下载</a>
+        <a class="primary" href="/app/index.html?tab=me&open=growthPage">进入说明</a>
       </nav>
     </header>
 
     <main>
       <section class="hero" aria-label="华伴官网首屏">
         <div class="hero-copy">
-          <span class="eyebrow">V1.1 设计稿 · 本地生活 AI 协助者</span>
-          <h1 id="heroTitle">华伴 AI</h1>
-          <p id="heroSubtitle" class="lead">一款内置 AI 的本地生活 App，帮助用户从海量信息中挣脱，重新专注自己的本地生活。与本地相连，与世界相通。</p>
-          <div class="cta">
-            <a class="button primary" href="/app/">查看用户端</a>
-            <a class="button" href="/admin/">查看后台</a>
-            <a class="button" href="#shop">小店与自动化</a>
+          <span class="eyebrow">AI 时代中文智能应用</span>
+          <h1 id="heroTitle">聚焦当地，联动全球。</h1>
+          <p id="heroSubtitle" class="lead">当地生活，何必淹没在十亿用户的信息海洋中？华伴帮助你连接本地的人、内容、服务和机会，也让更多当地人看到你。</p>
+          <div class="hero-points">
+            <span><b>当地生活</b>动态、朋友、服务和活动围绕城市展开。</span>
+            <span><b>中文智能</b>用熟悉的语言，让 AI 帮你搜索、整理、生成和执行。</span>
+            <span><b>联动全球</b>服务当地，也让跨城、跨国关系自然流动。</span>
           </div>
+          <div class="cta">
+            <a class="button primary" href="/app/index.html?tab=me&open=growthPage">招募 128 位初创者</a>
+            <a class="button" href="#features">查看功能</a>
+            <a class="button" href="#download">下载华伴</a>
+          </div>
+          <p class="recruit-strip">当前招募 128 位初创者，按加入时间排序。初创席位满员后，系统自动切换为 256 席共创者招募；共创者满员后，自动切换为 512 席共建者招募。点击后进入“我”页，查看积分、等级、身份权重和权益说明。</p>
         </div>
 
         <aside class="phone" aria-label="华伴用户端预览">
@@ -477,94 +553,86 @@
           <div class="assistant-card">
             <img src="/assets/brand/huaban-logo-v1.png" alt="华伴 AI">
             <strong>下午好，老丁</strong>
-            <p>动态、好友、小店和消息都可以让 AI 帮你整理。</p>
+            <p>想看哪里、找谁、发什么，都可以告诉 AI。</p>
           </div>
           <div class="ai-bar">
             <span class="round">⌾</span>
-            <span>把我当微信好友，聊我想做的事</span>
+            <span>对华伴说：匹配当地朋友</span>
             <span class="round">+</span>
             <span class="round">→</span>
           </div>
         </aside>
       </section>
 
-      <section class="section">
+      <section id="features" class="section">
         <div class="section-head">
-          <h2>用户端先连接真实生活，再让 AI 参与每一步。</h2>
-          <p>关系、内容、消息和小店不是分散功能，它们都围绕同一个用户身份码和同一套本地生活事件流运转。</p>
+          <h2>服务当地，让更多当地人看到你。</h2>
+          <p>华伴不是再造一个大而全的信息海洋，而是把本地生活常用功能和 AI 助手放在一起，帮用户更快找到人、内容、服务和机会。</p>
         </div>
         <div class="grid">
           <article class="card">
             <span class="icon">人</span>
-            <h3>名片与好友</h3>
-            <p>华伴号、二维码名片、备注、标签、来源和推荐关系，沉淀用户真实社交线索。</p>
+            <h3>本地关系</h3>
+            <p>身份码、二维码名片、好友、群聊、备注、标签和推荐关系，让真实连接可保存、可追踪。</p>
           </article>
           <article class="card">
             <span class="icon">近</span>
-            <h3>附近与动态</h3>
-            <p>本地内容、活动、问题和服务线索统一进入城市内容流，AI 辅助搜索与分类。</p>
+            <h3>附近动态</h3>
+            <p>图片、视频、问题、活动和服务线索围绕所在城市展示，AI 帮你筛选和总结。</p>
           </article>
           <article class="card">
             <span class="icon">聊</span>
-            <h3>消息与群聊</h3>
-            <p>聊天、群聊、推荐给朋友和资料页相互打通，AI 可总结、提醒、生成回复。</p>
+            <h3>AI 对话</h3>
+            <p>用户之间聊天、用户与 AI 对话在首页切换；搜索、匹配、生成和多步骤操作都可以口语化发起。</p>
           </article>
           <article class="card">
             <span class="icon">店</span>
-            <h3>小店与卡包</h3>
-            <p>服务卡、优惠券、收藏和未来 API 授权，成为低代码/无代码自动化入口。</p>
+            <h3>小店与自动化</h3>
+            <p>服务卡、优惠券、收付款、API 授权和 n8n 工作流，为本地服务者提供轻代码/无代码自动化入口。</p>
           </article>
         </div>
       </section>
 
-      <section id="logic" class="section">
+      <section id="recruit" class="section">
         <div class="section-head">
-          <h2>一条内部链路，贯穿用户端、官网和后台。</h2>
-          <p>用户端产生事件，后台审核和配置，官网只发布经过确认的规则和说明。</p>
+          <h2>正在招募 128 位初创者。</h2>
+          <p>初创、共创、共建身份只按加入时间排序；初创 128 席满员后自动切换为 256 席共创者招募，之后再进入 512 席共建者招募。</p>
         </div>
         <div class="logic">
           <div class="flow">
-            <div class="flow-row"><b>1</b><div><strong>身份码建立</strong><span>注册、名片、二维码、地区和可见范围</span></div><em>后台可审计</em></div>
-            <div class="flow-row"><b>2</b><div><strong>关系沉淀</strong><span>添加好友、备注、标签、来源、推荐给朋友</span></div><em>来源可追踪</em></div>
-            <div class="flow-row"><b>3</b><div><strong>内容参与</strong><span>发布动态、收藏、评论、附近发现和城市共建</span></div><em>积分可解释</em></div>
-            <div class="flow-row"><b>4</b><div><strong>小店/API</strong><span>服务卡、卡券、授权 API、自动化任务</span></div><em>授权可撤销</em></div>
-            <div class="flow-row"><b>5</b><div><strong>AI 协助</strong><span>搜索、整理、推荐、总结、字段映射和风控提示</span></div><em>操作留痕</em></div>
+            <div class="flow-row"><b>1</b><div><strong>我的积分</strong><span>真实参与、建议、内容、邀请和城市共建形成入账记录</span></div><em>参与奖励</em></div>
+            <div class="flow-row"><b>2</b><div><strong>我的等级</strong><span>L8 到 L1 对应不同释放权重，当前 L8 为 ×128</span></div><em>时间权重</em></div>
+            <div class="flow-row"><b>3</b><div><strong>我的身份</strong><span>初创 128 席 ×1.3，共创 256 席 ×1.2，共建 512 席 ×1.1，满员自动切换</span></div><em>按时间排序</em></div>
+            <div class="flow-row"><b>4</b><div><strong>我的权益</strong><span>我的积分 × 等级权重 × 身份权重，用于权益测算和说明</span></div><em>可查看</em></div>
           </div>
           <aside class="notice">
-            积分、等级、共创是参与权益机制：积分奖励参与，等级奖励参与时间，共创奖励冷启动。官网不做收益承诺，后台必须能追踪每一次积分来源、状态和撤销记录。
+            华伴不做充值、股权、证券或固定收益承诺。积分、等级和身份用于记录参与、解释权重和展示权益测算；每一次入账都应可追踪、可审核、可撤销。
+            <div class="cta" style="margin-top: 14px;">
+              <a class="button primary" href="/app/index.html?tab=me&open=growthPage">进入我页查看说明</a>
+            </div>
           </aside>
         </div>
       </section>
 
-      <section id="shop" class="section">
-        <div class="section-head">
-          <h2>小店/API 是华伴自动化价值的落点。</h2>
-          <p>第一阶段先做展示、咨询、收藏、卡券和联系方式。第二阶段再把商家的库存、预约、菜单、报价、课程表、排班、订单状态接入授权 API。</p>
-        </div>
-        <div class="grid">
-          <article class="card"><span class="icon">表</span><h3>表单配置</h3><p>用户用表单或聊天方式补齐服务卡，AI 帮提取字段、改写说明、补标签。</p></article>
-          <article class="card"><span class="icon">审</span><h3>后台审核</h3><p>后台检查资料完整度、城市、联系方式、风险等级和推荐展示位置。</p></article>
-          <article class="card"><span class="icon">API</span><h3>授权接入</h3><p>商家授权后才读取外部 API，范围、有效期、调用日志和撤销入口必须清楚。</p></article>
-          <article class="card"><span class="icon">自</span><h3>自动化运行</h3><p>n8n 或后端任务执行同步、提醒、摘要和回滚，把轻代码能力交给普通用户。</p></article>
+      <section id="download" class="section">
+        <div class="download-panel">
+          <div>
+            <h2>下载华伴，先从网页版体验。</h2>
+            <p>正式 App 下载地址确认后会替换到这里。当前可先进入用户端体验首页、消息、动态、我页和积分权益说明。</p>
+          </div>
+          <div class="cta" style="margin-top: 0;">
+            <a class="button primary" href="/app/index.html">进入用户端</a>
+            <a class="button" href="/app/index.html?tab=me&open=growthPage">查看初创权益</a>
+          </div>
         </div>
       </section>
     </main>
 
     <footer>
       <span>Huaban V1.1 · huabanapp.com</span>
-      <span>本页面为设计稿，不代表生产环境已接入真实服务。</span>
+      <a href="#download">下载华伴</a>
+      <span>AI 原生本地通讯网络 · 本页面为产品说明。</span>
     </footer>
   </div>
-
-  <script>
-    fetch('/api/v1/admin/website/content?page=official_home')
-      .then((response) => response.ok ? response.json() : null)
-      .then((page) => {
-        const content = page && page.content ? page.content : {};
-        if (content.heroTitle) document.querySelector('#heroTitle').textContent = content.heroTitle;
-        if (content.heroSubtitle) document.querySelector('#heroSubtitle').textContent = content.heroSubtitle;
-      })
-      .catch(() => {});
-  </script>
 </body>
 </html>

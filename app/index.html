@@ -197,9 +197,9 @@
       min-height: 34px;
       padding: 0 15px;
       border-radius: 999px;
-      background: rgba(255, 255, 255, .92);
+      background: rgba(255, 255, 255, .94);
       box-shadow: 0 18px 36px rgba(17, 24, 32, .1);
-      color: #5b646c;
+      color: #0f2b1d;
       font-size: var(--text-sm);
       font-weight: var(--weight-strong);
       touch-action: none;
@@ -217,7 +217,27 @@
       width: 10px;
       height: 10px;
       border-radius: 999px;
-      background: #b9c1c8;
+      background: var(--brand);
+    }
+
+    .download-float {
+      position: fixed;
+      right: max(14px, calc((100vw - 520px) / 2 + 14px));
+      top: 128px;
+      z-index: 7;
+      min-height: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 12px;
+      border: 1px solid rgba(17, 24, 32, .07);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .92);
+      box-shadow: 0 14px 32px rgba(17, 24, 32, .1);
+      color: #0f2b1d;
+      font-size: 12px;
+      font-weight: 520;
+      text-decoration: none;
     }
 
     .content-panel {
@@ -2693,7 +2713,8 @@
         <h1 id="legacyGreeting">下午好，老丁</h1>
         <p>华伴带你体验更多精彩。</p>
       </section>
-      <button id="unreadFloat" class="unread-pill" type="button">未读消息 0</button>
+      <button id="unreadFloat" class="unread-pill" type="button">正在招募</button>
+      <a class="download-float" href="../official/#download" aria-label="下载华伴">下载</a>
 
       <section class="launch-card home-ci-card" aria-label="华伴共创报名">
         <div class="hero-logo">
@@ -2983,12 +3004,13 @@
                 </div>
               </div>
               <div class="weight-panel" aria-label="身份关联权重">
-                <div class="weight-head"><strong>身份关联权重</strong><span>只按加入时间排序</span></div>
+                <div class="weight-head"><strong>身份关联权重</strong><span>满员后自动切换下一档</span></div>
                 <div class="weight-grid identity-grid">
                   <span class="weight-pill active">初创 128席<b>×1.3</b></span>
                   <span class="weight-pill">共创 256席<b>×1.2</b></span>
                   <span class="weight-pill">共建 512席<b>×1.1</b></span>
                 </div>
+                <p class="rule-note">身份只按加入时间排序；初创 128 席满员后自动切换为共创者 256 席，共创者满员后自动切换为共建者 512 席。</p>
               </div>
               <div class="release-brief" aria-label="积分释放说明">
                 <div class="release-brief-head"><strong>释放说明</strong><span>总盘固定，不增发</span></div>
@@ -3477,12 +3499,13 @@
           </div>
         </div>
         <div class="weight-panel" aria-label="身份关联权重">
-          <div class="weight-head"><strong>身份关联权重</strong><span>只按加入时间排序</span></div>
+          <div class="weight-head"><strong>身份关联权重</strong><span>满员后自动切换下一档</span></div>
           <div class="weight-grid identity-grid">
             <span class="weight-pill active">初创 128席<b>×1.3</b></span>
             <span class="weight-pill">共创 256席<b>×1.2</b></span>
             <span class="weight-pill">共建 512席<b>×1.1</b></span>
           </div>
+          <p class="rule-note">身份只按加入时间排序；初创 128 席满员后自动切换为共创者 256 席，共创者满员后自动切换为共建者 512 席。</p>
         </div>
         <div class="release-brief" aria-label="积分释放说明">
           <div class="release-brief-head"><strong>释放说明</strong><span>总盘固定，不增发</span></div>
@@ -4945,8 +4968,18 @@
           moved = false;
           return;
         }
-          openTab('homePage');
+        window.location.href = '../official/';
       });
+    }
+
+    function applyEntryParams() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('tab') === 'me') {
+        openTab('mePage');
+      }
+      if (params.get('open') === 'growthPage') {
+        window.setTimeout(() => openPage('growthPage'), 80);
+      }
     }
 
     aiWaveBtn.addEventListener('click', () => {
@@ -5027,6 +5060,7 @@
     loadAiCompanion();
     restoreUnreadFloat();
     setupUnreadDrag();
+    applyEntryParams();
     loadFeed();
   </script>
 </body>
