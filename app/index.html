@@ -4661,6 +4661,12 @@
       });
     }
 
+    function openDynamicFeed() {
+      document.querySelectorAll('.phone-page.open').forEach((page) => page.classList.remove('open'));
+      setDynamicSheet(false);
+      openTab('nearbyPage');
+    }
+
     async function runAiCommand(text) {
       const commandText = String(text || '').trim();
       if (!commandText) {
@@ -4669,7 +4675,7 @@
         return;
       }
       if (/打开动态|看动态|动态页|进入动态/i.test(commandText)) {
-        openTab('nearbyPage');
+        openDynamicFeed();
         toast('已打开动态。');
         await completeOnboardingPromptIfNeeded(commandText);
         return;
@@ -4709,13 +4715,13 @@
         } else if (command.action === 'open_location') {
           openLocationPicker();
         } else if (command.action === 'open_dynamic') {
-          openTab('nearbyPage');
+          openDynamicFeed();
           await completeOnboardingPromptIfNeeded(commandText);
         } else if (command.action === 'open_add_friend') {
           openPage('addFriendPage');
           await completeOnboardingPromptIfNeeded(commandText);
         } else if (command.action === 'search_local') {
-          openTab('nearbyPage');
+          openDynamicFeed();
           document.querySelector('#searchInput').value = command.query || commandText;
         } else {
           aiInput.focus();
@@ -4723,7 +4729,7 @@
         toast(command.message || 'AI 指令已执行。');
       } catch (error) {
         document.querySelector('#searchInput').value = commandText;
-        openTab('nearbyPage');
+        openDynamicFeed();
         toast(`AI 正在搜索：${commandText}`);
       }
     }
@@ -4919,7 +4925,7 @@
         const previewDynamics = data.dynamics.slice(0, 4);
         feed.replaceChildren(...previewDynamics.map(createPostNode));
       } catch (error) {
-        toast('动态流接口暂不可用，保留页面内置内容。');
+        console.info('Using built-in dynamic feed fallback.');
       }
     }
 
@@ -5094,8 +5100,12 @@
         closeTopPage();
       }
       if (menuTargetButton && !sideMenu.contains(menuTargetButton)) {
-        openTab(menuTargetButton.dataset.menuTarget);
-        closeTopPage();
+        if (menuTargetButton.dataset.menuTarget === 'nearbyPage') {
+          openDynamicFeed();
+        } else {
+          openTab(menuTargetButton.dataset.menuTarget);
+          closeTopPage();
+        }
       }
     });
 
@@ -5109,7 +5119,11 @@
       if (!button) return;
       document.querySelectorAll('.menu-item').forEach((item) => item.classList.remove('active'));
       button.classList.add('active');
-      openTab(button.dataset.menuTarget);
+      if (button.dataset.menuTarget === 'nearbyPage') {
+        openDynamicFeed();
+      } else {
+        openTab(button.dataset.menuTarget);
+      }
       setMenu(false);
       toast(`已打开${button.querySelector('strong')?.textContent || '功能'}。`);
     });
@@ -5117,7 +5131,11 @@
     document.querySelector('.bottom-tabs').addEventListener('click', (event) => {
       const button = event.target.closest('button[data-tab-target]');
       if (!button) return;
-      openTab(button.dataset.tabTarget);
+      if (button.dataset.tabTarget === 'nearbyPage') {
+        openDynamicFeed();
+      } else {
+        openTab(button.dataset.tabTarget);
+      }
     });
 
     document.body.addEventListener('click', (event) => {
