@@ -885,6 +885,13 @@ function resolveAiCommand(text = '') {
     };
   }
 
+  if (query.includes('打开动态') || query === '动态' || normalized.includes('feed')) {
+    return {
+      action: 'open_dynamic',
+      message: '已打开动态。'
+    };
+  }
+
   if (query.includes('匹配') || query.includes('推荐朋友') || query.includes('附近的人') || normalized.includes('match')) {
     return {
       action: 'match_cards',

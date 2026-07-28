@@ -188,13 +188,14 @@
 
     .unread-pill {
       position: fixed;
-      left: max(20px, calc((100vw - 520px) / 2 + 292px));
+      left: max(20px, calc((100vw - 520px) / 2 + 32px));
       top: 58vh;
       z-index: 7;
       display: inline-flex;
       align-items: center;
       gap: 8px;
       min-height: 34px;
+      max-width: calc(100vw - 40px);
       padding: 0 15px;
       border-radius: 999px;
       background: rgba(255, 255, 255, .94);
@@ -2879,7 +2880,7 @@
         <h1 id="legacyGreeting">下午好，老丁</h1>
         <p>华伴带你体验更多精彩。</p>
       </section>
-      <button id="unreadFloat" class="unread-pill" type="button" aria-label="进入新手福利">新手福利 · 去试试</button>
+      <button id="unreadFloat" class="unread-pill" type="button" aria-label="试试告诉 AI 打开动态">试试告诉 AI：打开动态</button>
       <a class="download-float" href="../official/#download" aria-label="下载华伴">下载</a>
 
       <section class="launch-card home-ci-card" aria-label="华伴共创报名">
@@ -4399,6 +4400,14 @@
       });
     }
 
+    async function runOnboardingPrompt() {
+      const prompt = '打开动态';
+      aiInput.value = prompt;
+      await runAiCommand(prompt);
+      await showPointsUnlock(2);
+      toast('已获得新手福利。点击“我”可查看积分详情。');
+    }
+
     async function loadTestStatus() {
       try {
         const data = await api('/admin/test-status');
@@ -4559,6 +4568,11 @@
         toast('可以说：匹配当地朋友、搜索附近咖啡、打开消息、我要发动态。');
         return;
       }
+      if (/打开动态|看动态|动态页|进入动态/i.test(commandText)) {
+        openTab('nearbyPage');
+        toast('已打开动态。');
+        return;
+      }
       if (/地图|导航|位置|定位|发送地址|发地址|map|navigation|location/i.test(commandText)) {
         openLocationPicker();
         toast('已打开地图位置。');
@@ -4587,6 +4601,8 @@
           document.querySelector('.growth-card')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         } else if (command.action === 'open_location') {
           openLocationPicker();
+        } else if (command.action === 'open_dynamic') {
+          openTab('nearbyPage');
         } else if (command.action === 'search_local') {
           openTab('nearbyPage');
           document.querySelector('#searchInput').value = command.query || commandText;
@@ -5252,7 +5268,7 @@
           moved = false;
           return;
         }
-        openPage('growthPage');
+        runOnboardingPrompt();
       });
     }
 
