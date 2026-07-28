@@ -38,7 +38,7 @@ export function runOpsInspection() {
 
   const checks = [
     ...requiredFiles.map((file) => check(`文件存在：${file}`, existsSync(join(root, file)), file, 'high')),
-    check('用户端有积分权益入口', appHtml.includes('积分权益') && appHtml.includes('不用投资，不用交钱'), '我页需展示合规积分入口', 'high'),
+    check('用户端有积分权益入口', appHtml.includes('积分权益') && appHtml.includes('参与越早，积分权重越高') && appHtml.includes('固定收益承诺'), '我页需展示合规积分入口', 'high'),
     check('后台管理中心存在', existsSync(join(root, 'admin/index.html')) && read('admin/index.html').includes('用户管理') && read('admin/index.html').includes('AI Prompt'), '后台需覆盖核心管理模块', 'high'),
     check('旧供给与雷达已迁回', read('admin/index.html').includes('供给侧') && read('admin/index.html').includes('雷达') && schema.includes('hb_supply_profiles') && schema.includes('hb_supply_radar_state'), '供给侧、雷达和对应数据表不能遗漏', 'high'),
     check('官网管理已迁回', read('admin/index.html').includes('官网管理') && schema.includes('hb_site_content') && schema.includes('hb_site_events'), '后台需能管理官网内容和官网事件', 'high'),

@@ -1,0 +1,246 @@
+{
+  "name": "HB V1.1 - 5 Agent User Simulation",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "manual-trigger",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "const baseUrl = $env.HUABAN_BASE_URL || 'https://www.huabanapp.com';\nconst stamp = Date.now();\nreturn [\n  { json: { baseUrl, stamp, agentId: 'agent_a_newcomer', ownerCode: 'HB_AGENT_A', role: '新到墨尔本的留学生', persona: '怕点错、喜欢让 AI 带路。', prompts: ['打开动态', '打开添加好友'], rewardPlan: [{ task: 'open_dynamic_d1', points: 2 }, { task: 'open_add_friend_d1', points: 2 }] } },\n  { json: { baseUrl, stamp, agentId: 'agent_b_social', ownerCode: 'HB_AGENT_B', role: '本地宝妈社交用户', persona: '想找附近家庭、中文活动和可信联系人。', prompts: ['帮我匹配当地喜欢咖啡的新朋友'], rewardPlan: [{ task: 'match_add_friend_d3', points: 6 }] } },\n  { json: { baseUrl, stamp, agentId: 'agent_c_creator', ownerCode: 'HB_AGENT_C', role: '小红书式内容发布用户', persona: '喜欢探店、图文、短视频，要求图片大、文字轻。', mediaPlan: { images: 6, imageKb: 4, videos: 1, videoKb: 8, videoSeconds: 15 }, prompts: ['帮我写一条墨尔本周末咖啡局动态'], rewardPlan: [{ task: 'compose_publish_dynamic_d4', points: 10 }] } },\n  { json: { baseUrl, stamp, agentId: 'agent_d_merchant', ownerCode: 'HB_AGENT_D', role: '本地小商家', persona: '经营接送机/服务卡，关心收付款、小店 API、预约和 n8n 自动化。', prompts: ['打开市集，把小店 API 接入做成自动化草稿'], rewardPlan: [{ task: 'shop_api_workflow_d5', points: 20 }] } },\n  { json: { baseUrl, stamp, agentId: 'agent_e_ops', ownerCode: 'HB_AGENT_E', role: '共创运营测试者', persona: '关心积分权重、地图地址、内容安全和后台巡检，专门找逻辑漏洞。', prompts: ['解释积分释放、等级权重和身份权重', '打开地图导航'], rewardPlan: [{ task: 'open_growth_d1', points: 2 }] } }\n];"
+      },
+      "id": "build-agent-list",
+      "name": "Build 5 Agents",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [240, 0]
+    },
+    {
+      "parameters": {
+        "url": "={{$json.baseUrl + '/api/v1/ai/command'}}",
+        "sendBody": true,
+        "contentType": "json",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "={{$json.prompts[0]}}"
+            },
+            {
+              "name": "city",
+              "value": "Melbourne"
+            },
+            {
+              "name": "inputMode",
+              "value": "voice"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ai-command-primary",
+      "name": "AI Command - Primary Prompt",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [500, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "const action = $input.first().json.action || '';\nconst source = $('Build 5 Agents').first().json;\nconst confirmed = Boolean(action);\nreturn [{ json: { ...source, primaryAction: action, primaryConfirmed: confirmed, aiResult: $input.first().json } }];"
+      },
+      "id": "confirm-primary-action",
+      "name": "Confirm Action Completed",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [760, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.primaryConfirmed}}",
+              "value2": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "if-action-confirmed",
+      "name": "IF Action Confirmed",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1020, 0]
+    },
+    {
+      "parameters": {
+        "url": "={{$json.baseUrl + '/api/v1/growth/events'}}",
+        "sendBody": true,
+        "contentType": "json",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "eventKey",
+              "value": "={{'hb_v1_1:n8n:' + $json.agentId + ':' + $json.rewardPlan[0].task + ':' + $json.stamp}}"
+            },
+            {
+              "name": "eventType",
+              "value": "={{'n8n_' + $json.rewardPlan[0].task}}"
+            },
+            {
+              "name": "growthChannel",
+              "value": "ai_prompt_training"
+            },
+            {
+              "name": "pointsDelta",
+              "value": "={{$json.rewardPlan[0].points}}"
+            },
+            {
+              "name": "ownerCode",
+              "value": "={{$json.ownerCode}}"
+            },
+            {
+              "name": "reason",
+              "value": "={{$json.role + ' 完成 ' + $json.rewardPlan[0].task}}"
+            },
+            {
+              "name": "status",
+              "value": "confirmed"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "write-confirmed-points",
+      "name": "Write Points After Confirmation",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1280, -120]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { ok: false, agentId: $json.agentId, role: $json.role, reason: 'AI action was not confirmed; no points written.' } }];"
+      },
+      "id": "no-points-without-confirmation",
+      "name": "No Points Without Confirmation",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1280, 120]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.all().map(item => item.json);\nreturn [{ json: { ok: input.every(item => item.ok !== false), workflow: 'HB V1.1 - 5 Agent User Simulation', results: input } }];"
+      },
+      "id": "summarize-results",
+      "name": "Summarize Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1540, 0]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Build 5 Agents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build 5 Agents": {
+      "main": [
+        [
+          {
+            "node": "AI Command - Primary Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Command - Primary Prompt": {
+      "main": [
+        [
+          {
+            "node": "Confirm Action Completed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Confirm Action Completed": {
+      "main": [
+        [
+          {
+            "node": "IF Action Confirmed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Action Confirmed": {
+      "main": [
+        [
+          {
+            "node": "Write Points After Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Points Without Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Points After Confirmation": {
+      "main": [
+        [
+          {
+            "node": "Summarize Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No Points Without Confirmation": {
+      "main": [
+        [
+          {
+            "node": "Summarize Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": [
+    {
+      "name": "huaban-v1.1"
+    },
+    {
+      "name": "agent-simulation"
+    }
+  ]
+}

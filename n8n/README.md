@@ -2,6 +2,24 @@
 
 V1.1 先保留 8 条主工作流。第一阶段不追求复杂编排，先保证每条工作流都有触发入口、授权边界、审核状态、可观测记录、失败提示和回滚说明。
 
+新增测试工作流草稿：
+
+- `huaban-v1.1-5-agent-user-simulation.workflow.json`
+
+用途：用 5 个模拟用户 Agent 测试用户端页面按键链、华伴 AI 指令理解、真实动作完成确认和积分入账。
+
+配套文档：
+
+- `docs/USER_ACTION_SCENARIO_CHAINS.md`
+
+本地等价脚本：
+
+```bash
+npm run agents:live
+```
+
+原则：Agent 只能在动作确认后写积分事件；不能只因用户输入提示词就发积分。
+
 所有工作流必须写入 `hb_automation_jobs`，AI 相关步骤必须写入 `hb_ai_logs`。
 
 每条工作流至少要记录：
