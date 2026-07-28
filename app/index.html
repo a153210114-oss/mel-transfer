@@ -2543,6 +2543,42 @@
       gap: 8px;
     }
 
+    .location-status {
+      display: none;
+      margin: 0 0 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(24, 197, 110, .08);
+      color: #26835a;
+      font-size: var(--text-sm);
+      line-height: 1.5;
+    }
+
+    .location-status.show {
+      display: block;
+    }
+
+    .location-status.error {
+      background: rgba(255, 171, 64, .12);
+      color: #9a6a1e;
+    }
+
+    .location-google {
+      display: none;
+      width: 100%;
+      height: 42px;
+      margin: 0 0 12px;
+      border-radius: 12px;
+      background: #111820;
+      color: #fff;
+      font-size: var(--text-sm);
+      font-weight: 500;
+    }
+
+    .location-google.show {
+      display: block;
+    }
+
     .location-result {
       display: grid;
       gap: 5px;
@@ -4564,6 +4600,8 @@
           <button id="locationSearchBtn" type="button">搜索</button>
         </div>
         <p id="locationHint" class="location-hint">可搜索地点，也可以使用当前位置。发送前会显示标准地址。</p>
+        <p id="locationStatus" class="location-status" aria-live="polite"></p>
+        <button id="locationGoogleBtn" class="location-google" type="button">打开 Google 地图</button>
         <div id="locationResults" class="location-results"></div>
         <button id="locationBottomConfirmBtn" class="location-confirm show" type="button">确认位置</button>
       </div>
@@ -4789,6 +4827,8 @@
     const locationSendBtn = document.querySelector('#locationSendBtn');
     const locationBottomConfirmBtn = document.querySelector('#locationBottomConfirmBtn');
     const locationHint = document.querySelector('#locationHint');
+    const locationStatus = document.querySelector('#locationStatus');
+    const locationGoogleBtn = document.querySelector('#locationGoogleBtn');
     const locationResults = document.querySelector('#locationResults');
     const aiInput = document.querySelector('#aiInput');
     const aiForm = document.querySelector('#aiForm');
@@ -5637,14 +5677,51 @@
           document.querySelectorAll('.location-result').forEach((node) => node.classList.remove('selected'));
           button.classList.add('selected');
           locationHint.textContent = item.formatted_address || '已选择位置';
+          setLocationStatus('已选择地址，可打开 Google 地图确认。');
+          setGoogleMapsButton(true);
         });
         return button;
       }));
       if (list[0]) {
         selectedLocation = list[0];
         locationHint.textContent = list[0].formatted_address || '已选择位置';
+        setLocationStatus('已选中第一个地址，可打开 Google 地图确认。');
+        setGoogleMapsButton(true);
         locationResults.querySelector('.location-result')?.classList.add('selected');
       }
+    }
+
+    function setLocationStatus(message = '', type = 'info') {
+      if (!locationStatus) return;
+      locationStatus.textContent = message;
+      locationStatus.classList.toggle('show', Boolean(message));
+      locationStatus.classList.toggle('error', type === 'error');
+    }
+
+    function setGoogleMapsButton(show) {
+      locationGoogleBtn?.classList.toggle('show', Boolean(show));
+    }
+
+    function googleMapsUrl(location) {
+      const target = location || currentLocationSelection();
+      if (!target) return '';
+      if (Number.isFinite(target.latitude) && Number.isFinite(target.longitude)) {
+        return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${target.latitude},${target.longitude}`)}`;
+      }
+      const query = String(target.formatted_address || locationSearchInput.value || '').trim();
+      return query ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}` : '';
+    }
+
+    function openGoogleMaps() {
+      const location = currentLocationSelection();
+      const url = googleMapsUrl(location);
+      if (!url) {
+        locationHint.textContent = '先定位、搜索地点，或输入地址。';
+        setLocationStatus('没有可打开的位置。', 'error');
+        locationSearchInput.focus();
+        return;
+      }
+      window.open(url, '_blank', 'noopener,noreferrer');
     }
 
     async function searchLocation(query) {
@@ -5655,30 +5732,69 @@
         return;
       }
       locationHint.textContent = '正在调用 Google 地址服务...';
-      const data = await locationApi({ locationMode: 'search', query: text, city: 'Melbourne' });
-      renderLocations(data.results || []);
-      if (!data.results?.length) locationHint.textContent = '没有找到地址，可以换个关键词。';
+      setLocationStatus('');
+      setGoogleMapsButton(false);
+      try {
+        const data = await locationApi({ locationMode: 'search', query: text, city: 'Melbourne' });
+        renderLocations(data.results || []);
+        if (!data.results?.length) {
+          selectedLocation = {
+            formatted_address: text,
+            city: 'Melbourne',
+            source: 'manual_input'
+          };
+          locationHint.textContent = '没有找到 Google 地址，已保留输入内容。';
+          setLocationStatus('可以打开 Google 地图继续确认，也可以直接确认手动地址。', 'error');
+          setGoogleMapsButton(true);
+        }
+      } catch (error) {
+        selectedLocation = {
+          formatted_address: text,
+          city: 'Melbourne',
+          source: 'manual_input'
+        };
+        locationHint.textContent = 'Google 地址服务暂不可用。';
+        setLocationStatus('已保留你输入的地址，可打开 Google 地图确认。', 'error');
+        setGoogleMapsButton(true);
+      }
     }
 
     async function reverseCurrentLocation() {
       if (!navigator.geolocation) {
         toast('当前浏览器不支持定位。');
+        setLocationStatus('当前浏览器不支持定位，请手动输入地址。', 'error');
         return;
       }
       locationHint.textContent = '正在读取当前位置...';
       navigator.geolocation.getCurrentPosition(async (position) => {
+        selectedLocation = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          formatted_address: `当前位置坐标 ${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}`,
+          source: 'browser_geolocation'
+        };
+        setLocationStatus('已获取手机坐标，正在用 Google 解析地址。');
+        setGoogleMapsButton(true);
         try {
           const data = await locationApi({
             locationMode: 'reverse_geocode',
             latitude: position.coords.latitude,
             longitude: position.coords.longitude
           });
-          renderLocations(data.results || []);
+          renderLocations(data.results?.length ? data.results : [selectedLocation]);
         } catch (error) {
-          locationHint.textContent = '位置解析失败，可以手动搜索地点。';
+          renderLocations([selectedLocation]);
+          locationHint.textContent = 'Google 地址解析失败，已保留当前位置坐标。';
+          setLocationStatus('可以打开 Google 地图确认坐标，或手动搜索地址。', 'error');
         }
-      }, () => {
-        locationHint.textContent = '没有获得定位权限，可以手动搜索地点。';
+      }, (error) => {
+        const message = error?.code === 1
+          ? '没有获得定位权限，请在浏览器或系统设置里允许定位。'
+          : error?.code === 3
+            ? '定位超时，请再试一次，或手动搜索地点。'
+            : '无法读取当前位置，可以手动搜索地点。';
+        locationHint.textContent = message;
+        setLocationStatus('定位没有完成，不能自动发送位置。', 'error');
       }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 });
     }
 
@@ -5687,6 +5803,8 @@
       selectedLocation = null;
       locationSearchInput.value = '';
       locationHint.textContent = '可搜索地点，也可以使用当前位置。发送前会显示标准地址。';
+      setLocationStatus('');
+      setGoogleMapsButton(false);
       locationResults.replaceChildren();
       openPage('locationPage');
       window.setTimeout(() => locationSearchInput.focus(), 120);
@@ -6686,6 +6804,8 @@
       event.preventDefault();
       locationSearchBtn.click();
     });
+
+    locationGoogleBtn.addEventListener('click', openGoogleMaps);
 
     locationCurrentBtn.addEventListener('click', () => {
       locationHint.textContent = '正在请求定位权限...';

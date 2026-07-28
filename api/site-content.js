@@ -313,7 +313,9 @@ async function handleLocationAction(req, res) {
     const query = cleanText(body.query || body.address || '', 260);
     if (!query) return res.status(400).json({ error: '请输入地点或地址' });
     const city = cleanText(body.city || 'Melbourne', 80);
-    const results = await googleGeocode({ address: `${query} ${city} Australia`, language: body.language || 'zh-CN' });
+    const looksSpecific = /\d/.test(query) || /,/.test(query) || /\b(st|street|rd|road|ave|avenue|dr|drive|ln|lane|cres|court|ct|vic|nsw|qld|sa|wa|tas|nt|act|australia)\b/i.test(query);
+    const address = looksSpecific ? query : `${query}, ${city}, VIC, Australia`;
+    const results = await googleGeocode({ address, language: body.language || 'zh-CN' });
     return res.status(200).json({ ok: true, results: results.slice(0, 6) });
   }
   if (mode === 'reverse_geocode') {
