@@ -1446,6 +1446,82 @@
       color: #9a6b09;
     }
 
+    .release-brief {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, .78);
+      border: 1px solid rgba(17, 24, 32, .05);
+    }
+
+    .release-brief-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .release-brief-head strong {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 620;
+    }
+
+    .release-brief-head span {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 390;
+      white-space: nowrap;
+    }
+
+    .release-meter {
+      height: 8px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(17, 24, 32, .08);
+    }
+
+    .release-meter i {
+      display: block;
+      width: 0.78%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #d9a326, #18c56e);
+    }
+
+    .release-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+      margin-top: 9px;
+    }
+
+    .release-metrics span {
+      padding: 7px 6px;
+      border-radius: 8px;
+      background: #f7faf8;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 390;
+    }
+
+    .release-metrics b {
+      display: block;
+      margin-top: 2px;
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 620;
+    }
+
+    .release-brief p {
+      margin: 8px 0 0;
+      color: #546068;
+      font-size: 11px;
+      font-weight: 390;
+      line-height: 1.5;
+    }
+
     .release-track {
       display: grid;
       gap: 7px;
@@ -2839,6 +2915,16 @@
                   <span class="weight-pill">L1<b>×1</b></span>
                 </div>
               </div>
+              <div class="release-brief" aria-label="积分释放说明">
+                <div class="release-brief-head"><strong>释放说明</strong><span>总盘固定，不增发</span></div>
+                <div class="release-meter" aria-hidden="true"><i></i></div>
+                <div class="release-metrics">
+                  <span>总积分池<b>42M</b></span>
+                  <span>当前释放<b>328,125</b></span>
+                  <span>释放比例<b>1/128</b></span>
+                </div>
+                <p>当前等级为 L8，对应最高权重 ×128。L8 当前数量释放完成后，系统自动进入 L7，后续按 L7 ×64 权重继续释放。</p>
+              </div>
               <div class="formula-card">
                 <b>权益测算 = 参与积分 × 等级权重 × 共创席位权重</b><br>
                 积分用于记录参与和权益测算，不是充值、股权、证券或固定收益承诺。
@@ -3314,6 +3400,16 @@
             <span class="weight-pill">L2<b>×2</b></span>
             <span class="weight-pill">L1<b>×1</b></span>
           </div>
+        </div>
+        <div class="release-brief" aria-label="积分释放说明">
+          <div class="release-brief-head"><strong>释放说明</strong><span>总盘固定，不增发</span></div>
+          <div class="release-meter" aria-hidden="true"><i></i></div>
+          <div class="release-metrics">
+            <span>总积分池<b>42M</b></span>
+            <span>当前释放<b>328,125</b></span>
+            <span>释放比例<b>1/128</b></span>
+          </div>
+          <p>当前等级为 L8，对应最高权重 ×128。L8 当前数量释放完成后，系统自动进入 L7，后续按 L7 ×64 权重继续释放。</p>
         </div>
         <div class="formula-card">
           <b>权益测算 = 参与积分 × 等级权重 × 共创席位权重</b><br>
