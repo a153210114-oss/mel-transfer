@@ -1345,6 +1345,19 @@
       margin-bottom: 8px;
     }
 
+    .growth-lead {
+      margin: 0 0 10px;
+      color: #546068;
+      font-size: 12px;
+      font-weight: 390;
+      line-height: 1.55;
+    }
+
+    .growth-lead b {
+      color: var(--ink);
+      font-weight: 620;
+    }
+
     .growth-stats {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1365,6 +1378,72 @@
       margin-bottom: 3px;
       color: var(--ink);
       font-size: 16px;
+    }
+
+    .weight-panel {
+      margin-top: 12px;
+      padding: 10px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, .76);
+      border: 1px solid rgba(17, 24, 32, .05);
+    }
+
+    .weight-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .weight-head strong {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 620;
+    }
+
+    .weight-head span {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 390;
+      white-space: nowrap;
+    }
+
+    .weight-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .weight-pill {
+      min-height: 42px;
+      display: grid;
+      align-content: center;
+      gap: 2px;
+      padding: 7px 6px;
+      border-radius: 8px;
+      background: #f7faf8;
+      color: #59656d;
+      font-size: 11px;
+      font-weight: 430;
+      text-align: center;
+      border: 1px solid rgba(17, 24, 32, .045);
+    }
+
+    .weight-pill b {
+      color: var(--brand-dark);
+      font-size: 13px;
+      font-weight: 680;
+    }
+
+    .weight-pill.active {
+      background: #fff8e7;
+      border-color: rgba(172, 126, 22, .18);
+      color: #8a640e;
+    }
+
+    .weight-pill.active b {
+      color: #9a6b09;
     }
 
     .release-track {
@@ -1405,7 +1484,7 @@
       border: 1px solid rgba(17, 24, 32, .06);
       color: var(--muted);
       font-size: 12px;
-      font-weight: 800;
+      font-weight: 420;
       line-height: 1.5;
     }
 
@@ -2732,26 +2811,37 @@
             </button>
             <button class="list-row" type="button" data-open-page="growthPage">
               <span class="row-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.5 5 5.5.8-4 3.9.9 5.5-4.9-2.6-4.9 2.6.9-5.5-4-3.9 5.5-.8L12 3Z"></path></svg></span>
-              <span class="row-text"><strong>积分权益</strong><span>1,280 分 · L8 · 推荐关系和入账记录。</span></span>
+              <span class="row-text"><strong>积分权益</strong><span>参与奖励 · L8 权重 ×128 · 入账记录。</span></span>
               <span class="row-meta">进入</span>
             </button>
             <div class="growth-card surface-hidden">
-              <strong>积分权益</strong>
+              <strong>积分是参与奖励</strong>
+              <p class="growth-lead"><b>你参与得越真实，积分越有效。</b>身份确认、提建议、发布有效内容、邀请真实朋友、完善名片和参与城市共建，都会进入入账记录。</p>
               <div class="growth-stats">
-                <div class="growth-stat"><b id="growthPoints">1,280</b>有效积分</div>
-                <div class="growth-stat"><b id="growthLevel">L8</b>当前释放</div>
-                <div class="growth-stat"><b id="growthPool">42M</b>总积分池</div>
-              </div>
-              <div class="release-track" aria-label="积分释放档位">
-                <div class="release-row active"><strong>L8</strong><span>第 1 轮 · 1/128</span><b>328,125</b></div>
-                <div class="release-row"><strong>L7</strong><span>第 2 轮 · 1/64</span><b>656,250</b></div>
-                <div class="release-row"><strong>L1</strong><span>最后释放 · 1:1 权重</span><b>约 21M</b></div>
+                <div class="growth-stat"><b id="growthPoints">1,280</b>参与积分</div>
+                <div class="growth-stat"><b id="growthLevel">L8</b>当前等级</div>
+                <div class="growth-stat"><b id="growthPool">×128</b>等级权重</div>
               </div>
               <div class="formula-card">
-                <b>不用投资，不用交钱。</b><br>
-                积分来自真实参与、提意见、给建议、发布有效内容、邀请朋友完善名片和参与城市共建。<br>
-                <b>贡献值 = 有效积分 × 释放等级权重 × 早期席位奖励</b><br>
-                净利润 80% 进入分配池；每满 42 万美元，按贡献值分配一次。
+                <b>当前贡献权重：1,280 × 128 = 163,840</b><br>
+                等级不是积分本身，而是积分进入权益池时的放大权重。
+              </div>
+              <div class="weight-panel" aria-label="等级关联权重">
+                <div class="weight-head"><strong>等级关联权重</strong><span>等级越高，释放权重越高</span></div>
+                <div class="weight-grid">
+                  <span class="weight-pill active">L8<b>×128</b></span>
+                  <span class="weight-pill">L7<b>×64</b></span>
+                  <span class="weight-pill">L6<b>×32</b></span>
+                  <span class="weight-pill">L5<b>×16</b></span>
+                  <span class="weight-pill">L4<b>×8</b></span>
+                  <span class="weight-pill">L3<b>×4</b></span>
+                  <span class="weight-pill">L2<b>×2</b></span>
+                  <span class="weight-pill">L1<b>×1</b></span>
+                </div>
+              </div>
+              <div class="formula-card">
+                <b>权益测算 = 参与积分 × 等级权重 × 共创席位权重</b><br>
+                积分用于记录参与和权益测算，不是充值、股权、证券或固定收益承诺。
               </div>
               <div class="release-track" aria-label="用户动作积分">
                 <div class="release-row"><strong>30</strong><span>手机号验证注册 / 创建二维码名片</span><b>一次</b></div>
@@ -3201,20 +3291,33 @@
         <span></span>
       </div>
       <div class="growth-card" style="margin: 14px;">
-        <strong>积分权益</strong>
+        <strong>积分是参与奖励</strong>
+        <p class="growth-lead"><b>你参与得越真实，积分越有效。</b>身份确认、提建议、发布有效内容、邀请真实朋友、完善名片和参与城市共建，都会进入入账记录。</p>
         <div class="growth-stats">
-          <div class="growth-stat"><b>1,280</b>有效积分</div>
-          <div class="growth-stat"><b>L8</b>当前释放</div>
-          <div class="growth-stat"><b>42M</b>总积分池</div>
-        </div>
-        <div class="release-track" aria-label="积分释放档位">
-          <div class="release-row active"><strong>L8</strong><span>第 1 轮 · 1/128</span><b>328,125</b></div>
-          <div class="release-row"><strong>L7</strong><span>第 2 轮 · 1/64</span><b>656,250</b></div>
-          <div class="release-row"><strong>L1</strong><span>最后释放 · 1:1 权重</span><b>约 21M</b></div>
+          <div class="growth-stat"><b>1,280</b>参与积分</div>
+          <div class="growth-stat"><b>L8</b>当前等级</div>
+          <div class="growth-stat"><b>×128</b>等级权重</div>
         </div>
         <div class="formula-card">
-          <b>贡献值 = 有效积分 × 释放等级权重 × 早期席位奖励</b><br>
-          积分来自真实参与、建议、有效内容、邀请朋友完善名片和城市共建。
+          <b>当前贡献权重：1,280 × 128 = 163,840</b><br>
+          等级不是积分本身，而是积分进入权益池时的放大权重。
+        </div>
+        <div class="weight-panel" aria-label="等级关联权重">
+          <div class="weight-head"><strong>等级关联权重</strong><span>等级越高，释放权重越高</span></div>
+          <div class="weight-grid">
+            <span class="weight-pill active">L8<b>×128</b></span>
+            <span class="weight-pill">L7<b>×64</b></span>
+            <span class="weight-pill">L6<b>×32</b></span>
+            <span class="weight-pill">L5<b>×16</b></span>
+            <span class="weight-pill">L4<b>×8</b></span>
+            <span class="weight-pill">L3<b>×4</b></span>
+            <span class="weight-pill">L2<b>×2</b></span>
+            <span class="weight-pill">L1<b>×1</b></span>
+          </div>
+        </div>
+        <div class="formula-card">
+          <b>权益测算 = 参与积分 × 等级权重 × 共创席位权重</b><br>
+          积分用于记录参与和权益测算，不是充值、股权、证券或固定收益承诺。
         </div>
       </div>
       <div class="friend-note-label">入账项目</div>
@@ -3898,7 +4001,7 @@
         const data = await api('/me/growth');
         document.querySelector('#growthPoints').textContent = Number(data.pointsBalance || 0).toLocaleString('zh-CN');
         document.querySelector('#growthLevel').textContent = data.releaseLevel || 'L8';
-        document.querySelector('#growthPool').textContent = Number(data.poolTotal || 42000000).toLocaleString('zh-CN', { notation: 'compact' });
+        document.querySelector('#growthPool').textContent = '×128';
       } catch (error) {
         toast('积分权益接口暂不可用。');
       }
