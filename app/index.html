@@ -5724,6 +5724,75 @@
       window.open(url, '_blank', 'noopener,noreferrer');
     }
 
+    locationSearchInput?.addEventListener('input', () => {
+      if (selectedLocation) return;
+      setGoogleMapsButton(Boolean(locationSearchInput.value.trim()));
+    });
+
+    function requestBrowserLocation(options = {}) {
+      return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+          reject(new Error('unsupported'));
+          return;
+        }
+        navigator.geolocation.getCurrentPosition(resolve, reject, options);
+      });
+    }
+
+    function browserLocationErrorMessage(error) {
+      if (!error || error.message === 'unsupported') return '当前浏览器不支持定位，请手动输入地址。';
+      if (error.code === 1) return '浏览器返回：定位权限被拒绝。请检查地址栏网站权限和系统定位权限。';
+      if (error.code === 2) return '浏览器返回：当前位置不可用。请检查网络、GPS 或稍后再试。';
+      if (error.code === 3) return '浏览器返回：定位超时。已尝试快速定位和高精度定位。';
+      return `浏览器定位失败：${error.message || '未知错误'}`;
+    }
+
+    async function resolveBrowserPosition() {
+      try {
+        setLocationStatus('正在快速读取当前位置...');
+        return await requestBrowserLocation({
+          enableHighAccuracy: false,
+          timeout: 8000,
+          maximumAge: 300000
+        });
+      } catch (firstError) {
+        setLocationStatus('快速定位失败，正在尝试高精度定位...', 'error');
+        try {
+          return await requestBrowserLocation({
+            enableHighAccuracy: true,
+            timeout: 30000,
+            maximumAge: 0
+          });
+        } catch (secondError) {
+          secondError.firstError = firstError;
+          throw secondError;
+        }
+      }
+    }
+
+    async function applyBrowserPosition(position) {
+      selectedLocation = {
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+        formatted_address: `当前位置坐标 ${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}`,
+        source: 'browser_geolocation'
+      };
+      setLocationStatus(`已获取手机坐标，精度约 ${Math.round(position.coords.accuracy || 0)} 米，正在用 Google 解析地址。`);
+      setGoogleMapsButton(true);
+      try {
+        const data = await locationApi({
+          locationMode: 'reverse_geocode',
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude
+        });
+        renderLocations(data.results?.length ? data.results : [selectedLocation]);
+      } catch (error) {
+        renderLocations([selectedLocation]);
+        locationHint.textContent = 'Google 地址解析失败，已保留当前位置坐标。';
+        setLocationStatus('可以打开 Google 地图确认坐标，或手动搜索地址。', 'error');
+      }
+    }
+
     async function searchLocation(query) {
       const text = String(query || '').trim();
       if (!text) {
@@ -5766,36 +5835,14 @@
         return;
       }
       locationHint.textContent = '正在读取当前位置...';
-      navigator.geolocation.getCurrentPosition(async (position) => {
-        selectedLocation = {
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          formatted_address: `当前位置坐标 ${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}`,
-          source: 'browser_geolocation'
-        };
-        setLocationStatus('已获取手机坐标，正在用 Google 解析地址。');
-        setGoogleMapsButton(true);
-        try {
-          const data = await locationApi({
-            locationMode: 'reverse_geocode',
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude
-          });
-          renderLocations(data.results?.length ? data.results : [selectedLocation]);
-        } catch (error) {
-          renderLocations([selectedLocation]);
-          locationHint.textContent = 'Google 地址解析失败，已保留当前位置坐标。';
-          setLocationStatus('可以打开 Google 地图确认坐标，或手动搜索地址。', 'error');
-        }
-      }, (error) => {
-        const message = error?.code === 1
-          ? '没有获得定位权限，请在浏览器或系统设置里允许定位。'
-          : error?.code === 3
-            ? '定位超时，请再试一次，或手动搜索地点。'
-            : '无法读取当前位置，可以手动搜索地点。';
-        locationHint.textContent = message;
-        setLocationStatus('定位没有完成，不能自动发送位置。', 'error');
-      }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 });
+      try {
+        const position = await resolveBrowserPosition();
+        await applyBrowserPosition(position);
+      } catch (error) {
+        locationHint.textContent = browserLocationErrorMessage(error);
+        setLocationStatus('定位没有完成，不能自动发送位置。你仍可以手动搜索地点，或打开 Google 地图。', 'error');
+        setGoogleMapsButton(Boolean(locationSearchInput.value.trim()));
+      }
     }
 
     function openLocationPicker(returnTarget = 'chat') {
