@@ -309,6 +309,16 @@ async function googleGeocode(params = {}) {
 async function handleLocationAction(req, res) {
   const body = req.body || {};
   const mode = cleanText(body.locationMode || body.mode || '', 40);
+  if (mode === 'maps_config') {
+    if (!GOOGLE_MAPS_KEY) return res.status(500).json({ error: 'Google Maps API Key 未配置' });
+    const url = new URL('https://maps.googleapis.com/maps/api/js');
+    url.searchParams.set('key', GOOGLE_MAPS_KEY);
+    url.searchParams.set('libraries', 'places');
+    url.searchParams.set('language', body.language || 'zh-CN');
+    url.searchParams.set('region', body.region || 'AU');
+    url.searchParams.set('v', 'weekly');
+    return res.status(200).json({ ok: true, scriptUrl: url.toString() });
+  }
   if (mode === 'search') {
     const query = cleanText(body.query || body.address || '', 260);
     if (!query) return res.status(400).json({ error: '请输入地点或地址' });

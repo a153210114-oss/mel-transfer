@@ -2439,6 +2439,12 @@
         #e8f0ed;
     }
 
+    .google-map-canvas {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+    }
+
     .map-grid {
       position: absolute;
       inset: 0;
@@ -2447,6 +2453,7 @@
         linear-gradient(90deg, rgba(123, 154, 168, .16) 1px, transparent 1px);
       background-size: 58px 58px;
       opacity: .8;
+      pointer-events: none;
     }
 
     .map-pin {
@@ -2459,6 +2466,8 @@
       background: var(--brand);
       transform: translate(-50%, -50%) rotate(-45deg);
       box-shadow: 0 12px 28px rgba(24, 197, 110, .28);
+      z-index: 2;
+      pointer-events: none;
     }
 
     .map-pin::after {
@@ -2478,6 +2487,7 @@
       border-radius: 12px;
       background: #fff;
       box-shadow: 0 10px 24px rgba(17, 24, 32, .12);
+      z-index: 3;
     }
 
     .map-locate svg {
@@ -2607,6 +2617,11 @@
     .location-result.selected {
       border-color: rgba(24, 197, 110, .46);
       box-shadow: inset 3px 0 0 var(--brand);
+    }
+
+    .location-map.maps-ready .map-grid,
+    .location-map.maps-ready .map-pin {
+      display: none;
     }
 
     #locationPage .page-nav {
@@ -4588,6 +4603,7 @@
         <button id="locationSendBtn" class="plain-icon" type="button" aria-label="发送位置">✓</button>
       </div>
       <div class="location-map" aria-label="地图选点预览">
+        <div id="googleMapCanvas" class="google-map-canvas" aria-hidden="true"></div>
         <div class="map-grid"></div>
         <div class="map-pin" aria-hidden="true"></div>
         <button id="locationCurrentBtn" class="map-locate" type="button" aria-label="定位当前位置">
@@ -4830,6 +4846,7 @@
     const locationStatus = document.querySelector('#locationStatus');
     const locationGoogleBtn = document.querySelector('#locationGoogleBtn');
     const locationResults = document.querySelector('#locationResults');
+    const googleMapCanvas = document.querySelector('#googleMapCanvas');
     const aiInput = document.querySelector('#aiInput');
     const aiForm = document.querySelector('#aiForm');
     const aiWaveBtn = document.querySelector('#aiWaveBtn');
@@ -4847,6 +4864,10 @@
     let selectedLocation = null;
     let publishSource = 'album';
     let locationReturnTarget = 'chat';
+    let googleMapsPromise = null;
+    let googleMap = null;
+    let googleMarker = null;
+    let googleGeocoder = null;
     let publishMediaFiles = [];
     let publishDraggedIndex = null;
     let publishSelectedIndex = 0;
@@ -5679,6 +5700,7 @@
           locationHint.textContent = item.formatted_address || '已选择位置';
           setLocationStatus('已选择地址，可打开 Google 地图确认。');
           setGoogleMapsButton(true);
+          updateGoogleMarker(item);
         });
         return button;
       }));
@@ -5687,6 +5709,7 @@
         locationHint.textContent = list[0].formatted_address || '已选择位置';
         setLocationStatus('已选中第一个地址，可打开 Google 地图确认。');
         setGoogleMapsButton(true);
+        updateGoogleMarker(list[0]);
         locationResults.querySelector('.location-result')?.classList.add('selected');
       }
     }
@@ -5722,6 +5745,106 @@
         return;
       }
       window.open(url, '_blank', 'noopener,noreferrer');
+    }
+
+    async function loadGoogleMaps() {
+      if (window.google?.maps) return window.google.maps;
+      if (googleMapsPromise) return googleMapsPromise;
+      googleMapsPromise = locationApi({ locationMode: 'maps_config' })
+        .then(({ scriptUrl }) => new Promise((resolve, reject) => {
+          if (!scriptUrl) {
+            reject(new Error('missing_google_maps_script'));
+            return;
+          }
+          const script = document.createElement('script');
+          script.src = scriptUrl;
+          script.async = true;
+          script.defer = true;
+          script.onload = () => resolve(window.google.maps);
+          script.onerror = () => reject(new Error('google_maps_load_failed'));
+          document.head.append(script);
+        }));
+      return googleMapsPromise;
+    }
+
+    function locationFromLatLng(latLng, formattedAddress = '') {
+      const latitude = typeof latLng.lat === 'function' ? latLng.lat() : latLng.lat;
+      const longitude = typeof latLng.lng === 'function' ? latLng.lng() : latLng.lng;
+      return {
+        latitude,
+        longitude,
+        formatted_address: formattedAddress || `当前位置坐标 ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
+        source: formattedAddress ? 'google_map' : 'map_pin'
+      };
+    }
+
+    function updateGoogleMarker(location, shouldPan = true) {
+      if (!googleMap || !window.google?.maps || !location) return;
+      if (!Number.isFinite(location.latitude) || !Number.isFinite(location.longitude)) return;
+      const position = { lat: location.latitude, lng: location.longitude };
+      if (!googleMarker) {
+        googleMarker = new google.maps.Marker({
+          map: googleMap,
+          position,
+          draggable: true
+        });
+        googleMarker.addListener('dragend', () => {
+          const next = googleMarker.getPosition();
+          reverseMapPoint(next);
+        });
+      } else {
+        googleMarker.setPosition(position);
+      }
+      if (shouldPan) googleMap.panTo(position);
+    }
+
+    async function reverseMapPoint(latLng) {
+      const fallback = locationFromLatLng(latLng);
+      selectedLocation = fallback;
+      updateGoogleMarker(fallback, false);
+      setGoogleMapsButton(true);
+      setLocationStatus('正在用 Google 地图解析选点地址。');
+      if (!googleGeocoder) googleGeocoder = new google.maps.Geocoder();
+      googleGeocoder.geocode({ location: latLng }, (results, status) => {
+        if (status === 'OK' && results?.[0]) {
+          selectedLocation = locationFromLatLng(latLng, results[0].formatted_address);
+          selectedLocation.place_id = results[0].place_id || '';
+          locationHint.textContent = selectedLocation.formatted_address;
+          setLocationStatus('已选中地图位置，可确认。');
+          renderLocations([selectedLocation]);
+          return;
+        }
+        locationHint.textContent = fallback.formatted_address;
+        setLocationStatus('Google 地图没有返回标准地址，已保留坐标。', 'error');
+        renderLocations([fallback]);
+      });
+    }
+
+    async function initGoogleMap() {
+      if (googleMap || !googleMapCanvas) return;
+      try {
+        await loadGoogleMaps();
+        const center = { lat: -37.8136, lng: 144.9631 };
+        googleMap = new google.maps.Map(googleMapCanvas, {
+          center,
+          zoom: 13,
+          clickableIcons: true,
+          disableDefaultUI: true,
+          zoomControl: true,
+          gestureHandling: 'greedy',
+          mapTypeControl: false,
+          streetViewControl: false,
+          fullscreenControl: false
+        });
+        googleGeocoder = new google.maps.Geocoder();
+        googleMap.addListener('click', (event) => {
+          reverseMapPoint(event.latLng);
+        });
+        googleMapCanvas.closest('.location-map')?.classList.add('maps-ready');
+        setLocationStatus('Google 地图已加载。可定位、搜索，或点地图选位置。');
+      } catch (error) {
+        setLocationStatus('Google 地图加载失败，可继续搜索地址或手动输入。', 'error');
+      }
     }
 
     locationSearchInput?.addEventListener('input', () => {
@@ -5786,8 +5909,10 @@
           longitude: position.coords.longitude
         });
         renderLocations(data.results?.length ? data.results : [selectedLocation]);
+        updateGoogleMarker(selectedLocation);
       } catch (error) {
         renderLocations([selectedLocation]);
+        updateGoogleMarker(selectedLocation);
         locationHint.textContent = 'Google 地址解析失败，已保留当前位置坐标。';
         setLocationStatus('可以打开 Google 地图确认坐标，或手动搜索地址。', 'error');
       }
@@ -5854,6 +5979,7 @@
       setGoogleMapsButton(false);
       locationResults.replaceChildren();
       openPage('locationPage');
+      initGoogleMap();
       window.setTimeout(() => locationSearchInput.focus(), 120);
     }
 
