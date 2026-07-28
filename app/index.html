@@ -2879,7 +2879,7 @@
         <h1 id="legacyGreeting">下午好，老丁</h1>
         <p>华伴带你体验更多精彩。</p>
       </section>
-      <button id="unreadFloat" class="unread-pill" type="button">正在招募</button>
+      <button id="unreadFloat" class="unread-pill" type="button" aria-label="进入新手福利">新手福利 · 去试试</button>
       <a class="download-float" href="../official/#download" aria-label="下载华伴">下载</a>
 
       <section class="launch-card home-ci-card" aria-label="华伴共创报名">
@@ -5252,7 +5252,7 @@
           moved = false;
           return;
         }
-        window.location.href = '../official/';
+        openPage('growthPage');
       });
     }
 
