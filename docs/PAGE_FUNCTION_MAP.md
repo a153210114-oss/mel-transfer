@@ -101,6 +101,7 @@
 | 添加朋友 `addFriendPage` | 当面拉群 | 当面建群 | `groupPage` | 群码/附近确认待后端 |
 | 个人资料 `profilePage` | 对方头像进入 | 查看对方资料、华伴号、地区、添加日期 | `profilePage` 只读关系模式 | 添加日期来自联系人关系表 |
 | 个人资料 `profilePage` | 自己头像进入 | 编辑自己的昵称、地区、简介 | `profilePage` 编辑模式 | 保存后刷新我的资料和首页问候 |
+| 个人资料 `profilePage` | 自己资料里的多设备传输 | 用自己的对话替代独立文件传输功能，不同设备间可传文字、图片、视频、文件 | `chatPage` 自聊模式 | 消息和附件进入自己的云端同步会话 |
 | 个人资料 `profilePage` | 朋友资料 | 备注、电话、标签、权限 | `friendInfoPage` | 保存到联系人关系表 |
 | 个人资料 `profilePage` | 动态 | 查看该用户动态 | `dynamicPage` | 按用户过滤动态 |
 

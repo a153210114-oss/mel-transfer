@@ -3824,15 +3824,15 @@
         </button>
       </div>
       <div class="action-strip">
-        <button type="button" data-chat="mia">♡ 发消息</button>
-        <button type="button">♧ 音视频通话</button>
+        <button id="profileChatBtn" type="button" data-chat="mia">♡ 发消息</button>
+        <button id="profileCallBtn" type="button">♧ 音视频通话</button>
       </div>
     </section>
 
     <section id="chatPage" class="phone-page" aria-label="好友对话">
       <div class="page-nav">
         <button class="plain-icon" type="button" data-close-page aria-label="返回">‹</button>
-        <strong>Andyweiwei</strong>
+        <strong id="chatPageTitle">Andyweiwei</strong>
         <button class="icon-btn logo-btn" type="button" data-open-page="aiChatPage" aria-label="切换到华伴 AI 对话">
           <img src="../assets/brand/huaban-logo-v1.png" alt="华伴 AI">
         </button>
@@ -4744,6 +4744,9 @@
     const profileBioInput = document.querySelector('#profileBioInput');
     const profileAddedAt = document.querySelector('#profileAddedAt');
     const profileActionStrip = profilePage?.querySelector('.action-strip');
+    const profileChatBtn = document.querySelector('#profileChatBtn');
+    const profileCallBtn = document.querySelector('#profileCallBtn');
+    const chatPageTitle = document.querySelector('#chatPageTitle');
     const friendRemark = document.querySelector('#friendRemark');
     const friendGeoGroup = document.querySelector('#friendGeoGroup');
     const chatMorePanel = document.querySelector('#chatMorePanel');
@@ -5786,6 +5789,17 @@
       node.textContent = profile.avatar;
     }
 
+    function openChat(id = 'mia') {
+      const isMe = id === 'me';
+      activeProfile = id;
+      const profile = profiles[id] || profiles.mia;
+      if (chatPageTitle) {
+        chatPageTitle.textContent = isMe ? '多设备传输' : profile.name.split(' · ')[0];
+      }
+      openPage('chatPage');
+      toast(isMe ? '已打开自己的多设备传输会话。' : `已打开和${profile.name.split(' · ')[0]}的对话。`);
+    }
+
     function geoGroupLabel(value) {
       return {
         local: '当地',
@@ -5819,7 +5833,10 @@
       ownProfileEditor.classList.toggle('active', isMe);
       ownProfileLinks.classList.toggle('active', isMe);
       otherProfileInfo.classList.toggle('active', !isMe);
-      profileActionStrip.hidden = isMe;
+      profileActionStrip.hidden = false;
+      profileChatBtn.dataset.chat = id;
+      profileChatBtn.textContent = isMe ? '☷ 多设备传输' : '♡ 发消息';
+      profileCallBtn.hidden = isMe;
       if (isMe) {
         profileNicknameInput.value = profile.name || '老丁';
         profileRegionInput.value = profileRegionValue;
@@ -6357,7 +6374,7 @@
       }
 
       if (chatButton) {
-        openPage('chatPage');
+        openChat(chatButton.dataset.chat || 'mia');
         return;
       }
 
