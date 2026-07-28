@@ -127,6 +127,9 @@ const defaultState = {
   },
   friendships: [],
   referrals: [],
+  identityAccounts: [],
+  identityLinks: [],
+  identityScans: [],
   messages: {
     mia: [
       { id: 'msg_1', from: 'mia', body: '我看到你收藏了 Carlton 那条动态，这周末要不要一起去？', dataSource: 'seed' },
@@ -407,6 +410,43 @@ function cleanCode(value = '') {
 
 function cleanRelated(value = '') {
   return String(value || '').replace(/[^a-zA-Z0-9_.:-]/g, '').trim().toUpperCase().slice(0, 120);
+}
+
+function normalizePhone(value = '') {
+  const raw = String(value || '').replace(/[\s().-]/g, '').trim();
+  if (!raw) return '';
+  if (raw.startsWith('00')) return `+${raw.slice(2).replace(/\D/g, '')}`;
+  if (raw.startsWith('+')) return `+${raw.slice(1).replace(/\D/g, '')}`;
+  const digits = raw.replace(/\D/g, '');
+  if (/^04\d{8}$/.test(digits)) return `+61${digits.slice(1)}`;
+  if (/^4\d{8}$/.test(digits)) return `+61${digits}`;
+  if (/^61\d{9}$/.test(digits)) return `+${digits}`;
+  return digits;
+}
+
+function parseIdentityPayload(value = '') {
+  const raw = String(value || '').trim();
+  const fallback = { raw, code: '', refCode: '', source: '', channel: '' };
+  if (!raw) return fallback;
+  try {
+    const parsed = raw.includes('://') ? new URL(raw) : new URL(raw, 'https://www.huabanapp.com');
+    const params = parsed.searchParams;
+    return {
+      raw,
+      code: cleanCode(params.get('code') || params.get('card') || params.get('friendCode') || parsed.pathname.split('/').filter(Boolean).pop() || ''),
+      refCode: cleanCode(params.get('ref') || params.get('refCode') || params.get('inviter') || ''),
+      source: String(params.get('source') || '').trim(),
+      channel: String(params.get('channel') || '').trim()
+    };
+  } catch {
+    const codeMatch = raw.match(/\bHB[A-Z0-9_-]+\b/i);
+    const refMatch = raw.match(/\bref(?:Code)?=([a-zA-Z0-9_-]+)/i);
+    return {
+      ...fallback,
+      code: cleanCode(codeMatch?.[0] || ''),
+      refCode: cleanCode(refMatch?.[1] || '')
+    };
+  }
 }
 
 function localPointEventKey({ ownerCode = '', action = '', relatedCode = '' } = {}) {
@@ -1258,6 +1298,127 @@ async function handleApi(req, res) {
         second_level_referrer_code: secondEligible ? secondLevelCode : '',
         event: referral,
         points: { direct, second }
+      });
+      return true;
+    }
+
+    if (req.method === 'POST' && path === '/api/v1/identity/phone-sync') {
+      const body = await readJson(req);
+      const phone = normalizePhone(body.phone);
+      const previousPhone = normalizePhone(body.previousPhone);
+      const requestedCode = cleanCode(body.friendCode || body.requestedFriendCode || body.ownerCode);
+      if (!phone) {
+        sendJson(res, 400, { error: '缺少手机号' });
+        return true;
+      }
+
+      state.identityAccounts ||= [];
+      state.identityLinks ||= [];
+      const activeForPhone = state.identityAccounts.find((item) => item.phone === phone && item.status === 'active');
+      const activePrevious = previousPhone
+        ? state.identityAccounts.find((item) => item.phone === previousPhone && item.status === 'active' && (!requestedCode || item.friendCode === requestedCode))
+        : null;
+      const canonicalCode = activeForPhone?.friendCode || activePrevious?.friendCode || requestedCode;
+      if (!canonicalCode) {
+        sendJson(res, 400, { error: '缺少身份码' });
+        return true;
+      }
+
+      if (activePrevious && activePrevious.phone !== phone) {
+        activePrevious.status = 'phone_replaced';
+        activePrevious.replacedByPhone = phone;
+        activePrevious.updatedAt = new Date().toISOString();
+      }
+
+      let account = activeForPhone || state.identityAccounts.find((item) => item.phone === phone && item.friendCode === canonicalCode);
+      if (!account) {
+        account = {
+          id: `identity_account_${Date.now()}_${state.identityAccounts.length}`,
+          phone,
+          friendCode: canonicalCode,
+          status: 'active',
+          dataSource: body.dataSource || TEST_SOURCE,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        state.identityAccounts.push(account);
+      } else {
+        account.status = 'active';
+        account.friendCode = canonicalCode;
+        account.updatedAt = new Date().toISOString();
+      }
+
+      const linkExists = state.identityLinks.some((item) => item.phone === phone && item.friendCode === canonicalCode && item.status === 'active');
+      if (!linkExists) {
+        state.identityLinks.push({
+          id: `identity_link_${Date.now()}_${state.identityLinks.length}`,
+          phone,
+          friendCode: canonicalCode,
+          linkType: 'verified_account_phone',
+          status: 'active',
+          dataSource: body.dataSource || TEST_SOURCE,
+          createdAt: new Date().toISOString()
+        });
+      }
+
+      saveState();
+      sendJson(res, 200, {
+        ok: true,
+        phone,
+        previousPhone,
+        friendCode: canonicalCode,
+        requestedFriendCode: requestedCode,
+        preservedIdentity: previousPhone ? canonicalCode === (activePrevious?.friendCode || canonicalCode) : true,
+        account,
+        replaced: activePrevious || null
+      });
+      return true;
+    }
+
+    if (req.method === 'POST' && path === '/api/v1/identity/resolve') {
+      const body = await readJson(req);
+      const parsed = parseIdentityPayload(body.qrPayload || body.shareUrl || body.url || body.payload || '');
+      if (!parsed.code) {
+        sendJson(res, 400, { error: '无法解析身份码' });
+        return true;
+      }
+      const scan = {
+        id: `identity_scan_${Date.now()}_${state.identityScans?.length || 0}`,
+        code: parsed.code,
+        refCode: parsed.refCode,
+        source: body.source || parsed.source || 'identity_resolve',
+        channel: body.channel || parsed.channel || '',
+        raw: parsed.raw,
+        dataSource: body.dataSource || TEST_SOURCE,
+        createdAt: new Date().toISOString()
+      };
+      state.identityScans ||= [];
+      state.identityScans.push(scan);
+      saveState();
+      sendJson(res, 200, { ok: true, ...scan });
+      return true;
+    }
+
+    if (req.method === 'GET' && path === '/api/v1/admin/identity-audit') {
+      const activeAccounts = (state.identityAccounts || []).filter((item) => item.status === 'active');
+      const activeLinks = (state.identityLinks || []).filter((item) => item.status === 'active');
+      const duplicatePhones = activeAccounts
+        .map((item) => item.phone)
+        .filter((phone, index, list) => phone && list.indexOf(phone) !== index);
+      const duplicateCodePhones = activeLinks
+        .map((item) => `${item.friendCode}:${item.phone}`)
+        .filter((key, index, list) => key && list.indexOf(key) !== index);
+      sendJson(res, 200, {
+        ok: duplicatePhones.length === 0 && duplicateCodePhones.length === 0,
+        accounts: state.identityAccounts || [],
+        links: state.identityLinks || [],
+        scans: state.identityScans || [],
+        summary: {
+          activeAccounts: activeAccounts.length,
+          activeLinks: activeLinks.length,
+          duplicatePhones,
+          duplicateCodePhones
+        }
       });
       return true;
     }

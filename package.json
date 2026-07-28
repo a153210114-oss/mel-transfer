@@ -12,6 +12,7 @@
     "agents:live": "node scripts/agent-simulation-live.mjs",
     "promo:live": "node scripts/promotion-simulation-live.mjs",
     "referral:live": "node scripts/referral-second-level-live.mjs",
+    "identity:live": "node scripts/identity-determinism-live.mjs",
     "locations:reverse-geocode": "node scripts/reverse-geocode-legacy-locations.mjs"
   },
   "dependencies": {
