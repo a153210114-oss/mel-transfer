@@ -2066,6 +2066,119 @@
       line-height: 1;
     }
 
+    .publish-editor {
+      background: #f4f6f4;
+    }
+
+    .publish-editor-body {
+      min-height: calc(100dvh - 52px);
+      padding: 14px 16px 120px;
+      background: #fff;
+    }
+
+    .publish-source-hint {
+      margin: 0 0 12px;
+      color: #7d868d;
+      font-size: 12px;
+      font-weight: 400;
+    }
+
+    .publish-media-preview {
+      position: relative;
+      min-height: 230px;
+      display: grid;
+      place-items: center;
+      margin-bottom: 14px;
+      border-radius: 12px;
+      background:
+        linear-gradient(135deg, rgba(24, 197, 110, .16), transparent 42%),
+        linear-gradient(45deg, #eff8f4, #f9fbfb);
+      color: #7b858b;
+      overflow: hidden;
+    }
+
+    .publish-media-preview.text-mode {
+      min-height: 150px;
+      background: #fafbfb;
+    }
+
+    .publish-media-preview.file-mode {
+      min-height: 168px;
+      background:
+        linear-gradient(135deg, rgba(37, 168, 242, .13), transparent),
+        #f8fbfd;
+    }
+
+    .publish-media-preview span {
+      font-size: 13px;
+      font-weight: 400;
+    }
+
+    .publish-media-preview.multi::after {
+      content: "1/6";
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(17, 24, 32, .52);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 350;
+    }
+
+    .publish-media-preview .media-dots {
+      bottom: 12px;
+    }
+
+    .publish-caption {
+      min-height: 128px;
+      padding: 13px 0;
+      border: 0;
+      border-radius: 0;
+      border-top: 1px solid rgba(17, 24, 32, .07);
+      border-bottom: 1px solid rgba(17, 24, 32, .07);
+      background: transparent;
+      resize: vertical;
+      font-size: 15px;
+      line-height: 1.6;
+      font-weight: 400;
+    }
+
+    .publish-editor-tools {
+      display: flex;
+      gap: 8px;
+      margin: 14px 0 4px;
+    }
+
+    .publish-editor-tools button {
+      min-height: 34px;
+      padding: 0 12px;
+      border-radius: 999px;
+      background: #f3f7f5;
+      color: #25312b;
+      font-size: 12px;
+      font-weight: 400;
+    }
+
+    .publish-visible-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      min-height: 44px;
+      margin-top: 12px;
+      border-top: 1px solid rgba(17, 24, 32, .07);
+      border-bottom: 1px solid rgba(17, 24, 32, .07);
+      color: #111820;
+      font-size: 14px;
+      font-weight: 400;
+    }
+
+    .publish-visible-row span:last-child {
+      color: #8f989f;
+      font-size: 12px;
+    }
+
     .location-panel {
       padding: 12px 12px 110px;
       background: #fff;
@@ -4133,6 +4246,31 @@
       <div id="operationList" class="profile-section"></div>
     </section>
 
+    <section id="publishEditorPage" class="phone-page publish-editor" aria-label="编辑动态">
+      <div class="page-nav">
+        <button class="plain-icon" type="button" data-close-page aria-label="返回">‹</button>
+        <strong>编辑动态</strong>
+        <button id="publishEditorSubmitBtn" class="plain-icon" type="button" aria-label="发布">✓</button>
+      </div>
+      <div class="publish-editor-body">
+        <p id="publishSourceHint" class="publish-source-hint">从相册选择 · 最多 6 张图</p>
+        <div id="publishMediaPreview" class="publish-media-preview multi" aria-label="动态内容预览">
+          <span>图片主图预览</span>
+          <span class="media-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+        </div>
+        <textarea id="publishEditorText" class="publish-caption" aria-label="动态配文" placeholder="说点什么，或让 AI 帮你整理成动态配文..."></textarea>
+        <div class="publish-editor-tools" aria-label="编辑工具">
+          <button id="publishAiPolishBtn" type="button">AI 整理</button>
+          <button id="publishAddLocationBtn" type="button">位置</button>
+          <button id="publishChangeSourceBtn" type="button">更换内容</button>
+        </div>
+        <button class="publish-visible-row" type="button" data-ai-command="设置动态可见范围">
+          <span>可见范围</span>
+          <span>当地可见 ›</span>
+        </button>
+      </div>
+    </section>
+
     <section id="locationPage" class="phone-page" aria-label="位置">
       <div class="page-nav">
         <button class="plain-icon" type="button" data-close-page aria-label="取消">×</button>
@@ -4209,6 +4347,7 @@
         <button type="button" data-publish-action="album">从相册选择</button>
         <button type="button" data-publish-action="camera">拍摄</button>
         <button type="button" data-publish-action="text">写文字</button>
+        <button type="button" data-publish-action="file">文件</button>
         <button id="publishCancelBtn" class="cancel" type="button">取消</button>
       </div>
     </div>
@@ -4320,6 +4459,13 @@
     const dynamicCancelBtn = document.querySelector('#dynamicCancelBtn');
     const operationTitle = document.querySelector('#operationTitle');
     const operationList = document.querySelector('#operationList');
+    const publishSourceHint = document.querySelector('#publishSourceHint');
+    const publishMediaPreview = document.querySelector('#publishMediaPreview');
+    const publishEditorText = document.querySelector('#publishEditorText');
+    const publishEditorSubmitBtn = document.querySelector('#publishEditorSubmitBtn');
+    const publishAiPolishBtn = document.querySelector('#publishAiPolishBtn');
+    const publishAddLocationBtn = document.querySelector('#publishAddLocationBtn');
+    const publishChangeSourceBtn = document.querySelector('#publishChangeSourceBtn');
     const locationSearchInput = document.querySelector('#locationSearchInput');
     const locationSearchBtn = document.querySelector('#locationSearchBtn');
     const locationCurrentBtn = document.querySelector('#locationCurrentBtn');
@@ -4338,6 +4484,8 @@
     let activeProfile = 'me';
     let menuDragMoved = false;
     let selectedLocation = null;
+    let publishSource = 'album';
+    let locationReturnTarget = 'chat';
 
     function localGreetingByHour(date = new Date()) {
       const hour = date.getHours();
@@ -4751,6 +4899,46 @@
       openPage('operationPage');
     }
 
+    function openPublishEditor(source = 'album') {
+      publishSource = source;
+      const config = {
+        album: {
+          hint: '从相册选择 · 最多 6 张图',
+          label: '图片主图预览',
+          className: 'publish-media-preview multi',
+          placeholder: '说点什么，或让 AI 帮你整理成动态配文...'
+        },
+        camera: {
+          hint: '拍摄 · 基础版视频最长 15 秒',
+          label: '拍摄内容预览',
+          className: 'publish-media-preview',
+          placeholder: '给刚拍的内容配一句话...'
+        },
+        text: {
+          hint: '写文字',
+          label: '文字动态',
+          className: 'publish-media-preview text-mode',
+          placeholder: '写想法、提问题，或让 AI 帮你扩写...'
+        },
+        file: {
+          hint: '文件 · 可作为动态附件',
+          label: '文件预览',
+          className: 'publish-media-preview file-mode',
+          placeholder: '补充文件说明，或让 AI 摘要后发布...'
+        }
+      }[source] || {};
+
+      publishSourceHint.textContent = config.hint || '发布动态';
+      publishMediaPreview.className = config.className || 'publish-media-preview';
+      publishMediaPreview.innerHTML = `<span>${config.label || '内容预览'}</span>${
+        source === 'album' ? '<span class="media-dots" aria-hidden="true"><i></i><i></i><i></i></span>' : ''
+      }`;
+      publishEditorText.placeholder = config.placeholder || '说点什么...';
+      if (!publishEditorText.value.trim()) publishEditorText.value = '';
+      openPage('publishEditorPage');
+      window.setTimeout(() => publishEditorText.focus(), 120);
+    }
+
     function renderLocations(results = []) {
       const list = Array.isArray(results) ? results : [];
       locationResults.replaceChildren(...list.map((item, index) => {
@@ -4809,7 +4997,8 @@
       }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 });
     }
 
-    function openLocationPicker() {
+    function openLocationPicker(returnTarget = 'chat') {
+      locationReturnTarget = returnTarget;
       selectedLocation = null;
       locationSearchInput.value = '';
       locationHint.textContent = '可搜索地点，也可以使用当前位置。发送前会显示标准地址。';
@@ -4943,12 +5132,7 @@
       const action = event.target.closest('[data-publish-action]');
       if (!action) return;
       setPublishSheet(false);
-      const actionText = {
-        album: '从相册选择',
-        camera: '拍摄',
-        text: '写文字'
-      }[action.dataset.publishAction];
-      openOperation(actionText, ['选择内容', 'AI 整理', '设置可见范围', '发布到动态']);
+      openPublishEditor(action.dataset.publishAction);
     });
 
     shareCancelBtn.addEventListener('click', () => setShareSheet(false));
@@ -5030,6 +5214,70 @@
         await loadGrowth();
         postDraft.value = '';
         toast('已发布到 Melbourne 附近动态。');
+      } catch (error) {
+        toast('发布失败，请检查本地 API。');
+      }
+    });
+
+    publishAiPolishBtn.addEventListener('click', async () => {
+      const text = publishEditorText.value.trim();
+      if (!text) {
+        toast('先写一点内容，AI 再帮你整理。');
+        publishEditorText.focus();
+        return;
+      }
+      try {
+        const data = await api('/ai/compose-post', {
+          method: 'POST',
+          body: JSON.stringify({ draft: text, city: 'Melbourne' })
+        });
+        publishEditorText.value = data.content;
+        toast(`AI 已整理：${data.tags.join('、')}`);
+      } catch (error) {
+        toast('AI 整理暂不可用，可以先手动编辑。');
+      }
+    });
+
+    publishAddLocationBtn.addEventListener('click', () => {
+      openLocationPicker('publish');
+    });
+
+    publishChangeSourceBtn.addEventListener('click', () => {
+      setPublishSheet(true);
+    });
+
+    publishEditorSubmitBtn.addEventListener('click', async () => {
+      const text = publishEditorText.value.trim();
+      if (!text) {
+        toast('先写一点配文再发布。');
+        publishEditorText.focus();
+        return;
+      }
+      const mediaType = {
+        album: 'image',
+        camera: 'video',
+        text: 'text',
+        file: 'file'
+      }[publishSource] || 'text';
+      try {
+        const data = await api('/dynamics', {
+          method: 'POST',
+          body: JSON.stringify({
+            city: 'Melbourne',
+            dynamicType: 'note',
+            mediaType,
+            mediaCount: publishSource === 'album' ? 3 : publishSource === 'text' ? 0 : 1,
+            content: text,
+            tags: ['本地生活']
+          })
+        });
+        addPost(data.post);
+        closeTopPage();
+        openDynamicFeed();
+        publishEditorText.value = '';
+        await showPointsUnlock(10);
+        await loadGrowth();
+        toast('已发布到动态。');
       } catch (error) {
         toast('发布失败，请检查本地 API。');
       }
@@ -5475,6 +5723,15 @@
     locationSendBtn.addEventListener('click', () => {
       if (!selectedLocation) {
         toast('先选择一个位置。');
+        return;
+      }
+      if (locationReturnTarget === 'publish') {
+        const address = selectedLocation.formatted_address || '';
+        publishEditorText.value = `${publishEditorText.value.trim()}${publishEditorText.value.trim() ? '\n' : ''}📍 ${address}`.trim();
+        closeTopPage();
+        openPublishEditor(publishSource);
+        toast('位置已加入动态。');
+        locationReturnTarget = 'chat';
         return;
       }
       aiInput.value = `发送位置：${selectedLocation.formatted_address || ''}`;
