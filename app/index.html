@@ -4414,25 +4414,61 @@
       localStorage.setItem(onboardingStageKey(), String(stage));
     }
 
-    async function runOnboardingPrompt() {
+    function onboardingPromptForStage(stage = getOnboardingStage()) {
+      return stage <= 0 ? '打开动态' : '打开添加好友';
+    }
+
+    function primeOnboardingPrompt() {
       const stage = getOnboardingStage();
       if (stage >= 2) {
         window.location.href = '../official/';
         return;
       }
-      const prompt = stage <= 0 ? '打开动态' : '打开添加好友';
+      const prompt = onboardingPromptForStage(stage);
       aiInput.value = prompt;
-      await runAiCommand(prompt);
+      aiInput.focus();
+      toast(stage <= 0 ? '发送这句试试，完成后有新手福利。' : '发送这句再试一次，完成今日任务。');
+    }
+
+    function waitForActionPaint() {
+      return new Promise((resolve) => {
+        window.requestAnimationFrame(() => window.requestAnimationFrame(resolve));
+      });
+    }
+
+    async function confirmOnboardingAction(stage) {
+      await waitForActionPaint();
+      if (stage <= 0) {
+        return document.querySelector('#nearbyPage')?.classList.contains('active') === true;
+      }
+      if (stage === 1) {
+        return document.querySelector('#addFriendPage')?.classList.contains('open') === true;
+      }
+      return false;
+    }
+
+    async function completeOnboardingPromptIfNeeded(commandText) {
+      const stage = getOnboardingStage();
+      const text = String(commandText || '');
+      const completedFirst = stage <= 0 && /打开动态|看动态|动态页|进入动态/i.test(text);
+      const completedSecond = stage === 1 && /打开添加好友|打开添加朋友|添加好友|添加朋友|加好友/i.test(text);
+      if (!completedFirst && !completedSecond) return false;
+      if (!(await confirmOnboardingAction(stage))) {
+        toast('动作还没完成，完成后再发放新手福利。');
+        return false;
+      }
+
       await showPointsUnlock(2);
       if (stage <= 0) {
         setOnboardingStage(1);
         updateOnboardingPrompt();
         toast('已获得 +2 积分。再试一次：打开添加好友。');
-        return;
+        return true;
       }
       setOnboardingStage(2);
       updateOnboardingPrompt();
       toast('今日任务完成，您已获得 4 积分。点击“我”查看详情。');
+      return true;
     }
 
     function updateOnboardingPrompt() {
@@ -4612,11 +4648,13 @@
       if (/打开动态|看动态|动态页|进入动态/i.test(commandText)) {
         openTab('nearbyPage');
         toast('已打开动态。');
+        await completeOnboardingPromptIfNeeded(commandText);
         return;
       }
       if (/打开添加好友|打开添加朋友|添加好友|添加朋友|加好友/i.test(commandText)) {
         openPage('addFriendPage');
         toast('已打开添加朋友。');
+        await completeOnboardingPromptIfNeeded(commandText);
         return;
       }
       if (/地图|导航|位置|定位|发送地址|发地址|map|navigation|location/i.test(commandText)) {
@@ -4649,8 +4687,10 @@
           openLocationPicker();
         } else if (command.action === 'open_dynamic') {
           openTab('nearbyPage');
+          await completeOnboardingPromptIfNeeded(commandText);
         } else if (command.action === 'open_add_friend') {
           openPage('addFriendPage');
+          await completeOnboardingPromptIfNeeded(commandText);
         } else if (command.action === 'search_local') {
           openTab('nearbyPage');
           document.querySelector('#searchInput').value = command.query || commandText;
@@ -5316,7 +5356,7 @@
           moved = false;
           return;
         }
-        runOnboardingPrompt();
+        primeOnboardingPrompt();
       });
     }
 
