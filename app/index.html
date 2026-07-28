@@ -2543,28 +2543,28 @@
     .map-locate {
       position: absolute;
       left: 14px;
-      bottom: 168px;
-      width: 44px;
-      height: 44px;
-      border-radius: 12px;
+      bottom: 216px;
+      width: 42px;
+      height: 42px;
+      border-radius: 999px;
       background: #fff;
       box-shadow: 0 10px 24px rgba(17, 24, 32, .12);
       z-index: 3;
     }
 
     .map-locate svg {
-      width: 22px;
-      height: 22px;
+      width: 23px;
+      height: 23px;
       fill: none;
-      stroke: #2188ff;
-      stroke-width: 1.9;
+      stroke: var(--brand);
+      stroke-width: 2;
       stroke-linecap: round;
       stroke-linejoin: round;
     }
 
     .location-search {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 44px 56px;
+      grid-template-columns: minmax(0, 1fr) 48px 56px;
       gap: 8px;
       align-items: center;
       margin-bottom: 8px;
@@ -2575,7 +2575,7 @@
       height: 40px;
       border: 0;
       border-radius: 12px;
-      padding: 0 14px;
+      padding: 0 16px;
       background: #f4f6f5;
       color: #111820;
       font-size: var(--text-sm);
@@ -2598,7 +2598,8 @@
     .location-dropdown {
       background: #f4f6f5;
       color: #617069;
-      font-size: 18px;
+      font-size: 24px;
+      line-height: 1;
       transition: transform .18s ease;
     }
 
@@ -4739,7 +4740,7 @@
         <div class="map-grid"></div>
         <div class="map-pin" aria-hidden="true"></div>
         <button id="locationCurrentBtn" class="map-locate" type="button" aria-label="定位当前位置">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v3"></path><path d="M12 18v3"></path><path d="M3 12h3"></path><path d="M18 12h3"></path><circle cx="12" cy="12" r="5"></circle></svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.1 7-12a7 7 0 1 0-14 0c0 5.9 7 12 7 12Z"></path><circle cx="12" cy="9" r="2.4"></circle></svg>
         </button>
       </div>
       <div class="location-panel">
