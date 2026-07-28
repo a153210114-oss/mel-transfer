@@ -1761,6 +1761,65 @@
       color: var(--hb-ink);
     }
 
+    .location-card {
+      width: min(260px, 72vw);
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 54px;
+      gap: 10px;
+      align-items: stretch;
+      padding: 12px;
+      border-radius: 10px;
+      background: #fff;
+      color: #111820;
+      text-align: left;
+      border: 1px solid rgba(17, 24, 32, .08);
+      box-shadow: 0 6px 18px rgba(17, 24, 32, .06);
+    }
+
+    .chat-line.me .location-card {
+      justify-self: end;
+    }
+
+    .location-card strong {
+      display: block;
+      margin-bottom: 5px;
+      font-size: var(--text-sm);
+      line-height: 1.35;
+      font-weight: 600;
+    }
+
+    .location-card span {
+      display: block;
+      color: #6f777e;
+      font-size: var(--text-xs);
+      line-height: 1.4;
+      font-weight: 400;
+    }
+
+    .location-map-thumb {
+      min-height: 54px;
+      border-radius: 8px;
+      background:
+        linear-gradient(110deg, rgba(51, 181, 123, .22), transparent 36%),
+        linear-gradient(28deg, transparent 0 35%, rgba(139, 177, 214, .58) 36% 40%, transparent 41% 60%, rgba(139, 177, 214, .42) 61% 65%, transparent 66%),
+        #e8f0ed;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .location-map-thumb::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 48%;
+      width: 16px;
+      height: 16px;
+      border-radius: 999px 999px 999px 0;
+      background: var(--brand);
+      transform: translate(-50%, -50%) rotate(-45deg);
+      box-shadow: 0 4px 12px rgba(24, 197, 110, .28);
+    }
+
     .chat-page-body {
       min-height: calc(100dvh - 64px);
       display: grid;
@@ -5770,7 +5829,7 @@
         selectedLabel: '发送地址，可编辑后确认',
         confirm: '确认发送位置',
         empty: '先选择一个地点，再带回对话框。',
-        done: '位置已填入当前对话框，确认后再发送。'
+        done: '位置消息已发送。'
       };
     }
 
@@ -6136,11 +6195,56 @@
         locationReturnTarget = 'chat';
         return;
       }
-      const targetInput = document.querySelector('#chatPage.open #fullChatInput') || aiInput;
-      targetInput.value = `发送位置：${location.formatted_address || ''}`;
       closeTopPage();
-      targetInput.focus();
+      appendChatLocation(location, true);
       toast(locationContextCopy().done);
+    }
+
+    function createLocationCard(location, isMe = false) {
+      const line = document.createElement('div');
+      line.className = `chat-line${isMe ? ' me' : ''}`;
+      const card = document.createElement('button');
+      card.className = 'location-card';
+      card.type = 'button';
+      card.dataset.locationCard = 'true';
+      card.dataset.address = location.formatted_address || '';
+      if (Number.isFinite(location.latitude)) card.dataset.latitude = String(location.latitude);
+      if (Number.isFinite(location.longitude)) card.dataset.longitude = String(location.longitude);
+      card.setAttribute('aria-label', '在 Google 地图查看位置');
+      card.innerHTML = `
+        <span>
+          <strong>${location.formatted_address || '位置'}</strong>
+          <span>查看距离和导航</span>
+        </span>
+        <span class="location-map-thumb" aria-hidden="true"></span>
+      `;
+      const avatar = document.createElement('button');
+      avatar.className = 'avatar avatar-button';
+      avatar.type = 'button';
+      avatar.dataset.card = isMe ? 'me' : 'mia';
+      avatar.setAttribute('aria-label', isMe ? '查看我的资料' : '查看对方资料');
+      if (isMe) {
+        avatar.innerHTML = '<img src="../assets/brand/huaban-logo-v1.png" alt="我的资料">';
+        line.append(card, avatar);
+      } else {
+        avatar.textContent = 'M';
+        line.append(avatar, card);
+      }
+      return line;
+    }
+
+    async function appendChatLocation(location, isMe = true) {
+      try {
+        await api('/messages/mia', {
+          method: 'POST',
+          body: JSON.stringify({ messageType: 'location', body: location.formatted_address || '', location })
+        });
+      } catch (error) {
+        toast('位置已显示，接口同步失败。');
+      }
+      const line = createLocationCard(location, isMe);
+      chatThread.append(line);
+      line.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }
 
     function addChatAttachmentPreview(files, sourceLabel) {
@@ -6919,6 +7023,16 @@
       const input = document.querySelector('#fullChatInput');
       const text = input.value.trim();
       if (!text) return;
+      const locationText = text.match(/^发送位置[:：]\s*(.+)$/)?.[1]?.trim();
+      if (locationText) {
+        await appendChatLocation({
+          formatted_address: locationText,
+          source: 'chat_input'
+        }, true);
+        input.value = '';
+        toast('位置消息已发送。');
+        return;
+      }
       try {
         await api('/messages/mia', {
           method: 'POST',
@@ -6939,6 +7053,26 @@
       chatThread.append(line);
       input.value = '';
       toast('消息已发送，已写入本地真测数据。');
+    });
+
+    chatThread.addEventListener('click', (event) => {
+      const card = event.target.closest('[data-location-card]');
+      const legacyBubble = event.target.closest('.bubble');
+      const legacyAddress = legacyBubble?.textContent?.match(/^(?:发送位置|位置)[:：]\s*(.+)$|^📍\s*(.+)$/)?.slice(1).find(Boolean);
+      if (!card && !legacyAddress) return;
+      const hasLatLng = card?.dataset.latitude && card?.dataset.longitude;
+      const url = card
+        ? googleMapsUrl({
+            formatted_address: card.dataset.address || '',
+            latitude: hasLatLng ? Number(card.dataset.latitude) : undefined,
+            longitude: hasLatLng ? Number(card.dataset.longitude) : undefined
+          })
+        : googleMapsUrl({ formatted_address: legacyAddress });
+      if (!url) {
+        toast('这个位置缺少可打开的地址。');
+        return;
+      }
+      window.open(url, '_blank', 'noopener,noreferrer');
     });
 
     document.querySelector('#aiChatForm').addEventListener('submit', async (event) => {
