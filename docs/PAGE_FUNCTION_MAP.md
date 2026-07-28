@@ -62,7 +62,7 @@
 | 编辑动态 | `publishEditorPage` | AI 整理 | 调 AI 生成/整理配文 | 文本框更新或失败提示 | `/api/v1/ai/compose-post` 成功 |
 | 编辑动态 | `publishEditorPage` | 位置 | 打开 `locationPage` | 选地址后回编辑页并插入地址 | Google 地址服务成功 |
 | 编辑动态 | `publishEditorPage` | 更换内容 | 回发布来源弹层 | 重新选择来源 | 不丢当前草稿 |
-| 编辑动态 | `publishEditorPage` | 左移/右移 | 调整当前图片顺序 | 主图和缩略图更新 | 多图顺序保存 |
+| 编辑动态 | `publishEditorPage` | 小图缩略图 | 点击显示绿色选中框，拖拽调整图片顺序 | 主图和缩略图更新 | 多图顺序保存 |
 | 编辑动态 | `publishEditorPage` | 存草稿 | 保存当前文本和结构 | 留在编辑页 | 后端草稿未接入前标 L2 |
 | 编辑动态 | `publishEditorPage` | 清空 | 清空媒体和文本 | 留在编辑页 | 不误删已发布内容 |
 | 编辑动态 | `publishEditorPage` | 可见范围 | 打开可见范围弹层 | 选择当地/好友/公开/仅自己 | 后端过滤后才算闭环 |

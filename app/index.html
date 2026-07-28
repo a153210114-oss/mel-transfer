@@ -4356,8 +4356,6 @@
           <button id="publishAiPolishBtn" class="primary-light" type="button">AI 整理</button>
           <button id="publishAddLocationBtn" type="button">位置</button>
           <button id="publishChangeSourceBtn" type="button">更换内容</button>
-          <button id="publishMoveLeftBtn" type="button">左移</button>
-          <button id="publishMoveRightBtn" type="button">右移</button>
           <button id="publishSaveDraftBtn" type="button">存草稿</button>
           <button id="publishClearDraftBtn" type="button">清空</button>
         </div>
@@ -4586,8 +4584,6 @@
     const publishAiPolishBtn = document.querySelector('#publishAiPolishBtn');
     const publishAddLocationBtn = document.querySelector('#publishAddLocationBtn');
     const publishChangeSourceBtn = document.querySelector('#publishChangeSourceBtn');
-    const publishMoveLeftBtn = document.querySelector('#publishMoveLeftBtn');
-    const publishMoveRightBtn = document.querySelector('#publishMoveRightBtn');
     const publishSaveDraftBtn = document.querySelector('#publishSaveDraftBtn');
     const publishClearDraftBtn = document.querySelector('#publishClearDraftBtn');
     const publishAlbumInput = document.querySelector('#publishAlbumInput');
@@ -5194,7 +5190,8 @@
         remove.type = 'button';
         remove.textContent = '×';
         remove.setAttribute('aria-label', '移除');
-        remove.addEventListener('click', () => {
+        remove.addEventListener('click', (event) => {
+          event.stopPropagation();
           publishMediaFiles.splice(index, 1);
           publishSelectedIndex = Math.min(publishSelectedIndex, Math.max(0, publishMediaFiles.length - 1));
           renderPublishMediaPreview();
@@ -5223,23 +5220,6 @@
       }));
       publishSelectedIndex = 0;
       if (files.length > limited.length) toast('最多选择 6 张图片。');
-      renderPublishMediaPreview();
-      savePublishDraft();
-    }
-
-    function moveSelectedPublishMedia(direction) {
-      if (publishMediaFiles.length < 2) {
-        toast('至少选择 2 个内容后才能调整顺序。');
-        return;
-      }
-      const nextIndex = publishSelectedIndex + direction;
-      if (nextIndex < 0 || nextIndex >= publishMediaFiles.length) {
-        toast(direction < 0 ? '已经在最前面。' : '已经在最后面。');
-        return;
-      }
-      const [item] = publishMediaFiles.splice(publishSelectedIndex, 1);
-      publishMediaFiles.splice(nextIndex, 0, item);
-      publishSelectedIndex = nextIndex;
       renderPublishMediaPreview();
       savePublishDraft();
     }
@@ -5735,9 +5715,6 @@
       setPublishSheet(true);
     });
 
-    publishMoveLeftBtn.addEventListener('click', () => moveSelectedPublishMedia(-1));
-    publishMoveRightBtn.addEventListener('click', () => moveSelectedPublishMedia(1));
-
     publishSaveDraftBtn.addEventListener('click', () => {
       savePublishDraft();
       toast('草稿已保存。');
@@ -5790,6 +5767,7 @@
       if (targetIndex === publishDraggedIndex) return;
       const [moved] = publishMediaFiles.splice(publishDraggedIndex, 1);
       publishMediaFiles.splice(targetIndex, 0, moved);
+      publishSelectedIndex = targetIndex;
       publishDraggedIndex = null;
       renderPublishMediaPreview();
       savePublishDraft();
