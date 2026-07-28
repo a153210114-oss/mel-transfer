@@ -1380,6 +1380,51 @@
       font-size: 16px;
     }
 
+    .equity-equation {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 14px minmax(0, 1fr) 14px minmax(0, 1fr) 16px minmax(0, 1.12fr);
+      align-items: stretch;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .equity-factor {
+      min-width: 0;
+      padding: 9px 8px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, .78);
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 390;
+    }
+
+    .equity-factor b {
+      display: block;
+      margin-bottom: 3px;
+      color: var(--ink);
+      font-size: 15px;
+      font-weight: 680;
+      white-space: nowrap;
+    }
+
+    .equity-factor.result {
+      background: #fff8e7;
+      border: 1px solid rgba(172, 126, 22, .18);
+      color: #7c5b13;
+    }
+
+    .equity-factor.result b {
+      color: #9a6b09;
+    }
+
+    .equity-symbol {
+      display: grid;
+      place-items: center;
+      color: #8d989f;
+      font-size: 15px;
+      font-weight: 520;
+    }
+
     .weight-panel {
       margin-top: 12px;
       padding: 10px;
@@ -1415,6 +1460,10 @@
       gap: 6px;
     }
 
+    .weight-grid.identity-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
     .weight-pill {
       min-height: 42px;
       display: grid;
@@ -1444,6 +1493,24 @@
 
     .weight-pill.active b {
       color: #9a6b09;
+    }
+
+    @media (max-width: 430px) {
+      .equity-equation {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .equity-symbol {
+        display: none;
+      }
+
+      .equity-factor {
+        padding: 8px 6px;
+      }
+
+      .equity-factor b {
+        font-size: 14px;
+      }
     }
 
     .release-brief {
@@ -2893,14 +2960,14 @@
             <div class="growth-card surface-hidden">
               <strong>积分是参与奖励</strong>
               <p class="growth-lead"><b>你参与得越真实，积分越有效。</b>身份确认、提建议、发布有效内容、邀请真实朋友、完善名片和参与城市共建，都会进入入账记录。</p>
-              <div class="growth-stats">
-                <div class="growth-stat"><b id="growthPoints">1,280</b>参与积分</div>
-                <div class="growth-stat"><b id="growthLevel">L8</b>当前等级</div>
-                <div class="growth-stat"><b id="growthPool">×128</b>等级权重</div>
-              </div>
-              <div class="formula-card">
-                <b>当前贡献权重：1,280 × 128 = 163,840</b><br>
-                等级不是积分本身，而是积分进入权益池时的放大权重。
+              <div class="equity-equation" aria-label="我的权益计算">
+                <div class="equity-factor"><b id="growthPoints">1,280</b>我的积分</div>
+                <span class="equity-symbol">×</span>
+                <div class="equity-factor"><b id="growthLevel">L8 · ×128</b>我的等级权重</div>
+                <span class="equity-symbol">×</span>
+                <div class="equity-factor"><b>初创 · ×1.3</b>我的身份权重</div>
+                <span class="equity-symbol">=</span>
+                <div class="equity-factor result"><b id="growthPool">212,992</b>我的权益</div>
               </div>
               <div class="weight-panel" aria-label="等级关联权重">
                 <div class="weight-head"><strong>等级关联权重</strong><span>等级越高，释放权重越高</span></div>
@@ -2915,6 +2982,14 @@
                   <span class="weight-pill">L1<b>×1</b></span>
                 </div>
               </div>
+              <div class="weight-panel" aria-label="身份关联权重">
+                <div class="weight-head"><strong>身份关联权重</strong><span>只按加入时间排序</span></div>
+                <div class="weight-grid identity-grid">
+                  <span class="weight-pill active">初创 128席<b>×1.3</b></span>
+                  <span class="weight-pill">共创 256席<b>×1.2</b></span>
+                  <span class="weight-pill">共建 512席<b>×1.1</b></span>
+                </div>
+              </div>
               <div class="release-brief" aria-label="积分释放说明">
                 <div class="release-brief-head"><strong>释放说明</strong><span>总盘固定，不增发</span></div>
                 <div class="release-meter" aria-hidden="true"><i></i></div>
@@ -2926,7 +3001,7 @@
                 <p>当前等级为 L8，对应最高权重 ×128。L8 当前数量释放完成后，系统自动进入 L7，后续按 L7 ×64 权重继续释放。</p>
               </div>
               <div class="formula-card">
-                <b>权益测算 = 参与积分 × 等级权重 × 共创席位权重</b><br>
+                <b>权益测算 = 我的积分 × 等级权重 × 身份权重</b><br>
                 积分用于记录参与和权益测算，不是充值、股权、证券或固定收益承诺。
               </div>
               <div class="release-track" aria-label="用户动作积分">
@@ -3379,14 +3454,14 @@
       <div class="growth-card" style="margin: 14px;">
         <strong>积分是参与奖励</strong>
         <p class="growth-lead"><b>你参与得越真实，积分越有效。</b>身份确认、提建议、发布有效内容、邀请真实朋友、完善名片和参与城市共建，都会进入入账记录。</p>
-        <div class="growth-stats">
-          <div class="growth-stat"><b>1,280</b>参与积分</div>
-          <div class="growth-stat"><b>L8</b>当前等级</div>
-          <div class="growth-stat"><b>×128</b>等级权重</div>
-        </div>
-        <div class="formula-card">
-          <b>当前贡献权重：1,280 × 128 = 163,840</b><br>
-          等级不是积分本身，而是积分进入权益池时的放大权重。
+        <div class="equity-equation" aria-label="我的权益计算">
+          <div class="equity-factor"><b>1,280</b>我的积分</div>
+          <span class="equity-symbol">×</span>
+          <div class="equity-factor"><b>L8 · ×128</b>我的等级权重</div>
+          <span class="equity-symbol">×</span>
+          <div class="equity-factor"><b>初创 · ×1.3</b>我的身份权重</div>
+          <span class="equity-symbol">=</span>
+          <div class="equity-factor result"><b>212,992</b>我的权益</div>
         </div>
         <div class="weight-panel" aria-label="等级关联权重">
           <div class="weight-head"><strong>等级关联权重</strong><span>等级越高，释放权重越高</span></div>
@@ -3401,6 +3476,14 @@
             <span class="weight-pill">L1<b>×1</b></span>
           </div>
         </div>
+        <div class="weight-panel" aria-label="身份关联权重">
+          <div class="weight-head"><strong>身份关联权重</strong><span>只按加入时间排序</span></div>
+          <div class="weight-grid identity-grid">
+            <span class="weight-pill active">初创 128席<b>×1.3</b></span>
+            <span class="weight-pill">共创 256席<b>×1.2</b></span>
+            <span class="weight-pill">共建 512席<b>×1.1</b></span>
+          </div>
+        </div>
         <div class="release-brief" aria-label="积分释放说明">
           <div class="release-brief-head"><strong>释放说明</strong><span>总盘固定，不增发</span></div>
           <div class="release-meter" aria-hidden="true"><i></i></div>
@@ -3412,7 +3495,7 @@
           <p>当前等级为 L8，对应最高权重 ×128。L8 当前数量释放完成后，系统自动进入 L7，后续按 L7 ×64 权重继续释放。</p>
         </div>
         <div class="formula-card">
-          <b>权益测算 = 参与积分 × 等级权重 × 共创席位权重</b><br>
+          <b>权益测算 = 我的积分 × 等级权重 × 身份权重</b><br>
           积分用于记录参与和权益测算，不是充值、股权、证券或固定收益承诺。
         </div>
       </div>
@@ -4095,9 +4178,12 @@
     async function loadGrowth() {
       try {
         const data = await api('/me/growth');
-        document.querySelector('#growthPoints').textContent = Number(data.pointsBalance || 0).toLocaleString('zh-CN');
-        document.querySelector('#growthLevel').textContent = data.releaseLevel || 'L8';
-        document.querySelector('#growthPool').textContent = '×128';
+        const points = Number(data.pointsBalance || 1280);
+        const levelWeight = 128;
+        const identityWeight = 1.3;
+        document.querySelector('#growthPoints').textContent = points.toLocaleString('zh-CN');
+        document.querySelector('#growthLevel').textContent = `${data.releaseLevel || 'L8'} · ×${levelWeight}`;
+        document.querySelector('#growthPool').textContent = Math.round(points * levelWeight * identityWeight).toLocaleString('zh-CN');
       } catch (error) {
         toast('积分权益接口暂不可用。');
       }
