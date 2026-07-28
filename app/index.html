@@ -645,6 +645,10 @@
       color: var(--muted);
     }
 
+    .menu-item .row-badge {
+      justify-self: end;
+    }
+
     .menu-item .row-text span {
       display: none;
     }
@@ -832,6 +836,22 @@
       font-weight: 400;
       justify-self: end;
       text-align: right;
+    }
+
+    .row-badge {
+      min-width: 16px;
+      height: 16px;
+      display: inline-grid;
+      place-items: center;
+      justify-self: end;
+      padding: 0 5px;
+      border-radius: 999px;
+      background: #ff3b4f;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 650;
+      line-height: 1;
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, .95);
     }
 
     .search {
@@ -2664,10 +2684,12 @@
       place-items: center;
       padding: 0 5px;
       border-radius: 999px;
-      background: var(--hb-amber);
+      background: #ff3b4f;
       color: #fff;
       font-size: 10px;
-      font-weight: 900;
+      font-weight: 650;
+      line-height: 1;
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, .96);
     }
 
     .publish-sheet {
@@ -2847,7 +2869,7 @@
         <button class="menu-item active" type="button" draggable="true" data-menu-key="home" data-menu-target="homePage">
           <span class="row-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h16v10H8l-4 3v-13Z"></path></svg></span>
           <span class="row-text"><strong>首页</strong><span>聊天、未读、AI 助手会话</span></span>
-          <span class="row-meta">2</span>
+          <span class="row-badge" aria-label="2 条未读消息">2</span>
         </button>
         <button class="menu-item" type="button" draggable="true" data-menu-key="contacts" data-menu-target="contactsPage">
           <span class="row-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"></path><path d="M4 21a8 8 0 0 1 16 0"></path></svg></span>
@@ -2857,7 +2879,7 @@
         <button class="menu-item" type="button" draggable="true" data-menu-key="dynamic" data-menu-target="nearbyPage">
           <span class="row-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.1 7-12a7 7 0 1 0-14 0c0 5.9 7 12 7 12Z"></path><path d="M12 11.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"></path></svg></span>
           <span class="row-text"><strong>动态</strong><span>附近内容、附近的人、城市推荐</span></span>
-          <span class="row-meta">›</span>
+          <span class="row-badge" aria-label="3 条未看动态">3</span>
         </button>
         <button class="menu-item" type="button" draggable="true" data-menu-key="me" data-menu-target="mePage">
           <span class="row-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14v14H5z"></path><path d="M8 8h2v2H8z"></path><path d="M14 8h2v2h-2z"></path><path d="M8 14h2v2H8z"></path><path d="M14 14h2v2h-2z"></path></svg></span>
@@ -2946,7 +2968,7 @@
             <button class="list-row" type="button" data-chat="mia">
               <span class="row-icon">M</span>
               <span class="row-text"><strong>Mia Zhang</strong><span>可以，我让 AI 帮我们找附近路线。</span></span>
-              <span class="row-meta">2 条</span>
+              <span class="row-badge" aria-label="2 条未读消息">2</span>
             </button>
             <button class="list-row" type="button" data-open-page="aiChatPage">
               <span class="row-icon">华</span>
@@ -4152,6 +4174,7 @@
       <button class="tab-btn active" type="button" data-tab-target="homePage">
         <span class="tab-icon">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5V20H5v-8.5Z"></path><path d="M9.5 20v-5h5v5"></path></svg>
+          <span class="tab-badge" aria-label="2 条未读消息">2</span>
         </span>
         <span>首页</span>
       </button>
@@ -4170,7 +4193,7 @@
       <button class="tab-btn" type="button" data-tab-target="nearbyPage">
         <span class="tab-icon">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.1 7-12a7 7 0 1 0-14 0c0 5.9 7 12 7 12Z"></path><path d="M12 11.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"></path></svg>
-          <span class="tab-badge">3</span>
+          <span class="tab-badge" aria-label="3 条未看动态">3</span>
         </span>
         <span>动态</span>
       </button>
