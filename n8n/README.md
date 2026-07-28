@@ -5,8 +5,11 @@ V1.1 先保留 8 条主工作流。第一阶段不追求复杂编排，先保证
 新增测试工作流草稿：
 
 - `huaban-v1.1-5-agent-user-simulation.workflow.json`
+- `huaban-v1.1-external-invite-promotion.workflow.json`
 
 用途：用 5 个模拟用户 Agent 测试用户端页面按键链、华伴 AI 指令理解、真实动作完成确认和积分入账。
+
+第二组用途：用 5 个推广 Agent 测试异城手机号外部邀请，覆盖短信和邮件推广路径，确认未注册用户只生成邀请与待确认记录，不提前发放积分。
 
 配套文档：
 
@@ -16,6 +19,7 @@ V1.1 先保留 8 条主工作流。第一阶段不追求复杂编排，先保证
 
 ```bash
 npm run agents:live
+npm run promo:live
 ```
 
 原则：Agent 只能在动作确认后写积分事件；不能只因用户输入提示词就发积分。

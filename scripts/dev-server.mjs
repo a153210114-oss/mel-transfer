@@ -1116,12 +1116,25 @@ async function handleApi(req, res) {
 
     if (req.method === 'POST' && path === '/api/v1/friendships') {
       const body = await readJson(req);
+      const externalInvite = body.recipientIsHuabanUser === false || body.inviteStatus;
       const friendship = {
         id: `friend_${Date.now()}`,
         addresseeId: body.addresseeId,
+        ownerCode: body.ownerCode || '',
+        friendPhone: body.friendPhone || body.phone || '',
+        friendEmail: body.friendEmail || body.email || '',
+        friendName: body.friendName || '',
+        city: body.city || '',
+        campaign: body.campaign || '',
+        refCode: body.refCode || body.ref_code || '',
+        recipientIsHuabanUser: body.recipientIsHuabanUser !== false,
+        inviteStatus: body.inviteStatus || (externalInvite ? 'external_invite_created' : 'accepted'),
+        inviteChannels: Array.isArray(body.inviteChannels) ? body.inviteChannels : [],
+        inviteLinks: body.inviteLinks || {},
         source: body.source || 'card',
         dataSource: body.dataSource || TEST_SOURCE,
-        status: 'accepted'
+        status: body.status || (externalInvite ? 'invited' : 'accepted'),
+        createdAt: new Date().toISOString()
       };
       state.friendships.push(friendship);
       saveState();

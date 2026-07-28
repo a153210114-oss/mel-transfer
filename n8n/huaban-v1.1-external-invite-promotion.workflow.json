@@ -1,0 +1,329 @@
+{
+  "name": "HB V1.1 - External Invite Promotion Simulation",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "manual-trigger",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "const baseUrl = $env.HUABAN_BASE_URL || 'https://www.huabanapp.com';\nconst stamp = Date.now();\nconst invite = {\n  baseUrl,\n  stamp,\n  city: 'Sydney',\n  inviter: { ownerCode: 'HB_AGENT_SYDNEY', name: '周宁' },\n  recipient: { name: 'Owen', phone: '+61400111222', email: 'owen.sydney@example.test', isHuabanUser: false },\n  campaign: 'sydney_external_phone_invite_v1',\n  refCode: 'HB_AGENT_SYDNEY'\n};\nconst link = (channel) => 'https://www.huabanapp.com/official/?' + new URLSearchParams({ ref: invite.refCode, campaign: invite.campaign, channel, city: invite.city, invite: 'phone_contact' }).toString();\ninvite.smsLink = link('sms');\ninvite.emailLink = link('email');\ninvite.smsText = `${invite.recipient.name}，我在华伴给你留了一个悉尼本地生活入口。中文用户用起来更顺，能找当地人、当地服务和AI帮忙整理信息：${invite.smsLink}`;\ninvite.emailSubject = `我在华伴给你留了一个 ${invite.city} 本地生活入口`;\ninvite.emailBody = `我正在测试华伴，一个贴合中文用户习惯的本地生活和通讯应用。它不是把你丢进十亿用户的信息海洋，而是先帮你看见 ${invite.city} 附近的人、服务和动态。\\n\\n你可以从这个链接进入：${invite.emailLink}\\n\\n如果你还不是华伴用户，打开后会先看到招募和下载入口。中国区暂不开放。`;\nreturn [{ json: invite }];"
+      },
+      "id": "build-invite",
+      "name": "Build Sydney Invite",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [240, 0]
+    },
+    {
+      "parameters": {
+        "url": "={{$json.baseUrl + '/api/v1/ai/command'}}",
+        "sendBody": true,
+        "contentType": "json",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "打开添加好友"
+            },
+            {
+              "name": "city",
+              "value": "={{$json.city}}"
+            },
+            {
+              "name": "inputMode",
+              "value": "voice"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ai-open-add-friend",
+      "name": "AI Open Add Friend",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [500, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "const source = $('Build Sydney Invite').first().json;\nconst aiResult = $input.first().json;\nconst confirmed = aiResult.action === 'open_add_friend';\nreturn [{ json: { ...source, aiAction: aiResult.action || '', actionConfirmed: confirmed } }];"
+      },
+      "id": "confirm-add-friend",
+      "name": "Confirm Add Friend Action",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [760, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.actionConfirmed}}",
+              "value2": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "if-action-confirmed",
+      "name": "IF Action Confirmed",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1020, 0]
+    },
+    {
+      "parameters": {
+        "url": "={{$json.baseUrl + '/api/v1/friendships'}}",
+        "sendBody": true,
+        "contentType": "json",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "ownerCode",
+              "value": "={{$json.inviter.ownerCode}}"
+            },
+            {
+              "name": "addresseeId",
+              "value": "external_phone_owen_sydney"
+            },
+            {
+              "name": "friendName",
+              "value": "={{$json.recipient.name}}"
+            },
+            {
+              "name": "friendPhone",
+              "value": "={{$json.recipient.phone}}"
+            },
+            {
+              "name": "friendEmail",
+              "value": "={{$json.recipient.email}}"
+            },
+            {
+              "name": "recipientIsHuabanUser",
+              "value": false
+            },
+            {
+              "name": "inviteStatus",
+              "value": "external_invite_created"
+            },
+            {
+              "name": "city",
+              "value": "={{$json.city}}"
+            },
+            {
+              "name": "campaign",
+              "value": "={{$json.campaign}}"
+            },
+            {
+              "name": "refCode",
+              "value": "={{$json.refCode}}"
+            },
+            {
+              "name": "source",
+              "value": "phone_contact_external_invite"
+            },
+            {
+              "name": "dataSource",
+              "value": "promotion_simulation"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "write-external-friendship",
+      "name": "Write External Invite Friendship",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1280, -160]
+    },
+    {
+      "parameters": {
+        "jsCode": "const source = $('Confirm Add Friend Action').first().json;\nreturn [{ json: { ...source, channel: 'sms', simulated: true, status: 'simulated_sent', to: source.recipient.phone, hook: source.smsText.split('：')[0], link: source.smsLink } }];"
+      },
+      "id": "simulate-sms",
+      "name": "Simulate SMS Invite",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1540, -240]
+    },
+    {
+      "parameters": {
+        "jsCode": "const source = $('Confirm Add Friend Action').first().json;\nreturn [{ json: { ...source, channel: 'email', simulated: true, status: 'simulated_opened_and_clicked', to: source.recipient.email, hook: source.emailSubject, link: source.emailLink } }];"
+      },
+      "id": "simulate-email",
+      "name": "Simulate Email Invite",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1540, -80]
+    },
+    {
+      "parameters": {
+        "url": "={{$json.baseUrl + '/api/v1/growth/events'}}",
+        "sendBody": true,
+        "contentType": "json",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "eventKey",
+              "value": "={{'hb_v1_1:n8n:promotion:' + $json.channel + ':' + $json.refCode + ':' + $json.stamp}}"
+            },
+            {
+              "name": "eventType",
+              "value": "external_invite_generated"
+            },
+            {
+              "name": "growthChannel",
+              "value": "external_invite_promotion"
+            },
+            {
+              "name": "pointsDelta",
+              "value": 0
+            },
+            {
+              "name": "basePoints",
+              "value": 2
+            },
+            {
+              "name": "ownerCode",
+              "value": "={{$json.inviter.ownerCode}}"
+            },
+            {
+              "name": "reason",
+              "value": "={{$json.channel + ' 外部邀请已生成，等待对方注册或认领后确认积分。'}}"
+            },
+            {
+              "name": "status",
+              "value": "pending_review"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "write-pending-event",
+      "name": "Write Pending Points Event",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1800, -160]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { ok: false, reason: 'AI action was not confirmed; no invite or points event should be created.' } }];"
+      },
+      "id": "stop-without-confirmation",
+      "name": "Stop Without Confirmation",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1280, 160]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Build Sydney Invite",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Sydney Invite": {
+      "main": [
+        [
+          {
+            "node": "AI Open Add Friend",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Open Add Friend": {
+      "main": [
+        [
+          {
+            "node": "Confirm Add Friend Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Confirm Add Friend Action": {
+      "main": [
+        [
+          {
+            "node": "IF Action Confirmed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Action Confirmed": {
+      "main": [
+        [
+          {
+            "node": "Write External Invite Friendship",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Stop Without Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write External Invite Friendship": {
+      "main": [
+        [
+          {
+            "node": "Simulate SMS Invite",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Simulate Email Invite",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simulate SMS Invite": {
+      "main": [
+        [
+          {
+            "node": "Write Pending Points Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simulate Email Invite": {
+      "main": [
+        [
+          {
+            "node": "Write Pending Points Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
