@@ -4615,7 +4615,7 @@
       <div class="publish-actions">
         <button type="button" data-publish-action="album">从相册选择</button>
         <button type="button" data-publish-action="camera">拍摄</button>
-        <button type="button" data-publish-action="text">写文字</button>
+        <button type="button" data-publish-action="text">文字生图</button>
         <button type="button" data-publish-action="file">文件</button>
         <button id="publishCancelBtn" class="cancel" type="button">取消</button>
       </div>
@@ -5477,7 +5477,7 @@
       const config = {
         album: { label: '点击更换内容，最多 6 张图', className: 'publish-media-preview multi' },
         camera: { label: '拍摄内容预览', className: 'publish-media-preview' },
-        text: { label: '文字动态', className: 'publish-media-preview text-mode' },
+        text: { label: '文字生图', className: 'publish-media-preview text-mode' },
         file: { label: '文件预览', className: 'publish-media-preview file-mode' }
       }[publishSource] || {};
       publishMediaPreview.className = config.className || 'publish-media-preview';
@@ -5589,7 +5589,7 @@
           placeholder: '给刚拍的内容配一句话...'
         },
         text: {
-          hint: '写文字',
+          hint: '文字生图',
           placeholder: '写想法、提问题，或让 AI 帮你扩写...'
         },
         file: {
