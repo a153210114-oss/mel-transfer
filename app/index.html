@@ -2553,6 +2553,52 @@
       gap: 8px;
     }
 
+    .location-selected {
+      display: none;
+      gap: 8px;
+      margin: 0 0 12px;
+      padding: 12px;
+      border-radius: 14px;
+      background: rgba(24, 197, 110, .07);
+      border: 1px solid rgba(24, 197, 110, .22);
+    }
+
+    .location-selected.show {
+      display: grid;
+    }
+
+    .location-selected label {
+      color: #26835a;
+      font-size: var(--text-xs);
+      font-weight: 500;
+    }
+
+    .location-selected textarea {
+      width: 100%;
+      min-height: 58px;
+      border: 0;
+      border-radius: 12px;
+      padding: 10px 12px;
+      resize: vertical;
+      background: #fff;
+      color: #111820;
+      font-size: var(--text-sm);
+      line-height: 1.5;
+      font-weight: 400;
+      outline: none;
+    }
+
+    .location-selected button {
+      justify-self: start;
+      height: 32px;
+      padding: 0 12px;
+      border-radius: 999px;
+      background: #fff;
+      color: #617069;
+      font-size: var(--text-xs);
+      border: 1px solid rgba(17, 24, 32, .08);
+    }
+
     .location-status {
       display: none;
       margin: 0 0 12px;
@@ -2644,6 +2690,11 @@
 
     .location-confirm.show {
       display: block;
+    }
+
+    #locationPage button:disabled {
+      opacity: .38;
+      pointer-events: none;
     }
 
     .friend-note-label {
@@ -4617,6 +4668,11 @@
         </div>
         <p id="locationHint" class="location-hint">可搜索地点，也可以使用当前位置。发送前会显示标准地址。</p>
         <p id="locationStatus" class="location-status" aria-live="polite"></p>
+        <div id="locationSelectedBox" class="location-selected" aria-live="polite">
+          <label for="locationAddressInput">已选地址，可编辑后确认</label>
+          <textarea id="locationAddressInput" rows="2" placeholder="选择地址后可在这里修改门牌、街名或备注"></textarea>
+          <button id="locationClearBtn" type="button">重新选择</button>
+        </div>
         <button id="locationGoogleBtn" class="location-google" type="button">打开 Google 地图</button>
         <div id="locationResults" class="location-results"></div>
         <button id="locationBottomConfirmBtn" class="location-confirm show" type="button">确认位置</button>
@@ -4846,6 +4902,9 @@
     const locationStatus = document.querySelector('#locationStatus');
     const locationGoogleBtn = document.querySelector('#locationGoogleBtn');
     const locationResults = document.querySelector('#locationResults');
+    const locationSelectedBox = document.querySelector('#locationSelectedBox');
+    const locationAddressInput = document.querySelector('#locationAddressInput');
+    const locationClearBtn = document.querySelector('#locationClearBtn');
     const googleMapCanvas = document.querySelector('#googleMapCanvas');
     const aiInput = document.querySelector('#aiInput');
     const aiForm = document.querySelector('#aiForm');
@@ -5685,7 +5744,35 @@
       setPublishSheet(true);
     }
 
-    function renderLocations(results = []) {
+    function updateLocationConfirmState() {
+      const hasSelection = Boolean(selectedLocation);
+      locationSelectedBox?.classList.toggle('show', hasSelection);
+      locationSendBtn?.toggleAttribute('disabled', !hasSelection);
+      locationBottomConfirmBtn?.classList.toggle('show', hasSelection);
+    }
+
+    function clearLocationSelection(message = '请选择一个地址，再确认。') {
+      selectedLocation = null;
+      if (locationAddressInput) locationAddressInput.value = '';
+      document.querySelectorAll('.location-result').forEach((node) => node.classList.remove('selected'));
+      locationHint.textContent = message;
+      updateLocationConfirmState();
+    }
+
+    function selectLocation(item, sourceButton = null, statusMessage = '已选择地址，可编辑后确认。') {
+      selectedLocation = { ...item };
+      const address = selectedLocation.formatted_address || '';
+      if (locationAddressInput) locationAddressInput.value = address;
+      locationHint.textContent = address || '已选择位置';
+      document.querySelectorAll('.location-result').forEach((node) => node.classList.remove('selected'));
+      sourceButton?.classList.add('selected');
+      setLocationStatus(statusMessage);
+      setGoogleMapsButton(true);
+      updateGoogleMarker(selectedLocation);
+      updateLocationConfirmState();
+    }
+
+    function renderLocations(results = [], options = {}) {
       const list = Array.isArray(results) ? results : [];
       locationResults.replaceChildren(...list.map((item, index) => {
         const button = document.createElement('button');
@@ -5694,24 +5781,19 @@
         button.dataset.locationIndex = String(index);
         button.innerHTML = `<strong>${item.formatted_address || '未命名地点'}</strong><span>${[item.suburb, item.city, item.state].filter(Boolean).join(' · ') || 'Google 地址结果'}</span>`;
         button.addEventListener('click', () => {
-          selectedLocation = item;
-          document.querySelectorAll('.location-result').forEach((node) => node.classList.remove('selected'));
-          button.classList.add('selected');
-          locationHint.textContent = item.formatted_address || '已选择位置';
-          setLocationStatus('已选择地址，可打开 Google 地图确认。');
-          setGoogleMapsButton(true);
-          updateGoogleMarker(item);
+          selectLocation(item, button);
         });
         return button;
       }));
-      if (list[0]) {
-        selectedLocation = list[0];
-        locationHint.textContent = list[0].formatted_address || '已选择位置';
-        setLocationStatus('已选中第一个地址，可打开 Google 地图确认。');
-        setGoogleMapsButton(true);
-        updateGoogleMarker(list[0]);
-        locationResults.querySelector('.location-result')?.classList.add('selected');
+      if (options.autoSelect && list[0]) {
+        selectLocation(
+          list[0],
+          locationResults.querySelector('.location-result'),
+          options.statusMessage || '已获取当前位置，可编辑后确认。'
+        );
+        return;
       }
+      clearLocationSelection(list.length ? '请选择一个搜索结果，也可以点地图或定位当前位置。' : '没有地址结果。');
     }
 
     function setLocationStatus(message = '', type = 'info') {
@@ -5727,7 +5809,10 @@
 
     function googleMapsUrl(location) {
       const target = location || currentLocationSelection();
-      if (!target) return '';
+      if (!target) {
+        const manualQuery = String(locationSearchInput.value || '').trim();
+        return manualQuery ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(manualQuery)}` : '';
+      }
       if (Number.isFinite(target.latitude) && Number.isFinite(target.longitude)) {
         return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${target.latitude},${target.longitude}`)}`;
       }
@@ -5811,12 +5896,18 @@
           selectedLocation.place_id = results[0].place_id || '';
           locationHint.textContent = selectedLocation.formatted_address;
           setLocationStatus('已选中地图位置，可确认。');
-          renderLocations([selectedLocation]);
+          renderLocations([selectedLocation], {
+            autoSelect: true,
+            statusMessage: '已选中地图位置，可编辑后确认。'
+          });
           return;
         }
         locationHint.textContent = fallback.formatted_address;
         setLocationStatus('Google 地图没有返回标准地址，已保留坐标。', 'error');
-        renderLocations([fallback]);
+        renderLocations([fallback], {
+          autoSelect: true,
+          statusMessage: '已保留地图坐标，可编辑后确认。'
+        });
       });
     }
 
@@ -5848,7 +5939,7 @@
     }
 
     locationSearchInput?.addEventListener('input', () => {
-      if (selectedLocation) return;
+      if (selectedLocation) clearLocationSelection('地址已修改，请重新搜索或选择当前位置。');
       setGoogleMapsButton(Boolean(locationSearchInput.value.trim()));
     });
 
@@ -5908,10 +5999,16 @@
           latitude: position.coords.latitude,
           longitude: position.coords.longitude
         });
-        renderLocations(data.results?.length ? data.results : [selectedLocation]);
+        renderLocations(data.results?.length ? data.results : [selectedLocation], {
+          autoSelect: true,
+          statusMessage: '已定位到当前位置，可编辑地址后确认。'
+        });
         updateGoogleMarker(selectedLocation);
       } catch (error) {
-        renderLocations([selectedLocation]);
+        renderLocations([selectedLocation], {
+          autoSelect: true,
+          statusMessage: '已保留当前位置坐标，可编辑后确认。'
+        });
         updateGoogleMarker(selectedLocation);
         locationHint.textContent = 'Google 地址解析失败，已保留当前位置坐标。';
         setLocationStatus('可以打开 Google 地图确认坐标，或手动搜索地址。', 'error');
@@ -5932,24 +6029,22 @@
         const data = await locationApi({ locationMode: 'search', query: text, city: 'Melbourne' });
         renderLocations(data.results || []);
         if (!data.results?.length) {
-          selectedLocation = {
+          selectLocation({
             formatted_address: text,
             city: 'Melbourne',
             source: 'manual_input'
-          };
+          }, null, '没有找到 Google 地址，已保留输入内容，可编辑后确认。');
           locationHint.textContent = '没有找到 Google 地址，已保留输入内容。';
           setLocationStatus('可以打开 Google 地图继续确认，也可以直接确认手动地址。', 'error');
-          setGoogleMapsButton(true);
         }
       } catch (error) {
-        selectedLocation = {
+        selectLocation({
           formatted_address: text,
           city: 'Melbourne',
           source: 'manual_input'
-        };
+        }, null, 'Google 地址服务暂不可用，已保留输入内容，可编辑后确认。');
         locationHint.textContent = 'Google 地址服务暂不可用。';
         setLocationStatus('已保留你输入的地址，可打开 Google 地图确认。', 'error');
-        setGoogleMapsButton(true);
       }
     }
 
@@ -5978,27 +6073,25 @@
       setLocationStatus('');
       setGoogleMapsButton(false);
       locationResults.replaceChildren();
+      updateLocationConfirmState();
       openPage('locationPage');
       initGoogleMap();
-      window.setTimeout(() => locationSearchInput.focus(), 120);
     }
 
     function currentLocationSelection() {
-      if (selectedLocation) return selectedLocation;
-      const manualAddress = locationSearchInput.value.trim();
-      if (!manualAddress) return null;
+      if (!selectedLocation) return null;
+      const editedAddress = locationAddressInput?.value.trim();
       return {
-        formatted_address: manualAddress,
-        city: 'Melbourne',
-        source: 'manual_input'
+        ...selectedLocation,
+        formatted_address: editedAddress || selectedLocation.formatted_address || ''
       };
     }
 
     function confirmLocationSelection() {
       const location = currentLocationSelection();
       if (!location) {
-        locationHint.textContent = '先搜索地点，或点左侧定位按钮读取当前位置。';
-        locationSearchInput.focus();
+        locationHint.textContent = '先搜索地点并选择结果，或点左侧定位按钮读取当前位置。';
+        setLocationStatus('还没有选定地址，不能确认。', 'error');
         return;
       }
       selectedLocation = location;
@@ -6976,6 +7069,19 @@
       if (event.key !== 'Enter') return;
       event.preventDefault();
       locationSearchBtn.click();
+    });
+
+    locationAddressInput?.addEventListener('input', () => {
+      if (!selectedLocation) return;
+      selectedLocation.formatted_address = locationAddressInput.value.trim();
+      locationHint.textContent = selectedLocation.formatted_address || '已选择位置，可继续编辑地址。';
+      updateLocationConfirmState();
+    });
+
+    locationClearBtn?.addEventListener('click', () => {
+      clearLocationSelection('已清除选择，请重新搜索、定位或点地图选位置。');
+      setGoogleMapsButton(Boolean(locationSearchInput.value.trim()));
+      locationSearchInput.focus();
     });
 
     locationGoogleBtn.addEventListener('click', openGoogleMaps);
