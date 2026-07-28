@@ -4417,7 +4417,7 @@
     async function runOnboardingPrompt() {
       const stage = getOnboardingStage();
       if (stage >= 2) {
-        toast('今日任务完成，您已获得 4 积分。点击“我”查看详情。');
+        window.location.href = '../official/';
         return;
       }
       const prompt = stage <= 0 ? '打开动态' : '打开添加好友';
@@ -4444,8 +4444,8 @@
         unreadFloat.textContent = '再来一次：打开添加好友';
         unreadFloat.setAttribute('aria-label', '再来一次，打开添加好友');
       } else {
-        unreadFloat.textContent = '今日任务完成 · 已获 4 积分';
-        unreadFloat.setAttribute('aria-label', '今日新手任务完成，点击我可查看积分详情');
+        unreadFloat.textContent = '正在招募';
+        unreadFloat.setAttribute('aria-label', '进入华伴招募页面');
       }
     }
 
