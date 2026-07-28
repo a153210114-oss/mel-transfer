@@ -2073,6 +2073,59 @@
       line-height: 1;
     }
 
+    .profile-mode {
+      display: none;
+    }
+
+    .profile-mode.active {
+      display: block;
+    }
+
+    .profile-edit-row {
+      display: grid;
+      gap: 6px;
+      padding: 12px 22px;
+      border-top: 1px solid rgba(17, 24, 32, .07);
+      background: #fff;
+    }
+
+    .profile-edit-row:first-child {
+      border-top: 0;
+    }
+
+    .profile-edit-row span {
+      color: #8a949c;
+      font-size: var(--text-sm);
+      font-weight: 400;
+    }
+
+    .profile-edit-row input,
+    .profile-edit-row textarea {
+      width: 100%;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: #111820;
+      font-size: var(--text-md);
+      font-weight: 400;
+      line-height: 1.45;
+    }
+
+    .profile-edit-row textarea {
+      min-height: 72px;
+      resize: vertical;
+    }
+
+    .profile-save-btn {
+      color: var(--brand);
+      font-size: 19px;
+    }
+
+    .profile-save-btn[hidden],
+    .profile-more-btn[hidden] {
+      display: none;
+    }
+
     .publish-editor {
       background: #f4f6f4;
     }
@@ -3721,7 +3774,8 @@
       <div class="page-nav">
         <button class="plain-icon" type="button" data-close-page aria-label="返回">‹</button>
         <strong id="profilePageTitle">个人资料</strong>
-        <button class="plain-icon" type="button" data-open-page="settingsPage" aria-label="更多">…</button>
+        <button id="profileSaveBtn" class="plain-icon profile-save-btn" type="button" aria-label="保存个人资料" hidden>✓</button>
+        <button id="profileMoreBtn" class="plain-icon profile-more-btn" type="button" data-open-page="friendInfoPage" aria-label="更多">…</button>
       </div>
       <div class="profile-head">
         <div id="profileAvatar" class="avatar">A</div>
@@ -3731,7 +3785,25 @@
           <p id="profileRegion">地区：澳大利亚</p>
         </div>
       </div>
-      <div class="profile-section">
+      <div id="ownProfileEditor" class="profile-section profile-mode" aria-label="编辑我的资料">
+        <label class="profile-edit-row">
+          <span>昵称</span>
+          <input id="profileNicknameInput" maxlength="24" autocomplete="name">
+        </label>
+        <label class="profile-edit-row">
+          <span>地区</span>
+          <input id="profileRegionInput" maxlength="40" autocomplete="address-level2">
+        </label>
+        <label class="profile-edit-row">
+          <span>简介</span>
+          <textarea id="profileBioInput" maxlength="120"></textarea>
+        </label>
+      </div>
+      <div id="otherProfileInfo" class="profile-section profile-mode" aria-label="对方资料">
+        <button class="profile-row" type="button" data-open-page="friendInfoPage">
+          <span>添加日期</span>
+          <small id="profileAddedAt">未添加</small>
+        </button>
         <button class="profile-row" type="button" data-open-page="friendInfoPage">
           <span>朋友资料</span>
           <span class="arrow">›</span>
@@ -3739,6 +3811,16 @@
         <button class="profile-row" type="button" data-open-page="dynamicPage">
           <span>动态</span>
           <span class="moment-thumb" aria-hidden="true"></span>
+        </button>
+      </div>
+      <div id="ownProfileLinks" class="profile-section profile-mode" aria-label="我的资料入口">
+        <button class="profile-row" type="button" data-open-page="growthPage">
+          <span>积分权益</span>
+          <span class="arrow">›</span>
+        </button>
+        <button class="profile-row" type="button" data-open-page="aiCompanionPage">
+          <span>定制我的 AI</span>
+          <span class="arrow">›</span>
         </button>
       </div>
       <div class="action-strip">
@@ -4589,8 +4671,9 @@
       me: {
         avatar: '华',
         avatarImage: '../assets/brand/huaban-logo-v1.png',
-        name: '我的二维码名片',
+        name: '老丁',
         meta: 'HB110001 · Melbourne · 城市可见',
+        region: 'Melbourne',
         bio: '本地生活、活动、朋友关系都从这张名片沉淀。'
       },
       lin: {
@@ -4598,6 +4681,7 @@
         geoGroup: 'local',
         name: '林安 · 咖啡探店',
         meta: 'HB110238 · Melbourne CBD · 生活动态',
+        addedAt: '2026年7月12日',
         bio: '喜欢安静咖啡店、City Walk 和认识同城新朋友。'
       },
       zhou: {
@@ -4605,6 +4689,7 @@
         geoGroup: 'local',
         name: '周宁 · 新到墨尔本',
         meta: 'HB110517 · Carlton · 提问',
+        addedAt: '2026年7月18日',
         bio: '刚搬到 Carlton，想找练英语和中文聊天的活动。'
       },
       chen: {
@@ -4612,6 +4697,7 @@
         geoGroup: 'remote_domestic',
         name: '陈予 · 活动组织',
         meta: 'HB110322 · Melbourne · City Walk',
+        addedAt: '2026年7月21日',
         bio: '每周组织小范围城市散步和新朋友见面。'
       },
       mia: {
@@ -4619,6 +4705,7 @@
         geoGroup: 'overseas',
         name: 'Mia Zhang',
         meta: 'HB110486 · Melbourne · 咖啡 / 留学',
+        addedAt: '2026年7月14日',
         bio: '熟悉留学、本地生活和周末咖啡路线。'
       }
     };
@@ -4642,10 +4729,21 @@
     const menuScrim = document.querySelector('#menuScrim');
     const homeMenuBtn = document.querySelector('#homeMenuBtn');
     const profilePage = document.querySelector('#profilePage');
+    const profilePageTitle = document.querySelector('#profilePageTitle');
     const profileAvatar = document.querySelector('#profileAvatar');
     const profileName = document.querySelector('#profileName');
     const profileCode = document.querySelector('#profileCode');
     const profileRegion = document.querySelector('#profileRegion');
+    const profileSaveBtn = document.querySelector('#profileSaveBtn');
+    const profileMoreBtn = document.querySelector('#profileMoreBtn');
+    const ownProfileEditor = document.querySelector('#ownProfileEditor');
+    const otherProfileInfo = document.querySelector('#otherProfileInfo');
+    const ownProfileLinks = document.querySelector('#ownProfileLinks');
+    const profileNicknameInput = document.querySelector('#profileNicknameInput');
+    const profileRegionInput = document.querySelector('#profileRegionInput');
+    const profileBioInput = document.querySelector('#profileBioInput');
+    const profileAddedAt = document.querySelector('#profileAddedAt');
+    const profileActionStrip = profilePage?.querySelector('.action-strip');
     const friendRemark = document.querySelector('#friendRemark');
     const friendGeoGroup = document.querySelector('#friendGeoGroup');
     const chatMorePanel = document.querySelector('#chatMorePanel');
@@ -4730,6 +4828,40 @@
         .replace(/^我的/, '')
         .replace(/二维码名片$/, '')
         .trim() || '老丁';
+    }
+
+    function profileCodeFromMeta(profile) {
+      return String(profile.meta || '').split(' · ')[0] || 'HB110486';
+    }
+
+    function profileRegionFromMeta(profile) {
+      return profile.region || String(profile.meta || '').split(' · ')[1] || '澳大利亚';
+    }
+
+    function applyOwnProfileToHome() {
+      const summaryName = document.querySelector('.summary-head strong');
+      const summaryMeta = document.querySelector('.summary-head span span');
+      if (summaryName) summaryName.textContent = profiles.me.name || '老丁';
+      if (summaryMeta) {
+        summaryMeta.textContent = `${profileCodeFromMeta(profiles.me)} · ${profileRegionFromMeta(profiles.me)} · 华伴共创用户`;
+      }
+      updateHomeGreeting();
+    }
+
+    function loadOwnProfileDraft() {
+      try {
+        const raw = localStorage.getItem('huaban_own_profile');
+        if (!raw) return;
+        const saved = JSON.parse(raw);
+        profiles.me = {
+          ...profiles.me,
+          ...saved,
+          meta: `${profileCodeFromMeta(profiles.me)} · ${saved.region || profileRegionFromMeta(profiles.me)} · 城市可见`
+        };
+        applyOwnProfileToHome();
+      } catch (error) {
+        localStorage.removeItem('huaban_own_profile');
+      }
     }
 
     function updateHomeGreeting() {
@@ -5665,17 +5797,36 @@
     async function openCard(id) {
       activeProfile = id;
       let profile = profiles[id] || profiles.me;
-      try {
-        const data = await api(`/cards/${id}`);
-        profile = data.profile;
-        profiles[id] = profile;
-      } catch (error) {
-        toast('暂时读取本地名片缓存。');
+      if (id !== 'me') {
+        try {
+          const data = await api(`/cards/${id}`);
+          profile = { ...profile, ...data.profile };
+          profiles[id] = profile;
+        } catch (error) {
+          toast('暂时读取本地名片缓存。');
+        }
       }
       setAvatar(profileAvatar, profile);
+      const isMe = id === 'me';
+      const profileCodeValue = isMe ? 'HB110001' : profileCodeFromMeta(profile);
+      const profileRegionValue = profileRegionFromMeta(profile);
+      profilePageTitle.textContent = isMe ? '我的资料' : '个人资料';
       profileName.textContent = profile.name.replace(' · ', ' ');
-      profileCode.textContent = id === 'me' ? '华伴号：HB110001' : `华伴号：${profile.meta.split(' · ')[0] || 'HB110486'}`;
-      profileRegion.textContent = `地区：${profile.meta.includes('Australia') ? '澳大利亚' : '澳大利亚'}`;
+      profileCode.textContent = `华伴号：${profileCodeValue}`;
+      profileRegion.textContent = `地区：${profileRegionValue}`;
+      profileSaveBtn.hidden = !isMe;
+      profileMoreBtn.hidden = isMe;
+      ownProfileEditor.classList.toggle('active', isMe);
+      ownProfileLinks.classList.toggle('active', isMe);
+      otherProfileInfo.classList.toggle('active', !isMe);
+      profileActionStrip.hidden = isMe;
+      if (isMe) {
+        profileNicknameInput.value = profile.name || '老丁';
+        profileRegionInput.value = profileRegionValue;
+        profileBioInput.value = profile.bio || '';
+      } else {
+        profileAddedAt.textContent = profile.addedAt || '未添加';
+      }
       friendRemark.textContent = profile.name.split(' · ')[0];
       friendGeoGroup.textContent = geoGroupLabel(profile.geoGroup);
       openPage('profilePage');
@@ -6147,6 +6298,29 @@
       }
     });
 
+    profileSaveBtn.addEventListener('click', () => {
+      if (activeProfile !== 'me') return;
+      const nickname = profileNicknameInput.value.trim() || '老丁';
+      const region = profileRegionInput.value.trim() || 'Melbourne';
+      const bio = profileBioInput.value.trim() || '本地生活、活动、朋友关系都从这张名片沉淀。';
+      profiles.me = {
+        ...profiles.me,
+        name: nickname,
+        region,
+        meta: `HB110001 · ${region} · 城市可见`,
+        bio
+      };
+      localStorage.setItem('huaban_own_profile', JSON.stringify({
+        name: nickname,
+        region,
+        bio
+      }));
+      profileName.textContent = nickname;
+      profileRegion.textContent = `地区：${region}`;
+      applyOwnProfileToHome();
+      toast('我的资料已保存到本机预览。');
+    });
+
     document.body.addEventListener('click', (event) => {
       const aiCommandButton = event.target.closest('[data-ai-command]');
       const companionLivelyButton = event.target.closest('[data-companion-lively]');
@@ -6550,6 +6724,7 @@
 
     restoreMenuOrder();
     setupMenuSorting();
+    loadOwnProfileDraft();
     updateHomeGreeting();
     setInterval(updateHomeGreeting, 60000);
     loadTestStatus();
