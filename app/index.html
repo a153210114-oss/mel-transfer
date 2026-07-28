@@ -2260,6 +2260,94 @@
       color: #8a5b00;
     }
 
+    .draft-box-body {
+      padding: 12px 18px 96px;
+      background: #f3f4f4;
+    }
+
+    .draft-box-empty {
+      min-height: 180px;
+      display: grid;
+      place-items: center;
+      color: #8b949b;
+      font-size: var(--text-sm);
+      font-weight: 400;
+    }
+
+    .draft-item {
+      display: grid;
+      grid-template-columns: 54px minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      min-height: 72px;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(17, 24, 32, .07);
+      background: transparent;
+    }
+
+    .draft-thumb {
+      width: 48px;
+      height: 48px;
+      display: grid;
+      place-items: center;
+      border-radius: 10px;
+      background: linear-gradient(135deg, rgba(24, 197, 110, .13), #fff);
+      color: var(--brand);
+      font-size: 18px;
+      font-weight: 520;
+    }
+
+    .draft-summary {
+      min-width: 0;
+    }
+
+    .draft-summary strong {
+      display: block;
+      overflow: hidden;
+      color: #111820;
+      font-size: var(--text-md);
+      font-weight: 430;
+      line-height: 1.35;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .draft-summary span {
+      display: block;
+      margin-top: 4px;
+      overflow: hidden;
+      color: #8b949b;
+      font-size: var(--text-xs);
+      font-weight: 350;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .draft-actions {
+      display: flex;
+      gap: 4px;
+    }
+
+    .draft-actions button {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 10px;
+      background: transparent;
+      color: #2f363b;
+    }
+
+    .draft-actions svg {
+      width: 19px;
+      height: 19px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.9;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
     .publish-visible-row {
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;
@@ -4366,6 +4454,15 @@
       </div>
     </section>
 
+    <section id="draftBoxPage" class="phone-page" aria-label="草稿箱">
+      <div class="page-nav">
+        <button class="plain-icon" type="button" data-close-page aria-label="返回">‹</button>
+        <strong>草稿箱</strong>
+        <button id="draftBoxNewBtn" class="plain-icon" type="button" aria-label="新建动态">+</button>
+      </div>
+      <div id="draftBoxList" class="draft-box-body"></div>
+    </section>
+
     <section id="locationPage" class="phone-page" aria-label="位置">
       <div class="page-nav">
         <button class="plain-icon" type="button" data-close-page aria-label="取消">×</button>
@@ -4440,13 +4537,6 @@
         <button type="button" data-publish-action="text">写文字</button>
         <button type="button" data-publish-action="file">文件</button>
         <button id="publishCancelBtn" class="cancel" type="button">取消</button>
-      </div>
-    </div>
-    <div id="publishDraftSheet" class="publish-sheet" aria-label="动态草稿">
-      <div class="share-actions">
-        <button type="button" data-draft-action="continue">继续上次草稿</button>
-        <button type="button" data-draft-action="new">新建动态</button>
-        <button id="publishDraftCancelBtn" class="cancel" type="button">取消</button>
       </div>
     </div>
     <div id="publishExitSheet" class="publish-sheet" aria-label="退出编辑动态">
@@ -4566,8 +4656,8 @@
     const publishSheet = document.querySelector('#publishSheet');
     const dynamicPublishBtn = document.querySelector('#dynamicPublishBtn');
     const publishCancelBtn = document.querySelector('#publishCancelBtn');
-    const publishDraftSheet = document.querySelector('#publishDraftSheet');
-    const publishDraftCancelBtn = document.querySelector('#publishDraftCancelBtn');
+    const draftBoxList = document.querySelector('#draftBoxList');
+    const draftBoxNewBtn = document.querySelector('#draftBoxNewBtn');
     const publishExitSheet = document.querySelector('#publishExitSheet');
     const publishExitCancelBtn = document.querySelector('#publishExitCancelBtn');
     const shareSheet = document.querySelector('#shareSheet');
@@ -4922,10 +5012,6 @@
       publishSheet.classList.toggle('open', open);
     }
 
-    function setPublishDraftSheet(open) {
-      publishDraftSheet.classList.toggle('open', open);
-    }
-
     function setPublishExitSheet(open) {
       publishExitSheet.classList.toggle('open', open);
     }
@@ -5051,7 +5137,28 @@
       return 'huaban_publish_draft';
     }
 
-    function readPublishDraft() {
+    function publishDraftsKey() {
+      return 'huaban_publish_drafts';
+    }
+
+    function createDraftId() {
+      return `draft_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    }
+
+    function normalizeDraft(draft) {
+      if (!draft) return null;
+      return {
+        id: draft.id || createDraftId(),
+        source: draft.source || 'album',
+        text: draft.text || '',
+        visibility: draft.visibility || 'local',
+        media: Array.isArray(draft.media) ? draft.media : [],
+        location: draft.location || '',
+        updatedAt: draft.updatedAt || new Date().toISOString()
+      };
+    }
+
+    function readLegacyPublishDraft() {
       try {
         return JSON.parse(localStorage.getItem(publishDraftKey()) || 'null');
       } catch (error) {
@@ -5060,21 +5167,53 @@
       }
     }
 
+    function readPublishDrafts() {
+      let drafts = [];
+      try {
+        drafts = JSON.parse(localStorage.getItem(publishDraftsKey()) || '[]');
+      } catch (error) {
+        localStorage.removeItem(publishDraftsKey());
+      }
+      if (!Array.isArray(drafts)) drafts = [];
+      const legacy = normalizeDraft(readLegacyPublishDraft());
+      const normalized = drafts.map(normalizeDraft).filter(Boolean);
+      if (legacy && !normalized.some((draft) => draft.id === legacy.id)) {
+        normalized.unshift(legacy);
+        localStorage.removeItem(publishDraftKey());
+        writePublishDrafts(normalized);
+      }
+      return normalized
+        .filter((draft) => draft.text || draft.media.length || draft.location || draft.visibility !== 'local')
+        .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+    }
+
+    function writePublishDrafts(drafts) {
+      const normalized = drafts.map(normalizeDraft).filter(Boolean).slice(0, 10);
+      localStorage.setItem(publishDraftsKey(), JSON.stringify(normalized));
+    }
+
     function hasPublishDraft() {
-      const draft = readPublishDraft();
-      return Boolean(draft?.text || draft?.location || (draft?.visibility && draft.visibility !== 'local') || publishMediaFiles.length);
+      return readPublishDrafts().length > 0;
     }
 
     function hasCurrentPublishWork() {
       return Boolean(publishEditorText.value.trim() || publishMediaFiles.length || publishVisibility !== 'local');
     }
 
+    let currentPublishDraftId = null;
+
     function savePublishDraft() {
       if (!hasCurrentPublishWork()) {
-        localStorage.removeItem(publishDraftKey());
+        if (currentPublishDraftId) {
+          writePublishDrafts(readPublishDrafts().filter((draft) => draft.id !== currentPublishDraftId));
+          currentPublishDraftId = null;
+        }
         return;
       }
+      const drafts = readPublishDrafts();
+      currentPublishDraftId = currentPublishDraftId || createDraftId();
       const payload = {
+        id: currentPublishDraftId,
         source: publishSource,
         text: publishEditorText.value,
         visibility: publishVisibility,
@@ -5085,14 +5224,15 @@
         })),
         updatedAt: new Date().toISOString()
       };
-      localStorage.setItem(publishDraftKey(), JSON.stringify(payload));
+      writePublishDrafts([payload, ...drafts.filter((draft) => draft.id !== currentPublishDraftId)]);
       publishSaveDraftBtn.classList.add('draft-active');
       window.setTimeout(() => publishSaveDraftBtn.classList.remove('draft-active'), 900);
     }
 
-    function restorePublishDraft() {
-      const draft = readPublishDraft();
+    function restorePublishDraft(draftId) {
+      const draft = readPublishDrafts().find((item) => item.id === draftId) || readPublishDrafts()[0];
       if (!draft) return false;
+      currentPublishDraftId = draft.id;
       publishEditorText.value = draft.text || '';
       if (draft.source) publishSource = draft.source;
       if (draft.visibility) publishVisibility = draft.visibility;
@@ -5100,14 +5240,88 @@
       return Boolean(draft.text || draft.media?.length);
     }
 
-    function clearPublishDraft() {
-      localStorage.removeItem(publishDraftKey());
+    function clearCurrentPublishWork(removeDraft = true) {
+      if (removeDraft && currentPublishDraftId) {
+        writePublishDrafts(readPublishDrafts().filter((draft) => draft.id !== currentPublishDraftId));
+      }
+      currentPublishDraftId = null;
       publishEditorText.value = '';
       publishMediaFiles = [];
       publishSelectedIndex = 0;
       publishVisibility = 'local';
       updatePublishVisibility();
       renderPublishMediaPreview();
+    }
+
+    function clearPublishDraft() {
+      clearCurrentPublishWork(true);
+    }
+
+    function deletePublishDraft(draftId) {
+      writePublishDrafts(readPublishDrafts().filter((draft) => draft.id !== draftId));
+      if (currentPublishDraftId === draftId) currentPublishDraftId = null;
+      renderDraftBox();
+    }
+
+    function draftSourceLabel(source) {
+      return {
+        album: '相册',
+        camera: '拍摄',
+        text: '文字',
+        file: '文件'
+      }[source] || '动态';
+    }
+
+    function formatDraftTime(value) {
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return '刚刚';
+      return date.toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+    }
+
+    function draftTitle(draft) {
+      const text = String(draft.text || '').trim();
+      if (text) return text.replace(/\s+/g, ' ').slice(0, 28);
+      if (draft.media?.length) return `${draft.media.length} 个媒体内容`;
+      return '未命名草稿';
+    }
+
+    function escapeHtml(value) {
+      return String(value || '').replace(/[&<>"']/g, (char) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      }[char]));
+    }
+
+    function renderDraftBox() {
+      const drafts = readPublishDrafts();
+      if (!drafts.length) {
+        draftBoxList.innerHTML = '<div class="draft-box-empty">暂无草稿</div>';
+        return;
+      }
+      draftBoxList.replaceChildren(...drafts.map((draft) => {
+        const row = document.createElement('div');
+        row.className = 'draft-item';
+        row.dataset.draftId = draft.id;
+        row.innerHTML = `
+          <div class="draft-thumb">${draft.media?.length ? draft.media.length : '文'}</div>
+          <div class="draft-summary">
+            <strong>${escapeHtml(draftTitle(draft))}</strong>
+            <span>${escapeHtml(formatDraftTime(draft.updatedAt))} · ${escapeHtml(draftSourceLabel(draft.source))} · ${draft.visibility === 'local' ? '当地可见' : '已设范围'}</span>
+          </div>
+          <div class="draft-actions">
+            <button type="button" data-draft-edit="${draft.id}" aria-label="继续编辑">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19h4l10-10a2.8 2.8 0 0 0-4-4L5 15v4Z"></path><path d="M13.5 6.5l4 4"></path></svg>
+            </button>
+            <button type="button" data-draft-delete="${draft.id}" aria-label="删除草稿">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"></path><path d="M9 7V5h6v2"></path><path d="M7 7l1 13h8l1-13"></path><path d="M10 11v5"></path><path d="M14 11v5"></path></svg>
+            </button>
+          </div>
+        `;
+        return row;
+      }));
     }
 
     function updatePublishVisibility() {
@@ -5230,7 +5444,7 @@
       if (source === 'file') publishFileInput.click();
     }
 
-    function openPublishEditor(source = 'album', triggerPicker = false, restoreDraft = false) {
+    function openPublishEditor(source = 'album', triggerPicker = false, restoreDraftId = null) {
       publishSource = source;
       const config = {
         album: {
@@ -5253,8 +5467,8 @@
 
       publishSourceHint.textContent = config.hint || '发布动态';
       publishEditorText.placeholder = config.placeholder || '说点什么...';
-      if (restoreDraft) {
-        restorePublishDraft();
+      if (restoreDraftId) {
+        restorePublishDraft(restoreDraftId);
       } else if (!hasCurrentPublishWork()) {
         updatePublishVisibility();
       }
@@ -5270,7 +5484,8 @@
 
     function openPublishEntry() {
       if (hasPublishDraft()) {
-        setPublishDraftSheet(true);
+        renderDraftBox();
+        openPage('draftBoxPage');
         return;
       }
       setPublishSheet(true);
@@ -5543,26 +5758,34 @@
       const action = event.target.closest('[data-publish-action]');
       if (!action) return;
       setPublishSheet(false);
+      clearCurrentPublishWork(false);
       openPublishEditor(action.dataset.publishAction, true);
     });
 
-    publishDraftCancelBtn.addEventListener('click', () => setPublishDraftSheet(false));
-    publishDraftSheet.addEventListener('click', (event) => {
-      if (event.target === publishDraftSheet) {
-        setPublishDraftSheet(false);
-        return;
-      }
-      const action = event.target.closest('[data-draft-action]');
-      if (!action) return;
-      setPublishDraftSheet(false);
-      if (action.dataset.draftAction === 'continue') {
-        const draft = readPublishDraft();
-        openPublishEditor(draft?.source || 'album', false, true);
-        toast('已恢复上次草稿。');
-        return;
-      }
-      clearPublishDraft();
+    draftBoxNewBtn.addEventListener('click', () => {
+      closeTopPage();
+      clearCurrentPublishWork(false);
       setPublishSheet(true);
+    });
+
+    draftBoxList.addEventListener('click', (event) => {
+      const editButton = event.target.closest('[data-draft-edit]');
+      const deleteButton = event.target.closest('[data-draft-delete]');
+      if (editButton) {
+        const draft = readPublishDrafts().find((item) => item.id === editButton.dataset.draftEdit);
+        if (!draft) {
+          renderDraftBox();
+          toast('这条草稿已经不存在。');
+          return;
+        }
+        openPublishEditor(draft.source || 'album', false, draft.id);
+        toast('已打开草稿。');
+        return;
+      }
+      if (deleteButton) {
+        deletePublishDraft(deleteButton.dataset.draftDelete);
+        toast('草稿已删除。');
+      }
     });
 
     publishExitCancelBtn.addEventListener('click', () => setPublishExitSheet(false));
@@ -5808,10 +6031,7 @@
         addPost(data.post);
         closeTopPage();
         openDynamicFeed();
-        publishEditorText.value = '';
-        publishMediaFiles = [];
-        localStorage.removeItem(publishDraftKey());
-        renderPublishMediaPreview();
+        clearCurrentPublishWork(true);
         await showPointsUnlock(10);
         await loadGrowth();
         toast('已发布到动态。');
