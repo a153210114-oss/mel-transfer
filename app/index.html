@@ -3688,6 +3688,11 @@
               <span><strong>老丁</strong><span>HB110001 · 墨尔本 · 华伴共创用户</span></span>
               <span class="row-meta">名片</span>
             </button>
+            <button class="list-row" type="button" data-open-page="phoneRegisterPage">
+              <span class="row-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h8a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"></path><path d="M10 18h4"></path></svg></span>
+              <span class="row-text"><strong>手机验证码注册</strong><span>身份唯一性、推荐关系和积分入账入口。</span></span>
+              <span class="row-meta">绑定</span>
+            </button>
             <button class="list-row" type="button" data-open-page="growthPage">
               <span class="row-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.5 5 5.5.8-4 3.9.9 5.5-4.9-2.6-4.9 2.6.9-5.5-4-3.9 5.5-.8L12 3Z"></path></svg></span>
               <span class="row-text"><strong>积分权益</strong><span>参与奖励 · L8 权重 ×128 · 入账记录。</span></span>
@@ -4343,6 +4348,35 @@
       </div>
     </section>
 
+    <section id="phoneRegisterPage" class="phone-page" aria-label="手机验证码注册">
+      <div class="page-nav">
+        <button class="plain-icon" type="button" data-close-page aria-label="返回">‹</button>
+        <strong>手机验证码注册</strong>
+        <span></span>
+      </div>
+      <div class="profile-section">
+        <label class="profile-edit-row">
+          <span>手机号</span>
+          <input id="registerPhoneInput" inputmode="tel" autocomplete="tel" placeholder="+61 4xx xxx xxx">
+        </label>
+        <label class="profile-edit-row">
+          <span>验证码</span>
+          <input id="registerCodeInput" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="6 位验证码">
+        </label>
+        <button id="sendRegisterCodeBtn" class="profile-row" type="button">
+          <span>获取验证码</span>
+          <small>发送短信验证码 ›</small>
+        </button>
+        <button id="confirmRegisterBtn" class="profile-row" type="button">
+          <span>完成注册 / 绑定</span>
+          <small>确认身份码、推荐关系和积分入账 ›</small>
+        </button>
+      </div>
+      <div class="formula-card" style="margin: 14px;">
+        手机号验证是身份唯一性的基础。完成后生成或绑定华伴身份码，并记录推荐关系与积分入账。
+      </div>
+    </section>
+
     <section id="aiSubscriptionPage" class="phone-page" aria-label="AI 高级能力">
       <div class="page-nav">
         <button class="plain-icon" type="button" data-close-page aria-label="返回">‹</button>
@@ -4976,6 +5010,10 @@
     const publishVisibilityText = document.querySelector('#publishVisibilityText');
     const publishVisibilitySheet = document.querySelector('#publishVisibilitySheet');
     const publishVisibilityCancelBtn = document.querySelector('#publishVisibilityCancelBtn');
+    const registerPhoneInput = document.querySelector('#registerPhoneInput');
+    const registerCodeInput = document.querySelector('#registerCodeInput');
+    const sendRegisterCodeBtn = document.querySelector('#sendRegisterCodeBtn');
+    const confirmRegisterBtn = document.querySelector('#confirmRegisterBtn');
     const locationSearchInput = document.querySelector('#locationSearchInput');
     const locationSearchBtn = document.querySelector('#locationSearchBtn');
     const locationDropdownBtn = document.querySelector('#locationDropdownBtn');
@@ -5855,6 +5893,16 @@
           done: '位置已加入动态。'
         };
       }
+      if (locationReturnTarget === 'ai') {
+        return {
+          title: '给 AI 发送位置',
+          hint: '把位置发给华伴 AI，用来让 AI 判断距离、路线、附近信息或生成建议。',
+          selectedLabel: '发给 AI 的地址，可编辑后确认',
+          confirm: '发送给 AI',
+          empty: '先选择一个地点，再发送给 AI。',
+          done: '位置已发送给华伴 AI。'
+        };
+      }
       return {
         title: '发送位置',
         hint: '选择要发送给对方的位置。可以定位当前位置、搜索地点，或点地图选位置。',
@@ -6233,6 +6281,14 @@
         return;
       }
       closeTopPage();
+      if (locationReturnTarget === 'ai') {
+        const doneMessage = locationContextCopy().done;
+        openPage('aiChatPage');
+        appendAiLocation(location);
+        locationReturnTarget = 'chat';
+        toast(doneMessage);
+        return;
+      }
       appendChatLocation(location, true);
       toast(locationContextCopy().done);
     }
@@ -6282,6 +6338,23 @@
       const line = createLocationCard(location, isMe);
       chatThread.append(line);
       line.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
+
+    function appendAiLocation(location) {
+      const userLine = createLocationCard(location, true);
+      aiChatThread.append(userLine);
+
+      const aiLine = document.createElement('div');
+      aiLine.className = 'chat-line';
+      aiLine.innerHTML = `
+        <button class="avatar avatar-button" type="button" data-open-page="aiCompanionPage" aria-label="查看我的 AI 伙伴">
+          <img src="../assets/brand/huaban-logo-v1.png" alt="华伴 AI">
+        </button>
+        <div class="bubble ai"></div>
+      `;
+      aiLine.querySelector('.bubble').textContent = '收到位置。你可以继续问我附近有什么、怎么去、距离多远，或者让我整理成动态地点。';
+      aiChatThread.append(aiLine);
+      aiLine.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }
 
     function addChatAttachmentPreview(files, sourceLabel) {
@@ -7092,7 +7165,7 @@
       toast('消息已发送，已写入本地真测数据。');
     });
 
-    chatThread.addEventListener('click', (event) => {
+    function handleLocationCardClick(event) {
       const card = event.target.closest('[data-location-card]');
       const legacyBubble = event.target.closest('.bubble');
       const legacyAddress = legacyBubble?.textContent?.match(/^(?:发送位置|位置)[:：]\s*(.+)$|^📍\s*(.+)$/)?.slice(1).find(Boolean);
@@ -7110,7 +7183,10 @@
         return;
       }
       window.open(url, '_blank', 'noopener,noreferrer');
-    });
+    }
+
+    chatThread.addEventListener('click', handleLocationCardClick);
+    aiChatThread.addEventListener('click', handleLocationCardClick);
 
     document.querySelector('#aiChatForm').addEventListener('submit', async (event) => {
       event.preventDefault();
@@ -7244,7 +7320,7 @@
         return;
       }
       if (action.dataset.aiMore === 'location') {
-        openLocationPicker('chat');
+        openLocationPicker('ai');
         return;
       }
       if (action.dataset.aiMore === 'album') {
@@ -7260,6 +7336,42 @@
         return;
       }
       toast(`${title}需要原生能力或服务端接口，当前只标为待接入。`);
+    });
+
+    sendRegisterCodeBtn?.addEventListener('click', () => {
+      const phone = registerPhoneInput?.value.trim();
+      if (!phone) {
+        toast('先输入手机号。');
+        registerPhoneInput?.focus();
+        return;
+      }
+      localStorage.setItem('huaban_demo_phone_code', '123456');
+      toast('验证码已发送。演示码：123456');
+      registerCodeInput?.focus();
+    });
+
+    confirmRegisterBtn?.addEventListener('click', async () => {
+      const phone = registerPhoneInput?.value.trim();
+      const code = registerCodeInput?.value.trim();
+      if (!phone) {
+        toast('先输入手机号。');
+        registerPhoneInput?.focus();
+        return;
+      }
+      if (code !== localStorage.getItem('huaban_demo_phone_code')) {
+        toast('验证码不正确。演示码：123456');
+        registerCodeInput?.focus();
+        return;
+      }
+      localStorage.setItem('huaban_phone_verified', JSON.stringify({
+        phone,
+        verifiedAt: new Date().toISOString(),
+        friendCode: 'HB110001'
+      }));
+      await showPointsUnlock(30);
+      toast('手机号已验证，身份码与推荐关系已进入记录。');
+      closeTopPage();
+      openTab('mePage');
     });
 
     locationSearchBtn.addEventListener('click', () => {
