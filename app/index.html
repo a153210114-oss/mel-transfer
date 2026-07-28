@@ -2185,6 +2185,11 @@
       opacity: .5;
     }
 
+    .publish-thumb.selected {
+      outline: 2px solid var(--brand);
+      outline-offset: 2px;
+    }
+
     .publish-thumb img,
     .publish-thumb video {
       width: 100%;
@@ -4352,12 +4357,14 @@
           <button id="publishAiPolishBtn" class="primary-light" type="button">AI 整理</button>
           <button id="publishAddLocationBtn" type="button">位置</button>
           <button id="publishChangeSourceBtn" type="button">更换内容</button>
+          <button id="publishMoveLeftBtn" type="button">左移</button>
+          <button id="publishMoveRightBtn" type="button">右移</button>
           <button id="publishSaveDraftBtn" type="button">存草稿</button>
           <button id="publishClearDraftBtn" type="button">清空</button>
         </div>
-        <button class="publish-visible-row" type="button" data-ai-command="设置动态可见范围">
+        <button id="publishVisibilityBtn" class="publish-visible-row" type="button">
           <span>可见范围</span>
-          <span>当地可见 ›</span>
+          <span id="publishVisibilityText">当地可见 ›</span>
         </button>
       </div>
     </section>
@@ -4442,6 +4449,20 @@
         <button id="publishCancelBtn" class="cancel" type="button">取消</button>
       </div>
     </div>
+    <div id="publishDraftSheet" class="publish-sheet" aria-label="动态草稿">
+      <div class="share-actions">
+        <button type="button" data-draft-action="continue">继续上次草稿</button>
+        <button type="button" data-draft-action="new">新建动态</button>
+        <button id="publishDraftCancelBtn" class="cancel" type="button">取消</button>
+      </div>
+    </div>
+    <div id="publishExitSheet" class="publish-sheet" aria-label="退出编辑动态">
+      <div class="share-actions">
+        <button type="button" data-exit-draft-action="save">保存草稿并退出</button>
+        <button type="button" data-exit-draft-action="discard">放弃草稿</button>
+        <button id="publishExitCancelBtn" class="cancel" type="button">继续编辑</button>
+      </div>
+    </div>
     <div id="shareSheet" class="publish-sheet" aria-label="转发分享菜单">
       <div class="share-actions">
         <button type="button" data-share-target="friend">发给朋友</button>
@@ -4456,6 +4477,15 @@
         <button type="button" data-dynamic-action="ask_ai">问问 AI</button>
         <button type="button" data-dynamic-action="filter">筛选动态</button>
         <button id="dynamicCancelBtn" class="cancel" type="button">取消</button>
+      </div>
+    </div>
+    <div id="publishVisibilitySheet" class="publish-sheet" aria-label="动态可见范围">
+      <div class="share-actions">
+        <button type="button" data-publish-visibility="local">当地可见</button>
+        <button type="button" data-publish-visibility="friends">好友可见</button>
+        <button type="button" data-publish-visibility="public">公开可见</button>
+        <button type="button" data-publish-visibility="private">仅自己可见</button>
+        <button id="publishVisibilityCancelBtn" class="cancel" type="button">取消</button>
       </div>
     </div>
     <div id="aiMoreSheet" class="publish-sheet" aria-label="输入框功能菜单">
@@ -4543,6 +4573,10 @@
     const publishSheet = document.querySelector('#publishSheet');
     const publishTabBtn = document.querySelector('#publishTabBtn');
     const publishCancelBtn = document.querySelector('#publishCancelBtn');
+    const publishDraftSheet = document.querySelector('#publishDraftSheet');
+    const publishDraftCancelBtn = document.querySelector('#publishDraftCancelBtn');
+    const publishExitSheet = document.querySelector('#publishExitSheet');
+    const publishExitCancelBtn = document.querySelector('#publishExitCancelBtn');
     const shareSheet = document.querySelector('#shareSheet');
     const shareCancelBtn = document.querySelector('#shareCancelBtn');
     const dynamicSheet = document.querySelector('#dynamicSheet');
@@ -4557,11 +4591,17 @@
     const publishAiPolishBtn = document.querySelector('#publishAiPolishBtn');
     const publishAddLocationBtn = document.querySelector('#publishAddLocationBtn');
     const publishChangeSourceBtn = document.querySelector('#publishChangeSourceBtn');
+    const publishMoveLeftBtn = document.querySelector('#publishMoveLeftBtn');
+    const publishMoveRightBtn = document.querySelector('#publishMoveRightBtn');
     const publishSaveDraftBtn = document.querySelector('#publishSaveDraftBtn');
     const publishClearDraftBtn = document.querySelector('#publishClearDraftBtn');
     const publishAlbumInput = document.querySelector('#publishAlbumInput');
     const publishCameraInput = document.querySelector('#publishCameraInput');
     const publishFileInput = document.querySelector('#publishFileInput');
+    const publishVisibilityBtn = document.querySelector('#publishVisibilityBtn');
+    const publishVisibilityText = document.querySelector('#publishVisibilityText');
+    const publishVisibilitySheet = document.querySelector('#publishVisibilitySheet');
+    const publishVisibilityCancelBtn = document.querySelector('#publishVisibilityCancelBtn');
     const locationSearchInput = document.querySelector('#locationSearchInput');
     const locationSearchBtn = document.querySelector('#locationSearchBtn');
     const locationCurrentBtn = document.querySelector('#locationCurrentBtn');
@@ -4584,6 +4624,8 @@
     let locationReturnTarget = 'chat';
     let publishMediaFiles = [];
     let publishDraggedIndex = null;
+    let publishSelectedIndex = 0;
+    let publishVisibility = 'local';
 
     function localGreetingByHour(date = new Date()) {
       const hour = date.getHours();
@@ -4884,12 +4926,24 @@
       publishSheet.classList.toggle('open', open);
     }
 
+    function setPublishDraftSheet(open) {
+      publishDraftSheet.classList.toggle('open', open);
+    }
+
+    function setPublishExitSheet(open) {
+      publishExitSheet.classList.toggle('open', open);
+    }
+
     function setShareSheet(open) {
       shareSheet.classList.toggle('open', open);
     }
 
     function setDynamicSheet(open) {
       dynamicSheet.classList.toggle('open', open);
+    }
+
+    function setPublishVisibilitySheet(open) {
+      publishVisibilitySheet.classList.toggle('open', open);
     }
 
     function setAiMoreSheet(open) {
@@ -5001,10 +5055,33 @@
       return 'huaban_publish_draft';
     }
 
+    function readPublishDraft() {
+      try {
+        return JSON.parse(localStorage.getItem(publishDraftKey()) || 'null');
+      } catch (error) {
+        localStorage.removeItem(publishDraftKey());
+        return null;
+      }
+    }
+
+    function hasPublishDraft() {
+      const draft = readPublishDraft();
+      return Boolean(draft?.text || draft?.location || (draft?.visibility && draft.visibility !== 'local') || publishMediaFiles.length);
+    }
+
+    function hasCurrentPublishWork() {
+      return Boolean(publishEditorText.value.trim() || publishMediaFiles.length || publishVisibility !== 'local');
+    }
+
     function savePublishDraft() {
+      if (!hasCurrentPublishWork()) {
+        localStorage.removeItem(publishDraftKey());
+        return;
+      }
       const payload = {
         source: publishSource,
         text: publishEditorText.value,
+        visibility: publishVisibility,
         media: publishMediaFiles.map((item) => ({
           name: item.name,
           type: item.type,
@@ -5018,22 +5095,33 @@
     }
 
     function restorePublishDraft() {
-      try {
-        const draft = JSON.parse(localStorage.getItem(publishDraftKey()) || 'null');
-        if (!draft) return false;
-        publishEditorText.value = draft.text || '';
-        return Boolean(draft.text || draft.media?.length);
-      } catch (error) {
-        localStorage.removeItem(publishDraftKey());
-        return false;
-      }
+      const draft = readPublishDraft();
+      if (!draft) return false;
+      publishEditorText.value = draft.text || '';
+      if (draft.source) publishSource = draft.source;
+      if (draft.visibility) publishVisibility = draft.visibility;
+      updatePublishVisibility();
+      return Boolean(draft.text || draft.media?.length);
     }
 
     function clearPublishDraft() {
       localStorage.removeItem(publishDraftKey());
       publishEditorText.value = '';
       publishMediaFiles = [];
+      publishSelectedIndex = 0;
+      publishVisibility = 'local';
+      updatePublishVisibility();
       renderPublishMediaPreview();
+    }
+
+    function updatePublishVisibility() {
+      const labels = {
+        local: '当地可见',
+        friends: '好友可见',
+        public: '公开可见',
+        private: '仅自己可见'
+      };
+      publishVisibilityText.textContent = `${labels[publishVisibility] || '当地可见'} ›`;
     }
 
     function mediaKind(file) {
@@ -5051,13 +5139,14 @@
       }[publishSource] || {};
       publishMediaPreview.className = config.className || 'publish-media-preview';
       publishMediaPreview.dataset.count = String(Math.max(1, publishMediaFiles.length || 6));
+      publishSelectedIndex = Math.min(Math.max(0, publishSelectedIndex), Math.max(0, publishMediaFiles.length - 1));
 
       if (!publishMediaFiles.length) {
         publishMediaPreview.innerHTML = `<div class="publish-empty-state"><span>${config.label || '内容预览'}</span></div>`;
         return;
       }
 
-      const first = publishMediaFiles[0];
+      const first = publishMediaFiles[publishSelectedIndex] || publishMediaFiles[0];
       const kind = mediaKind(first.file);
       const main = document.createElement('div');
       main.className = `publish-main-media ${kind}`;
@@ -5080,9 +5169,13 @@
       list.className = 'publish-media-list';
       publishMediaFiles.forEach((item, index) => {
         const thumb = document.createElement('div');
-        thumb.className = 'publish-thumb';
+        thumb.className = `publish-thumb${index === publishSelectedIndex ? ' selected' : ''}`;
         thumb.draggable = true;
         thumb.dataset.mediaIndex = String(index);
+        thumb.addEventListener('click', () => {
+          publishSelectedIndex = index;
+          renderPublishMediaPreview();
+        });
         const itemKind = mediaKind(item.file);
         if (itemKind === 'image') {
           const image = document.createElement('img');
@@ -5103,6 +5196,7 @@
         remove.setAttribute('aria-label', '移除');
         remove.addEventListener('click', () => {
           publishMediaFiles.splice(index, 1);
+          publishSelectedIndex = Math.min(publishSelectedIndex, Math.max(0, publishMediaFiles.length - 1));
           renderPublishMediaPreview();
           savePublishDraft();
         });
@@ -5127,7 +5221,25 @@
         type: file.type,
         url: URL.createObjectURL(file)
       }));
+      publishSelectedIndex = 0;
       if (files.length > limited.length) toast('最多选择 6 张图片。');
+      renderPublishMediaPreview();
+      savePublishDraft();
+    }
+
+    function moveSelectedPublishMedia(direction) {
+      if (publishMediaFiles.length < 2) {
+        toast('至少选择 2 个内容后才能调整顺序。');
+        return;
+      }
+      const nextIndex = publishSelectedIndex + direction;
+      if (nextIndex < 0 || nextIndex >= publishMediaFiles.length) {
+        toast(direction < 0 ? '已经在最前面。' : '已经在最后面。');
+        return;
+      }
+      const [item] = publishMediaFiles.splice(publishSelectedIndex, 1);
+      publishMediaFiles.splice(nextIndex, 0, item);
+      publishSelectedIndex = nextIndex;
       renderPublishMediaPreview();
       savePublishDraft();
     }
@@ -5138,7 +5250,7 @@
       if (source === 'file') publishFileInput.click();
     }
 
-    function openPublishEditor(source = 'album', triggerPicker = false) {
+    function openPublishEditor(source = 'album', triggerPicker = false, restoreDraft = false) {
       publishSource = source;
       const config = {
         album: {
@@ -5161,7 +5273,12 @@
 
       publishSourceHint.textContent = config.hint || '发布动态';
       publishEditorText.placeholder = config.placeholder || '说点什么...';
-      restorePublishDraft();
+      if (restoreDraft) {
+        restorePublishDraft();
+      } else if (!hasCurrentPublishWork()) {
+        updatePublishVisibility();
+      }
+      updatePublishVisibility();
       renderPublishMediaPreview();
       openPage('publishEditorPage');
       if (triggerPicker && source !== 'text') {
@@ -5169,6 +5286,14 @@
         return;
       }
       window.setTimeout(() => publishEditorText.focus(), 120);
+    }
+
+    function openPublishEntry() {
+      if (hasPublishDraft()) {
+        setPublishDraftSheet(true);
+        return;
+      }
+      setPublishSheet(true);
     }
 
     function renderLocations(results = []) {
@@ -5350,11 +5475,9 @@
       }
     }
 
-    document.querySelector('#publishFocusBtn').addEventListener('click', () => {
-      setPublishSheet(true);
-    });
+    document.querySelector('#publishFocusBtn').addEventListener('click', openPublishEntry);
 
-    publishTabBtn.addEventListener('click', () => setPublishSheet(true));
+    publishTabBtn.addEventListener('click', openPublishEntry);
     publishCancelBtn.addEventListener('click', () => setPublishSheet(false));
     publishSheet.addEventListener('click', (event) => {
       if (event.target === publishSheet) {
@@ -5365,6 +5488,45 @@
       if (!action) return;
       setPublishSheet(false);
       openPublishEditor(action.dataset.publishAction, true);
+    });
+
+    publishDraftCancelBtn.addEventListener('click', () => setPublishDraftSheet(false));
+    publishDraftSheet.addEventListener('click', (event) => {
+      if (event.target === publishDraftSheet) {
+        setPublishDraftSheet(false);
+        return;
+      }
+      const action = event.target.closest('[data-draft-action]');
+      if (!action) return;
+      setPublishDraftSheet(false);
+      if (action.dataset.draftAction === 'continue') {
+        const draft = readPublishDraft();
+        openPublishEditor(draft?.source || 'album', false, true);
+        toast('已恢复上次草稿。');
+        return;
+      }
+      clearPublishDraft();
+      setPublishSheet(true);
+    });
+
+    publishExitCancelBtn.addEventListener('click', () => setPublishExitSheet(false));
+    publishExitSheet.addEventListener('click', (event) => {
+      if (event.target === publishExitSheet) {
+        setPublishExitSheet(false);
+        return;
+      }
+      const action = event.target.closest('[data-exit-draft-action]');
+      if (!action) return;
+      setPublishExitSheet(false);
+      if (action.dataset.exitDraftAction === 'save') {
+        savePublishDraft();
+        closeTopPage();
+        toast('草稿已保存。');
+        return;
+      }
+      clearPublishDraft();
+      closeTopPage();
+      toast('已放弃草稿。');
     });
 
     shareCancelBtn.addEventListener('click', () => setShareSheet(false));
@@ -5410,6 +5572,22 @@
         filter: '筛选动态'
       }[action.dataset.dynamicAction];
       openOperation(dynamicTitle || '动态操作', dynamicPages[action.dataset.dynamicAction] || ['打开']);
+    });
+
+    publishVisibilityBtn.addEventListener('click', () => setPublishVisibilitySheet(true));
+    publishVisibilityCancelBtn.addEventListener('click', () => setPublishVisibilitySheet(false));
+    publishVisibilitySheet.addEventListener('click', (event) => {
+      if (event.target === publishVisibilitySheet) {
+        setPublishVisibilitySheet(false);
+        return;
+      }
+      const action = event.target.closest('[data-publish-visibility]');
+      if (!action) return;
+      publishVisibility = action.dataset.publishVisibility;
+      updatePublishVisibility();
+      savePublishDraft();
+      setPublishVisibilitySheet(false);
+      toast(`已设置为${publishVisibilityText.textContent.replace(' ›', '')}。`);
     });
 
     document.querySelector('#polishBtn').addEventListener('click', async () => {
@@ -5480,6 +5658,9 @@
     publishChangeSourceBtn.addEventListener('click', () => {
       setPublishSheet(true);
     });
+
+    publishMoveLeftBtn.addEventListener('click', () => moveSelectedPublishMedia(-1));
+    publishMoveRightBtn.addEventListener('click', () => moveSelectedPublishMedia(1));
 
     publishSaveDraftBtn.addEventListener('click', () => {
       savePublishDraft();
@@ -5565,6 +5746,7 @@
             dynamicType: 'note',
             mediaType,
             mediaCount: publishMediaFiles.length,
+            visibility: publishVisibility,
             content,
             tags: ['本地生活']
           })
@@ -5646,6 +5828,10 @@
         setMenu(false);
       }
       if (closePageButton) {
+        if (closePageButton.closest('#publishEditorPage') && hasCurrentPublishWork()) {
+          setPublishExitSheet(true);
+          return;
+        }
         closeTopPage();
       }
       if (menuTargetButton && !sideMenu.contains(menuTargetButton)) {
