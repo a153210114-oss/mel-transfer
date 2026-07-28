@@ -2086,8 +2086,7 @@
     .publish-media-preview {
       position: relative;
       min-height: 230px;
-      display: grid;
-      place-items: center;
+      display: block;
       margin-bottom: 14px;
       border-radius: 12px;
       background:
@@ -2109,13 +2108,23 @@
         #f8fbfd;
     }
 
+    .publish-empty-state {
+      min-height: inherit;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      color: #7b858b;
+      text-align: center;
+    }
+
+    .publish-empty-state span,
     .publish-media-preview span {
       font-size: 13px;
       font-weight: 400;
     }
 
     .publish-media-preview.multi::after {
-      content: "1/6";
+      content: "1/" attr(data-count);
       position: absolute;
       top: 10px;
       right: 10px;
@@ -2129,6 +2138,74 @@
 
     .publish-media-preview .media-dots {
       bottom: 12px;
+    }
+
+    .publish-main-media {
+      position: relative;
+      min-height: 230px;
+      background: #eef6f2;
+    }
+
+    .publish-main-media img,
+    .publish-main-media video {
+      width: 100%;
+      height: 100%;
+      min-height: 230px;
+      display: block;
+      object-fit: cover;
+    }
+
+    .publish-main-media.file {
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      color: #59636a;
+      text-align: center;
+    }
+
+    .publish-media-list {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 6px;
+      padding: 8px;
+      background: rgba(255, 255, 255, .82);
+      border-top: 1px solid rgba(17, 24, 32, .06);
+    }
+
+    .publish-thumb {
+      position: relative;
+      aspect-ratio: 1 / 1;
+      overflow: hidden;
+      border-radius: 8px;
+      background: #eef2f0;
+      cursor: grab;
+    }
+
+    .publish-thumb.dragging {
+      opacity: .5;
+    }
+
+    .publish-thumb img,
+    .publish-thumb video {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+    }
+
+    .publish-thumb button {
+      position: absolute;
+      top: 3px;
+      right: 3px;
+      width: 18px;
+      height: 18px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      background: rgba(17, 24, 32, .62);
+      color: #fff;
+      font-size: 12px;
+      line-height: 1;
     }
 
     .publish-caption {
@@ -2159,6 +2236,16 @@
       color: #25312b;
       font-size: 12px;
       font-weight: 400;
+    }
+
+    .publish-editor-tools button.primary-light {
+      background: rgba(24, 197, 110, .16);
+      color: var(--brand-dark);
+    }
+
+    .publish-editor-tools button.draft-active {
+      background: #fff6df;
+      color: #8a5b00;
     }
 
     .publish-visible-row {
@@ -4255,14 +4342,18 @@
       <div class="publish-editor-body">
         <p id="publishSourceHint" class="publish-source-hint">从相册选择 · 最多 6 张图</p>
         <div id="publishMediaPreview" class="publish-media-preview multi" aria-label="动态内容预览">
-          <span>图片主图预览</span>
-          <span class="media-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+          <div class="publish-empty-state"><span>图片主图预览</span></div>
         </div>
+        <input id="publishAlbumInput" type="file" accept="image/*" multiple hidden>
+        <input id="publishCameraInput" type="file" accept="image/*,video/*" capture="environment" hidden>
+        <input id="publishFileInput" type="file" hidden>
         <textarea id="publishEditorText" class="publish-caption" aria-label="动态配文" placeholder="说点什么，或让 AI 帮你整理成动态配文..."></textarea>
         <div class="publish-editor-tools" aria-label="编辑工具">
-          <button id="publishAiPolishBtn" type="button">AI 整理</button>
+          <button id="publishAiPolishBtn" class="primary-light" type="button">AI 整理</button>
           <button id="publishAddLocationBtn" type="button">位置</button>
           <button id="publishChangeSourceBtn" type="button">更换内容</button>
+          <button id="publishSaveDraftBtn" type="button">存草稿</button>
+          <button id="publishClearDraftBtn" type="button">清空</button>
         </div>
         <button class="publish-visible-row" type="button" data-ai-command="设置动态可见范围">
           <span>可见范围</span>
@@ -4466,6 +4557,11 @@
     const publishAiPolishBtn = document.querySelector('#publishAiPolishBtn');
     const publishAddLocationBtn = document.querySelector('#publishAddLocationBtn');
     const publishChangeSourceBtn = document.querySelector('#publishChangeSourceBtn');
+    const publishSaveDraftBtn = document.querySelector('#publishSaveDraftBtn');
+    const publishClearDraftBtn = document.querySelector('#publishClearDraftBtn');
+    const publishAlbumInput = document.querySelector('#publishAlbumInput');
+    const publishCameraInput = document.querySelector('#publishCameraInput');
+    const publishFileInput = document.querySelector('#publishFileInput');
     const locationSearchInput = document.querySelector('#locationSearchInput');
     const locationSearchBtn = document.querySelector('#locationSearchBtn');
     const locationCurrentBtn = document.querySelector('#locationCurrentBtn');
@@ -4486,6 +4582,8 @@
     let selectedLocation = null;
     let publishSource = 'album';
     let locationReturnTarget = 'chat';
+    let publishMediaFiles = [];
+    let publishDraggedIndex = null;
 
     function localGreetingByHour(date = new Date()) {
       const hour = date.getHours();
@@ -4899,43 +4997,177 @@
       openPage('operationPage');
     }
 
-    function openPublishEditor(source = 'album') {
+    function publishDraftKey() {
+      return 'huaban_publish_draft';
+    }
+
+    function savePublishDraft() {
+      const payload = {
+        source: publishSource,
+        text: publishEditorText.value,
+        media: publishMediaFiles.map((item) => ({
+          name: item.name,
+          type: item.type,
+          size: item.size
+        })),
+        updatedAt: new Date().toISOString()
+      };
+      localStorage.setItem(publishDraftKey(), JSON.stringify(payload));
+      publishSaveDraftBtn.classList.add('draft-active');
+      window.setTimeout(() => publishSaveDraftBtn.classList.remove('draft-active'), 900);
+    }
+
+    function restorePublishDraft() {
+      try {
+        const draft = JSON.parse(localStorage.getItem(publishDraftKey()) || 'null');
+        if (!draft) return false;
+        publishEditorText.value = draft.text || '';
+        return Boolean(draft.text || draft.media?.length);
+      } catch (error) {
+        localStorage.removeItem(publishDraftKey());
+        return false;
+      }
+    }
+
+    function clearPublishDraft() {
+      localStorage.removeItem(publishDraftKey());
+      publishEditorText.value = '';
+      publishMediaFiles = [];
+      renderPublishMediaPreview();
+    }
+
+    function mediaKind(file) {
+      if (file?.type?.startsWith('image/')) return 'image';
+      if (file?.type?.startsWith('video/')) return 'video';
+      return 'file';
+    }
+
+    function renderPublishMediaPreview() {
+      const config = {
+        album: { label: '点击更换内容，最多 6 张图', className: 'publish-media-preview multi' },
+        camera: { label: '拍摄内容预览', className: 'publish-media-preview' },
+        text: { label: '文字动态', className: 'publish-media-preview text-mode' },
+        file: { label: '文件预览', className: 'publish-media-preview file-mode' }
+      }[publishSource] || {};
+      publishMediaPreview.className = config.className || 'publish-media-preview';
+      publishMediaPreview.dataset.count = String(Math.max(1, publishMediaFiles.length || 6));
+
+      if (!publishMediaFiles.length) {
+        publishMediaPreview.innerHTML = `<div class="publish-empty-state"><span>${config.label || '内容预览'}</span></div>`;
+        return;
+      }
+
+      const first = publishMediaFiles[0];
+      const kind = mediaKind(first.file);
+      const main = document.createElement('div');
+      main.className = `publish-main-media ${kind}`;
+      if (kind === 'image') {
+        const image = document.createElement('img');
+        image.src = first.url;
+        image.alt = first.name || '动态图片';
+        main.append(image);
+      } else if (kind === 'video') {
+        const video = document.createElement('video');
+        video.src = first.url;
+        video.controls = true;
+        video.muted = true;
+        main.append(video);
+      } else {
+        main.textContent = first.name || '已选择文件';
+      }
+
+      const list = document.createElement('div');
+      list.className = 'publish-media-list';
+      publishMediaFiles.forEach((item, index) => {
+        const thumb = document.createElement('div');
+        thumb.className = 'publish-thumb';
+        thumb.draggable = true;
+        thumb.dataset.mediaIndex = String(index);
+        const itemKind = mediaKind(item.file);
+        if (itemKind === 'image') {
+          const image = document.createElement('img');
+          image.src = item.url;
+          image.alt = item.name || '图片';
+          thumb.append(image);
+        } else if (itemKind === 'video') {
+          const video = document.createElement('video');
+          video.src = item.url;
+          video.muted = true;
+          thumb.append(video);
+        } else {
+          thumb.textContent = '文件';
+        }
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.textContent = '×';
+        remove.setAttribute('aria-label', '移除');
+        remove.addEventListener('click', () => {
+          publishMediaFiles.splice(index, 1);
+          renderPublishMediaPreview();
+          savePublishDraft();
+        });
+        thumb.append(remove);
+        list.append(thumb);
+      });
+
+      publishMediaPreview.replaceChildren(main, list);
+    }
+
+    function handlePublishFiles(fileList) {
+      const files = Array.from(fileList || []);
+      if (!files.length) return;
+      const limited = publishSource === 'album' ? files.slice(0, 6) : files.slice(0, 1);
+      publishMediaFiles.forEach((item) => {
+        if (item.url) URL.revokeObjectURL(item.url);
+      });
+      publishMediaFiles = limited.map((file) => ({
+        file,
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        url: URL.createObjectURL(file)
+      }));
+      if (files.length > limited.length) toast('最多选择 6 张图片。');
+      renderPublishMediaPreview();
+      savePublishDraft();
+    }
+
+    function triggerPublishPicker(source) {
+      if (source === 'album') publishAlbumInput.click();
+      if (source === 'camera') publishCameraInput.click();
+      if (source === 'file') publishFileInput.click();
+    }
+
+    function openPublishEditor(source = 'album', triggerPicker = false) {
       publishSource = source;
       const config = {
         album: {
           hint: '从相册选择 · 最多 6 张图',
-          label: '图片主图预览',
-          className: 'publish-media-preview multi',
           placeholder: '说点什么，或让 AI 帮你整理成动态配文...'
         },
         camera: {
           hint: '拍摄 · 基础版视频最长 15 秒',
-          label: '拍摄内容预览',
-          className: 'publish-media-preview',
           placeholder: '给刚拍的内容配一句话...'
         },
         text: {
           hint: '写文字',
-          label: '文字动态',
-          className: 'publish-media-preview text-mode',
           placeholder: '写想法、提问题，或让 AI 帮你扩写...'
         },
         file: {
           hint: '文件 · 可作为动态附件',
-          label: '文件预览',
-          className: 'publish-media-preview file-mode',
           placeholder: '补充文件说明，或让 AI 摘要后发布...'
         }
       }[source] || {};
 
       publishSourceHint.textContent = config.hint || '发布动态';
-      publishMediaPreview.className = config.className || 'publish-media-preview';
-      publishMediaPreview.innerHTML = `<span>${config.label || '内容预览'}</span>${
-        source === 'album' ? '<span class="media-dots" aria-hidden="true"><i></i><i></i><i></i></span>' : ''
-      }`;
       publishEditorText.placeholder = config.placeholder || '说点什么...';
-      if (!publishEditorText.value.trim()) publishEditorText.value = '';
+      restorePublishDraft();
+      renderPublishMediaPreview();
       openPage('publishEditorPage');
+      if (triggerPicker && source !== 'text') {
+        triggerPublishPicker(source);
+        return;
+      }
       window.setTimeout(() => publishEditorText.focus(), 120);
     }
 
@@ -5132,7 +5364,7 @@
       const action = event.target.closest('[data-publish-action]');
       if (!action) return;
       setPublishSheet(false);
-      openPublishEditor(action.dataset.publishAction);
+      openPublishEditor(action.dataset.publishAction, true);
     });
 
     shareCancelBtn.addEventListener('click', () => setShareSheet(false));
@@ -5220,9 +5452,11 @@
     });
 
     publishAiPolishBtn.addEventListener('click', async () => {
-      const text = publishEditorText.value.trim();
+      const text = publishEditorText.value.trim() || (publishMediaFiles.length
+        ? '请根据我选择的图片或视频，生成一段适合发布到本地动态的中文配文。'
+        : '');
       if (!text) {
-        toast('先写一点内容，AI 再帮你整理。');
+        toast('先写一点内容，或先选择图片/视频。');
         publishEditorText.focus();
         return;
       }
@@ -5232,6 +5466,7 @@
           body: JSON.stringify({ draft: text, city: 'Melbourne' })
         });
         publishEditorText.value = data.content;
+        savePublishDraft();
         toast(`AI 已整理：${data.tags.join('、')}`);
       } catch (error) {
         toast('AI 整理暂不可用，可以先手动编辑。');
@@ -5246,10 +5481,72 @@
       setPublishSheet(true);
     });
 
+    publishSaveDraftBtn.addEventListener('click', () => {
+      savePublishDraft();
+      toast('草稿已保存。');
+    });
+
+    publishClearDraftBtn.addEventListener('click', () => {
+      clearPublishDraft();
+      toast('已清空编辑内容。');
+    });
+
+    publishEditorText.addEventListener('input', () => {
+      savePublishDraft();
+    });
+
+    publishAlbumInput.addEventListener('change', (event) => {
+      handlePublishFiles(event.target.files);
+      event.target.value = '';
+    });
+
+    publishCameraInput.addEventListener('change', (event) => {
+      handlePublishFiles(event.target.files);
+      event.target.value = '';
+    });
+
+    publishFileInput.addEventListener('change', (event) => {
+      handlePublishFiles(event.target.files);
+      event.target.value = '';
+    });
+
+    publishMediaPreview.addEventListener('dragstart', (event) => {
+      const thumb = event.target.closest('.publish-thumb');
+      if (!thumb) return;
+      publishDraggedIndex = Number(thumb.dataset.mediaIndex);
+      thumb.classList.add('dragging');
+      event.dataTransfer.effectAllowed = 'move';
+    });
+
+    publishMediaPreview.addEventListener('dragover', (event) => {
+      if (publishDraggedIndex === null) return;
+      const thumb = event.target.closest('.publish-thumb');
+      if (!thumb) return;
+      event.preventDefault();
+    });
+
+    publishMediaPreview.addEventListener('drop', (event) => {
+      const thumb = event.target.closest('.publish-thumb');
+      if (!thumb || publishDraggedIndex === null) return;
+      event.preventDefault();
+      const targetIndex = Number(thumb.dataset.mediaIndex);
+      if (targetIndex === publishDraggedIndex) return;
+      const [moved] = publishMediaFiles.splice(publishDraggedIndex, 1);
+      publishMediaFiles.splice(targetIndex, 0, moved);
+      publishDraggedIndex = null;
+      renderPublishMediaPreview();
+      savePublishDraft();
+    });
+
+    publishMediaPreview.addEventListener('dragend', () => {
+      publishDraggedIndex = null;
+      publishMediaPreview.querySelectorAll('.publish-thumb.dragging').forEach((thumb) => thumb.classList.remove('dragging'));
+    });
+
     publishEditorSubmitBtn.addEventListener('click', async () => {
       const text = publishEditorText.value.trim();
-      if (!text) {
-        toast('先写一点配文再发布。');
+      if (!text && !publishMediaFiles.length) {
+        toast('先选择内容或写一点配文。');
         publishEditorText.focus();
         return;
       }
@@ -5259,6 +5556,7 @@
         text: 'text',
         file: 'file'
       }[publishSource] || 'text';
+      const content = text || (publishMediaFiles.length ? '分享一条本地动态。' : '');
       try {
         const data = await api('/dynamics', {
           method: 'POST',
@@ -5266,8 +5564,8 @@
             city: 'Melbourne',
             dynamicType: 'note',
             mediaType,
-            mediaCount: publishSource === 'album' ? 3 : publishSource === 'text' ? 0 : 1,
-            content: text,
+            mediaCount: publishMediaFiles.length,
+            content,
             tags: ['本地生活']
           })
         });
@@ -5275,6 +5573,9 @@
         closeTopPage();
         openDynamicFeed();
         publishEditorText.value = '';
+        publishMediaFiles = [];
+        localStorage.removeItem(publishDraftKey());
+        renderPublishMediaPreview();
         await showPointsUnlock(10);
         await loadGrowth();
         toast('已发布到动态。');
