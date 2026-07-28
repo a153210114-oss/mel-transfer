@@ -919,6 +919,13 @@ function resolveAiCommand(text = '') {
     };
   }
 
+  if (query.includes('地图') || query.includes('导航') || query.includes('位置') || query.includes('定位') || query.includes('发送地址') || normalized.includes('map') || normalized.includes('navigation') || normalized.includes('location')) {
+    return {
+      action: 'open_location',
+      message: '已打开地图位置，可以搜索地点、使用当前位置或发送地址。'
+    };
+  }
+
   if (query.includes('积分') || query.includes('等级') || query.includes('释放') || query.includes('权重') || query.includes('分配') || query.includes('贡献') || query.includes('任务')) {
     return {
       action: 'open_growth',

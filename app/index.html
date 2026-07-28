@@ -2045,6 +2045,172 @@
       line-height: 1;
     }
 
+    .location-panel {
+      padding: 12px 12px 110px;
+      background: #fff;
+      border-radius: 18px 18px 0 0;
+      margin-top: -16px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .location-map {
+      position: relative;
+      min-height: 46vh;
+      overflow: hidden;
+      background:
+        linear-gradient(110deg, rgba(51, 181, 123, .15), transparent 34%),
+        linear-gradient(22deg, transparent 0 28%, rgba(139, 177, 214, .42) 29% 31%, transparent 32% 55%, rgba(139, 177, 214, .34) 56% 58%, transparent 59%),
+        linear-gradient(96deg, transparent 0 42%, rgba(139, 177, 214, .36) 43% 45%, transparent 46%),
+        #e8f0ed;
+    }
+
+    .map-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(123, 154, 168, .18) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(123, 154, 168, .16) 1px, transparent 1px);
+      background-size: 58px 58px;
+      opacity: .8;
+    }
+
+    .map-pin {
+      position: absolute;
+      left: 50%;
+      top: 46%;
+      width: 34px;
+      height: 34px;
+      border-radius: 999px 999px 999px 0;
+      background: var(--green);
+      transform: translate(-50%, -50%) rotate(-45deg);
+      box-shadow: 0 12px 28px rgba(24, 197, 110, .28);
+    }
+
+    .map-pin::after {
+      content: "";
+      position: absolute;
+      inset: 8px;
+      border-radius: 999px;
+      background: #fff;
+    }
+
+    .map-locate {
+      position: absolute;
+      left: 14px;
+      bottom: 28px;
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: #fff;
+      box-shadow: 0 10px 24px rgba(17, 24, 32, .12);
+    }
+
+    .map-locate svg {
+      width: 22px;
+      height: 22px;
+      fill: none;
+      stroke: #2188ff;
+      stroke-width: 1.9;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .location-search {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 74px;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .location-search input {
+      width: 100%;
+      height: 42px;
+      border: 0;
+      border-radius: 12px;
+      padding: 0 14px;
+      background: #fff;
+      color: #111820;
+      font-size: var(--text-md);
+      font-weight: 400;
+      outline: none;
+    }
+
+    .location-search button,
+    .location-current,
+    .location-confirm {
+      height: 42px;
+      border-radius: 12px;
+      background: var(--green);
+      color: #fff;
+      font-size: var(--text-sm);
+      font-weight: 600;
+    }
+
+    .location-current {
+      width: 100%;
+      margin: 4px 0 12px;
+      background: #fff;
+      color: #111820;
+      border: 1px solid rgba(17, 24, 32, .08);
+    }
+
+    .location-hint {
+      margin: 0 0 16px;
+      color: #717a81;
+      font-size: var(--text-sm);
+      line-height: 1.6;
+      font-weight: 400;
+    }
+
+    .location-results {
+      display: grid;
+      gap: 8px;
+    }
+
+    .location-result {
+      display: grid;
+      gap: 5px;
+      width: 100%;
+      padding: 13px 14px;
+      border-radius: 14px;
+      background: #fff;
+      color: #111820;
+      text-align: left;
+      border: 1px solid rgba(17, 24, 32, .06);
+    }
+
+    .location-result strong {
+      font-size: var(--text-md);
+      font-weight: 600;
+      line-height: 1.35;
+    }
+
+    .location-result span {
+      color: #6f777e;
+      font-size: var(--text-sm);
+      font-weight: 400;
+      line-height: 1.45;
+    }
+
+    .location-result.selected {
+      border-color: rgba(24, 197, 110, .46);
+      box-shadow: inset 3px 0 0 var(--green);
+    }
+
+    .location-confirm {
+      position: sticky;
+      bottom: calc(12px + env(safe-area-inset-bottom));
+      width: 100%;
+      margin-top: 14px;
+      display: none;
+    }
+
+    .location-confirm.show {
+      display: block;
+    }
+
     .friend-note-label {
       padding: 16px 22px 8px;
       color: #777f87;
@@ -3941,6 +4107,29 @@
       <div id="operationList" class="profile-section"></div>
     </section>
 
+    <section id="locationPage" class="phone-page" aria-label="位置">
+      <div class="page-nav">
+        <button class="plain-icon" type="button" data-close-page aria-label="取消">×</button>
+        <strong>位置</strong>
+        <button id="locationSendBtn" class="plain-icon" type="button" aria-label="发送位置">✓</button>
+      </div>
+      <div class="location-map" aria-label="地图选点预览">
+        <div class="map-grid"></div>
+        <div class="map-pin" aria-hidden="true"></div>
+        <button id="locationCurrentBtn" class="map-locate" type="button" aria-label="定位当前位置">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v3"></path><path d="M12 18v3"></path><path d="M3 12h3"></path><path d="M18 12h3"></path><circle cx="12" cy="12" r="5"></circle></svg>
+        </button>
+      </div>
+      <div class="location-panel">
+        <div class="location-search">
+          <input id="locationSearchInput" aria-label="搜索地点" placeholder="搜索地点">
+          <button id="locationSearchBtn" type="button">搜索</button>
+        </div>
+        <p id="locationHint" class="location-hint">可搜索地点，也可以使用当前位置。发送前会显示标准地址。</p>
+        <div id="locationResults" class="location-results"></div>
+      </div>
+    </section>
+
     <form id="aiForm" class="composer">
       <button id="aiWaveBtn" type="button" aria-label="直接发送语音">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4"></path><path d="M8 7v10"></path><path d="M12 4v16"></path><path d="M16 8v8"></path><path d="M20 11v2"></path></svg>
@@ -4104,6 +4293,12 @@
     const dynamicCancelBtn = document.querySelector('#dynamicCancelBtn');
     const operationTitle = document.querySelector('#operationTitle');
     const operationList = document.querySelector('#operationList');
+    const locationSearchInput = document.querySelector('#locationSearchInput');
+    const locationSearchBtn = document.querySelector('#locationSearchBtn');
+    const locationCurrentBtn = document.querySelector('#locationCurrentBtn');
+    const locationSendBtn = document.querySelector('#locationSendBtn');
+    const locationHint = document.querySelector('#locationHint');
+    const locationResults = document.querySelector('#locationResults');
     const aiInput = document.querySelector('#aiInput');
     const aiForm = document.querySelector('#aiForm');
     const aiWaveBtn = document.querySelector('#aiWaveBtn');
@@ -4115,6 +4310,7 @@
 
     let activeProfile = 'me';
     let menuDragMoved = false;
+    let selectedLocation = null;
 
     function localGreetingByHour(date = new Date()) {
       const hour = date.getHours();
@@ -4349,6 +4545,11 @@
         toast('可以说：匹配当地朋友、搜索附近咖啡、打开消息、我要发动态。');
         return;
       }
+      if (/地图|导航|位置|定位|发送地址|发地址|map|navigation|location/i.test(commandText)) {
+        openLocationPicker();
+        toast('已打开地图位置。');
+        return;
+      }
       try {
         const command = await api('/ai/command', {
           method: 'POST',
@@ -4370,6 +4571,8 @@
         } else if (command.action === 'open_growth') {
           openTab('mePage');
           document.querySelector('.growth-card')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else if (command.action === 'open_location') {
+          openLocationPicker();
         } else if (command.action === 'search_local') {
           openTab('nearbyPage');
           document.querySelector('#searchInput').value = command.query || commandText;
@@ -4399,6 +4602,79 @@
         return button;
       }));
       openPage('operationPage');
+    }
+
+    function renderLocations(results = []) {
+      const list = Array.isArray(results) ? results : [];
+      locationResults.replaceChildren(...list.map((item, index) => {
+        const button = document.createElement('button');
+        button.className = 'location-result';
+        button.type = 'button';
+        button.dataset.locationIndex = String(index);
+        button.innerHTML = `<strong>${item.formatted_address || '未命名地点'}</strong><span>${[item.suburb, item.city, item.state].filter(Boolean).join(' · ') || 'Google 地址结果'}</span>`;
+        button.addEventListener('click', () => {
+          selectedLocation = item;
+          document.querySelectorAll('.location-result').forEach((node) => node.classList.remove('selected'));
+          button.classList.add('selected');
+          locationHint.textContent = item.formatted_address || '已选择位置';
+        });
+        return button;
+      }));
+      if (list[0]) {
+        selectedLocation = list[0];
+        locationHint.textContent = list[0].formatted_address || '已选择位置';
+        locationResults.querySelector('.location-result')?.classList.add('selected');
+      }
+    }
+
+    async function searchLocation(query) {
+      const text = String(query || '').trim();
+      if (!text) {
+        locationSearchInput.focus();
+        toast('输入地点或地址。');
+        return;
+      }
+      locationHint.textContent = '正在调用 Google 地址服务...';
+      const data = await api('/locations', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'search', query: text, city: 'Melbourne' })
+      });
+      renderLocations(data.results || []);
+      if (!data.results?.length) locationHint.textContent = '没有找到地址，可以换个关键词。';
+    }
+
+    async function reverseCurrentLocation() {
+      if (!navigator.geolocation) {
+        toast('当前浏览器不支持定位。');
+        return;
+      }
+      locationHint.textContent = '正在读取当前位置...';
+      navigator.geolocation.getCurrentPosition(async (position) => {
+        try {
+          const data = await api('/locations', {
+            method: 'POST',
+            body: JSON.stringify({
+              action: 'reverse_geocode',
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude
+            })
+          });
+          renderLocations(data.results || []);
+        } catch (error) {
+          locationHint.textContent = '位置解析失败，可以手动搜索地点。';
+        }
+      }, () => {
+        locationHint.textContent = '没有获得定位权限，可以手动搜索地点。';
+      }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 });
+    }
+
+    function openLocationPicker() {
+      selectedLocation = null;
+      locationSearchInput.value = '';
+      locationHint.textContent = '可搜索地点，也可以使用当前位置。发送前会显示标准地址。';
+      locationResults.replaceChildren();
+      openPage('locationPage');
+      window.setTimeout(() => locationSearchInput.focus(), 120);
     }
 
     function closeTopPage() {
@@ -5009,7 +5285,48 @@
         openPage('payPage');
         return;
       }
+      if (action.dataset.aiMore === 'location') {
+        openOperation('位置', ['发送位置', '共享实时位置']);
+        operationList.querySelectorAll('.profile-row').forEach((button, index) => {
+          button.addEventListener('click', () => {
+            if (index === 0) {
+              openLocationPicker();
+              return;
+            }
+            toast('共享实时位置需要原生 App 权限，先进入待开发清单。');
+          }, { once: true });
+        });
+        return;
+      }
       openOperation(title, ['选择对象', '让 AI 辅助处理', '确认发送']);
+    });
+
+    locationSearchBtn.addEventListener('click', () => {
+      searchLocation(locationSearchInput.value).catch(() => {
+        locationHint.textContent = 'Google 地址服务暂不可用。';
+      });
+    });
+
+    locationSearchInput.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter') return;
+      event.preventDefault();
+      locationSearchBtn.click();
+    });
+
+    locationCurrentBtn.addEventListener('click', () => {
+      reverseCurrentLocation().catch(() => {
+        locationHint.textContent = '当前位置解析失败。';
+      });
+    });
+
+    locationSendBtn.addEventListener('click', () => {
+      if (!selectedLocation) {
+        toast('先选择一个位置。');
+        return;
+      }
+      aiInput.value = `发送位置：${selectedLocation.formatted_address || ''}`;
+      closeTopPage();
+      toast('位置已填入对话框。');
     });
 
     aiVoiceBtn.addEventListener('click', () => {

@@ -146,19 +146,41 @@ Response:
 - `formattedAddress` 是展示地址，不等同于已确认精确地址。
 - `placeId` 优先保存 Google Place ID，便于后续更新和去重。
 - `visibilityLevel` 可选：`private`、`friends`、`city`、`public`、`admin_only`。
-- 老数据只有坐标时，后端批量反解后写入 `hb_location_addresses`，并要求用户确认。
+- 新版本优先直接调用 Google Map；老数据只有坐标时，只作为历史补全来源，后端批量反解后写入 `hb_location_addresses`，并要求用户确认。
 - 用户不会使用 Google 地址标注时，可以只发定位或输入模糊地址，由 AI 调用 Google Map 解析后给出候选地址，再让用户一键确认或修改。
 
-### POST `/locations/reverse-geocode`
+### POST `/locations`
 
-服务端根据坐标解析地址。生产环境应限制调用频率和权限。
+统一位置入口。服务端调用 Google Geocoding API，支持搜索地点、坐标反查和确认保存。生产环境应限制调用频率和权限。
+
+Search request:
 
 ```json
 {
-  "entityType": "user_profile",
-  "entityId": "uuid",
+  "action": "search",
+  "query": "Glen Waverley 咖啡",
+  "city": "Melbourne"
+}
+```
+
+Reverse geocode request:
+
+```json
+{
+  "action": "reverse_geocode",
   "latitude": -37.8136,
-  "longitude": 144.9631,
+  "longitude": 144.9631
+}
+```
+
+Save request:
+
+```json
+{
+  "action": "save",
+  "entityType": "user_profile",
+  "friendCode": "HB110001",
+  "confirmed": true,
   "visibilityLevel": "city"
 }
 ```
@@ -167,7 +189,8 @@ Response:
 
 ```json
 {
-  "locationAddress": {
+  "results": [
+    {
     "country": "Australia",
     "state": "VIC",
     "city": "Melbourne",
@@ -181,6 +204,10 @@ Response:
     "precisionLevel": "city",
     "addressVerified": false,
     "verificationStatus": "needs_user_confirmation"
+    }
+  ],
+  "location": {
+    "id": "uuid"
   }
 }
 ```
