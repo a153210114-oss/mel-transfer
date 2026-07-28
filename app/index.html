@@ -4650,8 +4650,8 @@
     <section id="locationPage" class="phone-page" aria-label="位置">
       <div class="page-nav">
         <button class="plain-icon" type="button" data-close-page aria-label="取消">×</button>
-        <strong>位置</strong>
-        <button id="locationSendBtn" class="plain-icon" type="button" aria-label="发送位置">✓</button>
+        <strong id="locationPageTitle">位置</strong>
+        <button id="locationSendBtn" class="plain-icon" type="button" aria-label="确认位置">✓</button>
       </div>
       <div class="location-map" aria-label="地图选点预览">
         <div id="googleMapCanvas" class="google-map-canvas" aria-hidden="true"></div>
@@ -4669,7 +4669,7 @@
         <p id="locationHint" class="location-hint">可搜索地点，也可以使用当前位置。发送前会显示标准地址。</p>
         <p id="locationStatus" class="location-status" aria-live="polite"></p>
         <div id="locationSelectedBox" class="location-selected" aria-live="polite">
-          <label for="locationAddressInput">已选地址，可编辑后确认</label>
+          <label id="locationAddressLabel" for="locationAddressInput">已选地址，可编辑后确认</label>
           <textarea id="locationAddressInput" rows="2" placeholder="选择地址后可在这里修改门牌、街名或备注"></textarea>
           <button id="locationClearBtn" type="button">重新选择</button>
         </div>
@@ -4898,11 +4898,13 @@
     const locationCurrentBtn = document.querySelector('#locationCurrentBtn');
     const locationSendBtn = document.querySelector('#locationSendBtn');
     const locationBottomConfirmBtn = document.querySelector('#locationBottomConfirmBtn');
+    const locationPageTitle = document.querySelector('#locationPageTitle');
     const locationHint = document.querySelector('#locationHint');
     const locationStatus = document.querySelector('#locationStatus');
     const locationGoogleBtn = document.querySelector('#locationGoogleBtn');
     const locationResults = document.querySelector('#locationResults');
     const locationSelectedBox = document.querySelector('#locationSelectedBox');
+    const locationAddressLabel = document.querySelector('#locationAddressLabel');
     const locationAddressInput = document.querySelector('#locationAddressInput');
     const locationClearBtn = document.querySelector('#locationClearBtn');
     const googleMapCanvas = document.querySelector('#googleMapCanvas');
@@ -5751,6 +5753,36 @@
       locationBottomConfirmBtn?.classList.toggle('show', hasSelection);
     }
 
+    function locationContextCopy() {
+      if (locationReturnTarget === 'publish') {
+        return {
+          title: '动态位置',
+          hint: '给这条动态选择地点。可以定位当前位置、搜索地点，或点地图选位置。',
+          selectedLabel: '动态地点，可编辑后加入动态',
+          confirm: '加入动态',
+          empty: '先选择一个地点，再加入动态。',
+          done: '位置已加入动态。'
+        };
+      }
+      return {
+        title: '发送位置',
+        hint: '选择要发送给对方的位置。可以定位当前位置、搜索地点，或点地图选位置。',
+        selectedLabel: '发送地址，可编辑后确认',
+        confirm: '确认发送位置',
+        empty: '先选择一个地点，再带回对话框。',
+        done: '位置已填入当前对话框，确认后再发送。'
+      };
+    }
+
+    function applyLocationContext() {
+      const copy = locationContextCopy();
+      if (locationPageTitle) locationPageTitle.textContent = copy.title;
+      if (locationAddressLabel) locationAddressLabel.textContent = copy.selectedLabel;
+      if (locationBottomConfirmBtn) locationBottomConfirmBtn.textContent = copy.confirm;
+      locationSendBtn?.setAttribute('aria-label', copy.confirm);
+      locationHint.textContent = copy.hint;
+    }
+
     function clearLocationSelection(message = '请选择一个地址，再确认。') {
       selectedLocation = null;
       if (locationAddressInput) locationAddressInput.value = '';
@@ -6069,7 +6101,7 @@
       locationReturnTarget = returnTarget;
       selectedLocation = null;
       locationSearchInput.value = '';
-      locationHint.textContent = '可搜索地点，也可以使用当前位置。发送前会显示标准地址。';
+      applyLocationContext();
       setLocationStatus('');
       setGoogleMapsButton(false);
       locationResults.replaceChildren();
@@ -6090,7 +6122,7 @@
     function confirmLocationSelection() {
       const location = currentLocationSelection();
       if (!location) {
-        locationHint.textContent = '先搜索地点并选择结果，或点左侧定位按钮读取当前位置。';
+        locationHint.textContent = locationContextCopy().empty;
         setLocationStatus('还没有选定地址，不能确认。', 'error');
         return;
       }
@@ -6100,7 +6132,7 @@
         publishEditorText.value = `${publishEditorText.value.trim()}${publishEditorText.value.trim() ? '\n' : ''}📍 ${address}`.trim();
         closeTopPage();
         openPublishEditor(publishSource);
-        toast('位置已加入动态。');
+        toast(locationContextCopy().done);
         locationReturnTarget = 'chat';
         return;
       }
@@ -6108,7 +6140,7 @@
       targetInput.value = `发送位置：${location.formatted_address || ''}`;
       closeTopPage();
       targetInput.focus();
-      toast('位置已填入当前对话框，确认后再发送。');
+      toast(locationContextCopy().done);
     }
 
     function addChatAttachmentPreview(files, sourceLabel) {
